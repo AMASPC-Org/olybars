@@ -1,0 +1,16 @@
+{
+  "name": "olybars-functions",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.0.0",
+    "@google/genai": "^0.1.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "typescript": "^4.0.0"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}

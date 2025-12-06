@@ -2,11 +2,11 @@ import React from 'react';
 import { Clock } from 'lucide-react';
 
 // Theme: Cyber-Noir / Graphic Novel
-// Colors: Neon Green (#39ff14), Warm Orange (#ffaa00), Black (#000), White (#fff)
+// Colors: Amber/Gold (#fbbf24), Warm Orange (#ffaa00), Black (#000), White (#fff)
 
 export const ActionButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ className = '', children, ...props }) => (
   <button 
-    className={`bg-[#39ff14] text-black font-['Bangers'] tracking-wider text-xl px-6 py-3 border-2 border-black shadow-[4px_4px_0px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${className}`}
+    className={`bg-bar-gold text-black font-['Bangers'] tracking-wider text-xl px-6 py-3 border-2 border-black shadow-[4px_4px_0px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${className}`}
     {...props}
   >
     {children}
