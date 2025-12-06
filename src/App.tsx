@@ -2,10 +2,13 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { queryClient } from './lib/queryClient';
 import MobileLayout from './components/layout/MobileLayout';
-import HomePage from './pages/HomePage';
-import MapPage from './pages/MapPage';
-import LeaguePage from './pages/LeaguePage';
-import MorePage from './pages/MorePage';
+
+import BuzzFeed from './features/buzz/BuzzFeed';
+
+const MapScreen = () => <div className="p-4">Map Screen</div>;
+const LeagueScreen = () => <div className="p-4">League Screen</div>;
+const MoreScreen = () => <div className="p-4">More Screen</div>;
+
 
 function App() {
   return (
@@ -13,10 +16,10 @@ function App() {
       <Router>
         <MobileLayout>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/map" element={<MapPage />} />
-            <Route path="/league" element={<LeaguePage />} />
-            <Route path="/more" element={<MorePage />} />
+            <Route path="/" element={<BuzzFeed />} />
+            <Route path="/map" element={<MapScreen />} />
+            <Route path="/league" element={<LeagueScreen />} />
+            <Route path="/more" element={<MoreScreen />} />
           </Routes>
         </MobileLayout>
       </Router>

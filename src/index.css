@@ -2,26 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 1. KEEP: Your Font Imports (These are great for the League aesthetic) */
 @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Roboto+Condensed:wght@400;700;900&display=swap');
 
 body {
-    background-color: #111827;
-    background-image: radial-gradient(#1f2937 1px, transparent 1px);
-    background-size: 20px 20px;
-    margin: 0;
-    font-family: 'Roboto Condensed', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    color: #fff;
+  /* 2. UPDATE: Connect to the Design System 
+     We replace 'background-color: #111827' with '@apply bg-background'
+     This ensures the app uses the OlyBars Slate (#0f172a) defined in your config.
+  */
+  @apply bg-background text-white;
+  
+  /* 3. KEEP: Your Font Family */
+  font-family: 'Roboto Condensed', sans-serif;
+  
+  /* 4. OPTIONAL: Texture
+     I commented this out for a cleaner look, but you can uncomment it 
+     if you want to keep the "Comic/Texture" feel.
+  */
+  /* background-image: radial-gradient(#1f2937 1px, transparent 1px); */
+  /* background-size: 20px 20px; */
+
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Custom Scrollbar for Graphic Novel look */
+/* 5. KEEP: Your Custom Scrollbar (Updated to use Theme Colors) */
 ::-webkit-scrollbar {
     width: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: #111827; 
+    @apply bg-background; /* Matches body */
 }
 ::-webkit-scrollbar-thumb {
-    background: #fbbf24; 
+    @apply bg-primary; /* Uses your 'Yellow 500' Gold color */
     border: 1px solid #000;
 }
