@@ -2,32 +2,64 @@
 description: Mandatory steps for deploying changes to OlyBars environments.
 ---
 
-# Agent Release Flow Protocol
+# OlyBars Release Flow (DEV  PROD)
 
-This workflow MUST be followed for all code and infrastructure changes to prevent service outages and environment mismatches.
+## Target Map (source of truth = package.json)
+- DEV Hosting: target dev  site olybars-dev  https://olybars-dev.web.app
+- PROD Hosting: target prod  site olybars  https://olybars.com
+- DEV Backend: https://olybars-backend-juthzlaerq-uw.a.run.app
+- PROD Backend: https://olybars-backend-26629455103.us-west1.run.app
 
-## 1. Dev-First Implementation
-All UI, backend, or configuration changes must be deployed to the **Development** target first.
-// turbo
-- Run: `npm run deploy:dev`
-- This command automatically builds in development mode and verifies the build integrity.
+## 0) Pre-flight
+- Confirm you are on the correct branch (main) and repo (AMASPC-Org/olybars).
+- Confirm no secrets are being committed (.env must not be committed).
 
-## 2. Verification Gate
-Before proceeding to production, verify the staging environment:
-- Run: `npm run smoke:dev`
-- Use the browser tool to confirm the UI loads without console errors on `https://olybars-dev.web.app`.
+## 1) Deploy to DEV (default)
+Run:
+- 
+pm run deploy:dev
 
-## 3. Production Approval
-- **NEVER** deploy to production (`deploy:prod`) unless the user explicitly grants permission (e.g., "Proceed to production" or "Deploy to prod").
-- If the user has not explicitly requested a production deploy in the current turn, stop after verifying dev.
+Then verify:
+- 
+pm run smoke:dev
+- Open https://olybars-dev.web.app in an incognito window
+  - Hard refresh (Ctrl+Shift+R)
+  - Confirm no console errors
+  - Confirm app can load home and render venues
 
-## 4. Production Deployment
-Once approved:
-// turbo
-- Run: `npm run deploy:prod`
-- Run: `npm run smoke:prod` to confirm live site health.
+## 2) Debug if deploy succeeded but UI didnt change
+Run header checks (expect index.html = no-cache; assets = immutable):
+- PowerShell:
+  - Invoke-WebRequest -Uri "https://olybars-dev.web.app" -Method Head -MaximumRedirection 0 -UseBasicParsing | Select-Object -Expand Headers
+  - Invoke-WebRequest -Uri "https://olybars.com" -Method Head -MaximumRedirection 0 -UseBasicParsing | Select-Object -Expand Headers
 
-## Safety Rules
-- **No Global Redirects**: Never change domain mappings or apex domain configurations unless specifically asked.
-- **Cache Integrity**: Do not change global caching headers independently. Hashed assets should be cached; `index.html` should be `no-cache`.
-- **Environment checks**: The `deploy:*` scripts include a `check-env.js` guard that will block the deployment if a cross-environment URL mismatch is detected.
+If mismatch persists:
+- Verify the deployed release is correct (Firebase console or irebase hosting:sites:list + target)
+- Re-run 
+pm run deploy:dev after confirming working tree is clean and build artifacts updated
+
+## 3) PROD approval gate (must be explicit)
+STOP unless user explicitly says: deploy to prod / proceed to production.
+
+Required before PROD deploy (report results):
+- 
+pm run smoke:dev passes
+- https://olybars-dev.web.app loads without console errors
+
+## 4) Deploy to PROD (only after approval)
+Run:
+- 
+pm run deploy:prod
+- 
+pm run smoke:prod
+
+Manual verification:
+- Open https://olybars.com in an incognito window
+  - Hard refresh (Ctrl+Shift+R)
+  - Confirm no console errors
+  - Confirm app loads home and venues
+
+## Safety
+- Never change custom domain mappings unless explicitly requested.
+- Never change Cloud Run prod traffic split / IAM / env vars unless explicitly approved.
+- Never change caching headers globally unless explicitly approved.
