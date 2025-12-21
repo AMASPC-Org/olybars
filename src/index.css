@@ -1,39 +1,55 @@
+/* 1. IMPORTS MUST BE FIRST (Fixes the build crash) */
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Oswald:wght@400;700&family=Roboto+Condensed:wght@400;700;900&display=swap');
+
+/* 2. TAILWIND DIRECTIVES */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 1. KEEP: Your Font Imports (These are great for the League aesthetic) */
-@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Roboto+Condensed:wght@400;700;900&display=swap');
+/* 3. GLOBAL STYLES */
+@layer base {
 
-body {
-  /* 2. UPDATE: Connect to the Design System 
-     We replace 'background-color: #111827' with '@apply bg-background'
-     This ensures the app uses the OlyBars Slate (#0f172a) defined in your config.
-  */
-  @apply bg-background text-white;
-  
-  /* 3. KEEP: Your Font Family */
-  font-family: 'Roboto Condensed', sans-serif;
-  
-  /* 4. OPTIONAL: Texture
-     I commented this out for a cleaner look, but you can uncomment it 
-     if you want to keep the "Comic/Texture" feel.
-  */
-  /* background-image: radial-gradient(#1f2937 1px, transparent 1px); */
-  /* background-size: 20px 20px; */
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
 
-  margin: 0;
-  -webkit-font-smoothing: antialiased;
+  body {
+    @apply bg-background text-white antialiased;
+    font-family: 'Roboto Condensed', sans-serif;
+  }
 }
 
-/* 5. KEEP: Your Custom Scrollbar (Updated to use Theme Colors) */
+/* 4. RESTORED TEXTURE (The "Dimly Lit Bar" Vibe) */
+.bg-noise {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* 5. CUSTOM SCROLLBAR */
 ::-webkit-scrollbar {
-    width: 8px;
+  width: 6px;
 }
+
 ::-webkit-scrollbar-track {
-    @apply bg-background; /* Matches body */
+  @apply bg-surface;
 }
+
 ::-webkit-scrollbar-thumb {
-    @apply bg-primary; /* Uses your 'Yellow 500' Gold color */
-    border: 1px solid #000;
+  @apply bg-slate-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary;
 }

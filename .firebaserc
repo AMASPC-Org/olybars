@@ -1,0 +1,19 @@
+{
+  "projects": {
+    "default": "ama-ecosystem-prod",
+    "dev": "ama-ecosystem-prod"
+  },
+  "targets": {
+    "ama-ecosystem-prod": {
+      "hosting": {
+        "dev": [
+          "olybars-dev"
+        ],
+        "prod": [
+          "olybars"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
