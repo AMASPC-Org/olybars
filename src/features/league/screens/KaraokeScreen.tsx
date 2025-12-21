@@ -1,45 +1,83 @@
 import React from 'react';
-import { Mic, X, Crown, Settings } from 'lucide-react';
-import { Venue } from '../../venues/screens/BuzzScreen'; // Reusing the Venue interface
-
-// --- Mock Data (Filter only relevant venues) ---
-const MOCK_VENUES: Venue[] = [
-    { id: 'hannahs', name: "Hannah's Bar", status: 'buzzing', checkIns: 42, type: 'Dive Bar', vibe: 'Chaotic Good', leagueEvent: 'karaoke' },
-    { id: 'crypt', name: "Cryptatropa", status: 'chill', checkIns: 12, type: 'Goth Bar', vibe: 'Spooky Quiet', leagueEvent: 'karaoke' },
-];
+import { Mic, Music, Trophy, Star } from 'lucide-react';
 
 export const KaraokeScreen: React.FC = () => {
-    const venues = MOCK_VENUES; // Replace with useQuery later
-
-    const renderKaraokeHub = () => (
-        <div className="p-4 pb-28 space-y-6 bg-background">
-            {/* The Header Block (Modern Theme) */}
-            <div className="bg-surface border border-primary/50 p-4 rounded-xl shadow-lg">
-                <h2 className="text-3xl font-['Bangers'] text-white uppercase tracking-wider leading-none">KARAOKE LOUNGE</h2>
-                <p className="font-['Roboto_Condensed'] font-bold text-slate-400 text-sm mt-1">MIC IS HOT</p>
+    return (
+        <div className="bg-background text-white min-h-screen p-4 font-body">
+            {/* Header */}
+            <div className="text-center mb-6">
+                <h1 className="text-3xl font-black text-primary tracking-wider font-league uppercase">KARAOKE LOUNGE</h1>
+                <p className="text-sm font-bold text-slate-300 uppercase italic">Mic is Hot & Blood is Thin</p>
             </div>
-            
-            {/* The Venue List */}
-            {venues.filter(v => v.leagueEvent === 'karaoke').map(v => (
-                <div key={v.id} 
-                    // Theme Update: Sleek card, removing thick borders
-                    className="bg-surface border border-slate-700 p-4 rounded-lg shadow-md active:scale-[0.99] transition-transform cursor-pointer"
-                >
-                    <div className="flex justify-between items-start">
-                        <h3 className="text-xl font-['Bangers'] text-white tracking-wide">{v.name}</h3>
-                        <div className="p-1 bg-fuchsia-900/30 rounded-full">
-                          <Mic className="w-5 h-5 text-fuchsia-400" strokeWidth={3} />
+
+            {/* Main Stage Card */}
+            <div className="bg-surface rounded-lg border border-slate-700 shadow-[4px_4px_0px_0px_#000] p-5 mb-6">
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 className="text-2xl font-black text-white font-league uppercase leading-none">THE BROTHERHOOD</h2>
+                        <p className="text-xs text-slate-400 font-bold uppercase mt-1">TONIGHT @ 9:00 PM</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-xl font-black text-primary font-league">12 SINGERS</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">IN THE QUEUE</p>
+                    </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                    <button className="bg-primary hover:bg-yellow-400 text-black font-black py-4 rounded-md transition-all flex items-center justify-center gap-2 font-league uppercase border-2 border-black shadow-[3px_3px_0px_0px_#000]">
+                        <Mic size={18} strokeWidth={3} /> JOIN QUEUE
+                    </button>
+                    <button className="bg-slate-700 hover:bg-slate-600 text-white font-black py-4 rounded-md transition-all flex items-center justify-center gap-2 font-league uppercase border-2 border-black shadow-[3px_3px_0px_0px_#000]">
+                        <Music size={18} strokeWidth={3} /> REQUEST SONG
+                    </button>
+                </div>
+
+                {/* Rules & Rewards */}
+                <div className="space-y-4">
+                    <div className="bg-background/40 p-3 border border-white/5 rounded-md flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Star size={18} className="text-primary" />
+                            <div>
+                                <h3 className="font-black text-white text-sm font-league uppercase">VIBE MASTER</h3>
+                                <p className="text-[10px] text-slate-500 font-bold">Crowd vote winner gets +50 League Pts</p>
+                            </div>
                         </div>
                     </div>
-                    <p className="text-slate-400 font-bold text-sm mt-1">{v.description?.substring(0,60) || v.type}...</p>
+
+                    <div className="bg-background/40 p-3 border border-white/5 rounded-md flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Trophy size={18} className="text-yellow-400" />
+                            <div>
+                                <h3 className="font-black text-white text-sm font-league uppercase">LEAGUE PLAY</h3>
+                                <p className="text-[10px] text-slate-500 font-bold">Sing any song to earn 20 Pts</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <span className="bg-primary text-black text-[10px] font-black px-2 py-0.5 transform -skew-x-12 inline-block font-league uppercase">
+                                ACTIVE
+                            </span>
+                        </div>
+                    </div>
                 </div>
-            ))}
-            
-            {venues.filter(v => v.leagueEvent === 'karaoke').length === 0 && (
-                <div className="text-center p-8 border-2 border-dashed border-slate-700 font-['Roboto_Condensed'] text-slate-500 font-bold uppercase rounded-lg">No Active Karaoke</div>
-            )}
+            </div>
+
+            {/* Other Venues */}
+            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 font-league">OTHER KARAOKE SPOTS</h3>
+            <div className="space-y-3">
+                {[
+                    { name: "HANNAH'S BAR", time: "TUESDAYS 9PM", status: "NEXT UP" },
+                    { name: "CHINA CLIPPER", time: "DAILY 8PM", status: "MIC IS ON" }
+                ].map((spot, i) => (
+                    <div key={i} className="bg-surface/50 border border-white/5 p-4 flex justify-between items-center rounded-lg">
+                        <div>
+                            <span className="block text-white font-black text-sm font-league uppercase">{spot.name}</span>
+                            <span className="text-[10px] text-slate-500 font-bold uppercase">{spot.time}</span>
+                        </div>
+                        <span className="text-[10px] font-black text-primary font-league uppercase tracking-widest">{spot.status}</span>
+                    </div>
+                ))}
+            </div>
         </div>
     );
-    
-    return renderKaraokeHub();
 };

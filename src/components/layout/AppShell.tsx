@@ -159,12 +159,12 @@ export const AppShell: React.FC<AppShellProps> = ({
                 key={tab.id}
                 onClick={() => navigate(tab.path)}
                 className={`flex flex-col items-center justify-center py-2 transition-all border-2 border-black ${activeTab === tab.id
-                  ? 'bg-primary text-black'
+                  ? 'bg-primary text-black shadow-[2px_2px_0px_0px_#000]'
                   : 'bg-surface text-slate-200 hover:bg-surface/80'
                   }`}
               >
                 <tab.icon className="w-5 h-5 mb-1" strokeWidth={3} />
-                <span className="text-[10px] font-black tracking-wider font-league">
+                <span className="text-[10px] font-black tracking-wider font-league uppercase">
                   {tab.label}
                 </span>
               </button>
@@ -227,175 +227,163 @@ export const AppShell: React.FC<AppShellProps> = ({
           onClick={() => setShowMenu(false)}
         >
           <div
-            className="absolute top-0 right-0 w-[90%] max-w-sm bg-[#0f172a] h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300"
+            className="absolute top-0 right-0 w-[85%] max-w-sm bg-[#0f172a] h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Menu Header: Oly Gold Premium */}
-            <div className="bg-primary p-6 flex justify-between items-start border-b border-white/10">
-              <div className="flex flex-col">
-                <span className="text-3xl font-black text-black leading-tight uppercase tracking-tighter font-league">
-                  SETTINGS &
-                </span>
-                <span className="text-3xl font-black text-black leading-none uppercase tracking-tighter font-league">
-                  PROFILE
-                </span>
+            {/* 1. TOP SECTION: PROFILE & CLOSE */}
+            <div className="bg-primary p-6 flex justify-between items-start border-b border-black/20">
+              <div
+                className="flex items-center gap-3 cursor-pointer group"
+                onClick={() => {
+                  onProfileClick?.();
+                  setShowMenu(false);
+                }}
+              >
+                <div className="w-12 h-12 bg-black rounded-full border-2 border-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <User className="w-6 h-6 text-primary" strokeWidth={3} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xl font-black text-black leading-none uppercase font-league">
+                    CREATE PROFILE
+                  </span>
+                  <span className="text-[10px] font-black text-black/60 uppercase tracking-widest mt-0.5">
+                    GUEST USER
+                  </span>
+                </div>
               </div>
               <button
                 onClick={() => setShowMenu(false)}
-                className="text-black hover:scale-110 transition-transform"
+                className="text-black hover:rotate-90 transition-all p-1"
               >
-                <X className="w-10 h-10" strokeWidth={4} />
+                <X className="w-8 h-8" strokeWidth={4} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-8">
-              {/* Profile Card */}
-              <div className="bg-surface border border-white/10 p-5 rounded-lg relative">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-16 h-16 bg-primary rounded-full border-2 border-white flex items-center justify-center">
-                    <User className="w-8 h-8 text-black" strokeWidth={3} />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xl font-black text-white uppercase leading-none mb-1 font-league">
-                      GUEST USER
-                    </span>
-                    <span className="bg-primary text-black text-[10px] font-black px-2 py-0.5 tracking-widest inline-block select-none transform -skew-x-12">
-                      LEAGUE MEMBER
-                    </span>
-                  </div>
-                </div>
-                <p className="text-slate-400 text-xs font-medium leading-tight mb-4 font-body">
-                  Create your profile to save favorites and track points.
-                </p>
+            <div className="flex-1 overflow-y-auto p-5 space-y-6">
+              {/* 2. PRIMARY NAV LINKS */}
+              <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => {
-                    onProfileClick?.();
-                    setShowMenu(false);
-                  }}
-                  className="w-full bg-primary text-black font-black py-4 rounded-md transition-all uppercase tracking-wider font-league hover:bg-yellow-400 active:scale-[0.98]"
+                  onClick={() => handleMenuNavigation('/')}
+                  className="bg-surface border border-white/10 p-4 rounded-lg flex flex-col items-center gap-2 group hover:border-primary transition-all"
                 >
-                  CREATE PROFILE
+                  <Flame className="w-5 h-5 text-primary" strokeWidth={3} />
+                  <span className="text-white font-black text-[10px] tracking-widest uppercase font-league">PULSE</span>
+                </button>
+                <button
+                  onClick={() => handleMenuNavigation('/map')}
+                  className="bg-surface border border-white/10 p-4 rounded-lg flex flex-col items-center gap-2 group hover:border-primary transition-all"
+                >
+                  <MapIcon className="w-5 h-5 text-primary" strokeWidth={3} />
+                  <span className="text-white font-black text-[10px] tracking-widest uppercase font-league">VENUE MAP</span>
                 </button>
               </div>
 
-              {/* Alert Preferences */}
-              <div className="space-y-4">
-                <h3 className="text-primary font-black flex items-center gap-2 uppercase tracking-widest text-sm font-league">
-                  <Menu className="w-4 h-4" strokeWidth={3} /> MAIN MENU
+              {/* 3. SETTINGS & MORE LIST */}
+              <div className="space-y-2">
+                <h3 className="text-primary font-black flex items-center gap-2 uppercase tracking-widest text-[10px] font-league px-1 mb-3">
+                  <SettingsIcon className="w-3.5 h-3.5" strokeWidth={3} /> SETTINGS & MORE
                 </h3>
-                <button
-                  onClick={() => handleMenuNavigation('/more')}
-                  className="w-full bg-surface border border-white/10 p-4 rounded-lg flex items-center justify-between group hover:border-primary transition-all"
-                >
-                  <span className="text-white font-bold text-sm font-league">EXPLORE MORE VIBES</span>
-                  <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-primary" />
-                </button>
-
-                <h3 className="text-primary font-black flex items-center gap-2 uppercase tracking-widest text-sm font-league">
-                  <Bell className="w-4 h-4" strokeWidth={3} /> ALERT PREFERENCES
-                </h3>
-                <div className="bg-surface border border-white/10 p-4 rounded-lg flex items-center justify-between">
-                  <div>
-                    <span className="text-white font-bold text-sm font-league block">NIGHTLY OLYBARS BUZZ</span>
-                    <span className="text-[10px] text-slate-500 font-bold uppercase">Highlights from tonight's pulse</span>
-                  </div>
-                  <button
-                    onClick={() => setAlertPrefs({ ...alertPrefs, nightlyDigest: !alertPrefs.nightlyDigest })}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors ${alertPrefs.nightlyDigest ? 'bg-primary' : 'bg-slate-700'}`}
-                  >
-                    <div className={`w-4 h-4 bg-black rounded-full transition-transform ${alertPrefs.nightlyDigest ? 'translate-x-6' : 'translate-x-0'}`} />
-                  </button>
-                </div>
-
-                <div className="bg-surface border border-white/10 p-4 rounded-lg flex items-center justify-between">
-                  <div>
-                    <span className="text-white font-bold text-sm font-league block">ARTIE'S WEEKLY BUZZ</span>
-                    <span className="text-[10px] text-slate-500 font-bold uppercase">Weekly recommendations & stats</span>
-                  </div>
-                  <button
-                    onClick={() => setAlertPrefs({ ...alertPrefs, weeklyDigest: !alertPrefs.weeklyDigest })}
-                    className={`w-12 h-6 rounded-full p-1 transition-colors ${alertPrefs.weeklyDigest ? 'bg-primary' : 'bg-slate-700'}`}
-                  >
-                    <div className={`w-4 h-4 bg-black rounded-full transition-transform ${alertPrefs.weeklyDigest ? 'translate-x-6' : 'translate-x-0'}`} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Following List */}
-              <div className="space-y-4">
-                <h3 className="text-primary font-black flex items-center gap-2 uppercase tracking-widest text-sm font-league">
-                  <Star className="w-4 h-4" strokeWidth={3} /> FOLLOWING (0)
-                </h3>
-                <div className="border border-white/10 rounded-lg overflow-hidden divide-y divide-white/5">
+                <div className="grid grid-cols-1 gap-1">
                   {[
-                    "HANNAH'S BAR & GRILLE",
-                    "LEGENDS ARCADE",
-                    "CHINA CLIPPER",
-                    "WELL 80 BREWHOUSE",
-                    "THE BROTHERHOOD",
-                    "THREE MAGNETS"
-                  ].map((venue, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => {
-                        if (!isLeagueMember) {
-                          setShowMenu(false);
-                          setTimeout(() => {
-                            onProfileClick?.();
-                          }, 100);
-                        }
-                      }}
-                      className="bg-surface p-4 flex justify-between items-center group cursor-pointer hover:bg-slate-700 transition-colors"
+                    { label: 'LEAGUE HQ', path: '/league', icon: Crown },
+                    { label: 'EVENTS', path: '/events', icon: Calendar },
+                    { label: 'TRIVIA', path: '/trivia', icon: Brain },
+                    { label: 'KARAOKE', path: '/karaoke', icon: Mic },
+                    { label: 'ARCADE', path: '/arcade', icon: Music },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => handleMenuNavigation(item.path)}
+                      className="w-full bg-surface/50 hover:bg-surface border border-white/5 p-3 rounded-md flex items-center justify-between group transition-all"
                     >
-                      <span className="text-white font-bold text-xs tracking-tight font-league">{venue}</span>
-                      <Star className={`w-4 h-4 transition-colors ${isLeagueMember ? 'text-slate-600 group-hover:text-primary' : 'text-slate-700 group-hover:text-primary/50'}`} strokeWidth={3} />
-                    </div>
+                      <div className="flex items-center gap-3">
+                        <item.icon className="w-4 h-4 text-slate-400 group-hover:text-primary" strokeWidth={2.5} />
+                        <span className="text-white font-bold text-xs font-league tracking-wide">{item.label}</span>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-700 group-hover:text-primary" />
+                    </button>
                   ))}
                 </div>
-                {!isLeagueMember && (
-                  <p className="text-[9px] text-slate-500 font-bold uppercase text-center mt-2 italic">
-                    Log in as a League Member to save your favorites!
-                  </p>
-                )}
+              </div>
+
+              {/* 4. FOLLOWING / FAVORITES */}
+              <div className="space-y-3">
+                <h3 className="text-primary font-black flex items-center gap-2 uppercase tracking-widest text-[10px] font-league px-1">
+                  <Star className="w-3.5 h-3.5" strokeWidth={3} /> FAVORITE SPOTS
+                </h3>
+                <div className="bg-surface/30 border border-white/5 rounded-lg overflow-hidden divide-y divide-white/5">
+                  {venues.map((venue) => {
+                    const isFav = alertPrefs.followedVenues?.includes(venue.id);
+                    return (
+                      <div
+                        key={venue.id}
+                        className="p-3.5 flex justify-between items-center group cursor-pointer hover:bg-slate-800 transition-colors"
+                        onClick={() => {
+                          const followed = alertPrefs.followedVenues || [];
+                          const newFollowed = isFav
+                            ? followed.filter((id: string) => id !== venue.id)
+                            : [...followed, venue.id];
+                          setAlertPrefs({ ...alertPrefs, followedVenues: newFollowed });
+                        }}
+                      >
+                        <span className="text-white font-bold text-xs tracking-tight font-league">{venue.name.toUpperCase()}</span>
+                        <Star className={`w-4 h-4 transition-all ${isFav ? 'text-primary fill-primary' : 'text-slate-700 group-hover:text-primary/50'}`} strokeWidth={3} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 5. ALERT PREFS QUICK TOGGLE */}
+              <div className="bg-surface border border-white/10 p-4 rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest font-league">Nightly Buzz</span>
+                  <button
+                    onClick={() => setAlertPrefs({ ...alertPrefs, nightlyDigest: !alertPrefs.nightlyDigest })}
+                    className={`w-10 h-5 rounded-full p-1 transition-colors ${alertPrefs.nightlyDigest ? 'bg-primary' : 'bg-slate-700'}`}
+                  >
+                    <div className={`w-3 h-3 bg-black rounded-full transition-transform ${alertPrefs.nightlyDigest ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 6. SIDEBAR FOOTER: ADMIN & PROFILE */}
+            <div className="p-4 bg-black border-t border-white/10 space-y-3">
+              <button
+                onClick={() => {
+                  onProfileClick?.();
+                  setShowMenu(false);
+                }}
+                className="w-full bg-primary border-2 border-black p-4 flex items-center justify-between group rounded-md shadow-[4px_4px_0px_0px_#000] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000] transition-all"
+              >
+                <span className="text-black font-black text-sm uppercase tracking-wider font-league">
+                  MY PROFILE
+                </span>
+                <User className="w-5 h-5 text-black" strokeWidth={3} />
+              </button>
+
+              <button
+                onClick={() => {
+                  onOwnerLoginClick?.();
+                  setShowMenu(false);
+                }}
+                className="w-full bg-surface border border-white/10 p-3 flex items-center justify-between group rounded-md hover:border-slate-500 transition-all"
+              >
+                <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest font-league group-hover:text-white">
+                  OWNER LOGIN
+                </span>
+                <Lock className="w-4 h-4 text-slate-700 group-hover:text-white" />
+              </button>
+
+              <div className="flex justify-center gap-4 py-2">
+                <button onClick={() => handleMenuNavigation('/terms')} className="text-[9px] text-slate-600 font-bold uppercase hover:text-primary">TERMS</button>
+                <button onClick={() => handleMenuNavigation('/privacy')} className="text-[9px] text-slate-600 font-bold uppercase hover:text-primary">PRIVACY</button>
               </div>
             </div>
           </div>
-
-          {/* Legal Links */}
-          <div className="px-6 py-4 bg-black/40 border-t border-white/5 flex justify-center gap-6">
-            <button
-              onClick={() => handleMenuNavigation('/terms')}
-              className="text-[10px] text-slate-500 font-bold uppercase tracking-widest hover:text-primary transition-colors"
-            >
-              Terms
-            </button>
-            <button
-              onClick={() => handleMenuNavigation('/privacy')}
-              className="text-[10px] text-slate-500 font-bold uppercase tracking-widest hover:text-primary transition-colors"
-            >
-              Privacy
-            </button>
-          </div>
-
-          {/* Bottom Admin Link */}
-          <div className="p-6 bg-black">
-            <button
-              onClick={() => {
-                onOwnerLoginClick?.();
-                setShowMenu(false);
-              }}
-              className="w-full bg-surface p-4 border border-white/10 flex items-center justify-between group rounded-lg hover:border-primary transition-all active:scale-[0.98]"
-            >
-              <span className="text-slate-400 font-bold text-xs uppercase tracking-widest group-hover:text-white font-league">
-                VENUE ADMIN LOGIN
-              </span>
-              <Lock className="w-4 h-4 text-slate-600 group-hover:text-white" />
-            </button>
-          </div>
         </div>
-        </div>
-  )
-}
-    </div >
+      )}
+    </div>
   );
 };

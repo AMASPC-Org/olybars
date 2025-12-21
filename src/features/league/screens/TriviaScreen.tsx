@@ -4,8 +4,8 @@ import { Venue } from '../../venues/screens/BuzzScreen'; // Adjust path as neede
 
 // Using the same mock data structure for consistency
 const INITIAL_VENUES: Venue[] = [
-  { 
-    id: 'well80', name: "Well 80 Brewhouse", status: 'lively', checkIns: 35, 
+  {
+    id: 'well80', name: "Well 80 Brewhouse", status: 'lively', checkIns: 35,
     type: 'Brewery', vibe: 'Artesian Flow',
     leagueEvent: 'trivia', address: '514 4th Ave E', hours: '11AM - 10PM'
   },
@@ -48,10 +48,13 @@ export const TriviaScreen: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <button className="bg-primary hover:bg-yellow-400 text-black font-bold py-3 rounded-md transition-all flex items-center justify-center gap-2">
+          <button className="bg-primary hover:bg-yellow-400 text-black font-bold py-3 rounded-md transition-all flex items-center justify-center gap-2 font-league uppercase">
             <BookOpen size={16} /> REGISTER
           </button>
-          <button className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-md transition-all flex items-center justify-center gap-2">
+          <button
+            onClick={() => alert("League Team Scout activated! We'll notify you when a team at Well 80 needs a ringer. Drink some water while you wait!")}
+            className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-md transition-all flex items-center justify-center gap-2 font-league uppercase"
+          >
             <Users size={16} /> FIND A TEAM
           </button>
         </div>
@@ -82,7 +85,7 @@ export const TriviaScreen: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Power-Up Footer */}
         <div className="mt-4 pt-4 border-t border-slate-700 text-center">
           <h3 className="text-sm font-bold tracking-wide uppercase text-slate-400 mb-2">POWER-UPS ACTIVE</h3>

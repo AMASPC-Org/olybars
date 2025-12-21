@@ -24,7 +24,6 @@ import { KaraokeScreen } from './features/league/screens/KaraokeScreen';
 import { TriviaScreen } from './features/league/screens/TriviaScreen';
 import { ArcadeScreen } from './features/league/screens/ArcadeScreen';
 import { EventsScreen } from './features/league/screens/EventsScreen';
-import { LeagueHQScreen } from './features/league/screens/LeagueHQScreen';
 import { LoginModal } from './features/auth/components/LoginModal';
 import { OwnerDashboardScreen } from './features/owner/screens/OwnerDashboardScreen';
 import { ClockInModal } from './features/venues/components/ClockInModal';
