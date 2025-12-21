@@ -49,3 +49,9 @@ Routing/cache verification clause:
 
 Backend URL provenance clause:
 - Before changing backend URL behavior, agent must identify where the frontend API base URL is defined (env file, config file, build-time var) and cite the exact source.
+Self-healing customization rule:
+- If the agent detects that required OlyBars customizations are missing or disabled (release-flow workflow and/or this guardrails rule), it must:
+  1) State what is missing (name + scope: Workspace vs Global).
+  2) Propose the exact patch content (markdown) and the exact file path(s) under `.agent/` to add/update.
+  3) Ask for explicit approval before applying any changes.
+  4) After approval, provide the exact copy/paste commands to apply the patch.
