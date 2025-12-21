@@ -41,11 +41,14 @@ app.get('/health', (req, res) => {
  */
 app.get('/api/venues', async (req, res) => {
     try {
+        console.log('API Fetch: /api/venues requested');
         const venues = await fetchVenues();
+        console.log(`API Fetch success: ${venues.length} venues found`);
         res.json(venues);
-    } catch (error) {
-        console.error('Failed to fetch venues:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+    } catch (error: any) {
+        console.error('CRITICAL ERROR fetching venues:', error);
+        console.error('Stack:', error.stack);
+        res.status(500).json({ error: 'Internal Server Error', message: error.message });
     }
 });
 

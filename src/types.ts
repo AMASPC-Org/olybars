@@ -15,22 +15,30 @@ export interface Venue {
     score: number;
     lastUpdated: number;
   };
-  leagueEvent?: 'karaoke' | 'trivia' | 'arcade' | 'cornhole' | 'openmic' | 'bingo' | null;
+  leagueEvent?: 'karaoke' | 'trivia' | 'arcade' | 'events' | 'openmic' | 'bingo' | null;
   isHQ?: boolean;
   happyHour?: {
-    startTime: string; // e.g. "16:00"
-    endTime: string;   // e.g. "18:00"
+    startTime: string;
+    endTime: string;
     description: string;
   };
   alertTags?: string[];
   isFavorite?: boolean;
   description?: string;
   address?: string;
-  hours?: string;
+  hours?: string | { [key: string]: { open: string; close: string } };
   phone?: string;
   website?: string;
-  ownerId?: string;       // UID of the venue owner
-  managerIds?: string[];  // UIDs of managers authorized by the owner
+  ownerId?: string;
+  managerIds?: string[];
+  amenities?: string[];
+  deals?: {
+    title: string;
+    description: string;
+    days: string[];
+    start: string;
+    end: string;
+  }[];
 }
 
 export interface Message {

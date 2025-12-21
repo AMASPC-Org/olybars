@@ -1,9 +1,9 @@
 import admin from 'firebase-admin';
 
-// Initialize Firebase Admin with default credentials
+// Initialize Firebase Admin with explicit projectId to resolve authentication issues in Cloud Run
 if (!admin.apps.length) {
     admin.initializeApp({
-        projectId: process.env.GOOGLE_CLOUD_PROJECT || 'ama-ecosystem-prod'
+        projectId: 'ama-ecosystem-prod'
     });
 }
 

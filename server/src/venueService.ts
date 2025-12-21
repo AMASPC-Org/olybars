@@ -15,12 +15,14 @@ const sortVenuesByBuzzClock = (venues: Venue[]): Venue[] => {
         const aIsLong = aTime > 240;
         const bIsLong = bTime > 240;
 
-        if (aIsLong === bIsLong) {
-            return aTime - bTime;
-        }
-
+        // If one is "long" and the other isn't, handle priority
         if (aIsLong && !bIsLong) return 1;
-        return -1;
+        if (!aIsLong && bIsLong) return -1;
+
+        // If both are same "long-ness", sort by time
+        // If both are Infinity, they remain equal (0)
+        if (aTime === bTime) return 0;
+        return aTime < bTime ? -1 : 1;
     });
 };
 
