@@ -8,7 +8,8 @@ import {
   Settings,
   User,
   Coffee,
-  ExternalLink
+  ExternalLink,
+  Trophy
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UserProfile, UserRole } from '../../../types';
@@ -43,6 +44,22 @@ const MoreScreen: React.FC<MoreScreenProps> = ({ userProfile, setUserProfile }) 
         </h1>
         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Settings & Information</p>
       </header>
+
+      {userProfile.role !== 'guest' && (
+        <div className="mb-10 bg-slate-900 border-2 border-primary/20 p-6 rounded-3xl shadow-xl flex items-center justify-between">
+          <div>
+            <span className="text-[10px] text-primary font-black uppercase tracking-widest mb-1 block">Your Point Wallet</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black font-mono text-white">{(userProfile.stats?.seasonPoints || 0).toLocaleString()}</span>
+              <span className="text-xs font-bold text-slate-500 uppercase">Pts</span>
+            </div>
+            <p className="text-[10px] text-slate-500 font-bold mt-2 uppercase tracking-tighter">Season Rank: <span className="text-white">#42 of 1.2k</span></p>
+          </div>
+          <div className="bg-primary/10 p-3 rounded-2xl border border-primary/20">
+            <Trophy className="w-8 h-8 text-primary" strokeWidth={3} />
+          </div>
+        </div>
+      )}
 
       {/* Admin Role Switcher */}
       {isAdmin && (

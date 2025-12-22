@@ -24,6 +24,8 @@ import { KaraokeScreen } from './features/league/screens/KaraokeScreen';
 import { TriviaScreen } from './features/league/screens/TriviaScreen';
 import { ArcadeScreen } from './features/league/screens/ArcadeScreen';
 import { EventsScreen } from './features/league/screens/EventsScreen';
+import { VenuesScreen } from './features/venues/screens/VenuesScreen';
+import TheSpotsScreen from './features/venues/screens/TheSpotsScreen';
 import { LoginModal } from './features/auth/components/LoginModal';
 import { OwnerDashboardScreen } from './features/owner/screens/OwnerDashboardScreen';
 import { ClockInModal } from './features/venues/components/ClockInModal';
@@ -32,6 +34,7 @@ import { CookieBanner } from './components/ui/CookieBanner';
 
 // --- UTILS & HELPERS ---
 import { cookieService } from './services/cookieService';
+import { calculateDistance, metersToMiles } from './utils/geoUtils';
 
 // --- RELOCATED SCREENS ---
 import MapScreen from './features/venues/screens/MapScreen';
@@ -104,10 +107,29 @@ export default function OlyBarsApp() {
 
   const openInfo = (title: string, text: string) => { setInfoContent({ title, text }); };
 
-  const awardPoints = (reason: PointsReason) => {
-    const delta = reason === 'checkin' ? 10 : reason === 'photo' ? 10 : reason === 'share' ? 5 : 0;
+  const awardPoints = (reason: PointsReason, venueId?: string, hasConsent?: boolean) => {
+    let delta = 0;
+    if (reason === 'checkin' || reason === 'photo') delta = 10;
+    else if (reason === 'share') delta = 5;
+    else if (reason === 'vibe') delta = hasConsent ? 20 : 5;
+
+    if (hasConsent && reason !== 'vibe') delta += 15; // Generic bonus for consent if not vibe
+
     setUserPoints(prev => prev + delta);
-    logUserActivity(userId, { type: reason, timestamp: Date.now() });
+
+    if (reason === 'vibe' && venueId) {
+      const now = Date.now();
+      setUserProfile(prev => ({
+        ...prev,
+        lastGlobalVibeCheck: now,
+        lastVibeChecks: {
+          ...prev.lastVibeChecks,
+          [venueId]: now
+        }
+      }));
+    }
+
+    logUserActivity(userId, { type: reason, venueId, hasConsent, points: delta });
   };
 
   const handleUpdateVenue = (venueId: string, updates: Partial<Venue>) => {
@@ -116,12 +138,86 @@ export default function OlyBarsApp() {
 
   const handleClockIn = (venue: Venue) => {
     const now = Date.now();
-    const twelveHoursAgo = now - 12 * 60 * 60 * 1000;
-    const recentChecks = checkInHistory.filter(c => c.timestamp >= twelveHoursAgo);
-    if (recentChecks.length >= 2) { alert("Whoa there! Max 2 check-ins per 12 hours."); return; }
+
+    // 1. Calculate OlyBars Business Day Start (4:00 AM)
+    const today4AM = new Date();
+    today4AM.setHours(4, 0, 0, 0);
+    const businessDayStart = (now < today4AM.getTime())
+      ? today4AM.getTime() - 24 * 60 * 60 * 1000
+      : today4AM.getTime();
+
+    const nightlyChecks = checkInHistory.filter(c => c.timestamp >= businessDayStart);
+
+    // 2. Nightly Cap Check (Engagement Integrity)
+    if (nightlyChecks.length >= 2) {
+      alert("Nightly Cap reached! You've checked into 2 bars tonight. See you tomorrow at 4:00 AM!");
+      return;
+    }
+
     if (clockedInVenue === venue.id) { alert("You're already checked in here!"); return; }
+
+    // 3. Impossible Movement Check (Ops/Anti-Gaming)
+    if (nightlyChecks.length > 0) {
+      const lastCheck = nightlyChecks[nightlyChecks.length - 1];
+      const lastVenue = venues.find(v => v.id === lastCheck.venueId);
+
+      if (lastVenue?.location && venue.location) {
+        const distMeters = calculateDistance(
+          lastVenue.location.lat, lastVenue.location.lng,
+          venue.location.lat, venue.location.lng
+        );
+        const timeDiffSec = (now - lastCheck.timestamp) / 1000;
+        const speedMph = (metersToMiles(distMeters) / (timeDiffSec / 3600));
+
+        // Threshold: 100mph city movement is likely GPS spoofing or irresponsible
+        if (speedMph > 100 && timeDiffSec > 0) {
+          alert("Impossible Movement detected! Engage responsibly. Ops team has been notified.");
+          logUserActivity(userId, { type: 'bonus', venueId: venue.id, points: 0, metadata: { flagged: 'impossible_movement', speedMph } });
+          return;
+        }
+      }
+    }
+
     setSelectedVenue(venue);
     setShowClockInModal(true);
+  };
+
+  const handleVibeCheck = (venue: Venue, hasConsent?: boolean, photoUrl?: string) => {
+    const now = Date.now();
+
+    // 1. Global Cooldown (30m)
+    const lastGlobal = userProfile.lastGlobalVibeCheck;
+    if (lastGlobal && (now - lastGlobal) < 30 * 60 * 1000) {
+      const minsLeft = Math.ceil((30 * 60 * 1000 - (now - lastGlobal)) / 60000);
+      alert(`Global Cooldown! Wait ${minsLeft}m before checking another vibe.`);
+      return;
+    }
+
+    // 2. Per-Venue Cooldown (60m)
+    const lastCheck = userProfile.lastVibeChecks?.[venue.id];
+    if (lastCheck && (now - lastCheck) < 60 * 60 * 1000) {
+      const minsLeft = Math.ceil((60 * 60 * 1000 - (now - lastCheck)) / 60000);
+      alert(`${venue.name} Vibe Check locked! Available in ${minsLeft}m`);
+      return;
+    }
+
+    // 3. Update Venue Photos if photo provided
+    if (photoUrl) {
+      handleUpdateVenue(venue.id, {
+        photos: [
+          ...(venue.photos || []),
+          {
+            id: `p-${now}-${Math.random().toString(36).substr(2, 6)}`,
+            url: photoUrl,
+            allowMarketingUse: !!hasConsent,
+            timestamp: now,
+            userId: userProfile.uid
+          }
+        ]
+      });
+    }
+
+    awardPoints('vibe', venue.id, hasConsent);
   };
 
   const handleAcceptTerms = () => {
@@ -134,6 +230,13 @@ export default function OlyBarsApp() {
   useEffect(() => { localStorage.setItem('oly_checkins', JSON.stringify(checkInHistory)); }, [checkInHistory]);
   useEffect(() => { localStorage.setItem('oly_profile', JSON.stringify(userProfile)); }, [userProfile]);
   useEffect(() => { localStorage.setItem('oly_prefs', JSON.stringify(alertPrefs)); saveAlertPreferences(userId, alertPrefs); }, [alertPrefs]);
+
+  // Sync points when profile changes (e.g. after login)
+  useEffect(() => {
+    if (userProfile.stats?.seasonPoints !== undefined) {
+      setUserPoints(userProfile.stats.seasonPoints);
+    }
+  }, [userProfile.uid, userProfile.stats?.seasonPoints]);
 
   if (!hasAcceptedTerms) {
     return <OnboardingModal isOpen={true} onClose={handleAcceptTerms} />;
@@ -175,8 +278,13 @@ export default function OlyBarsApp() {
                     ) : (
                       <BuzzScreen
                         venues={venues}
+                        userProfile={userProfile}
+                        userPoints={userPoints}
                         handleClockIn={handleClockIn}
                         clockedInVenue={clockedInVenue}
+                        handleVibeCheck={handleVibeCheck}
+                        lastVibeChecks={userProfile.lastVibeChecks}
+                        lastGlobalVibeCheck={userProfile.lastGlobalVibeCheck}
                       />
                     )
                   }
@@ -187,6 +295,7 @@ export default function OlyBarsApp() {
                 <Route path="arcade" element={<ArcadeScreen venues={venues} />} />
                 <Route path="events" element={<EventsScreen venues={venues} />} />
                 <Route path="league" element={<LeagueHQScreen venues={venues} />} />
+                <Route path="bars" element={<TheSpotsScreen venues={venues} />} />
                 <Route path="map" element={<MapScreen />} />
                 <Route path="more" element={<MoreScreen userProfile={userProfile} setUserProfile={setUserProfile} />} />
                 <Route path="terms" element={<TermsScreen />} />

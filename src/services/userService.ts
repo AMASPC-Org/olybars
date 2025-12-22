@@ -13,11 +13,59 @@ export const saveAlertPreferences = async (userId: string, prefs: UserAlertPrefe
 };
 
 /**
- * Placeholder for activity logging. In Phase 4, this might move to a central API.
+ * Log user activity and award points via the production backend.
  */
-export const logUserActivity = async (userId: string, activity: any) => {
-  console.log('Logging user activity locally (WIP):', activity);
-  // Optional: Restore Firestore write if user profile is public
+export const logUserActivity = async (userId: string, activity: {
+  type: string,
+  venueId?: string,
+  points: number,
+  hasConsent?: boolean,
+  metadata?: any
+}) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/activity`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, ...activity })
+    });
+    if (!response.ok) throw new Error('Failed to log activity');
+    return await response.json();
+  } catch (e) {
+    console.error('Activity logging error:', e);
+    // Fallback to local log if offline (for MVP resilience)
+  }
+};
+
+/**
+ * Fetch aggregated activity statistics for a venue.
+ */
+export const fetchActivityStats = async (venueId: string, period: string = 'week') => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/activity?venueId=${venueId}&period=${period}`);
+    if (!response.ok) throw new Error('Failed to fetch stats');
+    return await response.json();
+  } catch (e) {
+    console.error('Stats fetch error:', e);
+    return { earned: 0, redeemed: 0, activeUsers: 0 };
+  }
+};
+
+/**
+ * Update photo approval status in the venue document.
+ */
+export const updatePhotoApproval = async (venueId: string, photoId: string, updates: { isApprovedForFeed?: boolean, isApprovedForSocial?: boolean }) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/venues/${venueId}/photos/${photoId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    if (!response.ok) throw new Error('Failed to update photo approval');
+    return await response.json();
+  } catch (e) {
+    console.error('Photo approval error:', e);
+    throw e;
+  }
 };
 
 /**
@@ -48,5 +96,23 @@ export const syncCheckIns = async (userId: string, history: CheckInRecord[]) => 
     await setDoc(doc(db, 'users', userId), { checkInHistory: history }, { merge: true });
   } catch (e) {
     console.error('Error syncing checkins:', e);
+  }
+};
+
+export const setupAdmin = async (email: string, secretKey: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/promote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, secretKey })
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Promotion failed');
+    }
+    return await response.json();
+  } catch (e) {
+    console.error('Admin setup error:', e);
+    throw e;
   }
 };

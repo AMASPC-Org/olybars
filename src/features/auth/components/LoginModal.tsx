@@ -186,6 +186,26 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <input type="password" value={ownerPassword} onChange={(e) => setOwnerPassword(e.target.value)} placeholder="Password" className={inputClasses} />
               </div>
               <button onClick={handleOwnerLogin} className="w-full bg-slate-800 text-white font-bold py-3 rounded mt-4 uppercase">Login</button>
+
+              <div className="pt-8 border-t border-slate-700">
+                <button
+                  onClick={async () => {
+                    const secret = prompt("Enter Master Setup Key:");
+                    if (secret) {
+                      try {
+                        const { setupAdmin } = await import('../../../services/userService');
+                        const res = await setupAdmin(ownerEmail || email, secret);
+                        alert(res.message);
+                      } catch (e: any) {
+                        alert(e.message);
+                      }
+                    }
+                  }}
+                  className="text-[9px] text-slate-500 hover:text-primary uppercase font-black tracking-widest transition-colors w-full text-center"
+                >
+                  [ Initialize Master Admin ]
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -180,3 +180,112 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
 
     return { success: true, message: `Checked in at ${venueData.name}!` };
 };
+
+/**
+ * Log user activity and update user points in Firestore.
+ */
+export const logUserActivity = async (data: {
+    userId: string,
+    type: string,
+    venueId?: string,
+    points: number,
+    hasConsent?: boolean,
+    metadata?: any
+}) => {
+    const timestamp = Date.now();
+    const logItem = { ...data, timestamp };
+
+    // 1. Save to activity_logs collection
+    await db.collection('activity_logs').add(logItem);
+
+    // 2. Update user points in users collection
+    const userRef = db.collection('users').doc(data.userId);
+    const userDoc = await userRef.get();
+
+    if (userDoc.exists) {
+        const userData = userDoc.data();
+        await userRef.update({
+            'stats.seasonPoints': (userData?.stats?.seasonPoints || 0) + data.points,
+            'stats.lifetimeCheckins': data.type === 'checkin'
+                ? (userData?.stats?.lifetimeCheckins || 0) + 1
+                : (userData?.stats?.lifetimeCheckins || 0)
+        });
+    } else {
+        await userRef.set({
+            uid: data.userId,
+            stats: {
+                seasonPoints: data.points,
+                lifetimeCheckins: data.type === 'checkin' ? 1 : 0,
+                currentStreak: 0
+            },
+            role: 'user'
+        });
+    }
+
+    return { success: true, pointsAwarded: data.points };
+};
+
+/**
+ * Aggregate activity statistics for a venue over a specific period.
+ */
+export const getActivityStats = async (venueId: string, period: string) => {
+    const now = Date.now();
+    let startTime = now - (7 * 24 * 60 * 60 * 1000); // Default 1 week
+
+    if (period === 'day') startTime = now - (24 * 60 * 60 * 1000);
+    else if (period === 'month') startTime = now - (30 * 24 * 60 * 60 * 1000);
+    else if (period === 'year') startTime = now - (365 * 24 * 60 * 60 * 1000);
+
+    const snapshot = await db.collection('activity_logs')
+        .where('venueId', '==', venueId)
+        .where('timestamp', '>=', startTime)
+        .get();
+
+    let earned = 0;
+    let redeemed = 0;
+    const users = new Set();
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.type === 'redeem') {
+            redeemed += Math.abs(data.points);
+        } else {
+            earned += data.points;
+        }
+        users.add(data.userId);
+    });
+
+    return {
+        earned,
+        redeemed,
+        activeUsers: users.size,
+        period
+    };
+};
+
+/**
+ * Update the approval status of a photo within a venue.
+ */
+export const updatePhotoStatus = async (
+    venueId: string,
+    photoId: string,
+    updates: { isApprovedForFeed?: boolean, isApprovedForSocial?: boolean }
+) => {
+    const venueRef = db.collection('venues').doc(venueId);
+    const venueDoc = await venueRef.get();
+
+    if (!venueDoc.exists) throw new Error('Venue not found');
+
+    const venueData = venueDoc.data() as Venue;
+    const photos = venueData.photos || [];
+
+    const updatedPhotos = photos.map(photo => {
+        if (photo.id === photoId) {
+            return { ...photo, ...updates };
+        }
+        return photo;
+    });
+
+    await venueRef.update({ photos: updatedPhotos });
+    return { success: true };
+};

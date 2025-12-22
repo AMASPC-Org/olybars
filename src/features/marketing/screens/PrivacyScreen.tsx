@@ -35,20 +35,24 @@ const PrivacyScreen: React.FC = () => {
                         <li>Location data (verified locally only at the moment of "Clock In")</li>
                         <li>Account information (Handle and points are stored locally for guests; synced to Cloud only upon profile creation)</li>
                         <li>Activity data (Vibe reports and check-in frequency for the Pulse algorithm)</li>
+                        <li>Photos (Optional "Vibe Photos" provided with or without marketing consent)</li>
                     </ul>
                 </section>
 
                 <section className="space-y-4">
-                    <h2 className="text-xl font-black uppercase tracking-wide font-league text-primary">2. How We Use Location</h2>
+                    <h2 className="text-xl font-black uppercase tracking-wide font-league text-primary">2. GPS, Geofencing & Photo Retention</h2>
                     <p className="text-slate-300 leading-relaxed text-sm">
-                        Your location is used exclusively to verify your proximity to a venue during a "Clock In" event. We do not track your background location or sell your movement data. Guest check-ins are associated with a temporary on-device ID.
+                        OlyBars utilizes real-time GPS verification to ensure League integrity. To "Clock In" or perform a "Vibe Check," users must be physically present within a 100-foot radius of the participating venue. This location data is used solely for point verification and is not stored or shared for advertising purposes.
+                    </p>
+                    <p className="text-slate-300 leading-relaxed text-sm">
+                        By submitting a "Vibe Check" with the "Marketing Consent" toggle active, users grant OlyBars a non-exclusive right to display the photo on the specific venue's listing page. In exchange, users receive a Premium Point Reward (+20 pts). Standard "Vibe Checks" (+5 pts) are ephemeral and are not stored for public gallery use.
                     </p>
                 </section>
 
                 <section className="space-y-4">
                     <h2 className="text-xl font-black uppercase tracking-wide font-league text-primary">3. Cookies and Storage</h2>
                     <p className="text-slate-300 leading-relaxed text-sm">
-                        We use essential cookies and local storage to keep you logged in and save your notification preferences. You can manage these via your browser settings, though some OlyBars features may be disabled as a result.
+                        We use essential cookies and <strong>local storage</strong> to keep you logged in, save your notification preferences, and persist "Anti-Gaming" cooldown timers across sessions. These storage mechanisms are critical for maintaining the integrity of the Olympia Bar League leaderboard.
                     </p>
                 </section>
 

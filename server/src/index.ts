@@ -122,6 +122,66 @@ app.post('/api/chat', async (req, res) => {
 });
 
 /**
+ * @route POST /api/activity
+ * @desc Log user activity and award points
+ */
+app.post('/api/activity', async (req, res) => {
+    const { userId, type, venueId, points, hasConsent, metadata } = req.body;
+
+    if (!userId || !type || points === undefined) {
+        return res.status(400).json({ error: 'Missing required activity data' });
+    }
+
+    try {
+        const { logUserActivity } = await import('./venueService');
+        const result = await logUserActivity({ userId, type, venueId, points, hasConsent, metadata });
+        res.json(result);
+    } catch (error: any) {
+        log('ERROR', 'Failed to log activity', { error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route GET /api/activity
+ * @desc Fetch aggregated activity stats for a venue
+ */
+app.get('/api/activity', async (req, res) => {
+    const { venueId, period } = req.query;
+
+    if (!venueId) {
+        return res.status(400).json({ error: 'venueId is required' });
+    }
+
+    try {
+        const { getActivityStats } = await import('./venueService');
+        const stats = await getActivityStats(venueId as string, period as string || 'week');
+        res.json(stats);
+    } catch (error: any) {
+        log('ERROR', 'Failed to fetch activity stats', { error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route PATCH /api/venues/:id/photos/:photoId
+ * @desc Update photo approval status
+ */
+app.patch('/api/venues/:id/photos/:photoId', async (req, res) => {
+    const { id: venueId, photoId } = req.params;
+    const { isApprovedForFeed, isApprovedForSocial } = req.body;
+
+    try {
+        const { updatePhotoStatus } = await import('./venueService');
+        const result = await updatePhotoStatus(venueId, photoId, { isApprovedForFeed, isApprovedForSocial });
+        res.json(result);
+    } catch (error: any) {
+        log('ERROR', 'Failed to update photo status', { error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
  * @route POST /api/client-errors
  * @desc Receive and log client-side errors
  */
@@ -132,6 +192,36 @@ app.post('/api/client-errors', (req, res) => {
         source: 'client-collector'
     });
     res.status(204).send();
+});
+
+/**
+ * @route POST /api/admin/promote
+ * @desc Promote a user to Admin role (Dev/MVP access)
+ */
+app.post('/api/admin/promote', async (req, res) => {
+    const { email, secretKey } = req.body;
+
+    // Master key for initial setup (in real prod this would be in Secret Manager)
+    if (secretKey !== 'OLY_MASTER_2025') {
+        return res.status(403).json({ error: 'Invalid master key' });
+    }
+
+    try {
+        const { db, auth } = await import('./firebaseAdmin');
+        const userRecord = await auth.getUserByEmail(email);
+        const uid = userRecord.uid;
+
+        await db.collection('users').doc(uid).set({
+            role: 'admin',
+            stats: { seasonPoints: 99999, lifetimeCheckins: 0, currentStreak: 0 }
+        }, { merge: true });
+
+        log('INFO', 'User promoted to Admin', { uid, email });
+        res.json({ success: true, message: `User ${email} is now an ADMIN.` });
+    } catch (error: any) {
+        log('ERROR', 'Promotion failed', { error: error.message });
+        res.status(400).json({ error: error.message });
+    }
 });
 
 app.listen(PORT, () => {

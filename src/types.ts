@@ -39,6 +39,18 @@ export interface Venue {
     start: string;
     end: string;
   }[];
+  isFeatured?: boolean;
+  featureWeight?: number;
+  isVisible?: boolean;
+  photos?: {
+    url: string;
+    allowMarketingUse: boolean;
+    isApprovedForFeed?: boolean;
+    isApprovedForSocial?: boolean;
+    timestamp: number;
+    userId: string;
+    id: string; // Add id for management
+  }[];
 }
 
 export interface Message {
@@ -71,7 +83,16 @@ export interface Signal {
   timestamp: number;
 }
 
-export type PointsReason = 'checkin' | 'photo' | 'share';
+export type PointsReason = 'checkin' | 'photo' | 'share' | 'vibe' | 'redeem' | 'bonus';
+
+export interface ActivityLogItem {
+  userId: string;
+  type: PointsReason;
+  venueId?: string;
+  points: number;
+  timestamp: number;
+  metadata?: any;
+}
 
 export type UserRole = 'guest' | 'user' | 'manager' | 'owner' | 'admin';
 
@@ -83,6 +104,8 @@ export interface UserProfile {
   favoriteDrink?: string;
   homeBase?: string;
   role: UserRole;
+  lastVibeChecks?: Record<string, number>;
+  lastGlobalVibeCheck?: number;
   stats?: {
     seasonPoints: number;
     lifetimeCheckins: number;

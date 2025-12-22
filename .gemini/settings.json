@@ -2,5 +2,8 @@
   "googleCloud": {
     "location": "us-west1"
   },
-  "reviewPolicy": "Agent Decides"
+  "reviewPolicy": "Agent Decides",
+  "validationGates": [
+    ".agent/rules/full-stack-integrity.md"
+  ]
 }

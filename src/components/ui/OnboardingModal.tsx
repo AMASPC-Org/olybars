@@ -28,12 +28,18 @@ const renderOnboardingContent = (step: number) => {
         case 3: return { title: "The League", text: "Clock In to venues and take Vibe Photos to earn points. Compete for the season champion trophy." };
         case 4: return { title: "Ask Artie", text: "Artie is your personal AI concierge. Ask for directions, food recommendations, or today's hottest deal." };
         case 5: return {
-            title: "Cookies & Privacy", text: (
-                <span>
-                    We use cookies to save your progress locally. Creating a profile syncs your points to the Oly Cloud. By continuing, you agree to our{' '}
-                    <a href="/terms" target="_blank" className="text-primary hover:underline">Terms</a> &{' '}
-                    <a href="/privacy" target="_blank" className="text-primary hover:underline">Privacy</a>.
-                </span>
+            title: "GPS & Photo Rights", text: (
+                <div className="space-y-3 text-left">
+                    <p className="text-[10px] leading-relaxed">
+                        <strong className="text-primary uppercase tracking-tighter">GPS:</strong> OlyBars uses real-time GPS verification (100ft radius) to ensure League integrity. Location data is used strictly for verification and never shared for ads.
+                    </p>
+                    <p className="text-[10px] leading-relaxed">
+                        <strong className="text-primary uppercase tracking-tighter">Photos:</strong> Marketing Consent grants OlyBars a non-exclusive right to display photos on venue listings in exchange for Premium Points (+20).
+                    </p>
+                    <p className="text-[10px] pt-2 border-t border-slate-700">
+                        By continuing, you agree to our <a href="/terms" target="_blank" className="text-primary hover:underline">Terms</a> & <a href="/privacy" target="_blank" className="text-primary hover:underline">Privacy</a>.
+                    </p>
+                </div>
             )
         };
         default: return { title: "Welcome", text: "Let's get started." };

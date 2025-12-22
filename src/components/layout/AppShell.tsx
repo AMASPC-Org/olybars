@@ -7,6 +7,7 @@ import {
   Mic,
   Brain,
   Music,
+  List,
   Calendar,
   Crown,
   Trophy,
@@ -15,6 +16,7 @@ import {
   MoreHorizontal,
   User,
   LogIn,
+  Search,
   Star,
   Bell,
   Lock,
@@ -111,12 +113,13 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   const navItems = [
     { id: 'pulse', label: 'PULSE', icon: Flame, path: '/' },
-    { id: 'league', label: 'LEAGUE HQ', icon: Crown, path: '/league' },
+    { id: 'bars', label: 'BARS', icon: Search, path: '/bars' },
     { id: 'map', label: 'MAP', icon: MapIcon, path: '/map' },
+    { id: 'league', label: 'LEAGUE HQ', icon: Crown, path: '/league' },
     { id: 'events', label: 'EVENTS', icon: Calendar, path: '/events' },
     { id: 'trivia', label: 'TRIVIA', icon: Brain, path: '/trivia' },
     { id: 'karaoke', label: 'KARAOKE', icon: Mic, path: '/karaoke' },
-    { id: 'more', label: 'MORE', icon: MoreHorizontal, path: '/more' },
+    { id: 'arcade', label: 'ARCADE', icon: Music, path: '/arcade' },
   ];
 
   const handleMenuNavigation = (path: string) => {
@@ -187,17 +190,23 @@ export const AppShell: React.FC<AppShellProps> = ({
                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border border-black" />
                 <Trophy className="w-5 h-5 text-primary" strokeWidth={3} />
               </div>
-              <p className="font-mono font-black text-xl text-white leading-none">
-                {userPoints.toLocaleString()}
-              </p>
+              <div className="flex flex-col">
+                <span className="text-[8px] text-primary font-black uppercase tracking-widest leading-none mb-1">League Points</span>
+                <p key={userPoints} className="font-mono font-black text-2xl text-white leading-none animate-in zoom-in-95 duration-300">
+                  {userPoints.toLocaleString()}
+                </p>
+              </div>
             </div>
             <div className="text-right">
-              <p className="text-[9px] text-slate-500 font-bold uppercase">
+              <p className="text-[9px] text-slate-500 font-bold uppercase mx-1">
                 Season ends Dec 31
               </p>
-              <p className="text-[10px] text-black font-black bg-primary border-2 border-white px-1 mt-0.5 inline-block transform skew-x-12">
-                RANK: #42
-              </p>
+              <div className="flex items-center justify-end gap-1 mt-0.5">
+                <span className="text-[10px] text-black font-black bg-primary border-2 border-white px-2 py-0.5 transform -skew-x-12 inline-block">
+                  RANK: #42
+                </span>
+                <Star className="w-4 h-4 text-primary fill-primary" />
+              </div>
             </div>
           </div>
         ) : (
@@ -260,50 +269,22 @@ export const AppShell: React.FC<AppShellProps> = ({
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-6">
-              {/* 2. PRIMARY NAV LINKS */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleMenuNavigation('/')}
-                  className="bg-surface border border-white/10 p-4 rounded-lg flex flex-col items-center gap-2 group hover:border-primary transition-all"
-                >
-                  <Flame className="w-5 h-5 text-primary" strokeWidth={3} />
-                  <span className="text-white font-black text-[10px] tracking-widest uppercase font-league">PULSE</span>
-                </button>
-                <button
-                  onClick={() => handleMenuNavigation('/map')}
-                  className="bg-surface border border-white/10 p-4 rounded-lg flex flex-col items-center gap-2 group hover:border-primary transition-all"
-                >
-                  <MapIcon className="w-5 h-5 text-primary" strokeWidth={3} />
-                  <span className="text-white font-black text-[10px] tracking-widest uppercase font-league">VENUE MAP</span>
-                </button>
-              </div>
-
-              {/* 3. SETTINGS & MORE LIST */}
-              <div className="space-y-2">
-                <h3 className="text-primary font-black flex items-center gap-2 uppercase tracking-widest text-[10px] font-league px-1 mb-3">
-                  <SettingsIcon className="w-3.5 h-3.5" strokeWidth={3} /> SETTINGS & MORE
-                </h3>
-                <div className="grid grid-cols-1 gap-1">
-                  {[
-                    { label: 'LEAGUE HQ', path: '/league', icon: Crown },
-                    { label: 'EVENTS', path: '/events', icon: Calendar },
-                    { label: 'TRIVIA', path: '/trivia', icon: Brain },
-                    { label: 'KARAOKE', path: '/karaoke', icon: Mic },
-                    { label: 'ARCADE', path: '/arcade', icon: Music },
-                  ].map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => handleMenuNavigation(item.path)}
-                      className="w-full bg-surface/50 hover:bg-surface border border-white/5 p-3 rounded-md flex items-center justify-between group transition-all"
-                    >
-                      <div className="flex items-center gap-3">
-                        <item.icon className="w-4 h-4 text-slate-400 group-hover:text-primary" strokeWidth={2.5} />
-                        <span className="text-white font-bold text-xs font-league tracking-wide">{item.label}</span>
-                      </div>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-700 group-hover:text-primary" />
-                    </button>
-                  ))}
-                </div>
+              {/* PRIMARY NAV GRID (4x2 Symmetry) */}
+              <div className="grid grid-cols-2 gap-3">
+                {navItems.map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={() => handleMenuNavigation(item.path)}
+                    className="bg-slate-900 border border-white/5 p-4 rounded-xl flex flex-col items-center gap-2 group hover:border-primary hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+                  >
+                    <div className="bg-white/5 p-2 rounded-lg group-hover:bg-primary/10 transition-colors">
+                      <item.icon className="w-5 h-5 text-primary" strokeWidth={3} />
+                    </div>
+                    <span className="text-white font-black text-[10px] tracking-widest uppercase font-league text-center">
+                      {item.label}
+                    </span>
+                  </button>
+                ))}
               </div>
 
               {/* 4. FOLLOWING / FAVORITES */}

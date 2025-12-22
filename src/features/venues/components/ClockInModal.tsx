@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Camera, Share2, MapPin, Info, Loader2 } from 'lucide-react';
+import { X, Camera, Share2, MapPin, Info, Loader2, Sparkles } from 'lucide-react';
 import { Venue, CheckInRecord, PointsReason } from '../../../types';
 import { performCheckIn } from '../../../services/userService';
 import { useGeolocation } from '../../../hooks/useGeolocation';
@@ -9,7 +9,7 @@ interface ClockInModalProps {
     isOpen: boolean;
     onClose: () => void;
     selectedVenue: Venue | null;
-    awardPoints: (reason: PointsReason) => void;
+    awardPoints: (reason: PointsReason, venueId?: string, hasConsent?: boolean) => void;
     setCheckInHistory: React.Dispatch<React.SetStateAction<CheckInRecord[]>>;
     setClockedInVenue: React.Dispatch<React.SetStateAction<string | null>>;
     setVenues: React.Dispatch<React.SetStateAction<Venue[]>>;
@@ -32,6 +32,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+    const [allowMarketingUse, setAllowMarketingUse] = useState(false);
     const { coords, loading: geoLoading } = useGeolocation();
 
     if (!isOpen || !selectedVenue) return null;
@@ -100,7 +101,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
                     await performCheckIn(selectedVenue.id, userId, latitude, longitude);
 
-                    awardPoints('checkin');
+                    awardPoints('checkin', selectedVenue.id, allowMarketingUse);
                     setCheckInHistory(prev => [...prev, { venueId: selectedVenue.id, timestamp: Date.now() }]);
                     setClockedInVenue(selectedVenue.id);
                     setVenues(prev => prev.map(v => v.id === selectedVenue.id ? { ...v, checkIns: v.checkIns + 1 } : v));
@@ -183,9 +184,54 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                         )}
                     </div>
 
-                    <div className="bg-slate-800/50 p-3 text-xs text-slate-400 border border-slate-700 rounded-md flex gap-2 items-start leading-tight">
-                        <Info className="w-4 h-4 shrink-0 text-slate-500 mt-0.5" />
-                        <p className="font-medium">Clocking in earns League points. <span className="text-slate-300 block font-bold uppercase">Max 2 check-ins per 12 hours. No purchase required.</span></p>
+                    {/* Marketing Consent & Total Rewards */}
+                    <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className={`p-1.5 rounded-md ${allowMarketingUse ? 'bg-primary/20 text-primary' : 'bg-slate-800 text-slate-500'}`}>
+                                    <Sparkles size={14} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-white uppercase tracking-wider font-league leading-none mb-1">Marketing Consent</p>
+                                    <p className="text-[8px] text-slate-500 font-bold uppercase italic">Earn +15 Bonus Points!</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setAllowMarketingUse(!allowMarketingUse)}
+                                className={`w-9 h-5 rounded-full p-1 transition-all ${allowMarketingUse ? 'bg-primary' : 'bg-slate-700'}`}
+                            >
+                                <div className={`w-3 h-3 rounded-full bg-white transition-all ${allowMarketingUse ? 'translate-x-4' : 'translate-x-0'}`} />
+                            </button>
+                        </div>
+
+                        <div className="bg-slate-900/60 rounded-lg p-2.5 border border-slate-800/50">
+                            <div className="flex items-start gap-2">
+                                <Info size={12} className="text-primary shrink-0 mt-0.5" />
+                                <div className="space-y-1">
+                                    <p className="text-[9px] text-slate-300 font-bold uppercase tracking-tight">Usage Transparency:</p>
+                                    <p className="text-[8px] text-slate-500 leading-normal font-medium italic">
+                                        By submitting a "Vibe Check" with the "Marketing Consent" toggle active, users grant OlyBars a non-exclusive right to display the photo on the specific venue's listing page. In exchange, users receive a Premium Point Reward (+20 pts). Standard "Vibe Checks" (+5 pts) are ephemeral and are not stored for public gallery use.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-800 flex justify-between items-center">
+                            <span className="text-[10px] font-black text-slate-500 uppercase font-league">Total Reward Preview</span>
+                            <span className="text-sm font-black text-primary uppercase font-league">
+                                +{10 + (allowMarketingUse ? 15 : 0)} POINTS
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-800/50 p-3 text-[10px] text-slate-400 border border-slate-700 rounded-md flex gap-2 items-start leading-tight">
+                        <Info className="w-4 h-4 shrink-0 text-primary mt-0.5" />
+                        <div className="space-y-1">
+                            <p className="font-black uppercase tracking-widest text-white">GPS Verification Disclosure</p>
+                            <p className="font-medium italic text-[9px]">
+                                OlyBars utilizes real-time GPS verification to ensure League integrity. To "Clock In" or perform a "Vibe Check," users must be physically present within a 100-foot radius of the participating venue. This location data is used solely for point verification and is not stored or shared for advertising purposes.
+                            </p>
+                        </div>
                     </div>
 
                     {errorMessage && (

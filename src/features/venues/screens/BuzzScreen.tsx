@@ -9,9 +9,10 @@ import {
   ChevronRight,
   Crown,
 } from 'lucide-react';
-import { Venue, VenueStatus } from '../../../types';
+import { Venue, VenueStatus, UserProfile } from '../../../types';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
+import { isVenueOpen, getVenueStatus } from '../../../utils/venueUtils';
 
 const PulseMeter = ({ status }: { status: VenueStatus }) => {
   if (status === 'chill') {
@@ -48,9 +49,15 @@ const STATUS_ORDER: Record<VenueStatus, number> = {
 // Main Screen
 export const BuzzScreen: React.FC<{
   venues: Venue[];
+  userProfile: UserProfile;
+  userPoints: number;
   handleClockIn?: (v: Venue) => void;
   clockedInVenue?: string | null;
-}> = ({ venues, handleClockIn, clockedInVenue }) => {
+  handleVibeCheck?: (v: Venue, hasConsent?: boolean, photoUrl?: string) => void;
+  lastVibeChecks?: Record<string, number>;
+  lastGlobalVibeCheck?: number;
+}> = ({ venues, userProfile, userPoints, handleClockIn, clockedInVenue, handleVibeCheck, lastVibeChecks, lastGlobalVibeCheck }) => {
+  const isGuest = userProfile.role === 'guest';
   // Default: show ALL, but sort by Buzzing → Lively → Chill
   const [filterKind, setFilterKind] = useState<FilterKind>('all');
   const [statusFilter, setStatusFilter] = useState<VenueStatus | 'all'>('all');
@@ -68,18 +75,43 @@ export const BuzzScreen: React.FC<{
     if (filterKind === 'league') {
       return !!v.leagueEvent || !!v.isHQ;
     }
+
+    // Global Visibility Check
+    if (v.isVisible === false) return false;
+
+    // Home Pulse Specific: Hide closed bars unless featured
+    const open = isVenueOpen(v);
+    if (!open && !v.isFeatured) return false;
+
     // 'all' and 'near' -> no filter (just change sorting)
     return true;
   };
 
   const venuesWithDistance = venues.map(v => ({
     ...v,
+    isOpen: isVenueOpen(v),
+    hourStatus: getVenueStatus(v),
     distance: coords && v.location ? metersToMiles(calculateDistance(coords.latitude, coords.longitude, v.location.lat, v.location.lng)) : null
   }));
 
   const filteredVenues = [...venuesWithDistance]
     .filter(applyFilter)
     .sort((a, b) => {
+      // 1. Featured Weighting (Primary Sort for Pulse)
+      if (a.isFeatured && !b.isFeatured) return -1;
+      if (!a.isFeatured && b.isFeatured) return 1;
+      if (a.isFeatured && b.isFeatured) {
+        if ((a.featureWeight || 0) !== (b.featureWeight || 0)) {
+          return (b.featureWeight || 0) - (a.featureWeight || 0);
+        }
+      }
+
+      // 2. Open Status (Open > Last Call > Closed)
+      if (a.hourStatus === 'open' && b.hourStatus !== 'open') return -1;
+      if (a.hourStatus !== 'open' && b.hourStatus === 'open') return 1;
+      if (a.hourStatus === 'last_call' && b.hourStatus === 'closed') return -1;
+      if (a.hourStatus === 'closed' && b.hourStatus === 'last_call') return 1;
+
       if (filterKind === 'near' && a.distance !== null && b.distance !== null) {
         return a.distance - b.distance;
       }
@@ -134,6 +166,24 @@ export const BuzzScreen: React.FC<{
               {filteredVenues.length} Spots Active
             </span>
           </div>
+
+          {!isGuest && (
+            <div className="bg-slate-900/50 border-2 border-primary/20 p-4 rounded-xl flex items-center justify-between shadow-inner">
+              <div className="flex items-center gap-3">
+                <div className="bg-primary p-2 rounded-lg">
+                  <Trophy className="w-5 h-5 text-black" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Your Pulse Progress</h4>
+                  <p className="text-xl font-black text-white font-mono">{userPoints.toLocaleString()} <span className="text-[10px] text-primary font-bold ml-1">PTS</span></p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] font-bold text-primary mb-1 uppercase">League Rank</div>
+                <div className="bg-black border border-white/20 px-2 py-0.5 rounded text-white font-black text-xs">#42</div>
+              </div>
+            </div>
+          )}
 
           {/* Filter controls: Status dropdown + Deals + League */}
           <div className="flex justify-center items-center gap-2 pb-2 flex-wrap">
@@ -338,6 +388,11 @@ export const BuzzScreen: React.FC<{
 
                 <div className="flex flex-col items-end gap-1">
                   <PulseMeter status={venue.status} />
+                  {venue.hourStatus === 'last_call' && (
+                    <span className="text-[10px] text-white font-black bg-red-600 px-2 py-0.5 rounded transform -skew-x-12 animate-pulse mt-1">
+                      LAST CALL 🕒
+                    </span>
+                  )}
                   <span className="text-[10px] text-slate-500 font-bold mt-1">
                     {venue.checkIns} Checked In
                   </span>
@@ -363,25 +418,69 @@ export const BuzzScreen: React.FC<{
                 </div>
               )}
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClockIn(venue);
-                }}
-                disabled={clockedInVenue === venue.id}
-                className={`w-full py-3 rounded-lg font-bold text-sm uppercase tracking-wide flex items-center justify-center gap-2 transition-all shadow-md ${clockedInVenue === venue.id
-                  ? 'bg-slate-700 text-slate-300 cursor-not-allowed'
-                  : 'bg-primary text-black hover:bg-primary/90'
-                  }`}
-              >
-                {clockedInVenue === venue.id ? (
-                  'Checked In'
-                ) : (
-                  <>
-                    <MapPin className="w-4 h-4" /> Clock In (+10 Pts)
-                  </>
-                )}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (handleVibeCheck) handleVibeCheck(venue);
+                  }}
+                  className={`flex-1 py-3 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all border-2 shadow-sm ${(() => {
+                    const now = Date.now();
+                    const lastCheck = lastVibeChecks?.[venue.id];
+                    const isVenueCooldown = lastCheck && (now - lastCheck) < 60 * 60 * 1000;
+
+                    const lastGlobal = lastGlobalVibeCheck;
+                    const isGlobalCooldown = lastGlobal && (now - lastGlobal) < 30 * 60 * 1000;
+
+                    return (isVenueCooldown || isGlobalCooldown)
+                      ? 'bg-slate-800/50 border-slate-700 text-slate-500 cursor-not-allowed'
+                      : 'bg-primary/5 border-primary/30 text-primary hover:bg-primary/10';
+                  })()}`}
+                >
+                  {(() => {
+                    const now = Date.now();
+                    const lastCheck = lastVibeChecks?.[venue.id];
+                    const isVenueCooldown = lastCheck && (now - lastCheck) < 60 * 60 * 1000;
+
+                    const lastGlobal = lastGlobalVibeCheck;
+                    const isGlobalCooldown = lastGlobal && (now - lastGlobal) < 30 * 60 * 1000;
+
+                    if (isVenueCooldown) {
+                      const minsLeft = Math.ceil((60 * 60 * 1000 - (now - lastCheck)) / 60000);
+                      return `Locked (${minsLeft}m)`;
+                    }
+                    if (isGlobalCooldown) {
+                      const minsLeft = Math.ceil((30 * 60 * 1000 - (now - lastGlobal)) / 60000);
+                      return `Global (${minsLeft}m)`;
+                    }
+                    return (
+                      <>
+                        <Users className="w-3.5 h-3.5" /> Vibe Check (+5)
+                      </>
+                    );
+                  })()}
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClockIn(venue);
+                  }}
+                  disabled={clockedInVenue === venue.id}
+                  className={`flex-1 py-3 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md ${clockedInVenue === venue.id
+                    ? 'bg-slate-700 text-slate-300 cursor-not-allowed'
+                    : 'bg-primary text-black hover:bg-primary/90 shadow-primary/20'
+                    }`}
+                >
+                  {clockedInVenue === venue.id ? (
+                    'Joined'
+                  ) : (
+                    <>
+                      <MapPin className="w-3.5 h-3.5" /> Clock In
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           ))
         )}
