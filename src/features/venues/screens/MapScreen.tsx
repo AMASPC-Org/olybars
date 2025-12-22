@@ -11,20 +11,29 @@ interface ContextType {
   venues: Venue[];
 }
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyCXElh6HgU4Rl5fvhjMAXyn19ji3azWTJg"; // Fallback to Firebase key
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 const MapScreen = () => {
   const { venues } = useOutletContext<ContextType>();
   const { coords, error: geoError, loading: geoLoading } = useGeolocation();
   const mapRef = useRef<HTMLDivElement>(null);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
 
   useEffect(() => {
     if (!mapRef.current) return;
 
+    const timeout = setTimeout(() => {
+      if (status === 'loading') setStatus('error');
+    }, 10000); // 10s timeout
+
     const loadMaps = async () => {
-      if (window.google?.maps) {
+      if (!GOOGLE_MAPS_API_KEY) {
+        setStatus('error');
+        return;
+      }
+      if ((window as any).google?.maps) {
         initMap();
         return;
       }
@@ -33,27 +42,40 @@ const MapScreen = () => {
       script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=visualization`;
       script.async = true;
       script.defer = true;
-      script.onload = initMap;
+      script.onload = () => {
+        clearTimeout(timeout);
+        initMap();
+      };
+      script.onerror = () => {
+        clearTimeout(timeout);
+        setStatus('error');
+      };
       document.head.appendChild(script);
     };
 
     const initMap = () => {
-      const defaultCenter = { lat: 47.0425, lng: -122.9007 }; // Olympia, WA
-      const initialMap = new (window as any).google.maps.Map(mapRef.current!, {
-        center: coords ? { lat: coords.latitude, lng: coords.longitude } : defaultCenter,
-        zoom: 14,
-        styles: darkMapStyle,
-        disableDefaultUI: true,
-        zoomControl: true,
-      });
-      setMap(initialMap);
+      try {
+        const defaultCenter = { lat: 47.0425, lng: -122.9007 }; // Olympia, WA
+        const initialMap = new (window as any).google.maps.Map(mapRef.current!, {
+          center: coords ? { lat: coords.latitude, lng: coords.longitude } : defaultCenter,
+          zoom: 14,
+          styles: darkMapStyle,
+          disableDefaultUI: true,
+          zoomControl: true,
+        });
+        setMap(initialMap);
+        setStatus('ready');
+      } catch (e) {
+        setStatus('error');
+      }
     };
 
     loadMaps();
+    return () => clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
-    if (!map || !venues) return;
+    if (!map || !venues || status !== 'ready') return;
 
     // Clear existing markers (In a real app, track them in a ref)
     venues.forEach(venue => {
@@ -93,7 +115,7 @@ const MapScreen = () => {
         },
       });
     }
-  }, [map, venues, coords]);
+  }, [map, venues, coords, status]);
 
   const handleGetDirections = (venue: Venue) => {
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${venue.location.lat},${venue.location.lng}`, '_blank');
@@ -101,12 +123,52 @@ const MapScreen = () => {
 
   return (
     <div className="h-full relative bg-slate-900">
-      <div ref={mapRef} className="w-full h-full" />
+      <div ref={mapRef} className={`w-full h-full ${status !== 'ready' ? 'hidden' : ''}`} />
 
-      {geoLoading && !coords && (
+      {status === 'loading' && !coords && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm z-20">
           <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
           <p className="text-white font-league text-xl uppercase tracking-widest">Pinpointing Vibe Coordinates...</p>
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 p-6 text-center z-20">
+          {GOOGLE_MAPS_API_KEY ? (
+            <>
+              <div className="w-full h-64 bg-slate-800 rounded-2xl mb-6 overflow-hidden border border-white/5 relative">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  style={{ border: 0 }}
+                  src={`https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_API_KEY}&q=Olympia,WA`}
+                  allowFullScreen
+                />
+                <div className="absolute inset-0 bg-slate-900/40 pointer-events-none flex items-center justify-center">
+                  <p className="text-primary font-league uppercase tracking-widest text-lg bg-black/60 px-4 py-2 rounded-lg">Interactive Map Restricted</p>
+                </div>
+              </div>
+              <h3 className="text-2xl font-black text-white font-league uppercase mb-2">Maps Key restricted</h3>
+              <p className="text-slate-400 mb-6 max-w-xs mx-auto">The interactive vibe map requires a dedicated Google Maps API key with JS API enabled.</p>
+            </>
+          ) : (
+            <>
+              <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mb-6">
+                <MapPin className="w-10 h-10 text-red-500" />
+              </div>
+              <h3 className="text-2xl font-black text-white font-league uppercase mb-2">Configuration Required</h3>
+              <p className="text-slate-400 mb-6 max-w-xs mx-auto">
+                Google Maps API key is missing. Please set <code className="text-primary">VITE_GOOGLE_MAPS_API_KEY</code> in your environment.
+              </p>
+            </>
+          )}
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-primary text-black font-black px-8 py-3 rounded-xl uppercase font-league tracking-widest hover:scale-105 transition-transform"
+          >
+            Retry Connection
+          </button>
         </div>
       )}
 
@@ -118,7 +180,7 @@ const MapScreen = () => {
               <p className="text-sm text-slate-400 font-body">{selectedVenue.vibe}</p>
             </div>
             <button onClick={() => setSelectedVenue(null)} className="text-slate-500 hover:text-white">
-              <Loader2 className="w-5 h-5" />
+              <Loader2 className="w-5 h-5 rotate-45" />
             </button>
           </div>
           <div className="flex gap-2 mt-4">
