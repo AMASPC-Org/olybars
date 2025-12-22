@@ -1,6 +1,8 @@
 import { Message } from '../types';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
+const VITE_API_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = (VITE_API_URL || 'https://olybars-backend-juthzlaerq-uw.a.run.app') + '/api';
+console.log('[Artie] Environment:', import.meta.env.MODE);
 console.log('[Artie] Connecting to:', API_BASE_URL);
 
 /**

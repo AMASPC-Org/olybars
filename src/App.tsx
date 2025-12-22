@@ -6,15 +6,15 @@ import { X } from 'lucide-react';
 // --- CONFIG & TYPES ---
 import { queryClient } from './lib/queryClient';
 import {
-  Venue, PointsReason, UserProfile, CheckInRecord, UserAlertPreferences, Message
+  Venue, PointsReason, UserProfile, CheckInRecord, UserAlertPreferences
 } from './types';
 
-// --- REAL SERVICES (Connecting the pipes) ---
-import { getArtieResponse } from './services/geminiService'; // Placeholder for now
-import { fetchVenues } from './services/venueService';       // REAL Firestore Read
+// --- REAL SERVICES ---
+import { getArtieResponse } from './services/geminiService';
+import { fetchVenues } from './services/venueService';
 import {
   saveAlertPreferences, logUserActivity, syncCheckIns
-} from './services/userService';                             // REAL Firestore Write
+} from './services/userService';
 
 // --- MODULAR COMPONENTS ---
 import { ErrorBoundary } from './components/common/ErrorBoundary';
@@ -37,7 +37,6 @@ import { cookieService } from './services/cookieService';
 import MapScreen from './features/venues/screens/MapScreen';
 import MoreScreen from './features/profile/screens/MoreScreen';
 import LeagueHomeScreen from './features/league/screens/LeagueHomeScreen';
-import LandingScreen from './features/marketing/screens/LandingScreen';
 import TermsScreen from './features/marketing/screens/TermsScreen';
 import PrivacyScreen from './features/marketing/screens/PrivacyScreen';
 import FAQScreen from './features/marketing/screens/FAQScreen';
@@ -58,25 +57,26 @@ const InfoPopup = ({ infoContent, setInfoContent }: any) => {
 };
 
 export default function OlyBarsApp() {
-  // STATE: Start empty, load from DB
   const [venues, setVenues] = useState<Venue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [userPoints, setUserPoints] = useState(() => parseInt(localStorage.getItem('oly_points') || '1250'));
   const [checkInHistory, setCheckInHistory] = useState<CheckInRecord[]>(() => JSON.parse(localStorage.getItem('oly_checkins') || '[]'));
   const [alertPrefs, setAlertPrefs] = useState<UserAlertPreferences>(() => JSON.parse(localStorage.getItem('oly_prefs') || '{"nightlyDigest":true,"weeklyDigest":true,"followedVenues":[],"interests":[]}'));
-  const [userProfile, setUserProfile] = useState<UserProfile>(() => JSON.parse(localStorage.getItem('oly_profile') || '{"role":"guest"}'));
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('oly_profile') || '{"uid":"guest","role":"guest"}');
+    } catch {
+      return { uid: 'guest', role: 'guest' };
+    }
+  });
 
-  // Fake User ID until Auth state is fully wired
-  const userId = "guest_user_123";
+  const userId = userProfile.uid || "guest_user_123";
 
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginMode, setLoginMode] = useState<'user' | 'owner'>('user');
   const [showOwnerDashboard, setShowOwnerDashboard] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(() => cookieService.get('oly_terms') === 'true');
-  const [hasAcceptedCookies, setHasAcceptedCookies] = useState(() => cookieService.get('oly_cookies') === 'true');
-  const [showArtie, setShowArtie] = useState(false);
   const [infoContent, setInfoContent] = useState<{ title: string, text: string } | null>(null);
   const [showClockInModal, setShowClockInModal] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
@@ -87,13 +87,17 @@ export default function OlyBarsApp() {
   ]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // --- LOAD DATA FROM FIRESTORE ---
   useEffect(() => {
     const loadData = async () => {
-      setIsLoading(true);
-      const data = await fetchVenues();
-      setVenues(data);
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        const data = await fetchVenues();
+        setVenues(data);
+      } catch (err) {
+        console.error('[OlyBars] CRITICAL: Failed to load venues:', err);
+      } finally {
+        setIsLoading(false);
+      }
     };
     loadData();
   }, []);
@@ -103,26 +107,11 @@ export default function OlyBarsApp() {
   const awardPoints = (reason: PointsReason) => {
     const delta = reason === 'checkin' ? 10 : reason === 'photo' ? 10 : reason === 'share' ? 5 : 0;
     setUserPoints(prev => prev + delta);
-    // Log to Real Firestore
     logUserActivity(userId, { type: reason, timestamp: Date.now() });
   };
 
   const handleUpdateVenue = (venueId: string, updates: Partial<Venue>) => {
     setVenues(prev => prev.map(v => v.id === venueId ? { ...v, ...updates } : v));
-    // TODO: Call updateVenue in venueService to persist to DB
-  };
-
-  const handleChatSend = async () => {
-    if (!chatInput.trim()) return;
-    const userText = chatInput;
-    setChatInput('');
-    setArtieMessages(prev => [...prev, { sender: 'user', text: userText }]);
-    try {
-      const response = await getArtieResponse(userText, []);
-      setArtieMessages(prev => [...prev, { sender: 'artie', text: response }]);
-    } catch (e) {
-      setArtieMessages(prev => [...prev, { sender: 'artie', text: "Connection error." }]);
-    }
   };
 
   const handleClockIn = (venue: Venue) => {
@@ -135,136 +124,117 @@ export default function OlyBarsApp() {
     setShowClockInModal(true);
   };
 
-  const confirmClockInSuccess = (venueId: string) => {
-    const newHistory = [...checkInHistory, { venueId: venueId, timestamp: Date.now() }];
-    setCheckInHistory(newHistory);
-    setClockedInVenue(venueId);
-    setVenues(prev => prev.map(v => v.id === venueId ? { ...v, checkIns: v.checkIns + 1 } : v));
-    setShowClockInModal(false);
-
-    // Sync to Real Firestore
-    syncCheckIns(userId, newHistory);
-
-    setShowArtie(true);
-    setArtieMessages(prev => [...prev, { sender: 'artie', text: `You're clocked in at ${venues.find(v => v.id === venueId)?.name}. Points added!` }]);
-  };
-
   const handleAcceptTerms = () => {
     cookieService.set('oly_terms', 'true');
     cookieService.set('oly_cookies', 'true');
     setHasAcceptedTerms(true);
-    setHasAcceptedCookies(true);
-  };
-  const handleLogout = () => {
-    if (confirm('Are you sure you want to sign out?')) {
-      setUserProfile({ role: 'guest' });
-      setShowMenu(false);
-    }
   };
 
   useEffect(() => { localStorage.setItem('oly_points', userPoints.toString()); }, [userPoints]);
   useEffect(() => { localStorage.setItem('oly_checkins', JSON.stringify(checkInHistory)); }, [checkInHistory]);
   useEffect(() => { localStorage.setItem('oly_profile', JSON.stringify(userProfile)); }, [userProfile]);
   useEffect(() => { localStorage.setItem('oly_prefs', JSON.stringify(alertPrefs)); saveAlertPreferences(userId, alertPrefs); }, [alertPrefs]);
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [artieMessages]);
 
   if (!hasAcceptedTerms) {
-    return <OnboardingModal isOpen={true} isTermsGate={true} onClose={handleAcceptTerms} />;
+    return <OnboardingModal isOpen={true} onClose={handleAcceptTerms} />;
   }
 
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <Router>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <AppShell
-                  venues={venues}
-                  userPoints={userPoints}
-                  isLeagueMember={userProfile.role !== 'guest'}
-                  alertPrefs={alertPrefs}
-                  setAlertPrefs={setAlertPrefs}
-                  onProfileClick={() => {
-                    setLoginMode('user');
-                    setShowLoginModal(true);
-                  }}
-                  onOwnerLoginClick={() => {
-                    setLoginMode('owner');
-                    setShowLoginModal(true);
-                  }}
-                />
-              }
-            >
+          <div className="h-full bg-background overflow-hidden relative">
+            <Routes>
               <Route
-                index
+                path="*"
                 element={
-                  isLoading ? (
-                    <div className="p-10 text-center text-primary font-bold">
-                      Connecting to AMA Network...
-                    </div>
-                  ) : (
-                    <BuzzScreen
-                      venues={venues}
-                      handleClockIn={handleClockIn}
-                      clockedInVenue={clockedInVenue}
-                    />
-                  )
+                  <AppShell
+                    venues={venues}
+                    userPoints={userPoints}
+                    isLeagueMember={userProfile.role !== 'guest'}
+                    alertPrefs={alertPrefs}
+                    setAlertPrefs={setAlertPrefs}
+                    onProfileClick={() => {
+                      setLoginMode('user');
+                      setShowLoginModal(true);
+                    }}
+                    onOwnerLoginClick={() => {
+                      setLoginMode('owner');
+                      setShowLoginModal(true);
+                    }}
+                  />
                 }
+              >
+                <Route
+                  index
+                  element={
+                    isLoading ? (
+                      <div className="p-10 text-center text-primary font-bold">
+                        Connecting to AMA Network...
+                      </div>
+                    ) : (
+                      <BuzzScreen
+                        venues={venues}
+                        handleClockIn={handleClockIn}
+                        clockedInVenue={clockedInVenue}
+                      />
+                    )
+                  }
+                />
+                <Route path="live" element={<LiveMusicScreen />} />
+                <Route path="karaoke" element={<KaraokeScreen />} />
+                <Route path="trivia" element={<TriviaScreen />} />
+                <Route path="arcade" element={<ArcadeScreen />} />
+                <Route path="events" element={<EventsScreen />} />
+                <Route path="league" element={<LeagueHomeScreen />} />
+                <Route path="map" element={<MapScreen />} />
+                <Route path="more" element={<MoreScreen />} />
+                <Route path="terms" element={<TermsScreen />} />
+                <Route path="privacy" element={<PrivacyScreen />} />
+                <Route path="faq" element={<FAQScreen />} />
+              </Route>
+            </Routes>
+
+            <LoginModal
+              isOpen={showLoginModal}
+              onClose={() => setShowLoginModal(false)}
+              loginMode={loginMode}
+              setLoginMode={setLoginMode}
+              userProfile={userProfile}
+              setUserProfile={setUserProfile}
+              venues={venues}
+              alertPrefs={alertPrefs}
+              setAlertPrefs={setAlertPrefs}
+              openInfo={openInfo}
+              onOwnerSuccess={() => setShowOwnerDashboard(true)}
+            />
+
+            {showOwnerDashboard && (
+              <OwnerDashboardScreen
+                isOpen={showOwnerDashboard}
+                onClose={() => setShowOwnerDashboard(false)}
+                venues={venues}
+                updateVenue={handleUpdateVenue}
+                userProfile={userProfile}
               />
-              <Route path="live" element={<LiveMusicScreen />} />
-              <Route path="karaoke" element={<KaraokeScreen />} />
-              <Route path="trivia" element={<TriviaScreen />} />
-              <Route path="arcade" element={<ArcadeScreen />} />
-              <Route path="events" element={<EventsScreen />} />
-              <Route path="league" element={<LeagueHomeScreen />} />
-              <Route path="map" element={<MapScreen />} />
-              <Route path="more" element={<MoreScreen />} />
-              <Route path="terms" element={<TermsScreen />} />
-              <Route path="privacy" element={<PrivacyScreen />} />
-              <Route path="faq" element={<FAQScreen />} />
-            </Route>
+            )}
 
-          </Routes>
+            {showClockInModal && selectedVenue && (
+              <ClockInModal
+                isOpen={showClockInModal}
+                onClose={() => setShowClockInModal(false)}
+                selectedVenue={selectedVenue}
+                awardPoints={awardPoints}
+                setCheckInHistory={setCheckInHistory}
+                setClockedInVenue={setClockedInVenue}
+                setVenues={setVenues}
+              />
+            )}
+
+            <InfoPopup infoContent={infoContent} setInfoContent={setInfoContent} />
+            <CookieBanner />
+          </div>
         </Router>
-        <LoginModal
-          isOpen={showLoginModal}
-          onClose={() => setShowLoginModal(false)}
-          loginMode={loginMode}
-          setLoginMode={setLoginMode}
-          userProfile={userProfile}
-          setUserProfile={setUserProfile}
-          venues={venues}
-          alertPrefs={alertPrefs}
-          setAlertPrefs={setAlertPrefs}
-          openInfo={openInfo}
-          onOwnerSuccess={() => setShowOwnerDashboard(true)}
-        />
-
-        {showOwnerDashboard && (
-          <OwnerDashboardScreen
-            isOpen={showOwnerDashboard}
-            onClose={() => setShowOwnerDashboard(false)}
-            venues={venues}
-            updateVenue={handleUpdateVenue}
-            userProfile={userProfile}
-          />
-        )}
-
-        {showClockInModal && selectedVenue && (
-          <ClockInModal
-            isOpen={showClockInModal}
-            onClose={() => setShowClockInModal(false)}
-            selectedVenue={selectedVenue}
-            confirmClockInSuccess={confirmClockInSuccess}
-            awardPoints={awardPoints}
-            checkInHistory={checkInHistory}
-          />
-        )}
-
-        <InfoPopup infoContent={infoContent} setInfoContent={setInfoContent} />
-        <CookieBanner />
       </QueryClientProvider>
     </ErrorBoundary>
   );
