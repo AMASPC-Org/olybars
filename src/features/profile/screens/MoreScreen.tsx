@@ -57,8 +57,8 @@ const MoreScreen: React.FC<MoreScreenProps> = ({ userProfile, setUserProfile }) 
                 key={role}
                 onClick={() => handleRoleSwitch(role)}
                 className={`py-2 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${userProfile.role === role
-                    ? 'bg-primary text-black border-primary'
-                    : 'bg-white/5 text-slate-400 border-white/10 hover:border-white/20'
+                  ? 'bg-primary text-black border-primary'
+                  : 'bg-white/5 text-slate-400 border-white/10 hover:border-white/20'
                   }`}
               >
                 {role}
@@ -95,9 +95,9 @@ const MoreScreen: React.FC<MoreScreenProps> = ({ userProfile, setUserProfile }) 
         <div className="bg-gradient-to-br from-slate-900 to-[#0f172a] border border-white/10 p-6 rounded-3xl relative overflow-hidden">
           <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
           <Coffee className="w-8 h-8 text-primary mb-4" />
-          <h3 className="text-lg font-black uppercase tracking-tight font-league text-white mb-2">Powered by Well 80</h3>
+          <h3 className="text-lg font-black uppercase tracking-tight font-league text-white mb-2">Powered by Hannah's Bar & Grill</h3>
           <p className="text-xs text-slate-400 leading-relaxed font-body mb-4">
-            OlyBars is a community project built for the love of Downtown Olympia. Support your local breweries and drink responsible.
+            OlyBars is a community project built for the love of Downtown Olympia. Support your local establishments and drink responsible.
           </p>
           <a
             href="https://well80.com"

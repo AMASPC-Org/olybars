@@ -79,6 +79,7 @@ const MapScreen = () => {
 
     // Clear existing markers (In a real app, track them in a ref)
     venues.forEach(venue => {
+      if (!venue.location?.lat || !venue.location?.lng) return;
       const isBuzzing = venue.status === 'buzzing';
       const marker = new (window as any).google.maps.Marker({
         position: { lat: venue.location.lat, lng: venue.location.lng },
