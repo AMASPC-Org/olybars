@@ -4,7 +4,8 @@ import { fetchVenues } from './venueService';
 import kb from './knowledgeBase.json';
 
 // OlyBars Constitution Rule: Use us-west1 for all resources.
-const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || 'ama-ecosystem-prod';
+// OlyBars Constitution Rule: Use us-west1 for all resources.
+const PROJECT_ID = 'ama-ecosystem-prod';
 const LOCATION = 'us-west1';
 
 const client = new GoogleGenAI({
@@ -45,7 +46,7 @@ ${venueContext}
 
 Use this real-time data to answer questions about what is happening right now in town.`;
 
-        const result = await client.models.generateContent({
+        const result = await (client.models as any).generateContent({
             model: 'gemini-1.5-flash',
             contents: [
                 { role: 'user', parts: [{ text: currentInstruction }] },
@@ -54,17 +55,10 @@ Use this real-time data to answer questions about what is happening right now in
                     parts: [{ text: msg.text }]
                 })),
                 { role: 'user', parts: [{ text: userMessage }] }
-            ],
-            // Vertex AI Node SDK uses snake_case in some versions or safety_settings
-            safety_settings: [
-                { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE },
-                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE },
-                { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE },
-                { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE },
             ]
         });
 
-        const candidates = result.response.candidates;
+        const candidates = (result as any).response.candidates;
         if (candidates && candidates.length > 0 && candidates[0].content?.parts?.length > 0) {
             return candidates[0].content.parts[0].text || "I'm drawing a blank, friend.";
         }

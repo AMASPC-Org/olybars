@@ -236,6 +236,11 @@ app.patch('/api/users/:uid', async (req, res) => {
                 return res.status(429).json({ error: `Handle lock active. Wait ${daysLeft} days.` });
             }
 
+            // [SECURITY] Reserve TheCommish handle
+            if (handle.toLowerCase() === '@thecommish' && !isPrivileged) {
+                return res.status(403).json({ error: 'This handle is reserved for League Administration.' });
+            }
+
             updates.handle = handle;
             updates.handleLastChanged = now;
         }

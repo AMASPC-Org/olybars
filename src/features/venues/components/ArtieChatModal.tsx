@@ -138,9 +138,23 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose 
                             <Send className="w-4 h-4" />
                         </button>
                     </div>
-                    <p className="text-[10px] text-center text-slate-600 mt-2 font-bold uppercase tracking-widest flex items-center justify-center gap-1.5">
-                        <Sparkles className="w-3 h-3" /> Powered by Well 80 Artesian AI
-                    </p>
+                    <div className="flex justify-center mt-2 items-center gap-3">
+                        <p className="text-[10px] text-center text-slate-600 font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 m-0">
+                            <Sparkles className="w-3 h-3" /> Powered by Well 80 Artesian AI
+                        </p>
+                        <span className="text-slate-700 text-[10px]">•</span>
+                        <a
+                            href="/meet-artie"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                onClose();
+                                window.location.href = '/meet-artie'; // Using window.location for reliability outside generic Router context inside modal
+                            }}
+                            className="text-[10px] text-slate-600 font-bold uppercase tracking-widest hover:text-primary transition-colors cursor-pointer"
+                        >
+                            Artie's Story
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

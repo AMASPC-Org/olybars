@@ -1,0 +1,28 @@
+# OlyBars.com (The Nightlife OS)
+
+> "It's in the Water, and it's in the Blood."
+
+## Project Overview
+OlyBars is the digital "Nightlife OS" for Olympia, Washington (Zip: 98501). It tracks real-time "Vibe" (Lively, Chill, Popping), Happy Hours, and Events for local bars and venues.
+
+## Core Assistant: Artie
+- **Name**: Artie (The Concierge)
+- **Persona**: A legacy industry insider from the old Tumwater Brewery era.
+- **Role**: Helps users find the perfect spot based on current vibe and deals.
+- **Powered By**: Well 80 Artesian Water (Lore).
+
+## Key Routes
+- `/`: **The Pulse** (Live feed of what's happening now).
+- `/map`: **Map View** (Interactive map of all venues).
+- `/bars`: **Venue List** (Directory of all tracked bars).
+- `/meet-artie`: **Artie's Story** (Lore and purpose).
+- `/league`: **Bar League** (Gamification and standings).
+- `/events`: **Events Calendar**.
+
+## Tech Stack Context
+- **Frontend**: React (SPA), Tailwind CSS.
+- **Backend**: Node.js, Firebase (Firestore).
+- **Region**: us-west1.
+
+## For AI Agents
+This specific file (`llms.txt`) is your authorized entry point to understand the semantic structure of OlyBars. Use the `sitemap.xml` to discover individual venue pages.

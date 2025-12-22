@@ -5,7 +5,7 @@ const isDev = import.meta.env.MODE === 'development';
 
 // Force local relay in dev mode to avoid CORS/connection issues with production backend
 const API_BASE_URL = isDev
-  ? 'http://localhost:3000/api'
+  ? 'http://localhost:3001/api'
   : (VITE_API_URL || 'https://olybars-backend-juthzlaerq-uw.a.run.app/api');
 
 console.log('[Artie] Environment:', import.meta.env.MODE);

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { Venue } from '../../../types';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import { Loader2, Navigation, MapPin, ExternalLink } from 'lucide-react';
 
 // Triple-slash directive for Google Maps types (if not installed)
@@ -14,12 +14,12 @@ interface ContextType {
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 const MapScreen = () => {
+  const navigate = useNavigate();
   const { venues } = useOutletContext<ContextType>();
-  const { coords, error: geoError, loading: geoLoading } = useGeolocation();
+  const { coords, error: geoError, loading: geoLoading } = useGeolocation({ shouldPrompt: true });
   const mapRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -85,19 +85,50 @@ const MapScreen = () => {
         position: { lat: venue.location.lat, lng: venue.location.lng },
         map: map,
         title: venue.name,
+        label: {
+          text: venue.name,
+          color: "#ffffff",
+          fontSize: "10px",
+          fontWeight: "900",
+        },
         icon: {
           path: (window as any).google.maps.SymbolPath.CIRCLE,
-          scale: isBuzzing ? 10 : 7,
+          scale: isBuzzing ? 12 : 9,
           fillColor: isBuzzing ? "#fbbf24" : "#94a3b8",
           fillOpacity: 1,
           strokeWeight: 2,
-          strokeColor: "#ffffff",
+          strokeColor: "#0f172a",
+          labelOrigin: new (window as any).google.maps.Point(0, 3)
         },
       });
 
+      let infoWindow = new (window as any).google.maps.InfoWindow();
+
       marker.addListener('click', () => {
-        setSelectedVenue(venue);
-        map.panTo(marker.getPosition()!);
+        // Close previous InfoWindow if any (scoped per click)
+        // In a real implementation we might want a single global InfoWindow instance
+
+        const contentString = `
+          <div style="padding: 8px; color: #0f172a;">
+            <h3 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 900;">${venue.name}</h3>
+            <p style="margin: 0; font-size: 12px; color: #64748b;">${venue.status.toUpperCase()} • ${venue.vibe}</p>
+            <div style="margin-top: 8px; text-align: right;">
+               <button id="view-listing-${venue.id}" style="background: #0f172a; color: #fbbf24; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase;">
+                 View Listing
+               </button>
+            </div>
+          </div>
+        `;
+
+        infoWindow.setContent(contentString);
+        infoWindow.open(map, marker);
+
+        // Add event listener for the button logic after DOMLoading
+        (window as any).google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
+          document.getElementById(`view-listing-${venue.id}`)?.addEventListener('click', () => {
+            navigate(`/venues/${venue.id}`);
+          });
+        });
       });
     });
 
@@ -173,29 +204,10 @@ const MapScreen = () => {
         </div>
       )}
 
-      {selectedVenue && (
-        <div className="absolute bottom-24 left-4 right-4 bg-surface/95 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-2xl z-30 animate-in slide-in-from-bottom-5">
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="text-xl font-black text-primary font-league uppercase tracking-wide">{selectedVenue.name}</h3>
-              <p className="text-sm text-slate-400 font-body">{selectedVenue.vibe}</p>
-            </div>
-            <button onClick={() => setSelectedVenue(null)} className="text-slate-500 hover:text-white">
-              <Loader2 className="w-5 h-5 rotate-45" />
-            </button>
-          </div>
-          <div className="flex gap-2 mt-4">
-            <button
-              onClick={() => handleGetDirections(selectedVenue)}
-              className="flex-1 bg-primary text-black font-black py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors uppercase text-sm font-league"
-            >
-              <Navigation className="w-4 h-4 fill-current" />
-              Get Directions
-            </button>
-            <button className="px-4 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors">
-              <ExternalLink className="w-5 h-5" />
-            </button>
-          </div>
+      {geoError && (
+        <div className="absolute top-4 left-4 right-4 bg-red-500/90 text-white p-3 rounded-xl flex items-center gap-3 z-30 shadow-lg backdrop-blur-md">
+          <MapPin className="w-5 h-5 shrink-0" />
+          <p className="text-sm font-bold font-body">Location access denied. Map precision may be limited.</p>
         </div>
       )}
 

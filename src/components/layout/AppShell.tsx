@@ -285,6 +285,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               {/* 1. LEAGUE HQ PROMINENT LINK */}
               <button
                 onClick={() => handleMenuNavigation('/league')}
+                title="Access rankings, rewards, and the full Bar League leaderboard."
                 className="w-full bg-gradient-to-r from-primary to-yellow-500 p-4 rounded-xl flex items-center justify-between group shadow-lg active:scale-95 transition-all"
               >
                 <div className="flex items-center gap-4">
@@ -302,6 +303,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               {/* 2. THE PLAYBOOK (Renamed from FAQ) */}
               <button
                 onClick={() => handleMenuNavigation('/faq')}
+                title="The Field Guide: How to play, rules of the well, and FAQ."
                 className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-all"
               >
                 <div className="flex items-center gap-4">
@@ -311,6 +313,24 @@ export const AppShell: React.FC<AppShellProps> = ({
                   <div className="text-left">
                     <span className="block text-white font-black text-xs uppercase tracking-tight">THE PLAYBOOK</span>
                     <span className="block text-slate-500 text-[8px] font-bold uppercase tracking-widest">Help & Field Guide</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
+              </button>
+
+              {/* [NEW] MEET ARTIE: THE LEGACY */}
+              <button
+                onClick={() => handleMenuNavigation('/meet-artie')}
+                title="The 98501 Legend: Artie Actual"
+                className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-all"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="bg-primary/10 p-2 rounded-lg">
+                    <User className="w-5 h-5 text-primary" strokeWidth={2} />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-white font-black text-xs uppercase tracking-tight">MEET ARTIE</span>
+                    <span className="block text-slate-500 text-[8px] font-bold uppercase tracking-widest">Values & Legend</span>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
@@ -331,6 +351,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                     <button
                       key={item.label}
                       onClick={() => handleMenuNavigation(item.path)}
+                      title={`Go to ${item.label}`}
                       className="bg-white/5 border border-white/5 py-3 px-4 rounded-xl flex items-center gap-3 hover:bg-white/10 transition-all group"
                     >
                       <item.icon className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
@@ -365,6 +386,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                     </div>
                     <button
                       onClick={() => setAlertPrefs({ ...alertPrefs, nightlyDigest: !alertPrefs.nightlyDigest })}
+                      title="Receive notifications about nightly drink deals and events."
                       className={`w-10 h-5 rounded-full p-1 transition-colors ${alertPrefs.nightlyDigest ? 'bg-primary' : 'bg-slate-700'}`}
                     >
                       <div className={`w-3 h-3 bg-black rounded-full transition-transform ${alertPrefs.nightlyDigest ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -377,6 +399,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                     </div>
                     <button
                       onClick={() => setAlertPrefs({ ...alertPrefs, weeklyDigest: !alertPrefs.weeklyDigest })}
+                      title="Receive a weekly summary of league standings and upcoming events."
                       className={`w-10 h-5 rounded-full p-1 transition-colors ${alertPrefs.weeklyDigest ? 'bg-primary' : 'bg-slate-700'}`}
                     >
                       <div className={`w-3 h-3 bg-black rounded-full transition-transform ${alertPrefs.weeklyDigest ? 'translate-x-5' : 'translate-x-0'}`} />

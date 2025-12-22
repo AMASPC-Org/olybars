@@ -6,7 +6,7 @@ import { X } from 'lucide-react';
 // --- CONFIG & TYPES ---
 import { queryClient } from './lib/queryClient';
 import {
-  Venue, PointsReason, UserProfile, CheckInRecord, UserAlertPreferences
+  Venue, PointsReason, UserProfile, CheckInRecord, UserAlertPreferences, VenueStatus
 } from './types';
 
 // --- REAL SERVICES ---
@@ -30,6 +30,7 @@ import { LoginModal } from './features/auth/components/LoginModal';
 import { OwnerDashboardScreen } from './features/owner/screens/OwnerDashboardScreen';
 import { ClockInModal } from './features/venues/components/ClockInModal';
 import { OnboardingModal } from './components/ui/OnboardingModal';
+import { VibeCheckModal } from './features/venues/components/VibeCheckModal';
 
 // --- UTILS & HELPERS ---
 import { cookieService } from './services/cookieService';
@@ -45,6 +46,7 @@ import FAQScreen from './features/marketing/screens/FAQScreen';
 import { AdminDashboardScreen } from './features/admin/screens/AdminDashboardScreen';
 import UserProfileScreen from './features/profile/screens/UserProfileScreen';
 import { VenueProfileScreen } from './features/venues/screens/VenueProfileScreen';
+import ArtieBioScreen from './features/artie/screens/ArtieBioScreen'; // [NEW] Import
 
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
@@ -84,6 +86,8 @@ export default function OlyBarsApp() {
   const [infoContent, setInfoContent] = useState<{ title: string, text: string } | null>(null);
   const [showClockInModal, setShowClockInModal] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
+  const [vibeVenue, setVibeVenue] = useState<Venue | null>(null);
+  const [showVibeCheckModal, setShowVibeCheckModal] = useState(false);
   const [clockedInVenue, setClockedInVenue] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
   const [artieMessages, setArtieMessages] = useState<{ sender: string, text: string }[]>([
@@ -183,7 +187,7 @@ export default function OlyBarsApp() {
     setShowClockInModal(true);
   };
 
-  const handleVibeCheck = (venue: Venue, hasConsent?: boolean, photoUrl?: string) => {
+  const handleVibeCheck = (venue: Venue) => {
     const now = Date.now();
 
     // 1. Global Cooldown (30m)
@@ -202,21 +206,27 @@ export default function OlyBarsApp() {
       return;
     }
 
-    // 3. Update Venue Photos if photo provided
-    if (photoUrl) {
-      handleUpdateVenue(venue.id, {
-        photos: [
-          ...(venue.photos || []),
-          {
-            id: `p-${now}-${Math.random().toString(36).substr(2, 6)}`,
-            url: photoUrl,
-            allowMarketingUse: !!hasConsent,
-            timestamp: now,
-            userId: userProfile.uid
-          }
-        ]
-      });
-    }
+    setVibeVenue(venue);
+    setShowVibeCheckModal(true);
+  };
+
+  const confirmVibeCheck = (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string) => {
+    const now = Date.now();
+
+    // Update Venue Status and Photos
+    handleUpdateVenue(venue.id, {
+      status,
+      photos: photoUrl ? [
+        ...(venue.photos || []),
+        {
+          id: `p-${now}-${Math.random().toString(36).substr(2, 6)}`,
+          url: photoUrl,
+          allowMarketingUse: hasConsent,
+          timestamp: now,
+          userId: userProfile.uid
+        }
+      ] : venue.photos
+    });
 
     awardPoints('vibe', venue.id, hasConsent);
   };
@@ -302,6 +312,8 @@ export default function OlyBarsApp() {
                 <Route path="league" element={<LeagueHQScreen venues={venues} isLeagueMember={userProfile.role !== 'guest'} />} />
                 <Route path="bars" element={<TheSpotsScreen venues={venues} />} />
                 <Route path="map" element={<MapScreen />} />
+                <Route path="meet-artie" element={<ArtieBioScreen />} />
+                <Route path="artie-bio" element={<ArtieBioScreen />} />
                 <Route path="more" element={<MoreScreen userProfile={userProfile} setUserProfile={setUserProfile} />} />
                 <Route
                   path="venues/:id"
@@ -373,6 +385,15 @@ export default function OlyBarsApp() {
                 setCheckInHistory={setCheckInHistory}
                 setClockedInVenue={setClockedInVenue}
                 setVenues={setVenues}
+              />
+            )}
+
+            {showVibeCheckModal && vibeVenue && (
+              <VibeCheckModal
+                isOpen={showVibeCheckModal}
+                onClose={() => setShowVibeCheckModal(false)}
+                venue={vibeVenue}
+                onConfirm={confirmVibeCheck}
               />
             )}
 

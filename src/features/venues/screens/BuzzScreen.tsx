@@ -472,13 +472,6 @@ export const BuzzScreen: React.FC<{
                   </button>
 
                   <button
-                    onClick={() => navigate(`/venues/${venue.id}`)}
-                    className="px-4 py-3 rounded-lg border-2 border-slate-700 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:border-primary hover:text-primary transition-all flex items-center gap-1"
-                  >
-                    View <ChevronRight className="w-4 h-4" />
-                  </button>
-
-                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onClockIn(venue);

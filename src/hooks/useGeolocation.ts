@@ -10,7 +10,11 @@ interface GeolocationState {
     permissionStatus: 'granted' | 'denied' | 'prompt' | 'unknown';
 }
 
-export const useGeolocation = (options: PositionOptions = { enableHighAccuracy: true }) => {
+interface GeolocationOptions extends PositionOptions {
+    shouldPrompt?: boolean;
+}
+
+export const useGeolocation = (options: GeolocationOptions = { enableHighAccuracy: true, shouldPrompt: false }) => {
     const [state, setState] = useState<GeolocationState>({
         coords: null,
         error: null,
@@ -19,6 +23,11 @@ export const useGeolocation = (options: PositionOptions = { enableHighAccuracy: 
     });
 
     useEffect(() => {
+        if (!options.shouldPrompt) {
+            setState(s => ({ ...s, loading: false }));
+            return;
+        }
+
         if (!navigator.geolocation) {
             setState(s => ({ ...s, error: 'Geolocation not supported', loading: false }));
             return;

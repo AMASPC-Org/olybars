@@ -11,7 +11,7 @@ import { VenueGallery } from '../components/VenueGallery';
 
 interface VenuesScreenProps {
     venues: Venue[];
-    handleVibeCheck?: (v: Venue, hasConsent?: boolean, photoUrl?: string) => void;
+    handleVibeCheck?: (v: Venue) => void;
     lastVibeChecks?: Record<string, number>;
     lastGlobalVibeCheck?: number;
 }
@@ -208,7 +208,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                     )}
 
                                     {venue.leagueEvent && (
-                                        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 flex items-center justify-between group/event cursor-pointer hover:bg-slate-800 transition-colors">
+                                        <Link to={`/venues/${venue.id}`} className="block bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 flex items-center justify-between group/event cursor-pointer hover:bg-slate-800 transition-colors">
                                             <div className="flex items-center gap-3">
                                                 <Trophy size={16} className="text-primary" />
                                                 <div>
@@ -217,7 +217,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                                 </div>
                                             </div>
                                             <ChevronRight size={16} className="text-slate-600 group-hover/event:text-primary transition-colors" />
-                                        </div>
+                                        </Link>
                                     )}
 
                                     <div className="mt-4">
@@ -227,7 +227,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                 </div>
 
                                 <div className="mt-6 pt-6 border-t border-slate-800 flex items-center justify-between">
-                                    <div className="flex items-center justify-between gap-4">
+                                    <div className="flex-1 flex items-center justify-between gap-4">
                                         <div className="flex gap-4">
                                             <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase font-league">
                                                 <Music size={12} strokeWidth={3} />
@@ -280,13 +280,6 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                                         </span>
                                                     );
                                                 })()}
-                                            </button>
-
-                                            <button
-                                                onClick={() => navigate(`/venues/${venue.id}`)}
-                                                className="text-primary text-[10px] font-black uppercase tracking-[0.2em] font-league italic hover:underline flex items-center gap-1"
-                                            >
-                                                View <ChevronRight size={12} />
                                             </button>
                                         </div>
                                     </div>

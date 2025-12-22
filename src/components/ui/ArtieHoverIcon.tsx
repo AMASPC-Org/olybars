@@ -17,16 +17,16 @@ const ArtieHoverIcon: React.FC<ArtieHoverIconProps> = ({ onClick }) => {
         >
             <div className="relative">
                 {/* The Artie Image */}
-                <div className="w-16 h-16 rounded-full border-4 border-[#FFD700] shadow-2xl overflow-hidden bg-primary ring-2 ring-black">
+                <div className="w-24 h-24 rounded-full border-4 border-[#FFD700] shadow-2xl overflow-hidden bg-primary ring-2 ring-black">
                     <img
                         src={SantaArtie}
                         alt="Santa Artie"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover scale-110"
                     />
                 </div>
 
                 {/* Notification Dot (similar to previous version) */}
-                <div className="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-black animate-pulse" />
+                <div className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full border-4 border-black animate-pulse shadow-lg" />
 
                 {/* Tooltip or "Artie says" bubble */}
                 <div className="absolute bottom-full right-0 mb-3 hidden group-hover:block bg-black border-2 border-primary text-primary font-black text-[10px] px-3 py-1.5 rounded-lg whitespace-nowrap uppercase tracking-widest shadow-xl animate-in fade-in slide-in-from-bottom-2">
