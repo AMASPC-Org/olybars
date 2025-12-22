@@ -1,5 +1,6 @@
 {
   "googleCloud": {
-    "location": "us-central1"
-  }
+    "location": "us-west1"
+  },
+  "reviewPolicy": "Agent Decides"
 }

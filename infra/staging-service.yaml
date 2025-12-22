@@ -1,0 +1,27 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: olybars-backend-staging
+  namespace: ama-ecosystem-stage
+  labels:
+    cloud.googleapis.com/location: us-west1
+spec:
+  template:
+    spec:
+      containers:
+      - image: us-west1-docker.pkg.dev/ama-ecosystem-stage/olybars/backend:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+        env:
+        - name: NODE_ENV
+          value: staging
+        - name: GCP_PROJECT
+          value: ama-ecosystem-stage
+        - name: REGION
+          value: us-west1
+        - name: FRONTEND_URL
+          value: https://olybars-dev.web.app

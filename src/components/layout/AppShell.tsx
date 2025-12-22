@@ -175,7 +175,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 
       {/* Main Content (Outlet) */}
       <div className="flex-1 overflow-y-auto relative">
-        <Outlet />
+        <Outlet context={{ venues }} />
       </div>
 
       {/* Footer / League Bar */}

@@ -51,7 +51,7 @@ app.get('/', (req, res) => {
     <body style="background: #0f172a; color: #fbbf24; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0;">
       <h1 style="font-size: 3rem; margin-bottom: 0;">OLYBARS BACKEND</h1>
       <p style="color: #94a3b8; font-size: 1.2rem;">Artie Relay is Online! 🍻</p>
-      <a href="http://localhost:3000" style="margin-top: 2rem; padding: 1rem 2rem; background: #fbbf24; color: #000; text-decoration: none; font-weight: bold; border-radius: 0.5rem;">Launch Frontend</a>
+      <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="margin-top: 2rem; padding: 1rem 2rem; background: #fbbf24; color: #000; text-decoration: none; font-weight: bold; border-radius: 0.5rem;">Launch Frontend</a>
     </body>
   `);
 });
