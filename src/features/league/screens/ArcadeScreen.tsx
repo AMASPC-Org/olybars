@@ -1,30 +1,12 @@
 import React, { useState } from 'react';
 import { Gamepad2 } from 'lucide-react';
-import { Venue } from '../../venues/screens/BuzzScreen'; // Adjust path as needed
+import { Venue } from '../../../types';
 
-// Mock data, adding a specific venue for this screen
-const INITIAL_VENUES: Venue[] = [
-  { 
-    id: 'hannahs', name: "Hannah's Bar", status: 'buzzing', checkIns: 42, 
-    deal: "$5 Well Drinks", dealEndsIn: 45, type: 'Dive Bar', vibe: 'Chaotic Good',
-    leagueEvent: 'karaoke', address: '123 5th Ave', hours: '4PM - 2AM'
-  },
-  { 
-    id: 'reset', name: "Reset Arcade Bar", status: 'lively', checkIns: 31, 
-    deal: "2-for-1 Tokens", dealEndsIn: 120, type: 'Arcade Bar', vibe: 'Retro Future',
-    leagueEvent: 'arcade', address: '456 Button St', hours: '2PM - 12AM'
-  },
-  { 
-    id: 'well80', name: "Well 80 Brewhouse", status: 'lively', checkIns: 35, 
-    type: 'Brewery', vibe: 'Artesian Flow',
-    leagueEvent: 'trivia', address: '514 4th Ave E', hours: '11AM - 10PM'
-  },
-];
+interface ArcadeScreenProps {
+  venues: Venue[];
+}
 
-export const ArcadeScreen: React.FC = () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [venues, setVenues] = useState<Venue[]>(INITIAL_VENUES);
-
+export const ArcadeScreen: React.FC<ArcadeScreenProps> = ({ venues }) => {
   const arcadeVenues = venues.filter(v => v.leagueEvent === 'arcade');
 
   return (
@@ -38,8 +20,8 @@ export const ArcadeScreen: React.FC = () => {
       {/* Main Content Area */}
       {arcadeVenues.length > 0 ? (
         arcadeVenues.map(venue => (
-          <div 
-            key={venue.id} 
+          <div
+            key={venue.id}
             className="bg-surface rounded-lg border border-slate-700 shadow-md p-4 transition-all"
           >
             <div className="flex justify-between items-start">
@@ -50,13 +32,13 @@ export const ArcadeScreen: React.FC = () => {
               <Gamepad2 className="w-6 h-6 text-primary" strokeWidth={2.5} />
             </div>
             <div className="mt-3 pt-3 border-t border-slate-700">
-                <p className="text-primary font-bold text-sm">{venue.deal || "Open Play Available"}</p>
+              <p className="text-primary font-bold text-sm">{venue.deal || "Open Play Available"}</p>
             </div>
           </div>
         ))
       ) : (
         <div className="text-center p-8 border-2 border-dashed border-slate-700 rounded-lg">
-            <p className="text-slate-500 font-bold uppercase">No Active Arcades</p>
+          <p className="text-slate-500 font-bold uppercase">No Active Arcades</p>
         </div>
       )}
     </div>

@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { X, Camera, Share2, MapPin, Info, Loader2 } from 'lucide-react';
 import { Venue, CheckInRecord, PointsReason } from '../../../types';
 import { performCheckIn } from '../../../services/userService';
+import { useGeolocation } from '../../../hooks/useGeolocation';
+import { calculateDistance } from '../../../utils/geoUtils';
 
 interface ClockInModalProps {
     isOpen: boolean;
@@ -30,7 +32,15 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+    const { coords, loading: geoLoading } = useGeolocation();
+
     if (!isOpen || !selectedVenue) return null;
+
+    const currentDistance = coords && selectedVenue.location
+        ? calculateDistance(coords.latitude, coords.longitude, selectedVenue.location.lat, selectedVenue.location.lng)
+        : null;
+
+    const isAtVenue = currentDistance !== null && currentDistance <= 100;
 
     const startCamera = async () => {
         setCameraError(false);
@@ -134,9 +144,19 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
                 <div className="p-4 space-y-4">
                     <div className="text-center">
-                        <p className="text-slate-400 text-xs uppercase tracking-widest mb-1 font-bold">Confirming location:</p>
+                        <p className="text-slate-400 text-xs uppercase tracking-widest mb-1 font-bold">
+                            {geoLoading ? 'Finding you...' : (isAtVenue ? '📍 Arrived' : '🚶 Heading there')}
+                        </p>
                         <h3 className="text-3xl font-bold text-white uppercase">{selectedVenue.name}</h3>
-                        <p className="text-primary text-xs mt-1 font-bold uppercase">{selectedVenue.type}</p>
+                        <div className="mt-1">
+                            {currentDistance !== null ? (
+                                <p className={`text-[10px] font-black uppercase tracking-widest ${isAtVenue ? 'text-primary' : 'text-slate-500'}`}>
+                                    {Math.round(currentDistance)}m FROM VENUE {isAtVenue ? '(OK)' : '(TOO FAR)'}
+                                </p>
+                            ) : (
+                                <p className="text-primary text-xs font-bold uppercase">{selectedVenue.type}</p>
+                            )}
+                        </div>
                     </div>
 
                     <div onClick={capturedPhoto ? undefined : startCamera} className={`border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer group relative overflow-hidden ${capturedPhoto ? 'border-primary/50 bg-black' : 'border-slate-600 bg-surface hover:bg-slate-800 hover:border-primary'}`}>

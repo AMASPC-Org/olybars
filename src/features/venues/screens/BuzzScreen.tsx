@@ -11,18 +11,7 @@ import {
 } from 'lucide-react';
 import { Venue, VenueStatus } from '../../../types';
 import { useGeolocation } from '../../../hooks/useGeolocation';
-
-const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  const R = 3958.8; // Radius of the Earth in miles
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
+import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
 
 const PulseMeter = ({ status }: { status: VenueStatus }) => {
   if (status === 'chill') {
@@ -85,7 +74,7 @@ export const BuzzScreen: React.FC<{
 
   const venuesWithDistance = venues.map(v => ({
     ...v,
-    distance: coords ? getDistance(coords.latitude, coords.longitude, v.location.lat, v.location.lng) : null
+    distance: coords && v.location ? metersToMiles(calculateDistance(coords.latitude, coords.longitude, v.location.lat, v.location.lng)) : null
   }));
 
   const filteredVenues = [...venuesWithDistance]
@@ -94,6 +83,20 @@ export const BuzzScreen: React.FC<{
       if (filterKind === 'near' && a.distance !== null && b.distance !== null) {
         return a.distance - b.distance;
       }
+
+      if (filterKind === 'deals') {
+        const timeA = a.dealEndsIn !== undefined ? a.dealEndsIn : 9999;
+        const timeB = b.dealEndsIn !== undefined ? b.dealEndsIn : 9999;
+
+        const isShortA = timeA <= 240;
+        const isShortB = timeB <= 240;
+
+        if (isShortA !== isShortB) {
+          return isShortA ? -1 : 1;
+        }
+        return timeA - timeB;
+      }
+
       return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
     });
 

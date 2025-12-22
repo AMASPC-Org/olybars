@@ -1,23 +1,14 @@
 import React, { useState } from 'react';
 import { BookOpen, Zap, Users, Trophy } from 'lucide-react';
-import { Venue } from '../../venues/screens/BuzzScreen'; // Adjust path as needed
+import { Venue } from '../../../types';
 
-// Using the same mock data structure for consistency
-const INITIAL_VENUES: Venue[] = [
-  {
-    id: 'well80', name: "Well 80 Brewhouse", status: 'lively', checkIns: 35,
-    type: 'Brewery', vibe: 'Artesian Flow',
-    leagueEvent: 'trivia', address: '514 4th Ave E', hours: '11AM - 10PM'
-  },
-  // Other venues can be added here if needed for selection logic
-];
+interface TriviaScreenProps {
+  venues: Venue[];
+}
 
-// Find the default trivia venue from the mock data
-const triviaVenue = INITIAL_VENUES.find(v => v.leagueEvent === 'trivia');
-
-export const TriviaScreen: React.FC = () => {
-  // Use the specific trivia venue from the mock data
-  const [selectedVenue] = useState<Venue | undefined>(triviaVenue);
+export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues }) => {
+  // Use the specific trivia venue from the passed venues
+  const selectedVenue = venues.find(v => v.leagueEvent === 'trivia');
 
   if (!selectedVenue) {
     return <div className="p-4 text-center text-slate-500">No Trivia Venue Loaded.</div>;

@@ -30,7 +30,7 @@ const renderOnboardingContent = (step: number) => {
         case 5: return {
             title: "Cookies & Privacy", text: (
                 <span>
-                    We use cookies to save your OlyBars ID, points, and favorite venues. By continuing, you agree to our{' '}
+                    We use cookies to save your progress locally. Creating a profile syncs your points to the Oly Cloud. By continuing, you agree to our{' '}
                     <a href="/terms" target="_blank" className="text-primary hover:underline">Terms</a> &{' '}
                     <a href="/privacy" target="_blank" className="text-primary hover:underline">Privacy</a>.
                 </span>

@@ -32,16 +32,16 @@ const PrivacyScreen: React.FC = () => {
                         To provide the Pulse and League features, we collect:
                     </p>
                     <ul className="list-disc list-inside text-slate-400 text-sm space-y-2 ml-4">
-                        <li>Location data (for geofenced check-ins)</li>
-                        <li>Account information (email, handle, interests)</li>
-                        <li>Activity data (points, favorite venues, vibe reports)</li>
+                        <li>Location data (verified locally only at the moment of "Clock In")</li>
+                        <li>Account information (Handle and points are stored locally for guests; synced to Cloud only upon profile creation)</li>
+                        <li>Activity data (Vibe reports and check-in frequency for the Pulse algorithm)</li>
                     </ul>
                 </section>
 
                 <section className="space-y-4">
                     <h2 className="text-xl font-black uppercase tracking-wide font-league text-primary">2. How We Use Location</h2>
                     <p className="text-slate-300 leading-relaxed text-sm">
-                        Your precise location is used exclusively to verify that you are within range of a venue when you "Clock In." We do not sell your movement data to third parties.
+                        Your location is used exclusively to verify your proximity to a venue during a "Clock In" event. We do not track your background location or sell your movement data. Guest check-ins are associated with a temporary on-device ID.
                     </p>
                 </section>
 

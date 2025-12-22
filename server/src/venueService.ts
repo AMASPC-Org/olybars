@@ -114,19 +114,52 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
         }
     }
 
-    // WA State LCB / Tech Constitution Compliance: Max 2 check-ins per 12h window
-    const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
-    const recentCheckIns = await db.collection('signals')
+    // 1. Conflict of Interest Check (Rule 03-B)
+    if (venueData.ownerId === userId || venueData.managerIds?.includes(userId)) {
+        throw new Error('Conflict of Interest: Venue staff and management are not eligible for League points at their own establishment.');
+    }
+
+    const timestamp = Date.now();
+
+    // 2. Throttling Logic (Rule 03-C)
+    // We fetch the most recent check-in to enforce minimum gaps
+    const recentSignals = await db.collection('signals')
+        .where('userId', '==', userId)
+        .where('type', '==', 'check_in')
+        .orderBy('timestamp', 'desc')
+        .limit(1)
+        .get();
+
+    if (!recentSignals.empty) {
+        const lastCheckIn = recentSignals.docs[0].data() as Signal;
+        const timeSinceLast = timestamp - lastCheckIn.timestamp;
+        const minutesSinceLast = Math.floor(timeSinceLast / (60 * 1000));
+
+        // Global Throttle: 120 minutes
+        if (timeSinceLast < (120 * 60 * 1000)) {
+            const waitTime = 120 - minutesSinceLast;
+            throw new Error(`Slow down, League Legend! The Pulse needs a bit more time. You can clock in again in ${waitTime} minutes.`);
+        }
+
+        // Same-Venue Throttle: 360 minutes (6 hours)
+        if (lastCheckIn.venueId === venueId && timeSinceLast < (360 * 60 * 1000)) {
+            const waitTime = 360 - minutesSinceLast;
+            throw new Error(`Already checked in here recently! To keep the Pulse fair, please wait another ${Math.floor(waitTime / 60)} hours and ${waitTime % 60} minutes before checking into ${venueData.name} again.`);
+        }
+    }
+
+    // 3. WA State LCB Compliance: Max 2 check-ins per 12h window
+    const twelveHoursAgo = timestamp - (12 * 60 * 60 * 1000);
+    const daySignals = await db.collection('signals')
         .where('userId', '==', userId)
         .where('type', '==', 'check_in')
         .where('timestamp', '>=', twelveHoursAgo)
         .get();
 
-    if (recentCheckIns.size >= 2) {
+    if (daySignals.size >= 2) {
         throw new Error('League Protocol: Max 2 check-ins per 12-hour window. Take it slow, friend!');
     }
 
-    const timestamp = Date.now();
     const signal: Partial<Signal> = {
         venueId,
         userId,

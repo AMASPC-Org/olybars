@@ -11,9 +11,17 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { UserProfile, UserRole } from '../../../types';
 
-const MoreScreen: React.FC = () => {
+interface MoreScreenProps {
+  userProfile: UserProfile;
+  setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
+}
+
+const MoreScreen: React.FC<MoreScreenProps> = ({ userProfile, setUserProfile }) => {
   const navigate = useNavigate();
+
+  const isAdmin = userProfile.email === 'ryan@amaspc.com';
 
   const menuItems = [
     { id: 'profile', label: 'My League ID', icon: User, path: '/league', color: 'text-primary' },
@@ -23,6 +31,10 @@ const MoreScreen: React.FC = () => {
     { id: 'privacy', label: 'Privacy Policy', icon: Eye, path: '/privacy', color: 'text-slate-400' },
   ];
 
+  const handleRoleSwitch = (newRole: UserRole) => {
+    setUserProfile(prev => ({ ...prev, role: newRole }));
+  };
+
   return (
     <div className="min-h-screen bg-background text-white p-6 pb-32">
       <header className="mb-10">
@@ -31,6 +43,33 @@ const MoreScreen: React.FC = () => {
         </h1>
         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Settings & Information</p>
       </header>
+
+      {/* Admin Role Switcher */}
+      {isAdmin && (
+        <div className="mb-10 p-4 border-2 border-primary/20 bg-primary/5 rounded-2xl">
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="w-5 h-5 text-primary" />
+            <h2 className="text-sm font-black uppercase tracking-widest font-league text-primary">Admin Role Switcher</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {(['admin', 'owner', 'manager', 'user', 'guest'] as UserRole[]).map((role) => (
+              <button
+                key={role}
+                onClick={() => handleRoleSwitch(role)}
+                className={`py-2 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${userProfile.role === role
+                    ? 'bg-primary text-black border-primary'
+                    : 'bg-white/5 text-slate-400 border-white/10 hover:border-white/20'
+                  }`}
+              >
+                {role}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-[9px] text-slate-500 font-bold uppercase text-center">
+            Currently viewing as: <span className="text-primary">{userProfile.role}</span>
+          </p>
+        </div>
+      )}
 
       <div className="space-y-3">
         {menuItems.map((item) => (

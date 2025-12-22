@@ -43,7 +43,7 @@ const TermsScreen: React.FC = () => {
                 <section className="space-y-4">
                     <h2 className="text-xl font-black uppercase tracking-wide font-league text-primary">3. The Olympia Bar League</h2>
                     <p className="text-slate-300 leading-relaxed text-sm">
-                        Membership in the Olympia Bar League (OBL) is a privilege, not a right. Points earned have no monetary value and are for entertainment purposes only. We reserve the right to revoke membership for unsportsmanlike conduct at participating venues.
+                        Membership in the Olympia Bar League (OBL) is a privilege. Points are earned by "Clocking In" at participating venues, which requires verified physical proximity (geofencing). Check-ins are strictly limited to two (2) per 12-hour window. Points have no monetary value.
                     </p>
                 </section>
 
@@ -57,7 +57,14 @@ const TermsScreen: React.FC = () => {
                 <section className="space-y-4">
                     <h2 className="text-xl font-black uppercase tracking-wide font-league text-primary">5. Disclaimer of Liability</h2>
                     <p className="text-slate-300 leading-relaxed text-sm italic border-l-4 border-slate-700 pl-4">
-                        OlyBars provides information about venues and deals "as-is." We are not responsible for the accuracy of happy hour times, venue closures, or the conduct of any bar or its patrons.
+                        OlyBars provides information about venues and deals "as-is." The "Buzz Clock" prioritizes deals ending soonest, but we do not guarantee the accuracy of happy hour times, venue capacity, or the availability of advertised deals.
+                    </p>
+                </section>
+
+                <section className="space-y-4">
+                    <h2 className="text-xl font-black uppercase tracking-wide font-league text-primary">6. Fair Play & Eligibility</h2>
+                    <p className="text-slate-300 leading-relaxed text-sm">
+                        To maintain a fair League, employees, managers, and owners are not eligible to earn points or "Clock In" at their own affiliated venues. Additionally, verified check-ins are subject to a 120-minute global cooling-off period and a 360-minute cooling-off period for checking into the same venue.
                     </p>
                 </section>
 

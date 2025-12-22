@@ -64,7 +64,7 @@ const BuzzClock: React.FC<{ venues: Venue[] }> = ({ venues }) => {
         <div className="flex items-center gap-2">
           <Clock className={`w-5 h-5 text-black ${activeDeals.length > 0 ? 'animate-pulse' : ''}`} strokeWidth={3} />
           <div className="flex flex-col">
-            <h2 className="text-sm font-bold text-black leading-none uppercase">
+            <h2 className="text-sm font-black text-black leading-none uppercase font-league">
               {activeDeals.length > 0 ? 'THE BUZZ CLOCK' : nextHH ? 'UPCOMING BUZZ' : 'FEATURED SPOT'}
             </h2>
             <span className="text-[10px] text-black font-medium uppercase">

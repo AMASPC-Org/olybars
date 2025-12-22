@@ -36,7 +36,7 @@ import { cookieService } from './services/cookieService';
 // --- RELOCATED SCREENS ---
 import MapScreen from './features/venues/screens/MapScreen';
 import MoreScreen from './features/profile/screens/MoreScreen';
-import LeagueHomeScreen from './features/league/screens/LeagueHomeScreen';
+import { LeagueHQScreen } from './features/league/screens/LeagueHQScreen';
 import TermsScreen from './features/marketing/screens/TermsScreen';
 import PrivacyScreen from './features/marketing/screens/PrivacyScreen';
 import FAQScreen from './features/marketing/screens/FAQScreen';
@@ -182,13 +182,13 @@ export default function OlyBarsApp() {
                   }
                 />
                 <Route path="live" element={<LiveMusicScreen />} />
-                <Route path="karaoke" element={<KaraokeScreen />} />
-                <Route path="trivia" element={<TriviaScreen />} />
-                <Route path="arcade" element={<ArcadeScreen />} />
-                <Route path="events" element={<EventsScreen />} />
-                <Route path="league" element={<LeagueHomeScreen />} />
+                <Route path="karaoke" element={<KaraokeScreen venues={venues} />} />
+                <Route path="trivia" element={<TriviaScreen venues={venues} />} />
+                <Route path="arcade" element={<ArcadeScreen venues={venues} />} />
+                <Route path="events" element={<EventsScreen venues={venues} />} />
+                <Route path="league" element={<LeagueHQScreen venues={venues} />} />
                 <Route path="map" element={<MapScreen />} />
-                <Route path="more" element={<MoreScreen />} />
+                <Route path="more" element={<MoreScreen userProfile={userProfile} setUserProfile={setUserProfile} />} />
                 <Route path="terms" element={<TermsScreen />} />
                 <Route path="privacy" element={<PrivacyScreen />} />
                 <Route path="faq" element={<FAQScreen />} />
