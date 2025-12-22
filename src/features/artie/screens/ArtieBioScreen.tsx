@@ -1,6 +1,7 @@
 import React from 'react';
 import { User, Beer, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ArtieLogo from '../../../assets/Artie-Only-Logo.png';
 
 const ArtieBioScreen = () => {
     const navigate = useNavigate();
@@ -20,18 +21,13 @@ const ArtieBioScreen = () => {
             <div className="max-w-md mx-auto relative z-10">
                 {/* Hero Section */}
                 <div className="flex flex-col items-center mb-10 text-center">
-                    <div className="w-32 h-32 bg-gradient-to-br from-primary to-yellow-600 rounded-xl shadow-lg border-2 border-primary/20 flex items-center justify-center mb-6 relative group">
-                        <div className="absolute inset-0 bg-[url('https://i.imgur.com/k6lLwz1.png')] opacity-10 bg-repeat bg-[length:20px_20px]" />
-                        {/* Placeholder for Squared Tap Handle Graphic - Using FontAwesome/Icon for now */}
-                        <div className="relative">
-                            <div className="w-20 h-24 bg-black/40 border-4 border-[#8B4513] rounded-t-lg mx-auto flex flex-col items-center pt-2">
-                                <div className="w-16 h-4 bg-slate-300 rounded mb-1" />
-                                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center border-2 border-white/20">
-                                    <span className="font-black text-black">A</span>
-                                </div>
-                            </div>
-                            <div className="w-6 h-8 bg-slate-800 mx-auto -mt-1" />
-                        </div>
+                    <div className="w-48 h-48 mb-6 relative group overflow-hidden rounded-2xl border-2 border-primary/20 shadow-2xl">
+                        <img
+                            src={ArtieLogo}
+                            alt="Artie Logo"
+                            className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
                     </div>
 
                     <h1 className="font-black text-4xl text-primary font-league uppercase tracking-tighter mb-2">
