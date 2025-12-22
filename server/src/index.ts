@@ -195,32 +195,101 @@ app.post('/api/client-errors', (req, res) => {
 });
 
 /**
- * @route POST /api/admin/promote
- * @desc Promote a user to Admin role (Dev/MVP access)
+ * @route PATCH /api/users/:uid
+ * @desc Update user profile data with business logic (e.g. handle cooldown)
  */
-app.post('/api/admin/promote', async (req, res) => {
-    const { email, secretKey } = req.body;
+app.patch('/api/users/:uid', async (req, res) => {
+    const { uid } = req.params;
+    const { handle, email, phone, favoriteDrink, homeBase, leaguePreferences } = req.body;
 
-    // Master key for initial setup (in real prod this would be in Secret Manager)
-    if (secretKey !== 'OLY_MASTER_2025') {
-        return res.status(403).json({ error: 'Invalid master key' });
+    try {
+        const { db } = await import('./firebaseAdmin');
+        const userRef = db.collection('users').doc(uid);
+        const userDoc = await userRef.get();
+
+        if (!userDoc.exists) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const userData = userDoc.data();
+        const updates: any = {
+            updatedAt: new Date().toISOString()
+        };
+
+        if (phone !== undefined) updates.phone = phone;
+        if (favoriteDrink !== undefined) updates.favoriteDrink = favoriteDrink;
+        if (homeBase !== undefined) updates.homeBase = homeBase;
+        if (leaguePreferences !== undefined) updates.leaguePreferences = leaguePreferences;
+        if (email !== undefined) updates.email = email;
+
+        // Handle cooldown logic
+        if (handle !== undefined && handle !== userData?.handle) {
+            const lastChanged = userData?.handleLastChanged || 0;
+            const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+            const now = Date.now();
+
+            // Super-admins/Admin bypass (Ryan's email)
+            const isPrivileged = userData?.role === 'super-admin' || userData?.email === 'ryan@amaspc.com';
+
+            if ((now - lastChanged) < thirtyDaysInMs && !isPrivileged) {
+                const daysLeft = Math.ceil((thirtyDaysInMs - (now - lastChanged)) / (24 * 60 * 60 * 1000));
+                return res.status(429).json({ error: `Handle lock active. Wait ${daysLeft} days.` });
+            }
+
+            updates.handle = handle;
+            updates.handleLastChanged = now;
+        }
+
+        await userRef.update(updates);
+        log('INFO', 'User profile updated', { uid, updates });
+        res.json({ success: true, updates });
+    } catch (error: any) {
+        log('ERROR', 'Failed to update user profile', { uid, error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route POST /api/admin/setup-super
+ * @desc Promote a user to Super-Admin role (Secure established)
+ */
+app.post('/api/admin/setup-super', async (req, res) => {
+    const { email, secretKey, password } = req.body;
+    const MASTER_KEY = process.env.MASTER_SETUP_KEY || 'OLY_MASTER_2025';
+
+    if (secretKey !== MASTER_KEY) {
+        return res.status(403).json({ error: 'Invalid master setup key' });
     }
 
     try {
         const { db, auth } = await import('./firebaseAdmin');
-        const userRecord = await auth.getUserByEmail(email);
-        const uid = userRecord.uid;
+        let user;
+        try {
+            user = await auth.getUserByEmail(email);
+        } catch (error) {
+            return res.status(404).json({ error: `User ${email} not found in Auth.` });
+        }
 
+        const uid = user.uid;
+
+        // 1. Update Auth (Password if provided)
+        if (password) {
+            await auth.updateUser(uid, { password });
+        }
+
+        // 2. Update Firestore
         await db.collection('users').doc(uid).set({
-            role: 'admin',
-            stats: { seasonPoints: 99999, lifetimeCheckins: 0, currentStreak: 0 }
+            role: 'super-admin',
+            isAdmin: true,
+            status: 'active',
+            updatedAt: new Date().toISOString()
         }, { merge: true });
 
-        log('INFO', 'User promoted to Admin', { uid, email });
-        res.json({ success: true, message: `User ${email} is now an ADMIN.` });
+        log('INFO', 'User promoted to Super-Admin', { uid, email });
+        res.json({ success: true, message: `User ${email} is now a SUPER-ADMIN.` });
     } catch (error: any) {
-        log('ERROR', 'Promotion failed', { error: error.message });
-        res.status(400).json({ error: error.message });
+        log('ERROR', 'Super-Admin promotion failed', { error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 

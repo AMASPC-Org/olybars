@@ -8,7 +8,7 @@ import {
   Brain,
   Music,
   List,
-  Calendar,
+  Ticket,
   Crown,
   Trophy,
   X,
@@ -22,8 +22,12 @@ import {
   Lock,
   ChevronRight,
   Settings as SettingsIcon,
+  Bot,
 } from 'lucide-react';
 import { Venue } from '../../types';
+import { ArtieChatModal } from '../../features/venues/components/ArtieChatModal';
+import ArtieHoverIcon from '../ui/ArtieHoverIcon';
+import { CookieBanner } from '../ui/CookieBanner';
 
 interface AppShellProps {
   venues: Venue[];
@@ -34,6 +38,7 @@ interface AppShellProps {
   setAlertPrefs: (prefs: any) => void;
   onProfileClick?: () => void;
   onOwnerLoginClick?: () => void;
+  userRole?: string;
 }
 
 // --- Component: BuzzClock ---
@@ -99,10 +104,12 @@ export const AppShell: React.FC<AppShellProps> = ({
   setAlertPrefs,
   onProfileClick,
   onOwnerLoginClick,
+  userRole,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showMenu, setShowMenu] = useState(false);
+  const [showArtie, setShowArtie] = useState(false);
 
   const getActiveTab = () => {
     const path = location.pathname.split('/')[1];
@@ -115,11 +122,11 @@ export const AppShell: React.FC<AppShellProps> = ({
     { id: 'pulse', label: 'PULSE', icon: Flame, path: '/' },
     { id: 'bars', label: 'BARS', icon: Search, path: '/bars' },
     { id: 'map', label: 'MAP', icon: MapIcon, path: '/map' },
-    { id: 'league', label: 'LEAGUE HQ', icon: Crown, path: '/league' },
-    { id: 'events', label: 'EVENTS', icon: Calendar, path: '/events' },
+    { id: 'league', label: 'LEAGUE', icon: Crown, path: '/league' },
+    { id: 'events', label: 'EVENTS', icon: Ticket, path: '/events' },
     { id: 'trivia', label: 'TRIVIA', icon: Brain, path: '/trivia' },
     { id: 'karaoke', label: 'KARAOKE', icon: Mic, path: '/karaoke' },
-    { id: 'arcade', label: 'ARCADE', icon: Music, path: '/arcade' },
+    { id: 'live', label: 'LIVE', icon: Music, path: '/live' },
   ];
 
   const handleMenuNavigation = (path: string) => {
@@ -185,7 +192,10 @@ export const AppShell: React.FC<AppShellProps> = ({
       <div className="sticky bottom-0 w-full max-w-md bg-black border-t-4 border-primary p-3 z-20 shadow-2xl">
         {leagueMember ? (
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
+            <div
+              className="flex items-center gap-3 cursor-pointer hover:bg-slate-900/50 p-1 rounded-lg transition-all active:scale-95"
+              onClick={() => navigate('/profile')}
+            >
               <div className="bg-slate-900 p-2 border-2 border-white relative shadow-sm">
                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border border-black" />
                 <Trophy className="w-5 h-5 text-primary" strokeWidth={3} />
@@ -197,7 +207,10 @@ export const AppShell: React.FC<AppShellProps> = ({
                 </p>
               </div>
             </div>
-            <div className="text-right">
+            <div
+              className="text-right cursor-pointer hover:bg-slate-900/50 p-1 rounded-lg transition-all active:scale-95"
+              onClick={() => navigate('/league?tab=standings')}
+            >
               <p className="text-[9px] text-slate-500 font-bold uppercase mx-1">
                 Season ends Dec 31
               </p>
@@ -268,31 +281,116 @@ export const AppShell: React.FC<AppShellProps> = ({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 space-y-6">
-              {/* PRIMARY NAV GRID (4x2 Symmetry) */}
-              <div className="grid grid-cols-2 gap-3">
-                {navItems.map((item) => (
-                  <button
-                    key={item.label}
-                    onClick={() => handleMenuNavigation(item.path)}
-                    className="bg-slate-900 border border-white/5 p-4 rounded-xl flex flex-col items-center gap-2 group hover:border-primary hover:bg-slate-800 transition-all shadow-lg active:scale-95"
-                  >
-                    <div className="bg-white/5 p-2 rounded-lg group-hover:bg-primary/10 transition-colors">
-                      <item.icon className="w-5 h-5 text-primary" strokeWidth={3} />
-                    </div>
-                    <span className="text-white font-black text-[10px] tracking-widest uppercase font-league text-center">
-                      {item.label}
-                    </span>
-                  </button>
-                ))}
+            <div className="flex-1 overflow-y-auto p-5 space-y-8">
+              {/* 1. LEAGUE HQ PROMINENT LINK */}
+              <button
+                onClick={() => handleMenuNavigation('/league')}
+                className="w-full bg-gradient-to-r from-primary to-yellow-500 p-4 rounded-xl flex items-center justify-between group shadow-lg active:scale-95 transition-all"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="bg-black/20 p-2 rounded-lg">
+                    <Crown className="w-6 h-6 text-black" strokeWidth={3} />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-black font-black text-sm uppercase tracking-tighter">THE LEAGUE HQ</span>
+                    <span className="block text-black/60 text-[8px] font-bold uppercase tracking-widest">Rankings & Rewards</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-black/40 group-hover:text-black transition-colors" />
+              </button>
+
+              {/* 2. THE PLAYBOOK (Renamed from FAQ) */}
+              <button
+                onClick={() => handleMenuNavigation('/faq')}
+                className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-all"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="bg-primary/10 p-2 rounded-lg">
+                    <Brain className="w-5 h-5 text-primary" strokeWidth={2} />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-white font-black text-xs uppercase tracking-tight">THE PLAYBOOK</span>
+                    <span className="block text-slate-500 text-[8px] font-bold uppercase tracking-widest">Help & Field Guide</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
+              </button>
+
+              {/* 3. DISCOVERY LINKS */}
+              <div className="space-y-2">
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1 mb-3">Discovery</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: 'Map', icon: MapIcon, path: '/map' },
+                    { label: 'Events', icon: Ticket, path: '/events' },
+                    { label: 'Trivia', icon: Brain, path: '/trivia' },
+                    { label: 'Karaoke', icon: Mic, path: '/karaoke' },
+                    { label: 'Live Music', icon: Music, path: '/live' },
+                    { label: 'Bars', icon: Search, path: '/bars' },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => handleMenuNavigation(item.path)}
+                      className="bg-white/5 border border-white/5 py-3 px-4 rounded-xl flex items-center gap-3 hover:bg-white/10 transition-all group"
+                    >
+                      <item.icon className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+                      <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* 4. FOLLOWING / FAVORITES */}
+              {/* 4. YOUR ACCOUNT */}
+              <div className="space-y-3">
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1 mb-3">Your Account</h3>
+                <button
+                  onClick={() => {
+                    onProfileClick?.();
+                    setShowMenu(false);
+                  }}
+                  className="w-full bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    <User className="w-5 h-5 text-primary" strokeWidth={2} />
+                    <span className="text-white font-black text-xs uppercase tracking-tight">My Profile</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-600" />
+                </button>
+
+                <div className="bg-surface/30 border border-white/5 rounded-xl p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Bell className="w-4 h-4 text-slate-500" />
+                      <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">Nightly Buzz</span>
+                    </div>
+                    <button
+                      onClick={() => setAlertPrefs({ ...alertPrefs, nightlyDigest: !alertPrefs.nightlyDigest })}
+                      className={`w-10 h-5 rounded-full p-1 transition-colors ${alertPrefs.nightlyDigest ? 'bg-primary' : 'bg-slate-700'}`}
+                    >
+                      <div className={`w-3 h-3 bg-black rounded-full transition-transform ${alertPrefs.nightlyDigest ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                    <div className="flex items-center gap-3">
+                      <Bell className="w-4 h-4 text-slate-500" />
+                      <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">Weekly Buzz</span>
+                    </div>
+                    <button
+                      onClick={() => setAlertPrefs({ ...alertPrefs, weeklyDigest: !alertPrefs.weeklyDigest })}
+                      className={`w-10 h-5 rounded-full p-1 transition-colors ${alertPrefs.weeklyDigest ? 'bg-primary' : 'bg-slate-700'}`}
+                    >
+                      <div className={`w-3 h-3 bg-black rounded-full transition-transform ${alertPrefs.weeklyDigest ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. FAVORITE SPOTS */}
               <div className="space-y-3">
                 <h3 className="text-primary font-black flex items-center gap-2 uppercase tracking-widest text-[10px] font-league px-1">
                   <Star className="w-3.5 h-3.5" strokeWidth={3} /> FAVORITE SPOTS
                 </h3>
-                <div className="bg-surface/30 border border-white/5 rounded-lg overflow-hidden divide-y divide-white/5">
+                <div className="bg-surface/30 border border-white/5 rounded-xl overflow-hidden divide-y divide-white/5">
                   {venues.map((venue) => {
                     const isFav = alertPrefs.followedVenues?.includes(venue.id);
                     return (
@@ -314,35 +412,22 @@ export const AppShell: React.FC<AppShellProps> = ({
                   })}
                 </div>
               </div>
-
-              {/* 5. ALERT PREFS QUICK TOGGLE */}
-              <div className="bg-surface border border-white/10 p-4 rounded-lg space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest font-league">Nightly Buzz</span>
-                  <button
-                    onClick={() => setAlertPrefs({ ...alertPrefs, nightlyDigest: !alertPrefs.nightlyDigest })}
-                    className={`w-10 h-5 rounded-full p-1 transition-colors ${alertPrefs.nightlyDigest ? 'bg-primary' : 'bg-slate-700'}`}
-                  >
-                    <div className={`w-3 h-3 bg-black rounded-full transition-transform ${alertPrefs.nightlyDigest ? 'translate-x-5' : 'translate-x-0'}`} />
-                  </button>
-                </div>
-              </div>
             </div>
 
-            {/* 6. SIDEBAR FOOTER: ADMIN & PROFILE */}
+            {/* 6. SIDEBAR FOOTER: ADMIN & LEGAL */}
             <div className="p-4 bg-black border-t border-white/10 space-y-3">
-              <button
-                onClick={() => {
-                  onProfileClick?.();
-                  setShowMenu(false);
-                }}
-                className="w-full bg-primary border-2 border-black p-4 flex items-center justify-between group rounded-md shadow-[4px_4px_0px_0px_#000] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000] transition-all"
-              >
-                <span className="text-black font-black text-sm uppercase tracking-wider font-league">
-                  MY PROFILE
-                </span>
-                <User className="w-5 h-5 text-black" strokeWidth={3} />
-              </button>
+              {/* ADMIN DASHBOARD (Conditional) */}
+              {userRole === 'super-admin' && (
+                <button
+                  onClick={() => handleMenuNavigation('/admin')}
+                  className="w-full bg-red-900/20 border border-red-500/30 p-3 flex items-center justify-between group rounded-md hover:bg-red-900/40 transition-all"
+                >
+                  <span className="text-red-500 font-black text-[10px] uppercase tracking-widest font-league">
+                    ADMIN DASHBOARD
+                  </span>
+                  <Lock className="w-4 h-4 text-red-500" />
+                </button>
+              )}
 
               <button
                 onClick={() => {
@@ -365,6 +450,15 @@ export const AppShell: React.FC<AppShellProps> = ({
           </div>
         </div>
       )}
+
+      {/* Santa Artie Festive FAB */}
+      <ArtieHoverIcon onClick={() => setShowArtie(true)} />
+
+      {/* Artie Chat Modal */}
+      <ArtieChatModal isOpen={showArtie} onClose={() => setShowArtie(false)} />
+
+      {/* Cookie Banner */}
+      <CookieBanner />
     </div>
   );
 };

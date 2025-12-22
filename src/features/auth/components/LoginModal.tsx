@@ -49,6 +49,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [weeklyBuzz, setWeeklyBuzz] = useState(true);
 
+  const [userSubMode, setUserSubMode] = useState<'login' | 'signup'>('signup');
+  const [isLoading, setIsLoading] = useState(false);
+
   const interestOptions = [
     { id: 'karaoke', label: 'Karaoke', icon: '🎤' },
     { id: 'trivia', label: 'Trivia', icon: '🧠' },
@@ -58,11 +61,38 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handleUserLogin = async () => {
+    if (!email.includes('@')) { alert('Please enter a valid email.'); return; }
+    if (!password) { alert('Please enter your password.'); return; }
+
+    setIsLoading(true);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const uid = userCredential.user.uid;
+      const profileSnap = await getDoc(doc(db, 'users', uid));
+
+      if (profileSnap.exists()) {
+        const profileData = profileSnap.data() as UserProfile;
+        setUserProfile(profileData);
+        onClose();
+        alert(`Welcome back, ${profileData.handle || 'Legend'}!`);
+      } else {
+        alert('Profile not found. Please register.');
+        setUserSubMode('signup');
+      }
+    } catch (error: any) {
+      alert(`Login Failed: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const saveUser = async () => {
     if (!handle.trim()) { alert('You need a Handle for the League!'); return; }
     if (!email.includes('@')) { alert('Please enter a valid email.'); return; }
     if (password.length < 6) { alert('Password must be at least 6 characters.'); return; }
 
+    setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
@@ -138,41 +168,64 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           {loginMode === 'user' ? (
             <div className="space-y-4">
               <div className="text-center">
-                <h3 className="text-xl font-bold uppercase">Create OlyBars ID</h3>
-                <p className="text-[10px] text-slate-400 uppercase">Save favorites & earn points</p>
+                <h3 className="text-xl font-bold uppercase">{userSubMode === 'signup' ? 'Create OlyBars ID' : 'Login to OlyBars'}</h3>
+                <p className="text-[10px] text-slate-400 uppercase">{userSubMode === 'signup' ? 'Save favorites & earn points' : 'Level up your night'}</p>
               </div>
-              <div className="relative">
-                <Hash className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                <input type="text" value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="Handle" className={inputClasses} />
-              </div>
+
+              {userSubMode === 'signup' && (
+                <div className="relative">
+                  <Hash className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                  <input type="text" value={handle} onChange={(e) => setHandle(e.target.value)} placeholder="Handle" className={inputClasses} />
+                </div>
+              )}
+
               <div className="relative">
                 <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className={inputClasses} />
               </div>
+
               <div className="relative">
                 <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className={inputClasses} />
               </div>
 
-              <div className="pt-4 border-t border-slate-700 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase">Join League?</span>
-                  <button onClick={() => setJoinLeague(!joinLeague)} className={`w-10 h-5 rounded-full p-1 ${joinLeague ? 'bg-primary' : 'bg-slate-700'}`}>
-                    <div className={`w-3 h-3 bg-white rounded-full transition-transform ${joinLeague ? 'translate-x-5' : 'translate-x-0'}`} />
-                  </button>
-                </div>
-                {joinLeague && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {interestOptions.map(opt => (
-                      <button key={opt.id} onClick={() => setSelectedInterests(prev => prev.includes(opt.id) ? prev.filter(i => i !== opt.id) : [...prev, opt.id])}
-                        className={`p-2 border rounded text-[10px] font-bold uppercase ${selectedInterests.includes(opt.id) ? 'bg-primary text-black' : 'border-slate-700 text-slate-400'}`}>
-                        {opt.label}
-                      </button>
-                    ))}
+              {userSubMode === 'signup' && (
+                <div className="pt-4 border-t border-slate-700 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase">Join League?</span>
+                    <button onClick={() => setJoinLeague(!joinLeague)} className={`w-10 h-5 rounded-full p-1 ${joinLeague ? 'bg-primary' : 'bg-slate-700'}`}>
+                      <div className={`w-3 h-3 bg-white rounded-full transition-transform ${joinLeague ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
                   </div>
-                )}
+                  {joinLeague && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {interestOptions.map(opt => (
+                        <button key={opt.id} onClick={() => setSelectedInterests(prev => prev.includes(opt.id) ? prev.filter(i => i !== opt.id) : [...prev, opt.id])}
+                          className={`p-2 border rounded text-[10px] font-bold uppercase ${selectedInterests.includes(opt.id) ? 'bg-primary text-black' : 'border-slate-700 text-slate-400'}`}>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button
+                onClick={userSubMode === 'signup' ? saveUser : handleUserLogin}
+                disabled={isLoading}
+                className="w-full bg-primary text-black font-bold py-3 rounded mt-4 uppercase disabled:opacity-50"
+              >
+                {isLoading ? 'Processing...' : userSubMode === 'signup' ? 'Create Account' : 'Login'}
+              </button>
+
+              <div className="text-center pt-2">
+                <button
+                  onClick={() => setUserSubMode(userSubMode === 'signup' ? 'login' : 'signup')}
+                  className="text-[10px] text-slate-500 hover:text-primary uppercase font-bold"
+                >
+                  {userSubMode === 'signup' ? 'Already have an account? Login' : 'Need an account? Sign Up'}
+                </button>
               </div>
-              <button onClick={saveUser} className="w-full bg-primary text-black font-bold py-3 rounded mt-4 uppercase">Create Account</button>
             </div>
           ) : (
             <div className="space-y-4">
@@ -187,25 +240,27 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               </div>
               <button onClick={handleOwnerLogin} className="w-full bg-slate-800 text-white font-bold py-3 rounded mt-4 uppercase">Login</button>
 
-              <div className="pt-8 border-t border-slate-700">
-                <button
-                  onClick={async () => {
-                    const secret = prompt("Enter Master Setup Key:");
-                    if (secret) {
-                      try {
-                        const { setupAdmin } = await import('../../../services/userService');
-                        const res = await setupAdmin(ownerEmail || email, secret);
-                        alert(res.message);
-                      } catch (e: any) {
-                        alert(e.message);
+              {userProfile.role !== 'super-admin' && (
+                <div className="pt-8 border-t border-slate-700">
+                  <button
+                    onClick={async () => {
+                      const secret = prompt("Enter Master Setup Key:");
+                      if (secret) {
+                        try {
+                          const { setupAdmin } = await import('../../../services/userService');
+                          const res = await setupAdmin(ownerEmail || email, secret, ownerPassword || password);
+                          alert(res.message);
+                        } catch (e: any) {
+                          alert(e.message);
+                        }
                       }
-                    }
-                  }}
-                  className="text-[9px] text-slate-500 hover:text-primary uppercase font-black tracking-widest transition-colors w-full text-center"
-                >
-                  [ Initialize Master Admin ]
-                </button>
-              </div>
+                    }}
+                    className="text-[9px] text-slate-500 hover:text-primary uppercase font-black tracking-widest transition-colors w-full text-center"
+                  >
+                    [ Initialize Master Admin ]
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

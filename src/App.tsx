@@ -22,7 +22,7 @@ import { AppShell } from './components/layout/AppShell';
 import { BuzzScreen } from './features/venues/screens/BuzzScreen';
 import { KaraokeScreen } from './features/league/screens/KaraokeScreen';
 import { TriviaScreen } from './features/league/screens/TriviaScreen';
-import { ArcadeScreen } from './features/league/screens/ArcadeScreen';
+import { LiveMusicScreen } from './features/league/screens/LiveMusicScreen';
 import { EventsScreen } from './features/league/screens/EventsScreen';
 import { VenuesScreen } from './features/venues/screens/VenuesScreen';
 import TheSpotsScreen from './features/venues/screens/TheSpotsScreen';
@@ -30,7 +30,6 @@ import { LoginModal } from './features/auth/components/LoginModal';
 import { OwnerDashboardScreen } from './features/owner/screens/OwnerDashboardScreen';
 import { ClockInModal } from './features/venues/components/ClockInModal';
 import { OnboardingModal } from './components/ui/OnboardingModal';
-import { CookieBanner } from './components/ui/CookieBanner';
 
 // --- UTILS & HELPERS ---
 import { cookieService } from './services/cookieService';
@@ -43,8 +42,10 @@ import { LeagueHQScreen } from './features/league/screens/LeagueHQScreen';
 import TermsScreen from './features/marketing/screens/TermsScreen';
 import PrivacyScreen from './features/marketing/screens/PrivacyScreen';
 import FAQScreen from './features/marketing/screens/FAQScreen';
+import { AdminDashboardScreen } from './features/admin/screens/AdminDashboardScreen';
+import UserProfileScreen from './features/profile/screens/UserProfileScreen';
+import { VenueProfileScreen } from './features/venues/screens/VenueProfileScreen';
 
-const LiveMusicScreen = () => <div className="p-4 text-white">LIVE MUSIC (WIP)</div>;
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
   if (!infoContent) return null;
@@ -222,7 +223,7 @@ export default function OlyBarsApp() {
 
   const handleAcceptTerms = () => {
     cookieService.set('oly_terms', 'true');
-    cookieService.set('oly_cookies', 'true');
+    // We don't set oly_cookies here automatically so the banner shows up separately
     setHasAcceptedTerms(true);
   };
 
@@ -258,13 +259,18 @@ export default function OlyBarsApp() {
                     alertPrefs={alertPrefs}
                     setAlertPrefs={setAlertPrefs}
                     onProfileClick={() => {
-                      setLoginMode('user');
-                      setShowLoginModal(true);
+                      if (userProfile.uid === 'guest') {
+                        setLoginMode('user');
+                        setShowLoginModal(true);
+                      } else {
+                        window.location.href = '/profile';
+                      }
                     }}
                     onOwnerLoginClick={() => {
                       setLoginMode('owner');
                       setShowLoginModal(true);
                     }}
+                    userRole={userProfile.role}
                   />
                 }
               >
@@ -289,18 +295,48 @@ export default function OlyBarsApp() {
                     )
                   }
                 />
-                <Route path="live" element={<LiveMusicScreen />} />
                 <Route path="karaoke" element={<KaraokeScreen venues={venues} />} />
                 <Route path="trivia" element={<TriviaScreen venues={venues} />} />
-                <Route path="arcade" element={<ArcadeScreen venues={venues} />} />
+                <Route path="live" element={<LiveMusicScreen venues={venues} />} />
                 <Route path="events" element={<EventsScreen venues={venues} />} />
-                <Route path="league" element={<LeagueHQScreen venues={venues} />} />
+                <Route path="league" element={<LeagueHQScreen venues={venues} isLeagueMember={userProfile.role !== 'guest'} />} />
                 <Route path="bars" element={<TheSpotsScreen venues={venues} />} />
                 <Route path="map" element={<MapScreen />} />
                 <Route path="more" element={<MoreScreen userProfile={userProfile} setUserProfile={setUserProfile} />} />
+                <Route
+                  path="venues/:id"
+                  element={
+                    <VenueProfileScreen
+                      venues={venues}
+                      userProfile={userProfile}
+                      handleClockIn={handleClockIn}
+                      handleVibeCheck={handleVibeCheck}
+                      clockedInVenue={clockedInVenue}
+                    />
+                  }
+                />
+                <Route
+                  path="profile"
+                  element={
+                    userProfile.uid !== 'guest'
+                      ? <UserProfileScreen userProfile={userProfile} setUserProfile={setUserProfile} venues={venues} />
+                      : <div className="p-10 text-center font-black text-primary uppercase tracking-widest">
+                        Access Denied: Please Login to View Your League ID
+                        <button onClick={() => setShowLoginModal(true)} className="block mx-auto mt-4 px-6 py-2 bg-primary text-black rounded-lg">Login</button>
+                      </div>
+                  }
+                />
                 <Route path="terms" element={<TermsScreen />} />
                 <Route path="privacy" element={<PrivacyScreen />} />
                 <Route path="faq" element={<FAQScreen />} />
+                <Route
+                  path="admin"
+                  element={
+                    userProfile.role === 'super-admin'
+                      ? <AdminDashboardScreen userProfile={userProfile} />
+                      : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
+                  }
+                />
               </Route>
             </Routes>
 
@@ -341,10 +377,9 @@ export default function OlyBarsApp() {
             )}
 
             <InfoPopup infoContent={infoContent} setInfoContent={setInfoContent} />
-            <CookieBanner />
           </div>
         </Router>
       </QueryClientProvider>
-    </ErrorBoundary>
+    </ErrorBoundary >
   );
 }

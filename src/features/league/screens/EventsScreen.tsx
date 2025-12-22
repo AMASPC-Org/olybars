@@ -12,10 +12,20 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
 
   return (
     <div className="bg-background text-white min-h-screen p-4 font-body">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-black text-primary tracking-wider font-league uppercase">EVENT WIRE</h1>
-        <p className="text-sm font-bold text-slate-300 uppercase italic">Citywide Feeds</p>
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex-1" />
+        <div className="text-center flex-1">
+          <h1 className="text-3xl font-black text-primary tracking-wider font-league uppercase">EVENTS</h1>
+          <p className="text-sm font-bold text-slate-300 uppercase italic">Citywide Feeds</p>
+        </div>
+        <div className="flex-1 flex justify-end">
+          <button
+            onClick={() => alert("Post to the Wire is coming soon!")}
+            className="bg-primary/10 border border-primary/20 p-2 rounded-xl text-primary hover:bg-primary/20 transition-all"
+          >
+            <Plus className="w-5 h-5" strokeWidth={3} />
+          </button>
+        </div>
       </div>
 
       {/* Featured Event Card */}

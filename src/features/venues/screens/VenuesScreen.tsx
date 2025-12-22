@@ -1,5 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Search, MapPin, Beer, Trophy, Music, Clock as ClockIcon, Sparkles, ChevronRight, Navigation, Users } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import {
+    Beer, Bot, ChevronRight, Clock, Crown, Filter, Flame, MapPin, Music, Navigation, Search, Sparkles, Star, Trophy, Users
+} from 'lucide-react';
 import { Venue } from '../../../types';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
@@ -16,6 +19,7 @@ interface VenuesScreenProps {
 type SortOption = 'alpha' | 'distance' | 'energy';
 
 export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCheck, lastVibeChecks, lastGlobalVibeCheck }) => {
+    const navigate = useNavigate();
     const { coords } = useGeolocation();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeSort, setActiveSort] = useState<SortOption>('alpha');
@@ -137,7 +141,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                             onClick={() => setShowOpenOnly(!showOpenOnly)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider border transition-all ${showOpenOnly ? 'bg-green-500/20 text-green-400 border-green-500' : 'bg-transparent text-slate-500 border-slate-800'}`}
                         >
-                            <ClockIcon size={12} />
+                            <Clock size={12} />
                             Open Now
                         </button>
                     </div>
@@ -161,9 +165,11 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <h3 className="text-2xl font-black text-white font-league uppercase italic leading-none group-hover:text-primary transition-colors">
-                                                {venue.name}
-                                            </h3>
+                                            <Link to={`/venues/${venue.id}`} className="hover:text-primary transition-colors">
+                                                <h3 className="text-2xl font-black text-white font-league uppercase italic leading-none group-hover:text-primary transition-colors">
+                                                    {venue.name}
+                                                </h3>
+                                            </Link>
                                             {venue.isFeatured && (
                                                 <div className="bg-primary px-2 py-0.5 rounded transform -skew-x-12">
                                                     <span className="text-black text-[8px] font-black uppercase italic">FEATURED</span>
@@ -276,7 +282,10 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                                 })()}
                                             </button>
 
-                                            <button className="text-primary text-[10px] font-black uppercase tracking-[0.2em] font-league italic hover:underline flex items-center gap-1">
+                                            <button
+                                                onClick={() => navigate(`/venues/${venue.id}`)}
+                                                className="text-primary text-[10px] font-black uppercase tracking-[0.2em] font-league italic hover:underline flex items-center gap-1"
+                                            >
                                                 View <ChevronRight size={12} />
                                             </button>
                                         </div>

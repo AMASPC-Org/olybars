@@ -15,7 +15,7 @@ export interface Venue {
     score: number;
     lastUpdated: number;
   };
-  leagueEvent?: 'karaoke' | 'trivia' | 'arcade' | 'events' | 'openmic' | 'bingo' | null;
+  leagueEvent?: 'karaoke' | 'trivia' | 'arcade' | 'events' | 'openmic' | 'bingo' | 'live_music' | null;
   isHQ?: boolean;
   happyHour?: {
     startTime: string;
@@ -94,14 +94,15 @@ export interface ActivityLogItem {
   metadata?: any;
 }
 
-export type UserRole = 'guest' | 'user' | 'manager' | 'owner' | 'admin';
+export type UserRole = 'guest' | 'user' | 'manager' | 'owner' | 'admin' | 'super-admin';
 
 export interface UserProfile {
   uid: string;
   handle?: string;
   email?: string;
   phone?: string;
-  favoriteDrink?: string;
+  favoriteDrink?: string; // Legacy
+  favoriteDrinks?: string[];
   homeBase?: string;
   role: UserRole;
   lastVibeChecks?: Record<string, number>;
@@ -111,4 +112,7 @@ export interface UserProfile {
     lifetimeCheckins: number;
     currentStreak: number;
   };
+  handleLastChanged?: number;
+  leaguePreferences?: string[];
+  weeklyBuzz?: boolean;
 }

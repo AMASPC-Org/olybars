@@ -1,4 +1,4 @@
-﻿---
+---
 description: Mandatory steps for deploying changes to OlyBars environments.
 ---
 

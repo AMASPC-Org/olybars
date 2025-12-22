@@ -25,7 +25,7 @@ const MoreScreen: React.FC<MoreScreenProps> = ({ userProfile, setUserProfile }) 
   const isAdmin = userProfile.email === 'ryan@amaspc.com';
 
   const menuItems = [
-    { id: 'profile', label: 'My League ID', icon: User, path: '/league', color: 'text-primary' },
+    { id: 'profile', label: 'My League ID', icon: User, path: '/profile', color: 'text-primary' },
     { id: 'faq', label: 'Help & FAQ', icon: HelpCircle, path: '/faq', color: 'text-blue-400' },
     { id: 'settings', label: 'Alert Settings', icon: Settings, path: '/', color: 'text-slate-400' },
     { id: 'terms', label: 'Terms of Service', icon: Shield, path: '/terms', color: 'text-slate-400' },

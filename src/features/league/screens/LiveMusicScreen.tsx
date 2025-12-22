@@ -1,64 +1,84 @@
 import React from 'react';
-import { Music, Ticket, Bell, Play } from 'lucide-react';
+import { Music, Calendar, MapPin, Plus } from 'lucide-react';
+import { Venue } from '../../../types';
 
-export const LiveMusicScreen: React.FC = () => {
+interface LiveMusicScreenProps {
+    venues: Venue[];
+}
+
+export const LiveMusicScreen: React.FC<LiveMusicScreenProps> = ({ venues }) => {
+    const musicVenues = venues.filter(v => v.leagueEvent === 'live_music' || v.type.toLowerCase().includes('music'));
+
     return (
-        <div className="bg-background text-white min-h-screen p-4 font-body">
+        <div className="bg-background text-white min-h-screen p-4 font-sans space-y-6">
             {/* Header */}
-            <div className="text-center mb-6">
-                <h1 className="text-3xl font-black text-primary tracking-wider font-league uppercase">LIVE STAGE</h1>
-                <p className="text-sm font-bold text-slate-300 uppercase italic">Support Oly Local Music</p>
+            <div className="text-center mb-8">
+                <h1 className="text-3xl font-black text-primary tracking-wider font-league uppercase">LIVE MUSIC CIRCUIT</h1>
+                <p className="text-sm font-bold text-slate-300 uppercase italic">The Sound of the South Sound</p>
             </div>
 
-            {/* Featured Headliner */}
-            <div className="bg-surface rounded-lg border border-slate-700 shadow-[4px_4px_0px_0px_#000] p-5 mb-6 overflow-hidden relative">
-                <div className="absolute top-0 right-0 bg-primary text-black text-[10px] font-black px-3 py-1 uppercase tracking-widest font-league">
-                    HEADLINER
-                </div>
-
-                <div className="flex items-center justify-between mb-4 mt-2">
-                    <div>
-                        <h2 className="text-2xl font-black text-white font-league uppercase leading-none">THE OLYMPIANS</h2>
-                        <p className="text-xs text-slate-400 font-bold uppercase mt-1">WELL 80 STAGE @ 8:00 PM</p>
+            {/* Submit CTA */}
+            <div className="bg-primary/5 border-2 border-dashed border-primary/30 rounded-2xl p-6 text-center space-y-4">
+                <div className="flex justify-center">
+                    <div className="bg-primary p-3 rounded-full shadow-lg shadow-primary/20">
+                        <Music className="w-6 h-6 text-black" strokeWidth={3} />
                     </div>
                 </div>
-
-                <p className="text-xs text-slate-300 mb-6 leading-relaxed">
-                    Local psych-rock legends returning for a one-night-only artesian well benefit show. Limited capacity!
-                </p>
-
-                {/* Action Buttons */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                    <button className="bg-primary hover:bg-yellow-400 text-black font-black py-4 rounded-md transition-all flex items-center justify-center gap-2 font-league uppercase border-2 border-black shadow-[3px_3px_0px_0px_#000]">
-                        <Ticket size={18} strokeWidth={3} /> BUY TICKETS
-                    </button>
-                    <button className="bg-slate-700 hover:bg-slate-600 text-white font-black py-4 rounded-md transition-all flex items-center justify-center gap-2 font-league uppercase border-2 border-black shadow-[3px_3px_0px_0px_#000]">
-                        <Bell size={18} strokeWidth={3} /> NOTIFY ME
-                    </button>
+                <div>
+                    <h3 className="text-lg font-black text-white font-league uppercase">Got a Gig?</h3>
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-tight mt-1">Submit your band or venue to the official OlyBars circuit.</p>
                 </div>
-
-                <div className="bg-background/40 p-3 border border-white/5 rounded-md flex items-center gap-3">
-                    <Play size={18} className="text-primary fill-primary" />
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider underline cursor-pointer">Listen to Latest Single</span>
-                </div>
+                <button
+                    onClick={() => alert("Feature coming soon! For now, contact Artie to request a listing.")}
+                    className="w-full bg-primary text-black font-black py-3 rounded-xl uppercase tracking-widest text-xs font-league border-2 border-black shadow-[4px_4px_0px_0px_#000] active:translate-y-[2px] active:shadow-none transition-all"
+                >
+                    <Plus className="inline-block w-4 h-4 mr-2" strokeWidth={3} /> Submit Band/Gig
+                </button>
             </div>
 
-            {/* Upcoming Shows */}
-            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 font-league">UPCOMING SHOWS</h3>
-            <div className="space-y-3">
-                {[
-                    { band: "SALTWATER TATTOO", venue: "THE BROHO", date: "SAT 12/28", price: "$10" },
-                    { band: "DOWNTOWN DIRT", venue: "HANNAH'S", date: "SUN 12/29", price: "FREE" }
-                ].map((show, i) => (
-                    <div key={i} className="bg-surface/50 border border-white/5 p-4 flex justify-between items-center rounded-lg group hover:border-primary transition-colors cursor-pointer">
-                        <div>
-                            <span className="block text-white font-black text-sm font-league uppercase group-hover:text-primary transition-colors">{show.band}</span>
-                            <span className="text-[10px] text-slate-500 font-bold uppercase">{show.venue} • {show.date}</span>
+            {/* Main Content Area */}
+            {musicVenues.length > 0 ? (
+                <div className="space-y-4">
+                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest px-1 font-league">ACTIVE STAGES</h3>
+                    {musicVenues.map(venue => (
+                        <div
+                            key={venue.id}
+                            className="bg-surface rounded-2xl border border-slate-700/50 shadow-xl overflow-hidden group hover:border-primary/50 transition-colors"
+                        >
+                            <div className="p-4">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 className="text-xl font-black text-white font-league uppercase">{venue.name}</h3>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <MapPin className="w-3 h-3 text-primary" />
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{venue.type}</p>
+                                        </div>
+                                    </div>
+                                    <div className="bg-slate-900 p-2 rounded-xl group-hover:bg-primary/10 transition-colors">
+                                        <Music className="w-5 h-5 text-primary" strokeWidth={3} />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <div className="flex-1 bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/5">
+                                        <p className="text-[9px] text-primary font-black uppercase mb-1">Coming Up</p>
+                                        <p className="text-xs font-bold text-white uppercase italic">{venue.deal || "Local Showcase @ 8PM"}</p>
+                                    </div>
+                                    <button className="bg-slate-800 p-3 rounded-xl border border-slate-700 hover:border-primary transition-colors group">
+                                        <Calendar className="w-4 h-4 text-slate-400 group-hover:text-primary" />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <span className="bg-slate-900 border border-white/10 px-3 py-1 rounded text-[10px] font-black font-league text-slate-300 uppercase">{show.price}</span>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center p-12 bg-slate-900 border-2 border-dashed border-slate-800 rounded-3xl">
+                    <Music className="w-12 h-12 text-slate-700 mx-auto mb-4" strokeWidth={1.5} />
+                    <p className="text-slate-500 font-black uppercase font-league tracking-widest">No Active Circuits Found</p>
+                    <p className="text-[10px] text-slate-600 font-bold uppercase mt-2">Check back during the weekend!</p>
+                </div>
+            )}
         </div>
     );
 };

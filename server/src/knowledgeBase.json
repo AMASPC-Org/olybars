@@ -1,27 +1,31 @@
 {
     "faq": [
         {
-            "question": "What is the Olympia Bar League?",
-            "answer": "The OlyBars League (OBL) is a community of nightlife enthusiasts in Olympia, WA. Members earn points by checking in to local bars, participating in events like Karaoke and Trivia, and helping others find the 'Pulse' of the city."
+            "question": "How do I join the League?",
+            "answer": "Head to the LEAGUE HQ tab and look for the 'Join the League' CTA. You'll need to create a Handle and set your drink preferences to start earning point for glory and free beer."
         },
         {
-            "question": "How do I earn points?",
-            "answer": "You earn 10 points for every 'Clock In' (once per venue per 12 hours), 10 points for uploading a 'Vibe Photo', and 5 points for sharing a deal. Bonus points are often available during special League events!"
+            "question": "Why can't I check in?",
+            "answer": "Check-ins are limited to 2 per 12-hour window per WA State LCB alignment. Check-ins also require you to be within 100 meters of the venue (measured via GPS)."
         },
         {
-            "question": "What can I do with points?",
-            "answer": "Points determine your rank on the OlyBars Leaderboard. At the end of each season (Dec 31 and June 30), the top-ranked members win exclusive prizes, including 'Well 80' gift cards and rare OlyBars merch."
+            "question": "What is 'Buzzing'?",
+            "answer": "When a venue receives multiple Vibe Checks or Check-ins within a short period, it turns Gold on the map, indicating it is currently high-energy."
         },
         {
-            "question": "What is the 'Pulse'?",
-            "answer": "The Pulse is our real-time vibe-meter. 'Chill' means quiet, 'Lively' means there is a good crowd, and 'Buzzing' means the place is hopping!"
+            "question": "How do I change my Handle?",
+            "answer": "You can update your Handle once every 30 days in your Profile settings. This ensures League integrity and leaderboard consistency."
         },
         {
-            "question": "How do I join a venue as an owner?",
-            "answer": "If you own a bar in Olympia and want to join the Pulse, use the 'Venue Admin Login' in the main menu or contact us at owners@olybars.com."
+            "question": "Is my data secure?",
+            "answer": "OlyBars uses Firebase Auth and Firestore for secure identity management. We only log actions required for points calculation and league standings."
         },
         {
-            "question": "Is Artie a real person?",
+            "question": "Where do I find Live Music?",
+            "answer": "Check the LIVE tab (Navigation Bar) for a dedicated gig guide and submission portal for local bands."
+        },
+        {
+            "question": "What is Artie?",
             "answer": "Artie is OlyBars' AI concierge, powered by the spirit of the Artesian Well and Well 80 Brewhouse. He's here 24/7 to help you find the best well drinks and vibes in town."
         }
     ],

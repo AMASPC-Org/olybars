@@ -30,5 +30,11 @@ We don't give away beer; we give away **League Bucks** (Generic Gift Cards).
 - **Compliance**: A gift card is a legal financial instrument, not "free booze."
 - **Brand Professionalism**: This protects our brand and our partners from "Free Alcohol" advertising violations while providing users with flexible rewards.
 
+### 4. The "Equal Exposure" Algorithmic Fallback
+To solve the problem of "empty state" friction, we've implemented a deterministic rotation fallback.
+- **Exposure Equity**: When a user filters by a vibe that currently has no matching venues, we display a "League Spotlight" list. 
+- **The 5-Minute Shift**: Every 5 minutes, the spotlight order shifts by one bar. This ensures that even if a filter is empty, every partner venue receives equal exposure at the top of the list throughout the day.
+- **Engagement Continuity**: By removing empty results, we keep users in the "engagement loop" and provide predictable value to bar owners, regardless of real-time crowd data.
+
 ## The Bottom Line
 OlyBars is now the only nightlife platform in the region with **Law-as-Code** integrated directly into the deployment pipeline. We have automated the complex legal requirements and sharpened the brand focus, making the league safer to run, easier to audit, and more valuable for our bar owners.

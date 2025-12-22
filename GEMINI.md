@@ -3,7 +3,7 @@
 ## Overview
 **Project:** OlyBars (Olympia Bar League Management)
 **Context:** Part of the `ama-agentic-ecosystem`
-**Primary Objective:** Optimization of OlyBars.com - The "Nightlife Operating System" for Olympia, WA.
+**Primary Objective:** Optimization of OlyBars.com - The "Artesian Bar League Manual" for Olympia, WA.
 
 ## Tech Stack
 - **Frontend:** React (v18+), Vite, TypeScript
@@ -17,6 +17,14 @@
 Governance and operational rules are strictly defined in the `.agent/rules/` directory.
 - See [.agent/rules/olybars-tech-constitution.md](.agent/rules/olybars-tech-constitution.md) for core technical rules.
 - See [.agent/rules/olybars-release-guardrails.md](.agent/rules/olybars-release-guardrails.md) for deployment and release procedures.
+- See [.agent/rules/full-stack-integrity.md](.agent/rules/full-stack-integrity.md) for systemic autonomy guardrails.
+- See [.agent/rules/state-aware-discovery.md](.agent/rules/state-aware-discovery.md) for feature cataloging and dependency auditing.
+- See [.agent/rules/contextual-ux-logic.md](.agent/rules/contextual-ux-logic.md) for state-aware UI variation logic.
+
+## Admin Hierarchy
+- **Super-Admin**: `ryan@amaspc.com` has global access to system health, user management, and secret management.
+- **Access**: Protected route at `/admin` requires `super-admin` role in Firestore.
+- **Setup**: Elevate users via the `/api/admin/setup-super` endpoint with the `MASTER_SETUP_KEY`.
 
 ## Mandatory Pre-Commit Procedures
 To maintain legal compliance and project stability, the following checks must be performed by the agent before proposing any code changes:

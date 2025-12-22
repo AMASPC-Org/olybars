@@ -1,7 +1,13 @@
 import { Message } from '../types';
 
 const VITE_API_URL = import.meta.env.VITE_API_URL;
-const API_BASE_URL = (VITE_API_URL || 'https://olybars-backend-juthzlaerq-uw.a.run.app') + '/api';
+const isDev = import.meta.env.MODE === 'development';
+
+// Force local relay in dev mode to avoid CORS/connection issues with production backend
+const API_BASE_URL = isDev
+  ? 'http://localhost:3000/api'
+  : (VITE_API_URL || 'https://olybars-backend-juthzlaerq-uw.a.run.app/api');
+
 console.log('[Artie] Environment:', import.meta.env.MODE);
 console.log('[Artie] Connecting to:', API_BASE_URL);
 

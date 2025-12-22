@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, Music, Trophy, Star } from 'lucide-react';
+import { Mic, Music, Trophy, Star, Plus } from 'lucide-react';
 import { Venue } from '../../../types';
 
 interface KaraokeScreenProps {
@@ -94,6 +94,17 @@ export const KaraokeScreen: React.FC<KaraokeScreenProps> = ({ venues }) => {
                     </div>
                 </>
             )}
+
+            {/* Submit CTA */}
+            <div className="mt-12 bg-primary/5 border-2 border-dashed border-primary/20 rounded-2xl p-6 text-center">
+                <p className="text-xs text-slate-400 font-bold uppercase mb-4 tracking-widest">Missing a Night?</p>
+                <button
+                    onClick={() => alert("Registration for new Karaoke nights is coming soon! Contact Artie for now.")}
+                    className="w-full bg-slate-800 text-primary font-black py-4 rounded-xl uppercase tracking-widest text-sm font-league border-2 border-primary shadow-[4px_4px_0px_0px_rgba(251,191,36,0.2)]"
+                >
+                    <Plus className="inline-block w-4 h-4 mr-2" /> Add Karaoke Night
+                </button>
+            </div>
         </div>
     );
 };

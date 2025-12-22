@@ -1,6 +1,6 @@
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { UserAlertPreferences, CheckInRecord } from '../types';
+import { UserAlertPreferences, CheckInRecord, UserProfile } from '../types';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
 
@@ -99,12 +99,12 @@ export const syncCheckIns = async (userId: string, history: CheckInRecord[]) => 
   }
 };
 
-export const setupAdmin = async (email: string, secretKey: string) => {
+export const setupAdmin = async (email: string, secretKey: string, password?: string) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/promote`, {
+    const response = await fetch(`${API_BASE_URL}/admin/setup-super`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, secretKey })
+      body: JSON.stringify({ email, secretKey, password })
     });
     if (!response.ok) {
       const error = await response.json();
@@ -113,6 +113,23 @@ export const setupAdmin = async (email: string, secretKey: string) => {
     return await response.json();
   } catch (e) {
     console.error('Admin setup error:', e);
+    throw e;
+  }
+};
+export const updateUserProfile = async (uid: string, updates: Partial<UserProfile>) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/${uid}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Update failed');
+    }
+    return await response.json();
+  } catch (e) {
+    console.error('Update profile error:', e);
     throw e;
   }
 };

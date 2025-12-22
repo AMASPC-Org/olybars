@@ -1,0 +1,8 @@
+{
+    "validationGates": [
+        ".agent/rules/state-aware-discovery.md",
+        ".agent/rules/contextual-ux-logic.md",
+        ".agent/rules/olybars-tech-constitution.md",
+        ".agent/rules/olybars-release-guardrails.md"
+    ]
+}
