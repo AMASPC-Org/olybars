@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import './services/logger'; // Initialize Google-native error tracking
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

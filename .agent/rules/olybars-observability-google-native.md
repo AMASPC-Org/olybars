@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # OlyBars Observability (Google-native; no Sentry)
 
 - Prefer Cloud Run Logs (Cloud Logging) for backend debugging; start with newest errors and include request correlation_id if present.

@@ -9,9 +9,38 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS configuration - allowing all for development/production hybrid
 app.use(cors());
 app.use(express.json());
+
+/**
+ * Structured Logging Helper for Google Cloud
+ */
+const log = (severity: string, message: string, payload: any = {}) => {
+    const logEntry = {
+        severity,
+        message,
+        timestamp: new Date().toISOString(),
+        ...payload,
+    };
+    console.log(JSON.stringify(logEntry));
+};
+
+app.use((req, res, next) => {
+    const start = Date.now();
+    const correlation_id = req.header('x-correlation-id') || `req-${Math.random().toString(36).substring(2, 11)}`;
+
+    res.on('finish', () => {
+        const latencyMs = Date.now() - start;
+        log('INFO', `${req.method} ${req.url} - ${res.statusCode}`, {
+            correlation_id,
+            route: req.route?.path || req.url,
+            status: res.statusCode,
+            latencyMs,
+            userAgent: req.get('user-agent'),
+        });
+    });
+    next();
+});
 
 /**
  * @route GET /
@@ -41,14 +70,14 @@ app.get('/health', (req, res) => {
  */
 app.get('/api/venues', async (req, res) => {
     try {
-        console.log('API Fetch: /api/venues requested');
         const venues = await fetchVenues();
-        console.log(`API Fetch success: ${venues.length} venues found`);
         res.json(venues);
     } catch (error: any) {
-        console.error('CRITICAL ERROR fetching venues:', error);
-        console.error('Stack:', error.stack);
-        res.status(500).json({ error: 'Internal Server Error', message: error.message });
+        log('ERROR', 'CRITICAL ERROR fetching venues', {
+            error: error.message,
+            stack: error.stack
+        });
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
@@ -67,7 +96,7 @@ app.post('/api/check-in', async (req, res) => {
         const result = await checkIn(venueId, userId, lat, lng);
         res.json(result);
     } catch (error: any) {
-        console.error('Check-in failed:', error.message);
+        log('WARNING', 'Check-in failed', { venueId, userId, error: error.message });
         res.status(400).json({ error: error.message });
     }
 });
@@ -86,12 +115,25 @@ app.post('/api/chat', async (req, res) => {
     try {
         const response = await getArtieResponse(message, history || []);
         res.json({ text: response });
-    } catch (error) {
-        console.error('Failed to get Artie response:', error);
+    } catch (error: any) {
+        log('ERROR', 'Failed to get Artie response', { error: error.message });
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
+/**
+ * @route POST /api/client-errors
+ * @desc Receive and log client-side errors
+ */
+app.post('/api/client-errors', (req, res) => {
+    const payload = req.body;
+    log('ERROR', `CLIENT ERROR: ${payload.message}`, {
+        ...payload,
+        source: 'client-collector'
+    });
+    res.status(204).send();
+});
+
 app.listen(PORT, () => {
-    console.log(`OlyBars Backend running on http://localhost:${PORT}`);
+    log('INFO', `OlyBars Backend running on http://localhost:${PORT}`);
 });

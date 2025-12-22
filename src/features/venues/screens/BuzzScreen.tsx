@@ -10,6 +10,19 @@ import {
   Crown,
 } from 'lucide-react';
 import { Venue, VenueStatus } from '../../../types';
+import { useGeolocation } from '../../../hooks/useGeolocation';
+
+const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 3958.8; // Radius of the Earth in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 const PulseMeter = ({ status }: { status: VenueStatus }) => {
   if (status === 'chill') {
@@ -35,7 +48,7 @@ const PulseMeter = ({ status }: { status: VenueStatus }) => {
   );
 };
 
-type FilterKind = 'status' | 'deals' | 'league' | 'all';
+type FilterKind = 'status' | 'deals' | 'league' | 'near' | 'all';
 
 const STATUS_ORDER: Record<VenueStatus, number> = {
   buzzing: 0,
@@ -53,6 +66,7 @@ export const BuzzScreen: React.FC<{
   const [filterKind, setFilterKind] = useState<FilterKind>('all');
   const [statusFilter, setStatusFilter] = useState<VenueStatus | 'all'>('all');
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const { coords } = useGeolocation();
 
   const applyFilter = (v: Venue): boolean => {
     if (filterKind === 'status') {
@@ -65,13 +79,23 @@ export const BuzzScreen: React.FC<{
     if (filterKind === 'league') {
       return !!v.leagueEvent || !!v.isHQ;
     }
-    // 'all' -> no filter
+    // 'all' and 'near' -> no filter (just change sorting)
     return true;
   };
 
-  const filteredVenues = [...venues]
+  const venuesWithDistance = venues.map(v => ({
+    ...v,
+    distance: coords ? getDistance(coords.latitude, coords.longitude, v.location.lat, v.location.lng) : null
+  }));
+
+  const filteredVenues = [...venuesWithDistance]
     .filter(applyFilter)
-    .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
+    .sort((a, b) => {
+      if (filterKind === 'near' && a.distance !== null && b.distance !== null) {
+        return a.distance - b.distance;
+      }
+      return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+    });
 
   const onClockIn = (venue: Venue) => {
     if (handleClockIn) handleClockIn(venue);
@@ -301,6 +325,11 @@ export const BuzzScreen: React.FC<{
                     <span className="text-slate-500 italic">
                       &quot;{venue.vibe}&quot;
                     </span>
+                    {venue.distance !== null && (
+                      <span className="ml-2 text-primary font-bold">
+                        • {venue.distance.toFixed(1)} mi
+                      </span>
+                    )}
                   </p>
                 </div>
 
