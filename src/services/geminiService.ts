@@ -3,10 +3,10 @@ import { Message } from '../types';
 const VITE_API_URL = import.meta.env.VITE_API_URL;
 const isDev = import.meta.env.MODE === 'development';
 
-// Force local relay in dev mode to avoid CORS/connection issues with production backend
-const API_BASE_URL = isDev
-  ? 'http://localhost:3001/api'
-  : (VITE_API_URL || 'https://olybars-backend-juthzlaerq-uw.a.run.app/api');
+const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+
+// Force local relay when running on localhost, otherwise fallback to VITE_API_URL or production
+const API_BASE_URL = (isLocalhost ? 'http://localhost:3001' : (VITE_API_URL || 'https://olybars-backend-juthzlaerq-uw.a.run.app')) + '/api';
 
 console.log('[Artie] Environment:', import.meta.env.MODE);
 console.log('[Artie] Connecting to:', API_BASE_URL);

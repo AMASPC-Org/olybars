@@ -1,12 +1,16 @@
 import React, { useState, useRef } from 'react';
-import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame } from 'lucide-react';
-import { Venue, PointsReason, VenueStatus } from '../../../types';
+import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin } from 'lucide-react';
+import { Venue, VenueStatus } from '../../../types';
+import { useGeolocation } from '../../../hooks/useGeolocation';
+import { calculateDistance } from '../../../utils/geoUtils';
 
 interface VibeCheckModalProps {
     isOpen: boolean;
     onClose: () => void;
     venue: Venue;
     onConfirm: (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string) => void;
+    clockedIn?: boolean;
+    onClockInPrompt?: () => void;
 }
 
 export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
@@ -14,6 +18,8 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     onClose,
     venue,
     onConfirm,
+    clockedIn,
+    onClockInPrompt,
 }) => {
     const [selectedStatus, setSelectedStatus] = useState<VenueStatus>(venue.status || 'chill');
     const [showCamera, setShowCamera] = useState(false);
@@ -21,11 +27,21 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     const [cameraError, setCameraError] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [allowMarketingUse, setAllowMarketingUse] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+    const { coords, loading: geoLoading, requestLocation, refresh } = useGeolocation();
+
     if (!isOpen) return null;
+
+    const currentDistance = coords && venue.location
+        ? calculateDistance(coords.latitude, coords.longitude, venue.location.lat, venue.location.lng)
+        : null;
+
+    const isAtVenue = currentDistance !== null && currentDistance <= 100;
 
     const startCamera = async () => {
         setCameraError(false);
@@ -66,12 +82,26 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     };
 
     const handleConfirm = async () => {
+        if (!isAtVenue) {
+            setErrorMessage("Coordinate Verification Failed. You must be at the venue to submit a vibe.");
+            return;
+        }
+
         setIsSubmitting(true);
-        // Simulate a small delay for "processing" feel
-        await new Promise(resolve => setTimeout(resolve, 800));
-        onConfirm(venue, selectedStatus, allowMarketingUse, capturedPhoto || undefined);
-        setIsSubmitting(false);
-        onClose();
+        setErrorMessage(null);
+
+        try {
+            await onConfirm(venue, selectedStatus, allowMarketingUse, capturedPhoto || undefined);
+            setIsSuccess(true);
+
+            if (clockedIn) {
+                setTimeout(onClose, 2000);
+            }
+        } catch (err: any) {
+            setErrorMessage(err.message || "Failed to submit vibe.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const vibeOptions: { status: VenueStatus; label: string; icon: any; color: string; desc: string }[] = [
@@ -79,6 +109,39 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
         { status: 'lively', label: 'Lively', icon: Users, color: 'text-primary', desc: 'Good energy, moderate crowd' },
         { status: 'buzzing', label: 'Buzzing', icon: Flame, color: 'text-red-500', desc: 'Packed, high energy!' },
     ];
+
+    if (isSuccess) {
+        return (
+            <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
+                <div className="bg-surface w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
+                    <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto animate-bounce">
+                        <Sparkles className="w-10 h-10 text-black" />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league italic">Vibe Submitted!</h2>
+                        <p className="text-primary font-black uppercase tracking-widest text-xs mt-1">LEAGUE XP GRANTED</p>
+                    </div>
+
+                    {!clockedIn && onClockInPrompt ? (
+                        <div className="bg-slate-900/80 p-4 rounded-xl border border-white/5 space-y-4">
+                            <p className="text-slate-300 text-sm font-bold leading-tight">
+                                Nice vibe! Since you're here, want to <span className="text-primary italic">Clock In</span> for +10 more points?
+                            </p>
+                            <button
+                                onClick={onClockInPrompt}
+                                className="w-full bg-white text-black font-black py-3 rounded-lg uppercase tracking-wider font-league hover:scale-105 transition-transform flex items-center justify-center gap-2"
+                            >
+                                <MapPin className="w-5 h-5" /> Clock In Now
+                            </button>
+                            <button onClick={onClose} className="text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white">Maybe Later</button>
+                        </div>
+                    ) : (
+                        <p className="text-slate-400 text-xs font-medium italic">Redirecting to status hub...</p>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in zoom-in-95 duration-200">
@@ -103,6 +166,20 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                 </div>
 
                 <div className="p-4 space-y-4">
+                    <div className="text-center">
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${isAtVenue ? 'text-primary' : (currentDistance !== null ? 'text-red-400' : 'text-slate-500')}`}>
+                            {geoLoading ? 'Finding you...' : (isAtVenue ? '📍 Verified At Venue' : (currentDistance !== null ? `${Math.round(currentDistance)}m FROM VENUE (TOO FAR)` : '🚶 Location Check Required'))}
+                        </p>
+                        {!isAtVenue && !geoLoading && (
+                            <button
+                                onClick={refresh}
+                                className="mt-2 text-[10px] bg-primary/20 text-primary font-black px-3 py-1 rounded-full border border-primary/30 hover:bg-primary/30 transition-all uppercase tracking-widest"
+                            >
+                                {coords ? 'Verify Again' : 'Verify My Location'}
+                            </button>
+                        )}
+                    </div>
+
                     {/* Vibe Selection */}
                     <div className="grid grid-cols-1 gap-2">
                         {vibeOptions.map((opt) => (
@@ -165,6 +242,12 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                         </div>
                     </div>
 
+                    {errorMessage && (
+                        <div className="bg-red-900/20 border border-red-800 p-3 rounded-lg text-red-200 text-xs font-bold text-center">
+                            ⚠️ {errorMessage}
+                        </div>
+                    )}
+
                     <div className="pt-2 border-t border-slate-800 flex justify-between items-center mb-2">
                         <span className="text-[10px] font-black text-slate-500 uppercase font-league tracking-widest">League Reward</span>
                         <span className="text-sm font-black text-primary uppercase font-league">
@@ -174,7 +257,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
 
                     <button
                         onClick={handleConfirm}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || (!isAtVenue && !geoLoading)}
                         className="w-full bg-primary hover:bg-yellow-400 disabled:bg-slate-700 disabled:text-slate-400 text-black font-black text-lg uppercase tracking-widest py-4 rounded-lg shadow-xl active:scale-95 transition-all font-league italic flex items-center justify-center gap-2"
                     >
                         {isSubmitting ? (

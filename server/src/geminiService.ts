@@ -8,7 +8,10 @@ import kb from './knowledgeBase.json';
 const PROJECT_ID = 'ama-ecosystem-prod';
 const LOCATION = 'us-west1';
 
+const GEMINI_API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+
 const client = new GoogleGenAI({
+    apiKey: GEMINI_API_KEY,
     project: PROJECT_ID,
     location: LOCATION,
 });

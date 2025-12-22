@@ -2,7 +2,8 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { UserAlertPreferences, CheckInRecord, UserProfile } from '../types';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
+const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+const API_BASE_URL = (isLocalhost ? 'http://localhost:3001' : (import.meta.env.VITE_API_URL || 'https://olybars-backend-juthzlaerq-uw.a.run.app')) + '/api';
 
 export const saveAlertPreferences = async (userId: string, prefs: UserAlertPreferences) => {
   try {

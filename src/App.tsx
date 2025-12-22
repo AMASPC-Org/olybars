@@ -89,6 +89,7 @@ export default function OlyBarsApp() {
   const [vibeVenue, setVibeVenue] = useState<Venue | null>(null);
   const [showVibeCheckModal, setShowVibeCheckModal] = useState(false);
   const [clockedInVenue, setClockedInVenue] = useState<string | null>(null);
+  const [vibeCheckedVenue, setVibeCheckedVenue] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
   const [artieMessages, setArtieMessages] = useState<{ sender: string, text: string }[]>([
     { sender: 'artie', text: "Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water." }
@@ -210,8 +211,16 @@ export default function OlyBarsApp() {
     setShowVibeCheckModal(true);
   };
 
-  const confirmVibeCheck = (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string) => {
+  const confirmVibeCheck = async (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string) => {
     const now = Date.now();
+
+    // 1. If not already clocked in, perform a background check-in to unify signals
+    if (!clockedInVenue || clockedInVenue !== venue.id) {
+      setClockedInVenue(venue.id);
+      setCheckInHistory(prev => [...prev, { venueId: venue.id, timestamp: now }]);
+    }
+
+    setVibeCheckedVenue(venue.id);
 
     // Update Venue Status and Photos
     handleUpdateVenue(venue.id, {
@@ -385,6 +394,12 @@ export default function OlyBarsApp() {
                 setCheckInHistory={setCheckInHistory}
                 setClockedInVenue={setClockedInVenue}
                 setVenues={setVenues}
+                vibeChecked={vibeCheckedVenue === selectedVenue.id}
+                onVibeCheckPrompt={() => {
+                  setVibeVenue(selectedVenue);
+                  setShowVibeCheckModal(true);
+                  setShowClockInModal(false);
+                }}
               />
             )}
 
@@ -394,6 +409,12 @@ export default function OlyBarsApp() {
                 onClose={() => setShowVibeCheckModal(false)}
                 venue={vibeVenue}
                 onConfirm={confirmVibeCheck}
+                clockedIn={clockedInVenue === vibeVenue.id}
+                onClockInPrompt={() => {
+                  setSelectedVenue(vibeVenue);
+                  setShowClockInModal(true);
+                  setShowVibeCheckModal(false);
+                }}
               />
             )}
 

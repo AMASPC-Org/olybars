@@ -13,6 +13,8 @@ interface ClockInModalProps {
     setCheckInHistory: React.Dispatch<React.SetStateAction<CheckInRecord[]>>;
     setClockedInVenue: React.Dispatch<React.SetStateAction<string | null>>;
     setVenues: React.Dispatch<React.SetStateAction<Venue[]>>;
+    vibeChecked?: boolean;
+    onVibeCheckPrompt?: () => void;
 }
 
 export const ClockInModal: React.FC<ClockInModalProps> = ({
@@ -23,17 +25,20 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     setCheckInHistory,
     setClockedInVenue,
     setVenues,
+    vibeChecked,
+    onVibeCheckPrompt,
 }) => {
     const [showCamera, setShowCamera] = useState(false);
     const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
     const [cameraError, setCameraError] = useState(false);
     const [isCheckingIn, setIsCheckingIn] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [isSuccess, setIsSuccess] = useState(false);
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     const [allowMarketingUse, setAllowMarketingUse] = useState(false);
-    const { coords, loading: geoLoading } = useGeolocation();
+    const { coords, loading: geoLoading, requestLocation, refresh } = useGeolocation();
 
     if (!isOpen || !selectedVenue) return null;
 
@@ -76,50 +81,79 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                 context.drawImage(videoRef.current, 0, 0);
                 const dataUrl = canvasRef.current.toDataURL('image/jpeg');
                 setCapturedPhoto(dataUrl);
-                awardPoints('photo');
+                awardPoints('photo', selectedVenue.id, allowMarketingUse);
                 stopCamera();
             }
         }
     };
 
     const handleShare = async () => {
-        awardPoints('share');
-        // Share logic can be implemented here or in parent
+        awardPoints('share', selectedVenue.id);
         alert("Link copied to clipboard! (+5 Points)");
     };
 
     const confirmClockIn = async () => {
+        if (!isAtVenue || !coords) {
+            setErrorMessage("Coordinate Verification Failed. You must be at the venue to clock in.");
+            return;
+        }
+
         setIsCheckingIn(true);
         setErrorMessage(null);
 
-        // Get actual location
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                try {
-                    const { latitude, longitude } = position.coords;
-                    const userId = "guest_user_123"; // Placeholder until Auth wired
+        try {
+            const { latitude, longitude } = coords;
+            const userId = "guest_user_123"; // Placeholder until Auth wired
 
-                    await performCheckIn(selectedVenue.id, userId, latitude, longitude);
+            await performCheckIn(selectedVenue.id, userId, latitude, longitude);
 
-                    awardPoints('checkin', selectedVenue.id, allowMarketingUse);
-                    setCheckInHistory(prev => [...prev, { venueId: selectedVenue.id, timestamp: Date.now() }]);
-                    setClockedInVenue(selectedVenue.id);
-                    setVenues(prev => prev.map(v => v.id === selectedVenue.id ? { ...v, checkIns: v.checkIns + 1 } : v));
-                    onClose();
-                } catch (err: any) {
-                    setErrorMessage(err.message);
-                } finally {
-                    setIsCheckingIn(false);
-                }
-            },
-            (err) => {
-                console.error("Geolocation error", err);
-                setErrorMessage("Coordinate Verification Failed. Please enable location services.");
-                setIsCheckingIn(false);
-            },
-            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-        );
+            awardPoints('checkin', selectedVenue.id, allowMarketingUse);
+            setCheckInHistory(prev => [...prev, { venueId: selectedVenue.id, timestamp: Date.now() }]);
+            setClockedInVenue(selectedVenue.id);
+            setVenues(prev => prev.map(v => v.id === selectedVenue.id ? { ...v, checkIns: v.checkIns + 1 } : v));
+
+            setIsSuccess(true);
+            if (vibeChecked) {
+                setTimeout(onClose, 2000);
+            }
+        } catch (err: any) {
+            setErrorMessage(err.message);
+            setIsCheckingIn(false);
+        }
     };
+
+    if (isSuccess) {
+        return (
+            <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+                <div className="bg-surface w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
+                    <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto animate-bounce">
+                        <Sparkles className="w-10 h-10 text-black" />
+                    </div>
+                    <div>
+                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league italic">Checked In!</h2>
+                        <p className="text-primary font-black uppercase tracking-widest text-xs mt-1">+10 LEAGUE POINTS AWARDED</p>
+                    </div>
+
+                    {!vibeChecked && onVibeCheckPrompt ? (
+                        <div className="bg-slate-900/80 p-4 rounded-xl border border-white/5 space-y-4">
+                            <p className="text-slate-300 text-sm font-bold leading-tight">
+                                Want to double down? Submit a <span className="text-primary italic">Vibe Check</span> for +5 more points!
+                            </p>
+                            <button
+                                onClick={onVibeCheckPrompt}
+                                className="w-full bg-white text-black font-black py-3 rounded-lg uppercase tracking-wider font-league hover:scale-105 transition-transform flex items-center justify-center gap-2"
+                            >
+                                <Camera className="w-5 h-5" /> Vibe Check Now
+                            </button>
+                            <button onClick={onClose} className="text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white">Maybe Later</button>
+                        </div>
+                    ) : (
+                        <p className="text-slate-400 text-xs font-medium italic">Redirecting to status hub...</p>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in zoom-in-95 duration-200">
@@ -145,17 +179,28 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
                 <div className="p-4 space-y-4">
                     <div className="text-center">
-                        <p className="text-slate-400 text-xs uppercase tracking-widest mb-1 font-bold">
-                            {geoLoading ? 'Finding you...' : (isAtVenue ? '📍 Arrived' : '🚶 Heading there')}
-                        </p>
                         <h3 className="text-3xl font-bold text-white uppercase">{selectedVenue.name}</h3>
                         <div className="mt-1">
-                            {currentDistance !== null ? (
-                                <p className={`text-[10px] font-black uppercase tracking-widest ${isAtVenue ? 'text-primary' : 'text-slate-500'}`}>
-                                    {Math.round(currentDistance)}m FROM VENUE {isAtVenue ? '(OK)' : '(TOO FAR)'}
+                            {geoLoading ? (
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 animate-pulse">
+                                    Finding you...
+                                </p>
+                            ) : isAtVenue ? (
+                                <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+                                    📍 Verified At Venue
                                 </p>
                             ) : (
-                                <p className="text-primary text-xs font-bold uppercase">{selectedVenue.type}</p>
+                                <div className="space-y-2 mb-2">
+                                    <p className={`text-[10px] font-black uppercase tracking-widest ${currentDistance !== null ? 'text-red-400' : 'text-slate-500'}`}>
+                                        {currentDistance !== null ? `${Math.round(currentDistance)}m FROM VENUE (TOO FAR)` : 'Location Check REQUIRED'}
+                                    </p>
+                                    <button
+                                        onClick={refresh}
+                                        className="text-[10px] bg-primary/20 text-primary font-black px-4 py-2 rounded-full border border-primary/30 hover:bg-primary/30 transition-all uppercase tracking-widest"
+                                    >
+                                        {coords ? 'Verify Again' : 'Verify My Location'}
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -191,7 +236,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                                 <div className={`p-1.5 rounded-md ${allowMarketingUse ? 'bg-primary/20 text-primary' : 'bg-slate-800 text-slate-500'}`}>
                                     <Sparkles size={14} />
                                 </div>
-                                <div>
+                                <div className="ml-1">
                                     <p className="text-[10px] font-black text-white uppercase tracking-wider font-league leading-none mb-1">Marketing Consent</p>
                                     <p className="text-[8px] text-slate-500 font-bold uppercase italic">Earn +15 Bonus Points!</p>
                                 </div>
@@ -242,7 +287,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
                     <button
                         onClick={confirmClockIn}
-                        disabled={isCheckingIn}
+                        disabled={isCheckingIn || !isAtVenue}
                         className="w-full bg-primary hover:bg-yellow-400 disabled:bg-slate-700 disabled:text-slate-400 text-black font-bold text-lg uppercase tracking-wider py-4 rounded-lg shadow-md active:scale-95 transition-transform flex items-center justify-center gap-2"
                     >
                         {isCheckingIn ? (

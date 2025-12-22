@@ -16,7 +16,7 @@ const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const MapScreen = () => {
   const navigate = useNavigate();
   const { venues } = useOutletContext<ContextType>();
-  const { coords, error: geoError, loading: geoLoading } = useGeolocation({ shouldPrompt: true });
+  const { coords, error: geoError, loading: geoLoading, requestLocation, isRequested } = useGeolocation({ shouldPrompt: false });
   const mapRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -105,9 +105,6 @@ const MapScreen = () => {
       let infoWindow = new (window as any).google.maps.InfoWindow();
 
       marker.addListener('click', () => {
-        // Close previous InfoWindow if any (scoped per click)
-        // In a real implementation we might want a single global InfoWindow instance
-
         const contentString = `
           <div style="padding: 8px; color: #0f172a;">
             <h3 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 900;">${venue.name}</h3>
@@ -123,7 +120,6 @@ const MapScreen = () => {
         infoWindow.setContent(contentString);
         infoWindow.open(map, marker);
 
-        // Add event listener for the button logic after DOMLoading
         (window as any).google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
           document.getElementById(`view-listing-${venue.id}`)?.addEventListener('click', () => {
             navigate(`/venues/${venue.id}`);
@@ -146,6 +142,9 @@ const MapScreen = () => {
           strokeColor: "#ffffff",
         },
       });
+
+      // Pan to user if markers just updated
+      map.panTo({ lat: coords.latitude, lng: coords.longitude });
     }
   }, [map, venues, coords, status]);
 
@@ -157,10 +156,27 @@ const MapScreen = () => {
     <div className="h-full relative bg-slate-900">
       <div ref={mapRef} className={`w-full h-full ${status !== 'ready' ? 'hidden' : ''}`} />
 
-      {status === 'loading' && !coords && (
+      {status === 'loading' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm z-20">
           <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-          <p className="text-white font-league text-xl uppercase tracking-widest">Pinpointing Vibe Coordinates...</p>
+          <p className="text-white font-league text-xl uppercase tracking-widest text-center px-6">Loading OlyBuzz Hub...</p>
+        </div>
+      )}
+
+      {status === 'ready' && !coords && (
+        <button
+          onClick={() => requestLocation()}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 bg-primary text-black font-black px-6 py-3 rounded-full flex items-center gap-2 shadow-2xl hover:scale-105 transition-all border-2 border-black active:scale-95 animate-in slide-in-from-bottom duration-500 uppercase tracking-wider font-league italic"
+        >
+          <Navigation className="w-5 h-5 fill-black" />
+          Find My Vibe
+        </button>
+      )}
+
+      {status === 'ready' && geoLoading && isRequested && !coords && (
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 bg-black/80 text-primary border-2 border-primary/50 px-6 py-3 rounded-full flex items-center gap-2 shadow-2xl backdrop-blur-md">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="font-black text-xs uppercase tracking-widest font-league italic">Locating...</span>
         </div>
       )}
 
@@ -170,6 +186,7 @@ const MapScreen = () => {
             <>
               <div className="w-full h-64 bg-slate-800 rounded-2xl mb-6 overflow-hidden border border-white/5 relative">
                 <iframe
+                  title="Google Maps Static View"
                   width="100%"
                   height="100%"
                   frameBorder="0"
@@ -178,7 +195,7 @@ const MapScreen = () => {
                   allowFullScreen
                 />
                 <div className="absolute inset-0 bg-slate-900/40 pointer-events-none flex items-center justify-center">
-                  <p className="text-primary font-league uppercase tracking-widest text-lg bg-black/60 px-4 py-2 rounded-lg">Interactive Map Restricted</p>
+                  <p className="text-primary font-league uppercase tracking-widest text-lg bg-black/60 px-4 py-2 rounded-lg text-center">Interactive Map Restricted</p>
                 </div>
               </div>
               <h3 className="text-2xl font-black text-white font-league uppercase mb-2">Maps Key restricted</h3>
@@ -205,16 +222,9 @@ const MapScreen = () => {
       )}
 
       {geoError && (
-        <div className="absolute top-4 left-4 right-4 bg-red-500/90 text-white p-3 rounded-xl flex items-center gap-3 z-30 shadow-lg backdrop-blur-md">
-          <MapPin className="w-5 h-5 shrink-0" />
-          <p className="text-sm font-bold font-body">Location access denied. Map precision may be limited.</p>
-        </div>
-      )}
-
-      {geoError && (
-        <div className="absolute top-4 left-4 right-4 bg-red-500/90 text-white p-3 rounded-xl flex items-center gap-3 z-30 shadow-lg backdrop-blur-md">
-          <MapPin className="w-5 h-5 shrink-0" />
-          <p className="text-sm font-bold font-body">Location access denied. Map precision may be limited.</p>
+        <div className="absolute top-4 left-4 right-4 bg-red-900/90 text-white p-3 rounded-xl flex items-center gap-3 z-30 shadow-lg backdrop-blur-md border border-red-500/30">
+          <MapPin className="w-5 h-5 shrink-0 text-white" />
+          <p className="text-[10px] font-black uppercase tracking-widest font-league">Location access denied. Map precision limited.</p>
         </div>
       )}
     </div>
