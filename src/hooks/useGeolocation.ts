@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface GeolocationState {
     coords: {
@@ -14,7 +14,9 @@ interface GeolocationOptions extends PositionOptions {
     shouldPrompt?: boolean;
 }
 
-export const useGeolocation = (options: GeolocationOptions = { enableHighAccuracy: true, shouldPrompt: false }) => {
+const DEFAULT_OPTIONS: GeolocationOptions = { enableHighAccuracy: true, shouldPrompt: false };
+
+export const useGeolocation = (options: GeolocationOptions = DEFAULT_OPTIONS) => {
     const [state, setState] = useState<GeolocationState>({
         coords: null,
         error: null,
@@ -48,6 +50,14 @@ export const useGeolocation = (options: GeolocationOptions = { enableHighAccurac
         }));
     }, []);
 
+    // Use ref to track options to avoid infinite loop on object reference change
+    const optionsRef = useRef(options);
+    useEffect(() => {
+        if (JSON.stringify(options) !== JSON.stringify(optionsRef.current)) {
+            optionsRef.current = options;
+        }
+    }, [options]);
+
     useEffect(() => {
         // If not requested and shouldPrompt is false, just stop loading
         if (!isRequested) {
@@ -65,17 +75,16 @@ export const useGeolocation = (options: GeolocationOptions = { enableHighAccurac
         // Check permission status if API available
         if (navigator.permissions && navigator.permissions.query) {
             navigator.permissions.query({ name: 'geolocation' }).then(status => {
-                setState(s => ({ ...s, permissionStatus: status.state as any }));
-                status.onchange = () => {
-                    setState(s => ({ ...s, permissionStatus: status.state as any }));
-                };
+                const updatePermission = () => setState(s => ({ ...s, permissionStatus: status.state as any }));
+                updatePermission();
+                status.onchange = updatePermission;
             });
         }
 
-        const watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, options);
+        const watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, optionsRef.current);
 
         return () => navigator.geolocation.clearWatch(watchId);
-    }, [isRequested, options, handleSuccess, handleError]);
+    }, [isRequested, handleSuccess, handleError]); // Removed options from here, using stable ref
 
     const refresh = useCallback(() => {
         if (!isRequested) {

@@ -1,7 +1,9 @@
 import { Venue } from '../types';
 
-const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-const API_BASE_URL = (isLocalhost ? 'http://localhost:3001' : (import.meta.env.VITE_API_URL || 'https://olybars-backend-juthzlaerq-uw.a.run.app')) + '/api';
+// Force production backend for now to verify data
+const API_BASE_URL = 'https://olybars-backend-juthzlaerq-uw.a.run.app/api';
+// const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+// const API_BASE_URL = (isLocalhost ? 'http://localhost:3001' : (import.meta.env.VITE_API_URL || 'https://olybars-backend-juthzlaerq-uw.a.run.app')) + '/api';
 
 /**
  * Fetches the list of venues from the production backend.

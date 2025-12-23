@@ -10,7 +10,6 @@ import {
 } from './types';
 
 // --- REAL SERVICES ---
-import { getArtieResponse } from './services/geminiService';
 import { fetchVenues } from './services/venueService';
 import {
   saveAlertPreferences, logUserActivity, syncCheckIns
@@ -47,6 +46,7 @@ import { AdminDashboardScreen } from './features/admin/screens/AdminDashboardScr
 import UserProfileScreen from './features/profile/screens/UserProfileScreen';
 import { VenueProfileScreen } from './features/venues/screens/VenueProfileScreen';
 import ArtieBioScreen from './features/artie/screens/ArtieBioScreen'; // [NEW] Import
+import { ArtieChatWidget } from './components/ArtieChatWidget';
 
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
@@ -91,10 +91,10 @@ export default function OlyBarsApp() {
   const [clockedInVenue, setClockedInVenue] = useState<string | null>(null);
   const [vibeCheckedVenue, setVibeCheckedVenue] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
-  const [artieMessages, setArtieMessages] = useState<{ sender: string, text: string }[]>([
-    { sender: 'artie', text: "Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water." }
-  ]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  // const [artieMessages, setArtieMessages] = useState<{ sender: string, text: string }[]>([
+  //   { sender: 'artie', text: "Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water." }
+  // ]);
+  // const messagesEndRef = useRef<HTMLDivElement>(null); // Unused in App.tsx now as Chat Logic is in Modal
 
   useEffect(() => {
     const loadData = async () => {
@@ -419,6 +419,7 @@ export default function OlyBarsApp() {
             )}
 
             <InfoPopup infoContent={infoContent} setInfoContent={setInfoContent} />
+            <ArtieChatWidget />
           </div>
         </Router>
       </QueryClientProvider>

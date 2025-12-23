@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { Venue } from '../../types';
 import { ArtieChatModal } from '../../features/venues/components/ArtieChatModal';
-import ArtieHoverIcon from '../ui/ArtieHoverIcon';
+import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
 import { CookieBanner } from '../ui/CookieBanner';
 
 interface AppShellProps {

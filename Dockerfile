@@ -13,10 +13,6 @@ COPY package*.json ./
 # Install production dependencies.
 RUN npm install --only=production
 
-# Install tsx globally to run TypeScript files directly in production
-# This simplifies the build process for this specific architecture.
-RUN npm install -g tsx
-
 # Copy local code to the container image.
 COPY . .
 
@@ -25,4 +21,4 @@ COPY . .
 ENV PORT 8080
 
 # Run the web service on container startup.
-CMD [ "tsx", "server/src/index.ts" ]
+CMD [ "npx", "tsx", "server/src/index.ts" ]

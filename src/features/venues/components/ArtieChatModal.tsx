@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Sparkles, Bot } from 'lucide-react';
-import { getArtieResponse } from '../../../services/geminiService';
-import { Message } from '../../../types';
+import { useArtie } from '../../../hooks/useArtie';
 
 interface ArtieChatModalProps {
     isOpen: boolean;
@@ -9,16 +8,8 @@ interface ArtieChatModalProps {
 }
 
 export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose }) => {
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: 'initial',
-            role: 'model',
-            text: "Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water. Ask me anything about Oly's bars, deals, or events!",
-            timestamp: new Date()
-        }
-    ]);
+    const { messages, sendMessage, isLoading, error } = useArtie();
     const [input, setInput] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -27,43 +18,13 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose 
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages]);
+    }, [messages, isLoading]);
 
     const handleSend = async () => {
         if (!input.trim() || isLoading) return;
-
         const userText = input.trim();
         setInput('');
-        const userMsg: Message = {
-            id: Date.now().toString(),
-            role: 'user',
-            text: userText,
-            timestamp: new Date()
-        };
-        setMessages(prev => [...prev, userMsg]);
-        setIsLoading(true);
-
-        try {
-            const response = await getArtieResponse(userText, messages);
-            const artieMsg: Message = {
-                id: (Date.now() + 1).toString(),
-                role: 'model',
-                text: response,
-                timestamp: new Date()
-            };
-            setMessages(prev => [...prev, artieMsg]);
-        } catch (error) {
-            console.error('Artie error:', error);
-            const artieError: Message = {
-                id: (Date.now() + 1).toString(),
-                role: 'model',
-                text: "My artesians are a bit clogged right now. Try again in a minute?",
-                timestamp: new Date()
-            };
-            setMessages(prev => [...prev, artieError]);
-        } finally {
-            setIsLoading(false);
-        }
+        await sendMessage(userText);
     };
 
     if (!isOpen) return null;
@@ -97,13 +58,22 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose 
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/50">
+                    {/* Static Greeting */}
+                    {messages.length === 0 && (
+                        <div className="flex justify-start">
+                            <div className="max-w-[85%] p-3 rounded-2xl text-sm font-medium leading-relaxed bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none">
+                                Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water. Ask me anything about Oly's bars, deals, or events!
+                            </div>
+                        </div>
+                    )}
+
                     {messages.map((m, i) => (
-                        <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                             <div className={`max-w-[85%] p-3 rounded-2xl text-sm font-medium leading-relaxed ${m.role === 'user'
                                 ? 'bg-primary text-black rounded-tr-none'
                                 : 'bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none'
                                 }`}>
-                                {m.text}
+                                {m.content}
                             </div>
                         </div>
                     ))}
@@ -113,6 +83,13 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose 
                                 <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" />
                                 <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce [animation-delay:0.2s]" />
                                 <div className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce [animation-delay:0.4s]" />
+                            </div>
+                        </div>
+                    )}
+                    {error && (
+                        <div className="flex justify-center">
+                            <div className="bg-red-500/10 text-red-400 text-xs p-2 rounded-lg border border-red-500/20">
+                                {error}
                             </div>
                         </div>
                     )}
@@ -148,7 +125,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose 
                             onClick={(e) => {
                                 e.preventDefault();
                                 onClose();
-                                window.location.href = '/meet-artie'; // Using window.location for reliability outside generic Router context inside modal
+                                window.location.href = '/meet-artie';
                             }}
                             className="text-[10px] text-slate-600 font-bold uppercase tracking-widest hover:text-primary transition-colors cursor-pointer"
                         >

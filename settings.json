@@ -1,5 +1,6 @@
 {
     "validationGates": [
+        ".agent/rules/google-cloud-native-deployment.md",
         ".agent/rules/state-aware-discovery.md",
         ".agent/rules/contextual-ux-logic.md",
         ".agent/rules/olybars-tech-constitution.md",
