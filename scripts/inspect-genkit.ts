@@ -4,7 +4,7 @@ import { vertexAI } from '@genkit-ai/vertexai';
 
 const ai = genkit({
     plugins: [
-        vertexAI({ location: 'us-central1' }),
+        vertexAI({ location: 'us-west1' }),
     ],
 });
 

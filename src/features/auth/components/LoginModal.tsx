@@ -237,6 +237,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                     <Beer className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                     <input type="text" value={drink} onChange={(e) => setDrink(e.target.value)} placeholder="Preferred Sips (e.g. IPA)" className={inputClasses} />
                   </div>
+
+                  <div className="relative">
+                    <Home className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                    <select
+                      value={homeBase}
+                      onChange={(e) => setHomeBase(e.target.value)}
+                      className={`${inputClasses} appearance-none cursor-pointer`}
+                    >
+                      <option value="" disabled className="text-black">Select Home Base</option>
+                      {venues.map(v => (
+                        <option key={v.id} value={v.id} className="text-black">{v.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </>
               )}
 

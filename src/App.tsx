@@ -46,8 +46,9 @@ import FAQScreen from './features/marketing/screens/FAQScreen';
 import { AdminDashboardScreen } from './features/admin/screens/AdminDashboardScreen';
 import UserProfileScreen from './features/profile/screens/UserProfileScreen';
 import { VenueProfileScreen } from './features/venues/screens/VenueProfileScreen';
+import AboutPage from './pages/About';
 import ArtieBioScreen from './features/artie/screens/ArtieBioScreen'; // [NEW] Import
-import { ArtieChatWidget } from './components/ArtieChatWidget';
+import ScrollToTop from './components/layout/ScrollToTop';
 
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
@@ -93,6 +94,7 @@ export default function OlyBarsApp() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [clockedInVenue, setClockedInVenue] = useState<string | null>(null);
   const [vibeCheckedVenue, setVibeCheckedVenue] = useState<string | null>(null);
+  const [showArtie, setShowArtie] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const { showToast } = useToast();
   // const [artieMessages, setArtieMessages] = useState<{ sender: string, text: string }[]>([
@@ -126,6 +128,23 @@ export default function OlyBarsApp() {
     };
     loadData();
   }, []);
+
+  // Persistence Layer (Sync State to LocalStorage)
+  useEffect(() => {
+    if (userProfile) localStorage.setItem('oly_profile', JSON.stringify(userProfile));
+  }, [userProfile]);
+
+  useEffect(() => {
+    localStorage.setItem('oly_points', userPoints.toString());
+  }, [userPoints]);
+
+  useEffect(() => {
+    localStorage.setItem('oly_checkins', JSON.stringify(checkInHistory));
+  }, [checkInHistory]);
+
+  useEffect(() => {
+    localStorage.setItem('oly_prefs', JSON.stringify(alertPrefs));
+  }, [alertPrefs]);
 
   const openInfo = (title: string, text: string) => { setInfoContent({ title, text }); };
 
@@ -256,6 +275,25 @@ export default function OlyBarsApp() {
     awardPoints('vibe', venue.id, hasConsent);
   };
 
+  const handleToggleWeeklyBuzz = async () => {
+    const newVal = !userProfile.weeklyBuzz;
+
+    // 1. Update Profile (Local + Remote)
+    setUserProfile(prev => ({ ...prev, weeklyBuzz: newVal }));
+
+    // 2. Update Alert Prefs (Local) to keep synced
+    setAlertPrefs(prev => ({ ...prev, weeklyDigest: newVal }));
+
+    // 3. Persist to Firestore
+    if (userProfile.uid !== 'guest') {
+      try {
+        await updateUserProfile(userProfile.uid, { weeklyBuzz: newVal });
+      } catch (e) {
+        showToast('Sync failed, retrying...', 'error');
+      }
+    }
+  };
+
   const handleToggleFavorite = async (venueId: string) => {
     if (userProfile.uid === 'guest') {
       setShowLoginModal(true);
@@ -310,6 +348,7 @@ export default function OlyBarsApp() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <Router>
+          <ScrollToTop />
           <div className="h-full bg-background overflow-hidden relative">
             <Routes>
               <Route
@@ -321,13 +360,21 @@ export default function OlyBarsApp() {
                     isLeagueMember={userProfile.role !== 'guest'}
                     alertPrefs={alertPrefs}
                     setAlertPrefs={setAlertPrefs}
+                    onToggleWeeklyBuzz={handleToggleWeeklyBuzz}
                     onProfileClick={() => {
                       if (userProfile.uid === 'guest') {
                         setLoginMode('user');
                         setUserSubMode('login');
                         setShowLoginModal(true);
                       } else {
-                        window.location.href = '/profile';
+                        // Use document location for SPA feel or navigation handler
+                        window.history.pushState({}, '', '/profile');
+                        // Since we aren't using a router hook at this level, 
+                        // we need to trigger a re-render or use a shared navigation handler.
+                        // However, routes are defined below. 
+                        // To keep it simple and fix the "reload" issue:
+                        const popStateEvent = new PopStateEvent('popstate');
+                        window.dispatchEvent(popStateEvent);
                       }
                     }}
                     onOwnerLoginClick={() => {
@@ -344,6 +391,10 @@ export default function OlyBarsApp() {
                     userHandle={userProfile.handle}
                     userRank={userRank}
                     onLogout={handleLogout}
+                    userProfile={userProfile}
+                    onToggleFavorite={handleToggleFavorite}
+                    showArtie={showArtie}
+                    setShowArtie={setShowArtie}
                   />
                 }
               >
@@ -372,7 +423,21 @@ export default function OlyBarsApp() {
                 <Route path="trivia" element={<TriviaScreen venues={venues} />} />
                 <Route path="live" element={<LiveMusicScreen venues={venues} />} />
                 <Route path="events" element={<EventsScreen venues={venues} />} />
-                <Route path="league" element={<LeagueHQScreen venues={venues} isLeagueMember={userProfile.role !== 'guest'} />} />
+                <Route
+                  path="league"
+                  element={
+                    <LeagueHQScreen
+                      venues={venues}
+                      isLeagueMember={userProfile.role !== 'guest'}
+                      onJoinClick={(mode) => {
+                        setUserSubMode(mode || 'login');
+                        setLoginMode('user');
+                        setShowLoginModal(true);
+                      }}
+                      onAskArtie={() => setShowArtie(true)}
+                    />
+                  }
+                />
                 <Route path="bars" element={<TheSpotsScreen venues={venues} userProfile={userProfile} handleToggleFavorite={handleToggleFavorite} />} />
                 <Route path="map" element={<MapScreen />} />
                 <Route path="meet-artie" element={<ArtieBioScreen />} />
@@ -405,6 +470,7 @@ export default function OlyBarsApp() {
                 <Route path="terms" element={<TermsScreen />} />
                 <Route path="privacy" element={<PrivacyScreen />} />
                 <Route path="faq" element={<FAQScreen />} />
+                <Route path="about" element={<AboutPage />} />
                 <Route
                   path="admin"
                   element={
@@ -484,7 +550,6 @@ export default function OlyBarsApp() {
             )}
 
             <InfoPopup infoContent={infoContent} setInfoContent={setInfoContent} />
-            <ArtieChatWidget />
           </div>
         </Router>
       </QueryClientProvider>

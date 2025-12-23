@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { format } from 'date-fns';
 import {
     User, Mail, Smartphone, Beer, Home, Trophy, Shield,
     Settings, Save, Lock, ChevronRight, Info, AlertTriangle,
-    History, LogOut, CheckCircle2, X, Zap, Star
+    History, LogOut, CheckCircle2, X, Zap, Star, Clock
 } from 'lucide-react';
 import { UserProfile, UserRole, Venue } from '../../../types';
 import { updatePassword, updateEmail } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { updateUserProfile } from '../../../services/userService';
 import { useToast } from '../../../components/ui/BrandedToast';
+import { Link } from 'react-router-dom';
 
 interface UserProfileScreenProps {
     userProfile: UserProfile;
@@ -43,10 +44,65 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
     const cooldownActive = (Date.now() - lastChanged) < thirtyDaysInMs;
     const daysRemaining = Math.ceil((thirtyDaysInMs - (Date.now() - lastChanged)) / (24 * 60 * 60 * 1000));
 
+    // Sync local state with props (for menu toggles etc)
+    useEffect(() => {
+        setWeeklyBuzz(userProfile.weeklyBuzz ?? false);
+        setHomeBase(userProfile.homeBase || '');
+        setPhone(userProfile.phone || '');
+        setFavoriteDrinks(userProfile.favoriteDrinks || (userProfile.favoriteDrink ? [userProfile.favoriteDrink] : []));
+        setShowMemberSince(userProfile.showMemberSince ?? true);
+    }, [userProfile.weeklyBuzz, userProfile.homeBase, userProfile.phone, userProfile.favoriteDrinks, userProfile.showMemberSince]);
+
     const handleRoleSwitch = (newRole: UserRole) => {
         setUserProfile(prev => ({ ...prev, role: newRole }));
         showToast(`View Switched to: ${newRole.toUpperCase()}`, 'success');
     }
+
+    // Unified Auto-Save for non-sensitive fields
+    const autoSaveUpdates = useCallback(async (newUpdates: any) => {
+        if (userProfile.uid === 'guest') return;
+        try {
+            const result = await updateUserProfile(userProfile.uid, {
+                ...newUpdates,
+                updatedAt: Date.now()
+            });
+            if (result.success) {
+                setUserProfile(prev => ({ ...prev, ...result.updates }));
+            }
+        } catch (e) {
+            console.error('Auto-save failed:', e);
+        }
+    }, [userProfile.uid, setUserProfile]);
+
+    // Unsaved Changes Guard logic
+    const isDirty = (
+        handle !== (userProfile.handle || '') ||
+        email !== (userProfile.email || '') ||
+        phone !== (userProfile.phone || '') ||
+        JSON.stringify(favoriteDrinks) !== JSON.stringify(userProfile.favoriteDrinks || (userProfile.favoriteDrink ? [userProfile.favoriteDrink] : [])) ||
+        newPassword !== ''
+    );
+
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (isDirty && isEditing) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isDirty, isEditing]);
+
+    const handleTabSwitch = (tab: 'overview' | 'settings' | 'league') => {
+        if (isDirty && isEditing) {
+            if (!window.confirm("You have unsaved changes. Save them before switching?")) {
+                return;
+            }
+            handleSaveProfile();
+        }
+        setActiveTab(tab);
+    };
 
     const handleSaveProfile = async () => {
         setIsLoading(true);
@@ -55,6 +111,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                 phone,
                 favoriteDrinks,
                 weeklyBuzz,
+                homeBase,
                 showMemberSince,
                 leaguePreferences: leaguePrefs,
                 updatedAt: Date.now(),
@@ -102,50 +159,47 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
     };
 
     return (
-        <div className="min-h-screen bg-background text-white pb-32">
-            {/* Premium Header */}
-            <div className="relative h-48 bg-slate-900 border-b border-white/10 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-60" />
-                <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="bg-background min-h-screen text-white font-body pb-24">
+            {/* Header / Banner */}
+            <div className="relative h-48 bg-gradient-to-br from-slate-900 via-black to-slate-900 overflow-hidden border-b border-white/5">
+                <div className="absolute inset-0 opacity-20">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(251,191,36,0.1),transparent)]" />
+                </div>
 
-                <div className="absolute bottom-0 left-0 right-0 p-6 flex items-end justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="w-20 h-20 bg-slate-800 rounded-2xl border-4 border-background overflow-hidden relative group">
-                            <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary">
-                                <User className="w-10 h-10" />
+                <div className="absolute bottom-6 left-6 flex items-end gap-6">
+                    <div className="w-24 h-24 rounded-3xl bg-slate-800 border-4 border-background shadow-2xl flex items-center justify-center relative group overflow-hidden">
+                        <User className="w-12 h-12 text-slate-600 group-hover:scale-110 transition-transform" />
+                        <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Save className="w-6 h-6 text-primary" />
+                        </div>
+                    </div>
+                    <div className="pb-2">
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-3xl font-black uppercase tracking-tighter font-league">
+                                {userProfile.handle ? `#${userProfile.handle.toUpperCase()}` : 'GUEST OPERATOR'}
+                            </h2>
+                            <div className="px-2 py-0.5 bg-primary text-black text-[9px] font-black uppercase tracking-widest rounded flex items-center gap-1 shadow-lg">
+                                <Trophy className="w-2.5 h-2.5" />
+                                {userProfile.role.toUpperCase()}
                             </div>
                         </div>
-                        <div>
-                            <h1 className="text-3xl font-black uppercase tracking-tighter font-league">
-                                {userProfile.handle || 'Legend'}
-                            </h1>
-                            <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded">
-                                    {userProfile.role.replace('-', ' ')}
-                                </span>
-                                <span className="text-[10px] font-bold text-slate-500 uppercase">Season Rank: #42</span>
+                        <div className="flex items-center gap-4 mt-1 text-slate-500 font-bold uppercase text-[10px] tracking-widest">
+                            <div className="flex items-center gap-1.5">
+                                <Mail className="w-3 h-3" /> {userProfile.email}
                             </div>
-                            {/* Member Since Badge */}
-                            {(showMemberSince || isEditing) && (
-                                <div className="mt-1 text-[9px] font-bold text-slate-500 uppercase flex items-center gap-1">
-                                    <Trophy className="w-3 h-3 text-yellow-500/50" />
-                                    League Member since {format(userProfile.createdAt ? new Date(userProfile.createdAt) : new Date(), 'MMM yyyy')}
+                            {userProfile.createdAt && showMemberSince && (
+                                <div className="flex items-center gap-1.5 border-l border-white/10 pl-4">
+                                    <Clock className="w-3 h-3" /> EST. {format(userProfile.createdAt, 'MMM yyyy').toUpperCase()}
                                 </div>
                             )}
                         </div>
                     </div>
-                    <div className="text-right">
-                        <p className="text-xs font-bold text-slate-500 uppercase mb-1">League Points</p>
-                        <p className="text-3xl font-black font-mono text-white">
-                            {(userProfile.stats?.seasonPoints || 0).toLocaleString()}
-                        </p>
-                    </div>
                 </div>
             </div>
 
-            {/* Super-Admin Switcher */}
+            {/* Quick Admin Override for Testing Swapping roles */}
             {isSuperAdmin && (
-                <div className="m-6 p-4 bg-primary/5 border-2 border-primary/20 rounded-2xl">
+                <div className="bg-slate-900 border-y border-white/5 px-6 py-4">
                     <div className="flex items-center gap-2 mb-3">
                         <Shield className="w-4 h-4 text-primary" />
                         <span className="text-xs font-black uppercase tracking-widest text-primary font-league">View Mode Switcher</span>
@@ -172,7 +226,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                 {(['overview', 'settings', 'league'] as const).map(tab => (
                     <button
                         key={tab}
-                        onClick={() => setActiveTab(tab)}
+                        onClick={() => handleTabSwitch(tab)}
                         className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
                     >
                         {tab}
@@ -230,38 +284,67 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                                 </div>
 
                                 <div className="pt-4 border-t border-white/5">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center">
+                                            <Beer className="w-5 h-5 text-amber-400" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase">Preferred Sips</p>
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {(() => {
+                                                    const drinks = [
+                                                        ...(userProfile.favoriteDrinks || []),
+                                                        ...(userProfile.favoriteDrink ? [userProfile.favoriteDrink] : [])
+                                                    ].filter((v, i, a) => a.indexOf(v) === i); // Dedupe
+
+                                                    return drinks.length > 0 ? (
+                                                        drinks.map((drink, i) => (
+                                                            <span key={i} className="px-2 py-0.5 bg-white/5 rounded text-[10px] font-black uppercase text-slate-200 border border-white/5">
+                                                                {drink}
+                                                            </span>
+                                                        ))
+                                                    ) : (
+                                                        <p className="text-[10px] text-slate-600 font-bold uppercase italic">No sips listed.</p>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-white/5">
                                     <div className="flex items-center gap-2 mb-3">
                                         <Star className="w-3 h-3 text-primary fill-primary" />
                                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Favorite Spots</p>
                                     </div>
                                     <div className="grid grid-cols-1 gap-2">
-                                        {userProfile.favorites && userProfile.favorites.length > 0 ? (
-                                            userProfile.favorites.map(venueId => {
-                                                const v = venues.find(v => v.id === venueId);
-                                                return v ? (
-                                                    <div key={venueId} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
-                                                        <span className="text-xs font-bold uppercase font-league text-slate-200">{v.name}</span>
+                                        {(() => {
+                                            const favIds = userProfile.favorites || [];
+                                            const favVenues = venues.filter(v => favIds.includes(v.id));
+
+                                            // Sort: Home Base first, then alphabetical
+                                            const sortedFavs = [...favVenues].sort((a, b) => {
+                                                if (a.id === userProfile.homeBase) return -1;
+                                                if (b.id === userProfile.homeBase) return 1;
+                                                return a.name.localeCompare(b.name);
+                                            });
+
+                                            return sortedFavs.length > 0 ? (
+                                                sortedFavs.map(v => (
+                                                    <div key={v.id} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5 group">
+                                                        <div className="flex items-center gap-2">
+                                                            {v.id === userProfile.homeBase && <Home className="w-3 h-3 text-primary" />}
+                                                            <span className={`text-xs font-bold uppercase font-league ${v.id === userProfile.homeBase ? 'text-primary' : 'text-slate-200'}`}>
+                                                                {v.name}
+                                                            </span>
+                                                        </div>
                                                         <Star className="w-3 h-3 text-primary fill-primary" />
                                                     </div>
-                                                ) : null;
-                                            })
-                                        ) : (
-                                            <p className="text-[10px] text-slate-600 font-bold uppercase italic px-1">No favorites listed yet.</p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 border-t border-white/5">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                                            <Beer className="w-5 h-5 text-primary" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-[10px] font-black text-slate-500 uppercase">Preferred Sips</p>
-                                            <p className="text-sm font-black uppercase font-league text-white">
-                                                {favoriteDrinks.length > 0 ? favoriteDrinks.join(', ') : 'Not Set'}
-                                            </p>
-                                        </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-[10px] text-slate-600 font-bold uppercase italic px-1">No favorites listed yet.</p>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>
@@ -270,22 +353,29 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                 )}
 
                 {activeTab === 'settings' && (
-                    <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                            <h3 className="text-xl font-black uppercase tracking-tight font-league">Profile Intel</h3>
-                        </div>
+                    <div className="space-y-8 animate-in slide-in-from-right duration-300">
+                        <header className="flex justify-between items-start">
+                            <div>
+                                <h3 className="text-2xl font-black uppercase tracking-tighter font-league">Vibe Tuning</h3>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Refine your operator preferences</p>
+                            </div>
+                            <button
+                                onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
+                                disabled={isLoading}
+                                className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${isEditing
+                                    ? 'bg-primary text-black shadow-primary/20 hover:bg-yellow-400'
+                                    : 'bg-white/10 text-white hover:bg-white/20'
+                                    }`}
+                            >
+                                {isLoading ? <Zap className="w-3 h-3 animate-spin" /> : isEditing ? <Save className="w-3 h-3" /> : <Settings className="w-3 h-3" />}
+                                {isEditing ? (isDirty ? 'SYNC' : 'SAVED') : 'EDIT'}
+                            </button>
+                        </header>
 
-                        <div className="space-y-4">
-                            {/* Handle Field with 30-Day Logic */}
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase ml-1">League Handle</label>
-                                    {cooldownActive && !isSuperAdmin && (
-                                        <div className="flex items-center gap-1 text-[9px] font-bold text-primary uppercase">
-                                            <Lock className="w-3 h-3" /> Lock: {daysRemaining}D
-                                        </div>
-                                    )}
-                                </div>
+                        <div className="space-y-6">
+                            {/* Personal Details */}
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black text-slate-500 uppercase ml-1">League Handle</label>
                                 <div className="relative group">
                                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
                                         <span className="font-league font-black text-lg">#</span>
@@ -351,6 +441,27 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                                         />
                                     </div>
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase ml-1">Home Base / HQ</label>
+                                    <div className="relative">
+                                        <Home className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                                        <select
+                                            value={homeBase}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setHomeBase(val);
+                                                if (isEditing) autoSaveUpdates({ homeBase: val });
+                                            }}
+                                            disabled={!isEditing}
+                                            className="w-full bg-slate-900 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm font-black uppercase font-league outline-none disabled:opacity-50 appearance-none cursor-pointer text-white"
+                                        >
+                                            <option value="" disabled className="bg-slate-900 text-white">Select Home Base</option>
+                                            {venues.map(v => (
+                                                <option key={v.id} value={v.id} className="bg-slate-900 text-white">{v.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="pt-4 border-t border-white/5">
@@ -363,7 +474,13 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => isEditing && setWeeklyBuzz(!weeklyBuzz)}
+                                        onClick={() => {
+                                            if (isEditing) {
+                                                const newVal = !weeklyBuzz;
+                                                setWeeklyBuzz(newVal);
+                                                autoSaveUpdates({ weeklyBuzz: newVal });
+                                            }
+                                        }}
                                         disabled={!isEditing}
                                         className={`w-12 h-6 rounded-full p-1 transition-all ${weeklyBuzz ? 'bg-primary' : 'bg-slate-800'}`}
                                     >
@@ -376,14 +493,20 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                             <div className="pt-4 border-t border-white/5">
                                 <div className="flex items-center justify-between bg-slate-900/50 p-4 rounded-2xl border border-white/5">
                                     <div className="flex items-center gap-3">
-                                        <Trophy className={`w-5 h-5 ${showMemberSince ? 'text-yellow-500' : 'text-slate-600'}`} />
+                                        <Clock className={`w-5 h-5 ${showMemberSince ? 'text-yellow-500' : 'text-slate-600'}`} />
                                         <div>
                                             <p className="text-xs font-black uppercase font-league">Public Tenure Badge</p>
                                             <p className="text-[9px] text-slate-500 font-bold uppercase">Show "Member Since" on profile</p>
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => isEditing && setShowMemberSince(!showMemberSince)}
+                                        onClick={() => {
+                                            if (isEditing) {
+                                                const newVal = !showMemberSince;
+                                                setShowMemberSince(newVal);
+                                                autoSaveUpdates({ showMemberSince: newVal });
+                                            }
+                                        }}
                                         disabled={!isEditing}
                                         className={`w-12 h-6 rounded-full p-1 transition-all ${showMemberSince ? 'bg-primary' : 'bg-slate-800'}`}
                                     >
@@ -410,26 +533,33 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                                 </div>
                             )}
 
-                            {/* Action Button - Bottom of Form */}
-                            <div className="pt-6 mt-4 pb-8">
+                            {/* Dual Sync Button - Bottom of Form for Accessibility */}
+                            <div className="pt-6 mt-4 pb-8 border-t border-white/5 text-center">
                                 <button
                                     onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
-                                    disabled={isLoading}
-                                    className={`w-full py-4 rounded-xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${isEditing
-                                        ? 'bg-primary text-black shadow-primary/20 hover:bg-yellow-400'
+                                    disabled={isLoading || (isEditing && !isDirty)}
+                                    className={`w-full py-4 rounded-xl flex items-center justify-center gap-3 text-xs font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 ${isEditing
+                                        ? isDirty
+                                            ? 'bg-primary text-black shadow-primary/20 hover:bg-yellow-400'
+                                            : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                                         : 'bg-white/10 text-white hover:bg-white/20'
                                         }`}
                                 >
                                     {isLoading ? <Zap className="w-4 h-4 animate-spin" /> : isEditing ? <Save className="w-4 h-4" /> : <Settings className="w-4 h-4" />}
-                                    {isEditing ? 'SYNC CHANGES' : 'EDIT PROFILE'}
+                                    {isEditing ? (isDirty ? 'SYNC CHANGES' : 'ALL SYNCED') : 'EDIT PROFILE'}
                                 </button>
+                                {isEditing && isDirty && (
+                                    <p className="text-[9px] text-primary font-black uppercase text-center mt-3 animate-pulse">
+                                        You have unsaved vibe adjustments
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'league' && (
-                    <div className="space-y-8">
+                    <div className="space-y-8 animate-in slide-in-from-left duration-300">
                         <header>
                             <h3 className="text-2xl font-black uppercase tracking-tighter font-league">League Commissions</h3>
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Control your active participation</p>
@@ -470,7 +600,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
             </div>
 
             {/* Wipe Data Option */}
-            <div className="px-6 mt-12">
+            <div className="px-6 mt-12 pb-12">
                 <button
                     onClick={() => {
                         if (confirm("THIS WILL WIPE YOUR LEAGUE DATA. ARE YOU SURE?")) {

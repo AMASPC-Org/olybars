@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     MapPin, Clock, Beer, Trophy, Music, Users,
     ChevronLeft, Navigation, Star, Shield, Info,
-    Flame, Calendar, Share2, ChevronRight
+    Flame, Calendar, Share2, ChevronRight, Zap
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../../types';
 import { VenueGallery } from '../components/VenueGallery';
@@ -30,6 +30,26 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
     const navigate = useNavigate();
     const venue = venues.find(v => v.id === id);
 
+    const handleShare = async () => {
+        if (!venue) return;
+        const shareData = {
+            title: `OlyBars - ${venue.name}`,
+            text: `Checking out the vibes at ${venue.name} on OlyBars. Come join the league!`,
+            url: window.location.href,
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(window.location.href);
+                alert('Link copied to clipboard!');
+            }
+        } catch (err) {
+            console.error('Error sharing:', err);
+        }
+    };
+
     if (!venue) {
         return (
             <div className="p-10 text-center text-slate-500 font-bold">
@@ -55,10 +75,28 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
 
                 <button
                     onClick={() => navigate(-1)}
-                    className="absolute top-6 left-6 p-2 bg-black/50 backdrop-blur-md rounded-full text-white border border-white/10 hover:bg-black transition-colors"
+                    className="absolute top-6 left-6 p-2 bg-black/50 backdrop-blur-md rounded-full text-white border border-white/10 hover:bg-black transition-colors z-10"
                 >
                     <ChevronLeft className="w-6 h-6" />
                 </button>
+
+                <div className="absolute top-6 right-6 flex gap-2 z-10">
+                    <button
+                        onClick={() => handleToggleFavorite(venue.id)}
+                        className={`p-2 bg-black/50 backdrop-blur-md rounded-full border transition-colors ${userProfile.favorites?.includes(venue.id)
+                            ? 'border-primary text-primary'
+                            : 'border-white/10 text-white hover:bg-black'
+                            }`}
+                    >
+                        <Star className={`w-5 h-5 ${userProfile.favorites?.includes(venue.id) ? 'fill-primary' : ''}`} />
+                    </button>
+                    <button
+                        onClick={handleShare}
+                        className="p-2 bg-black/50 backdrop-blur-md rounded-full text-white border border-white/10 hover:bg-black transition-colors"
+                    >
+                        <Share2 className="w-5 h-5" />
+                    </button>
+                </div>
 
                 <div className="absolute bottom-6 left-6 right-6">
                     <div className="flex justify-between items-end">
@@ -121,19 +159,11 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                         {clockedInVenue === venue.id ? 'Checked In' : 'Clock In (+10)'}
                     </button>
                     <button
-                        onClick={() => handleToggleFavorite(venue.id)}
-                        className={`w-14 h-14 bg-surface border-2 rounded-2xl flex items-center justify-center transition-all active:scale-95 shadow-xl ${userProfile.favorites?.includes(venue.id)
-                            ? 'border-primary text-primary'
-                            : 'border-slate-700 text-slate-400 hover:border-primary/50 hover:text-primary/70'
-                            }`}
-                    >
-                        <Star className={`w-6 h-6 ${userProfile.favorites?.includes(venue.id) ? 'fill-primary' : ''}`} />
-                    </button>
-                    <button
                         onClick={() => handleVibeCheck(venue)}
-                        className="w-14 h-14 bg-surface border-2 border-slate-700 rounded-2xl flex items-center justify-center text-slate-400 hover:border-primary hover:text-primary transition-all active:scale-95 shadow-xl"
+                        className="flex-1 py-4 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 text-slate-100 hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 shadow-xl"
                     >
-                        <Share2 className="w-6 h-6" />
+                        <Zap className="w-4 h-4 text-primary" />
+                        Vibe Check (+5)
                     </button>
                 </div>
 

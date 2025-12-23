@@ -1,6 +1,7 @@
 import { ai as genkitAi } from '../genkit';
 import { z } from 'zod';
 import { venueSearch } from '../tools/venueSearch';
+import { knowledgeSearch } from '../tools/knowledgeSearch';
 import { GeminiService } from '../services/geminiService';
 
 // Lazy-load the service to ensure environment variables are ready
@@ -48,7 +49,21 @@ export const artieChatLogic = genkitAi.defineFlow({
             }))
         ];
 
-        // 2. Search Intent
+        // 2. Playbook/FAQ Intent
+        if (rawTriage.includes('PLAYBOOK')) {
+            const kbKeywords = rawTriage.split('PLAYBOOK:')[1]?.trim().toLowerCase() || question;
+            const kbResult = await knowledgeSearch({ query: kbKeywords });
+
+            baseContents.push({
+                role: 'user',
+                parts: [{ text: `User Query: ${question}\n\nOlyBars Playbook Knowledge: ${JSON.stringify(kbResult)}` }]
+            });
+
+            return await service.generateArtieResponse('gemini-2.0-flash', baseContents, 0.4)
+                || "I've got the playbook right here, but I'm blanking. Ask me about league rules again?";
+        }
+
+        // 3. Search Intent
         if (rawTriage.includes('SEARCH')) {
             const searchKeywords = rawTriage.split('SEARCH:')[1]?.trim().toLowerCase() || question;
             const queryResult = await venueSearch({ query: searchKeywords });

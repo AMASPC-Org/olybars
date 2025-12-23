@@ -19,8 +19,12 @@ const app = initializeApp(firebaseConfig);
 // Export the services so the rest of the app can use them
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const functions = getFunctions(app, 'us-central1');
+export const functions = getFunctions(app, 'us-west1');
 
+// DISABLED: Forcing emulator connect on localhost was blocking Artie when emulators aren't running.
+// To use emulators, explicitly enable this or use an environment variable.
+/*
 if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
   connectFunctionsEmulator(functions, 'localhost', 5001);
 }
+*/

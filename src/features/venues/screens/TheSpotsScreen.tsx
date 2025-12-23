@@ -7,7 +7,9 @@ import {
     ArrowLeft,
     Filter,
     Flame,
-    Star
+    Star,
+    Zap,
+    Clock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Venue, UserProfile } from '../../../types';
@@ -24,7 +26,7 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
     const navigate = useNavigate();
     const { coords } = useGeolocation();
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeFilter, setActiveFilter] = useState<'all' | 'buzzing' | 'favorites'>('all');
+    const [activeFilter, setActiveFilter] = useState<'all' | 'buzzing' | 'lively' | 'chill' | 'favorites'>('all');
 
     // Logic for sorting and filtering
     const filteredVenues = useMemo(() => {
@@ -40,7 +42,13 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
 
         // 2. Category filter
         if (activeFilter === 'buzzing') {
-            result = result.filter(v => (v.currentBuzz?.score || 0) > 70);
+            result = result.filter(v =>
+                v.status === 'buzzing' || (v.currentBuzz?.score || 0) > 70
+            );
+        } else if (activeFilter === 'lively') {
+            result = result.filter(v => v.status === 'lively');
+        } else if (activeFilter === 'chill') {
+            result = result.filter(v => v.status === 'chill');
         } else if (activeFilter === 'favorites') {
             result = result.filter(v => userProfile.favorites?.includes(v.id));
         }
@@ -87,16 +95,18 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
             </div>
 
             {/* Quick Filters */}
-            <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-2 mb-8 overflow-x-auto pb-4 scrollbar-hide no-scrollbar -mx-6 px-6">
                 {[
-                    { id: 'all', label: 'ALL BARS', icon: Filter },
+                    { id: 'all', label: 'ALL', icon: Filter },
                     { id: 'buzzing', label: 'BUZZING', icon: Flame },
+                    { id: 'lively', label: 'LIVELY', icon: Zap },
+                    { id: 'chill', label: 'CHILL', icon: Clock },
                     { id: 'favorites', label: 'FAVORITES', icon: Star },
                 ].map((item) => (
                     <button
                         key={item.id}
                         onClick={() => setActiveFilter(item.id as any)}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-full border-2 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all ${activeFilter === item.id
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-full border-2 whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all ${activeFilter === item.id
                             ? 'bg-primary border-primary text-black shadow-[0_0_15px_rgba(251,191,36,0.3)]'
                             : 'bg-surface border-slate-800 text-slate-400 hover:border-slate-600'
                             }`}
@@ -118,7 +128,7 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
                         return (
                             <div key={venue.id} className="flex items-center gap-2">
                                 <button
-                                    onClick={() => navigate(`/venue/${venue.id}`)}
+                                    onClick={() => navigate(`/venues/${venue.id}`)}
                                     className="flex-1 bg-slate-900/50 border border-slate-800 hover:border-primary/30 p-4 rounded-2xl flex items-center justify-between group transition-all"
                                 >
                                     <div className="flex items-center gap-4">

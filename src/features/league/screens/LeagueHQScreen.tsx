@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Crown, Trophy, Star, Gift, Zap, Users, ArrowRight, ShieldCheck, Clock, Ticket } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Crown, Trophy, Star, Gift, Zap, Users, ArrowRight, ShieldCheck, Clock, Ticket, ChevronRight } from 'lucide-react';
 import { Venue } from '../../../types';
 
-type LeagueTab = 'overview' | 'schedule' | 'standings' | 'bars' | 'rules' | 'prizes';
+type LeagueTab = 'league' | 'schedule' | 'standings' | 'bars' | 'rules' | 'prizes';
 
 // Mock data for the standings with tie-breaker info
 const leaderboardData = [
@@ -39,11 +39,14 @@ const calculateRanks = (data: typeof leaderboardData) => {
 interface LeagueHQScreenProps {
   venues: Venue[];
   isLeagueMember?: boolean;
+  onJoinClick?: (mode?: 'login' | 'signup') => void;
+  onAskArtie?: () => void;
 }
 
-export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeagueMember = true }) => {
+export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeagueMember = true, onJoinClick, onAskArtie }) => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') as LeagueTab || 'overview';
+  const initialTab = searchParams.get('tab') as LeagueTab || 'league';
   const [leagueTab, setLeagueTab] = useState<LeagueTab>(initialTab);
 
   const rankedPlayers = useMemo(() => calculateRanks(leaderboardData), []);
@@ -76,33 +79,19 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
     setSearchParams({ tab });
   };
 
-  const renderJoinCTA = () => (
-    <div className="bg-primary border-4 border-black p-6 rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mb-8 transform -rotate-1">
-      <h3 className="text-black font-league font-black text-2xl uppercase leading-none mb-2">Not a Member Yet?</h3>
-      <p className="text-black text-xs font-bold uppercase mb-6 leading-tight">Join {totalMembers} locals competing for glory and free beer.</p>
-      <button
-        onClick={() => alert("Registration screen coming soon!")}
-        className="w-full bg-black text-white font-league font-black py-4 rounded-xl uppercase tracking-widest text-sm flex items-center justify-center gap-2"
-      >
-        JOIN THE LEAGUE <ArrowRight size={18} />
-      </button>
-    </div>
-  );
-
   const renderContent = () => {
     switch (leagueTab) {
-      case 'overview':
+      case 'league':
         return (
           <div className="space-y-6">
-            {!isLeagueMember && renderJoinCTA()}
-
             <div className="relative">
               <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-800" />
               <div className="space-y-8 relative">
                 {[
                   { t: '1. Create Handle', d: 'Stake your claim. Pick a name that will go down in Oly history.', icon: Users },
                   { t: '2. Check In', d: 'Clock in at any participating venue (max 2 per 12hrs).', icon: ShieldCheck },
-                  { t: '3. Climb the Ranks', d: 'Earn points for vibing, playing, and existing in the scene.', icon: Trophy }
+                  { t: '3. Climb the Ranks', d: 'Earn points for vibing, playing, and existing in the scene.', icon: Trophy },
+                  { t: '4. Win Swag', d: 'Score limited-edition gear and exclusive local perks.', icon: Gift }
                 ].map((i, idx) => (
                   <div key={i.t} className="flex gap-6 items-start">
                     <div className="bg-slate-900 border-2 border-slate-700 p-2 rounded-xl relative z-10">
@@ -117,13 +106,30 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
               </div>
             </div>
 
+            {/* Re-adding Live Promotions properly as requested */}
             <div className="bg-surface p-6 rounded-2xl border border-white/5 space-y-4">
-              <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Live Promotions</h4>
+              <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                <Zap size={12} fill="currentColor" /> Live Promotions
+              </h4>
               <div className="bg-background/50 border border-slate-800 p-4 rounded-xl">
                 <p className="text-sm font-bold text-white mb-1">Double Points at Hannah's</p>
-                <p className="text-[10px] text-slate-500 font-bold uppercase">Valid every Tuesday during League Karaoke.</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase leading-tight">Valid during League Nights. Check in to activate.</p>
               </div>
             </div>
+
+            {/* Restored Join CTA for Guests */}
+            {!isLeagueMember && (
+              <div className="bg-primary border-4 border-black p-6 rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform -rotate-1 relative z-20">
+                <h3 className="text-black font-league font-black text-2xl uppercase leading-none mb-2">Not a Member Yet?</h3>
+                <p className="text-black text-xs font-bold uppercase mb-6 leading-tight">Join {totalMembers} locals competing for glory and free beer.</p>
+                <button
+                  onClick={() => onJoinClick?.('signup')}
+                  className="w-full bg-black text-white font-league font-black py-4 rounded-xl uppercase tracking-widest text-sm flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
+                >
+                  JOIN THE LEAGUE <ArrowRight size={18} />
+                </button>
+              </div>
+            )}
           </div>
         );
       case 'schedule':
@@ -190,7 +196,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
                 ))}
               </div>
             </div>
-            <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest">Tie-Breaker: Check-ins \u003e Streak \u003e A-Z</p>
+            <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest">Tie-Breaker: Check-ins &gt; Streak &gt; A-Z</p>
           </div>
         );
       case 'prizes':
@@ -225,11 +231,26 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
       case 'bars':
         return (
           <div className="space-y-2">
-            <h2 className="text-3xl font-league text-white mb-4 uppercase tracking-tight px-2">Participating Venues</h2>
+            <div className="flex justify-between items-center mb-4 px-2">
+              <h2 className="text-3xl font-league text-white uppercase tracking-tight">Participating Venues</h2>
+              <button
+                onClick={() => navigate('/bars')}
+                className="text-[10px] font-black text-primary border-b border-primary/30 hover:border-primary transition-all uppercase"
+              >
+                View Full Directory
+              </button>
+            </div>
             {venues.map(v => (
-              <div key={v.id} className="bg-background/50 p-4 rounded-xl flex justify-between items-center border border-slate-800 hover:border-primary/30 hover:bg-slate-900/50 cursor-pointer transition-all mx-2">
-                <span className="font-league text-white text-lg tracking-wide uppercase">{v.name}</span>
-                {v.isHQ && <Crown className="w-5 h-5 text-primary" />}
+              <div
+                key={v.id}
+                onClick={() => navigate(`/venues/${v.id}`)}
+                className="bg-background/50 p-4 rounded-xl flex justify-between items-center border border-slate-800 hover:border-primary/30 hover:bg-slate-900/50 cursor-pointer transition-all mx-2 group"
+              >
+                <span className="font-league text-white text-lg tracking-wide uppercase group-hover:text-primary transition-colors">{v.name}</span>
+                <div className="flex items-center gap-2">
+                  {v.isHQ && <Crown className="w-5 h-5 text-primary" />}
+                  <ChevronRight className="w-4 h-4 text-slate-700 group-hover:text-primary transition-colors" />
+                </div>
               </div>
             ))}
           </div>
@@ -255,6 +276,18 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
                 <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #4: Fair Play</h3>
                 <p className="font-bold text-slate-400 text-sm leading-relaxed">Any attempt to spoof GPS or automate check-ins results in a permanent ban. Play fair, drink responsibly.</p>
               </div>
+
+              {/* [NEW] Have Questions? Ask Artie CTA */}
+              <div className="mt-8 pt-8 border-t border-slate-800 text-center">
+                <h3 className="text-xl font-black uppercase tracking-tight font-league mb-2">Have Questions?</h3>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4">Artie is our 24/7 AI Concierge and League Guide.</p>
+                <button
+                  onClick={onAskArtie}
+                  className="bg-oly-navy border-2 border-oly-gold text-oly-gold font-league font-black px-8 py-3 rounded-xl uppercase tracking-widest text-sm hover:bg-slate-800 transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2 mx-auto"
+                >
+                  <Star size={16} fill="currentColor" /> ASK ARTIE
+                </button>
+              </div>
             </div>
           </div>
         );
@@ -265,67 +298,56 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
 
   return (
     <div className="bg-background text-white min-h-screen p-4 font-sans pb-24">
-
       {/* Sponsor Hero Section */}
       <div className="mb-8 mx-auto max-w-sm">
         <div className="border-2 border-primary/20 bg-slate-900/40 rounded-2xl p-6 shadow-2xl relative overflow-hidden group hover:border-primary/40 transition-all duration-500">
           <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-700" />
-
           <div className="relative z-10 flex flex-col items-center text-center">
             <span className="text-primary font-league text-xs font-black uppercase tracking-[0.2em] mb-4">Official League HQ</span>
-
-            {/* Sponsor Logo Container */}
             <div className="bg-white px-6 py-3 rounded shadow-xl transform rotate-1 group-hover:-rotate-1 transition-transform mb-4">
               <h2 className="text-black font-league font-black text-3xl leading-none">HANNAH'S</h2>
-              <p className="text-black text-[10px] font-black uppercase leading-none tracking-[0.3em] mt-1">Bar \u0026 Grill</p>
+              <p className="text-black text-[10px] font-black uppercase leading-none tracking-[0.3em] mt-1">Bar & Grill</p>
             </div>
-
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-6 px-4">Your playbook for league nights in Olympia.</p>
-
             <div className="flex gap-3 flex-wrap justify-center">
               <button
                 onClick={() => handleTabChange('schedule')}
-                className="bg-primary text-black font-league font-black text-sm px-6 py-2 rounded-lg shadow-lg hover:scale-105 transition-transform uppercase tracking-wider"
+                className="bg-primary text-black font-league font-black text-sm px-8 py-2.5 rounded-lg shadow-lg hover:scale-105 transition-transform uppercase tracking-wider"
               >
-                Tonight
+                Schedule
               </button>
               <button
                 onClick={() => handleTabChange('standings')}
-                className="bg-slate-800 text-white font-league font-black text-sm px-6 py-2 rounded-lg shadow-lg border border-slate-700 hover:bg-slate-700 transition-colors uppercase tracking-wider flex items-center gap-2"
+                className="bg-slate-800 text-white font-league font-black text-sm px-8 py-2.5 rounded-lg shadow-lg border border-slate-700 hover:bg-slate-700 transition-colors uppercase tracking-wider flex items-center gap-2"
               >
                 <Trophy size={14} /> Standings
-              </button>
-              <button
-                onClick={() => handleTabChange('rules')}
-                className="bg-slate-800 text-white font-league font-black text-sm px-6 py-2 rounded-lg shadow-lg border border-slate-700 hover:bg-slate-700 transition-colors uppercase tracking-wider"
-              >
-                The Rules
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Sub Nav */}
-      <div className="flex gap-3 overflow-x-auto pb-4 mb-4 scrollbar-hide no-scrollbar px-2">
-        {(['overview', 'schedule', 'standings', 'prizes', 'bars', 'rules'] as LeagueTab[]).map((tab) => (
+      {/* Sub Nav Bubbles (Moved up as requested) */}
+      <div className="flex gap-3 overflow-x-auto pb-6 mb-4 scrollbar-hide no-scrollbar px-1">
+        {(['league', 'prizes', 'bars', 'rules'] as LeagueTab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => handleTabChange(tab)}
-            className={`px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all rounded-full border
-            ${leagueTab === tab
+            className={`px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all rounded-full border
+              ${leagueTab === tab
                 ? 'bg-primary text-black border-primary shadow-lg shadow-primary/20'
                 : 'bg-slate-900/50 text-slate-500 border-slate-800 hover:border-slate-600 hover:text-white'}`}
           >
-            {tab}
+            {tab === 'league' ? 'League' : tab}
           </button>
         ))}
       </div>
 
-      {/* Conditional Content area */}
-      <div className="min-h-[400px] border-t border-white/5 pt-6">
+      {/* Main Content Area */}
+      <div className="flex-1">
         {renderContent()}
       </div>
+
     </div>
   );
 };

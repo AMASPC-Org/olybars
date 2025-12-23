@@ -1,0 +1,28 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+export const Footer = () => {
+    return (
+        <footer className="w-full bg-black border-t border-primary/10 p-4 text-center mt-auto">
+            <div className="flex flex-col items-center gap-2">
+                <span className="text-xl font-black text-white tracking-widest font-league uppercase italic">
+                    OLYBARS<span className="text-primary">.COM</span>
+                </span>
+                <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">
+                    Powered by Artie Wells. Est. 2025.
+                </p>
+            </div>
+
+            <div className="flex justify-center gap-4 my-3 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                <Link to="/about" className="hover:text-primary transition-colors">About</Link>
+                <Link to="/faq" className="hover:text-primary transition-colors">Playbook</Link>
+                <Link to="/terms" className="hover:text-primary transition-colors">Terms</Link>
+                <Link to="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
+            </div>
+
+            <p className="text-[7px] text-slate-700 font-bold uppercase tracking-widest">
+                © 2025 OlyBars | Part of the AMA Agentic Ecosystem
+            </p>
+        </footer>
+    );
+};

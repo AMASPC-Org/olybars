@@ -24,14 +24,18 @@ import {
   ChevronRight,
   Settings as SettingsIcon,
   Bot,
+  Info,
+  Home,
 } from 'lucide-react';
-import { Venue } from '../../types';
+import { Venue, UserProfile } from '../../types';
 import { ArtieChatModal } from '../../features/venues/components/ArtieChatModal';
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
 import { CookieBanner } from '../ui/CookieBanner';
+import { Footer } from './Footer';
 
 interface AppShellProps {
   venues: Venue[];
+  userProfile: UserProfile;
   userPoints: number;
   userRank?: number;
   // if undefined, we default to showing the scoreboard for now
@@ -44,13 +48,30 @@ interface AppShellProps {
   userRole?: string;
   userHandle?: string;
   onLogout?: () => void;
+  onToggleFavorite?: (venueId: string) => void;
+  onToggleWeeklyBuzz?: () => void;
+  showArtie?: boolean;
+  setShowArtie?: (show: boolean) => void;
 }
 
 // --- Component: BuzzClock ---
 const BuzzClock: React.FC<{ venues: Venue[] }> = ({ venues }) => {
   const activeDeals = venues
     .filter((v) => v.deal && v.dealEndsIn && v.dealEndsIn > 0)
-    .sort((a, b) => (a.dealEndsIn || 0) - (b.dealEndsIn || 0));
+    .sort((a, b) => {
+      const aTime = a.dealEndsIn || 0;
+      const bTime = b.dealEndsIn || 0;
+
+      // Rule: Deals > 4 hours (240 mins) go to the bottom
+      const aIsLong = aTime > 240;
+      const bIsLong = bTime > 240;
+
+      if (aIsLong && !bIsLong) return 1;
+      if (!aIsLong && bIsLong) return -1;
+
+      // Otherwise sort by time remaining (shortest first)
+      return aTime - bTime;
+    });
 
   const getNextHappyHour = () => {
     const now = new Date();
@@ -68,31 +89,36 @@ const BuzzClock: React.FC<{ venues: Venue[] }> = ({ venues }) => {
   };
 
   const nextHH = getNextHappyHour();
-  const featuredVenue = venues[0]; // Fallback to first venue as featured
 
   return (
-    <div className="bg-primary border-b-2 border-black p-3 shadow-md z-20 relative">
-      <div className="flex items-center justify-between">
+    <div className="bg-black border-b border-primary/30 p-2 z-20 relative overflow-hidden group">
+      {/* Subtle scrolling text background for "Buzz" feel */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none select-none font-black text-4xl whitespace-nowrap overflow-hidden flex items-center">
+        <span className="animate-pulse text-primary tracking-tighter">BUZZ BUZZ BUZZ BUZZ BUZZ BUZZ</span>
+      </div>
+
+      <div className="flex items-center justify-between relative z-10">
         <div className="flex items-center gap-2">
-          <Clock className={`w-5 h-5 text-black ${activeDeals.length > 0 ? 'animate-pulse' : ''}`} strokeWidth={3} />
+          <Clock className={`w-4 h-4 text-primary ${activeDeals.length > 0 ? 'animate-pulse' : ''}`} strokeWidth={3} />
           <div className="flex flex-col">
-            <h2 className="text-sm font-black text-black leading-none uppercase font-league">
-              {activeDeals.length > 0 ? 'THE BUZZ CLOCK' : nextHH ? 'UPCOMING BUZZ' : 'FEATURED SPOT'}
+            <h2 className="text-[10px] font-black text-primary/80 leading-none uppercase font-league tracking-widest">
+              {activeDeals.length > 0 ? 'LIVE BUZZ CLOCK' : nextHH ? 'UPCOMING VIBES' : 'THE PULSE'}
             </h2>
-            <span className="text-[10px] text-black font-medium uppercase">
+            <span className="text-[11px] text-white font-bold uppercase tracking-tight truncate max-w-[280px]">
               {activeDeals.length > 0
-                ? `${activeDeals[0].name}: ${activeDeals[0].deal}`
+                ? `${activeDeals[0].name}: ${activeDeals[0].deal} (${activeDeals[0].dealEndsIn}m left)`
                 : nextHH
-                  ? `${nextHH.venue.name} Happy Hour in ${nextHH.diff} mins`
-                  : featuredVenue
-                    ? `Visit ${featuredVenue.name} tonight!`
-                    : 'Loading OlyBuzz...'}
+                  ? `${nextHH.venue.name} HH in ${nextHH.diff} mins`
+                  : 'All quiet in the 98501... for now.'}
             </span>
           </div>
         </div>
-        <div className="text-right">
-          <span className="text-[10px] font-bold tracking-wider text-white bg-black px-2 py-0.5 transform -skew-x-12 inline-block">
-            {activeDeals.length > 0 ? 'DEAL(S)' : nextHH ? 'PREP' : 'SPOTLIGHT'}
+        <div className="flex flex-col items-end">
+          {activeDeals.length > 1 && (
+            <span className="text-[8px] text-primary font-black animate-bounce mb-0.5">+{activeDeals.length - 1} MORE DEALS</span>
+          )}
+          <span className="text-[9px] font-black tracking-widest text-black bg-primary px-1.5 py-0.5 transform -skew-x-12 inline-block">
+            {activeDeals.length > 0 ? 'ACTIVE' : nextHH ? 'WARMUP' : 'QUIET'}
           </span>
         </div>
       </div>
@@ -103,6 +129,7 @@ const BuzzClock: React.FC<{ venues: Venue[] }> = ({ venues }) => {
 // --- The App Shell Component ---
 export const AppShell: React.FC<AppShellProps> = ({
   venues,
+  userProfile,
   userPoints,
   userRank,
   isLeagueMember,
@@ -113,12 +140,15 @@ export const AppShell: React.FC<AppShellProps> = ({
   onMemberLoginClick,
   userRole,
   userHandle,
-  onLogout
+  onLogout,
+  onToggleFavorite,
+  onToggleWeeklyBuzz,
+  showArtie,
+  setShowArtie,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showMenu, setShowMenu] = useState(false);
-  const [showArtie, setShowArtie] = useState(false);
 
   const getActiveTab = () => {
     const path = location.pathname.split('/')[1];
@@ -157,7 +187,10 @@ export const AppShell: React.FC<AppShellProps> = ({
       {/* Header Area */}
       <div className="sticky top-0 z-40 bg-background shadow-lg">
         <div className="p-3 flex justify-between items-center bg-black border-b-2 border-primary">
-          <div className="text-3xl font-black tracking-wide text-white flex items-center gap-1 drop-shadow-md">
+          <div
+            onClick={() => navigate('/')}
+            className="text-3xl font-black tracking-wide text-white flex items-center gap-1 drop-shadow-md cursor-pointer hover:opacity-80 transition-opacity"
+          >
             OLYBARS<span className="text-primary">.COM</span>
           </div>
           <button
@@ -193,8 +226,11 @@ export const AppShell: React.FC<AppShellProps> = ({
       </div>
 
       {/* Main Content (Outlet) */}
-      <div className="flex-1 overflow-y-auto relative">
-        <Outlet context={{ venues }} />
+      <div className="flex-1 overflow-y-auto relative flex flex-col">
+        <div className="flex-1">
+          <Outlet context={{ venues, onAskArtie: () => setShowArtie?.(true) }} />
+        </div>
+        {location.pathname !== '/map' && <Footer />}
       </div>
 
       {/* Footer / League Bar */}
@@ -252,277 +288,306 @@ export const AppShell: React.FC<AppShellProps> = ({
       </div>
 
       {/* Hamburger Menu Overlay */}
-      {showMenu && (
-        <div
-          className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm"
-          onClick={() => setShowMenu(false)}
-        >
+      {
+        showMenu && (
           <div
-            className="absolute top-0 right-0 w-[85%] max-w-sm bg-[#0f172a] h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowMenu(false)}
           >
-            {/* 1. TOP SECTION: PROFILE & CLOSE */}
-            <div className="bg-primary p-6 flex justify-between items-start border-b border-black/20">
-              <div
-                className="flex items-center gap-3 cursor-pointer group"
-                onClick={() => {
-                  if (userRole === 'guest') {
-                    onMemberLoginClick?.('signup');
-                  } else {
-                    onProfileClick?.();
-                  }
-                  setShowMenu(false);
-                }}
-              >
-                <div className="w-12 h-12 bg-black rounded-full border-2 border-white flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <User className="w-6 h-6 text-primary" strokeWidth={3} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xl font-black text-black leading-none uppercase font-league">
-                    {userHandle || "CREATE OLYBARS ID"}
-                  </span>
-                  <span className="text-[10px] font-black text-black/60 uppercase tracking-widest mt-0.5">
-                    {userRole === 'guest' ? "GUEST USER" : userRole?.toUpperCase() || "MEMBER"}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowMenu(false)}
-                className="text-black hover:rotate-90 transition-all p-1"
-              >
-                <X className="w-8 h-8" strokeWidth={4} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-5 space-y-8">
-              {/* 1. LEAGUE HQ PROMINENT LINK */}
-              <button
-                onClick={() => handleMenuNavigation('/league')}
-                title="Access rankings, rewards, and the full Bar League leaderboard."
-                className="w-full bg-gradient-to-r from-primary to-yellow-500 p-4 rounded-xl flex items-center justify-between group shadow-lg active:scale-95 transition-all"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="bg-black/20 p-2 rounded-lg">
-                    <Crown className="w-6 h-6 text-black" strokeWidth={3} />
-                  </div>
-                  <div className="text-left">
-                    <span className="block text-black font-black text-sm uppercase tracking-tighter">THE LEAGUE HQ</span>
-                    <span className="block text-black/60 text-[8px] font-bold uppercase tracking-widest">Rankings & Rewards</span>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-black/40 group-hover:text-black transition-colors" />
-              </button>
-
-              {/* 2. THE PLAYBOOK (Renamed from FAQ) */}
-              <button
-                onClick={() => handleMenuNavigation('/faq')}
-                title="The Field Guide: How to play, rules of the well, and FAQ."
-                className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-all"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="bg-primary/10 p-2 rounded-lg">
-                    <Brain className="w-5 h-5 text-primary" strokeWidth={2} />
-                  </div>
-                  <div className="text-left">
-                    <span className="block text-white font-black text-xs uppercase tracking-tight">THE PLAYBOOK</span>
-                    <span className="block text-slate-500 text-[8px] font-bold uppercase tracking-widest">Help & Field Guide</span>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
-              </button>
-
-              {/* [NEW] MEET ARTIE: THE LEGACY */}
-              <button
-                onClick={() => handleMenuNavigation('/meet-artie')}
-                title="The 98501 Legend: Artie Actual"
-                className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-all"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="bg-primary/10 p-2 rounded-lg">
-                    <User className="w-5 h-5 text-primary" strokeWidth={2} />
-                  </div>
-                  <div className="text-left">
-                    <span className="block text-white font-black text-xs uppercase tracking-tight">MEET ARTIE</span>
-                    <span className="block text-slate-500 text-[8px] font-bold uppercase tracking-widest">Values & Legend</span>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
-              </button>
-
-              {/* 3. DISCOVERY LINKS */}
-              <div className="space-y-2">
-                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1 mb-3">Discovery</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { label: 'Map', icon: MapIcon, path: '/map' },
-                    { label: 'Events', icon: Ticket, path: '/events' },
-                    { label: 'Trivia', icon: Brain, path: '/trivia' },
-                    { label: 'Karaoke', icon: Mic, path: '/karaoke' },
-                    { label: 'Live Music', icon: Music, path: '/live' },
-                    { label: 'Bars', icon: Search, path: '/bars' },
-                  ].map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => handleMenuNavigation(item.path)}
-                      title={`Go to ${item.label}`}
-                      className="bg-white/5 border border-white/5 py-3 px-4 rounded-xl flex items-center gap-3 hover:bg-white/10 transition-all group"
-                    >
-                      <item.icon className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
-                      <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest">{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 4. YOUR ACCOUNT */}
-              <div className="space-y-3">
-                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1 mb-3">Your Account</h3>
-                <button
+            <div
+              className="absolute top-0 right-0 w-[85%] max-w-sm bg-[#0f172a] h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* 1. TOP SECTION: PROFILE & CLOSE */}
+              <div className="bg-primary p-6 flex justify-between items-start border-b border-black/20">
+                <div
+                  className="flex items-center gap-3 cursor-pointer group"
                   onClick={() => {
-                    onProfileClick?.();
+                    if (userRole === 'guest') {
+                      onMemberLoginClick?.('signup');
+                    } else {
+                      onProfileClick?.();
+                    }
                     setShowMenu(false);
                   }}
-                  className="w-full bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-all"
+                >
+                  <div className="w-12 h-12 bg-black rounded-full border-2 border-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <User className="w-6 h-6 text-primary" strokeWidth={3} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xl font-black text-black leading-none uppercase font-league">
+                      {userHandle || "CREATE OLYBARS ID"}
+                    </span>
+                    <span className="text-[10px] font-black text-black/60 uppercase tracking-widest mt-0.5">
+                      {userRole === 'guest' ? "GUEST USER" : userRole?.toUpperCase() || "MEMBER"}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowMenu(false)}
+                  className="text-black hover:rotate-90 transition-all p-1"
+                >
+                  <X className="w-8 h-8" strokeWidth={4} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-5 space-y-8">
+                {/* 1. LEAGUE HQ PROMINENT LINK */}
+                <button
+                  onClick={() => handleMenuNavigation('/league')}
+                  title="Access rankings, rewards, and the full Bar League leaderboard."
+                  className="w-full bg-gradient-to-r from-primary to-yellow-500 p-4 rounded-xl flex items-center justify-between group shadow-lg active:scale-95 transition-all"
                 >
                   <div className="flex items-center gap-4">
-                    <User className="w-5 h-5 text-primary" strokeWidth={2} />
-                    <span className="text-white font-black text-xs uppercase tracking-tight">My Profile</span>
+                    <div className="bg-black/20 p-2 rounded-lg">
+                      <Crown className="w-6 h-6 text-black" strokeWidth={3} />
+                    </div>
+                    <div className="text-left">
+                      <span className="block text-black font-black text-sm uppercase tracking-tighter">THE LEAGUE HQ</span>
+                      <span className="block text-black/60 text-[8px] font-bold uppercase tracking-widest">Rankings & Rewards</span>
+                    </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-600" />
+                  <ChevronRight className="w-5 h-5 text-black/40 group-hover:text-black transition-colors" />
                 </button>
 
-                <div className="bg-surface/30 border border-white/5 rounded-xl p-4 space-y-4 text-left">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Bell className="w-4 h-4 text-slate-500" />
-                      <div>
-                        <span className="block text-[10px] text-slate-300 font-black uppercase tracking-widest">Weekly Buzz</span>
-                        <span className="block text-[8px] text-slate-500 font-bold uppercase mt-0.5">Standings & Artie's Weekly Recs</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setAlertPrefs({ ...alertPrefs, weeklyDigest: !alertPrefs.weeklyDigest })}
-                      title="Receive a weekly summary of league standings and upcoming events."
-                      className={`w-10 h-5 rounded-full p-1 transition-colors ${alertPrefs.weeklyDigest ? 'bg-primary' : 'bg-slate-700'}`}
-                    >
-                      <div className={`w-3 h-3 bg-black rounded-full transition-transform ${alertPrefs.weeklyDigest ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* 5. FAVORITE SPOTS */}
-              <div className="space-y-3">
-                <h3 className="text-primary font-black flex items-center gap-2 uppercase tracking-widest text-[10px] font-league px-1">
-                  <Star className="w-3.5 h-3.5" strokeWidth={3} /> FAVORITE SPOTS
-                </h3>
-                <div className="bg-surface/30 border border-white/5 rounded-xl overflow-hidden divide-y divide-white/5">
-                  {(venues.filter(v => alertPrefs.followedVenues?.includes(v.id)).length > 0) ? (
-                    venues.filter(v => alertPrefs.followedVenues?.includes(v.id)).map((venue) => (
-                      <div
-                        key={venue.id}
-                        className="p-3.5 flex justify-between items-center group cursor-pointer hover:bg-slate-800 transition-colors"
-                        onClick={() => {
-                          const followed = alertPrefs.followedVenues || [];
-                          const isFav = followed.includes(venue.id);
-                          const newFollowed = isFav
-                            ? followed.filter((id: string) => id !== venue.id)
-                            : [...followed, venue.id];
-                          setAlertPrefs({ ...alertPrefs, followedVenues: newFollowed });
-                        }}
-                      >
-                        <span className="text-white font-bold text-xs tracking-tight font-league">{venue.name.toUpperCase()}</span>
-                        <Star className="w-4 h-4 text-primary fill-primary" strokeWidth={3} />
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center">
-                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">No favorites yet</p>
-                      <p className="text-[8px] text-slate-600 uppercase mt-1">Star the spots you love to track them here.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* 6. SIDEBAR FOOTER: ADMIN & LEGAL */}
-            <div className="p-4 bg-black border-t border-white/10 space-y-3">
-              {/* ADMIN DASHBOARD (Conditional) */}
-              {userRole === 'super-admin' && (
+                {/* [NEW] ABOUT OLYBARS */}
                 <button
-                  onClick={() => handleMenuNavigation('/admin')}
-                  className="w-full bg-red-900/20 border border-red-500/30 p-3 flex items-center justify-between group rounded-md hover:bg-red-900/40 transition-all"
+                  onClick={() => handleMenuNavigation('/about')}
+                  className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-all"
                 >
-                  <span className="text-red-500 font-black text-[10px] uppercase tracking-widest font-league">
-                    ADMIN DASHBOARD
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-red-500" />
+                  <div className="flex items-center gap-4">
+                    <div className="bg-primary/10 p-2 rounded-lg">
+                      <Info className="w-5 h-5 text-primary" strokeWidth={2} />
+                    </div>
+                    <div className="text-left">
+                      <span className="block text-white font-black text-xs uppercase tracking-tight">ABOUT THE 98501</span>
+                      <span className="block text-slate-500 text-[8px] font-bold uppercase tracking-widest">Our Story & Artie Wells</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
                 </button>
-              )}
 
-              <button
-                onClick={() => {
-                  onOwnerLoginClick?.();
-                  setShowMenu(false);
-                }}
-                className="w-full bg-surface border border-white/10 p-3 flex items-center justify-between group rounded-md hover:border-slate-500 transition-all"
-              >
-                <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest font-league group-hover:text-white">
-                  VENUE LOGIN
-                </span>
-                <ChevronRight className="w-4 h-4 text-slate-700 group-hover:text-white" />
-              </button>
+                {/* [NEW] MEET ARTIE: THE LEGACY */}
+                <button
+                  onClick={() => handleMenuNavigation('/meet-artie')}
+                  title="The 98501 Legend: Artie Actual"
+                  className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="bg-primary/10 p-2 rounded-lg">
+                      <User className="w-5 h-5 text-primary" strokeWidth={2} />
+                    </div>
+                    <div className="text-left">
+                      <span className="block text-white font-black text-xs uppercase tracking-tight">MEET ARTIE</span>
+                      <span className="block text-slate-500 text-[8px] font-bold uppercase tracking-widest">Values & Legend</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
+                </button>
 
-              {userRole === 'guest' && (
+                {/* 2. THE PLAYBOOK (Renamed from FAQ) */}
+                <button
+                  onClick={() => handleMenuNavigation('/faq')}
+                  title="The Field Guide: How to play, rules of the well, and FAQ."
+                  className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="bg-primary/10 p-2 rounded-lg">
+                      <Brain className="w-5 h-5 text-primary" strokeWidth={2} />
+                    </div>
+                    <div className="text-left">
+                      <span className="block text-white font-black text-xs uppercase tracking-tight">THE PLAYBOOK</span>
+                      <span className="block text-slate-500 text-[8px] font-bold uppercase tracking-widest">Help & Field Guide</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
+                </button>
+
+                {/* 3. DISCOVERY LINKS */}
                 <div className="space-y-2">
+                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1 mb-3">Discovery</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: 'Map', icon: MapIcon, path: '/map' },
+                      { label: 'Events', icon: Ticket, path: '/events' },
+                      { label: 'Trivia', icon: Brain, path: '/trivia' },
+                      { label: 'Karaoke', icon: Mic, path: '/karaoke' },
+                      { label: 'Live Music', icon: Music, path: '/live' },
+                      { label: 'Bars', icon: Search, path: '/bars' },
+                    ].map((item) => (
+                      <button
+                        key={item.label}
+                        onClick={() => handleMenuNavigation(item.path)}
+                        title={`Go to ${item.label}`}
+                        className="bg-white/5 border border-white/5 py-3 px-4 rounded-xl flex items-center gap-3 hover:bg-white/10 transition-all group"
+                      >
+                        <item.icon className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 4. YOUR ACCOUNT */}
+                <div className="space-y-3">
+                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1 mb-3">Your Account</h3>
                   <button
                     onClick={() => {
-                      if (onMemberLoginClick) onMemberLoginClick('login');
-                      else onProfileClick?.();
+                      onProfileClick?.();
                       setShowMenu(false);
                     }}
-                    className="w-full bg-slate-800 border border-white/10 p-3 flex items-center justify-between group rounded-md hover:border-primary/50 transition-all font-league"
+                    className="w-full bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-all"
                   >
-                    <span className="text-white font-bold text-[10px] uppercase tracking-widest group-hover:text-primary">
-                      MEMBER LOGIN
-                    </span>
-                    <LogIn className="w-4 h-4 text-slate-500 group-hover:text-primary transition-colors" />
+                    <div className="flex items-center gap-4">
+                      <User className="w-5 h-5 text-primary" strokeWidth={2} />
+                      <span className="text-white font-black text-xs uppercase tracking-tight">My Profile</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-600" />
                   </button>
-                </div>
-              )}
 
-              {userRole !== 'guest' && (
+                  <div className="bg-surface/30 border border-white/5 rounded-xl p-4 space-y-4 text-left">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Bell className="w-4 h-4 text-slate-500" />
+                        <div>
+                          <span className="block text-[10px] text-slate-300 font-black uppercase tracking-widest">Weekly Buzz</span>
+                          <span className="block text-[8px] text-slate-500 font-bold uppercase mt-0.5">Standings & Artie's Weekly Recs</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => onToggleWeeklyBuzz?.()}
+                        title="Receive a weekly summary of league standings and upcoming events."
+                        className={`w-10 h-5 rounded-full p-1 transition-colors ${userProfile.weeklyBuzz ? 'bg-primary' : 'bg-slate-700'}`}
+                      >
+                        <div className={`w-3 h-3 bg-black rounded-full transition-transform ${userProfile.weeklyBuzz ? 'translate-x-5' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. FAVORITE SPOTS */}
+                <div className="space-y-3">
+                  <h3 className="text-primary font-black flex items-center gap-2 uppercase tracking-widest text-[10px] font-league px-1">
+                    <Star className="w-3.5 h-3.5" strokeWidth={3} /> FAVORITE SPOTS
+                  </h3>
+                  <div className="bg-surface/30 border border-white/5 rounded-xl overflow-hidden divide-y divide-white/5">
+                    {(() => {
+                      const favIds = userProfile.favorites || [];
+                      const favVenues = venues.filter(v => favIds.includes(v.id));
+
+                      // Prioritization: Home Base First
+                      const sortedFavs = [...favVenues].sort((a, b) => {
+                        if (a.id === userProfile.homeBase) return -1;
+                        if (b.id === userProfile.homeBase) return 1;
+                        return a.name.localeCompare(b.name);
+                      });
+
+                      return sortedFavs.length > 0 ? (
+                        sortedFavs.map((venue) => (
+                          <div
+                            key={venue.id}
+                            className="p-3.5 flex justify-between items-center group cursor-pointer hover:bg-slate-800 transition-colors"
+                            onClick={() => onToggleFavorite?.(venue.id)}
+                          >
+                            <div className="flex items-center gap-2">
+                              {venue.id === userProfile.homeBase && <Home className="w-3 h-3 text-primary" />}
+                              <span className={`font-bold text-xs tracking-tight font-league ${venue.id === userProfile.homeBase ? 'text-primary' : 'text-white'}`}>
+                                {venue.name.toUpperCase()}
+                              </span>
+                            </div>
+                            <Star className="w-4 h-4 text-primary fill-primary" strokeWidth={3} />
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center">
+                          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">No favorites yet</p>
+                          <p className="text-[8px] text-slate-600 uppercase mt-1">Star the spots you love to track them here.</p>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              {/* 6. SIDEBAR FOOTER: ADMIN & LEGAL */}
+              <div className="p-4 bg-black border-t border-white/10 space-y-3">
+                {/* ADMIN DASHBOARD (Conditional) */}
+                {userRole === 'super-admin' && (
+                  <button
+                    onClick={() => handleMenuNavigation('/admin')}
+                    className="w-full bg-red-900/20 border border-red-500/30 p-3 flex items-center justify-between group rounded-md hover:bg-red-900/40 transition-all"
+                  >
+                    <span className="text-red-500 font-black text-[10px] uppercase tracking-widest font-league">
+                      ADMIN DASHBOARD
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-red-500" />
+                  </button>
+                )}
+
                 <button
                   onClick={() => {
-                    onLogout?.();
+                    onOwnerLoginClick?.();
                     setShowMenu(false);
                   }}
-                  className="w-full bg-slate-900/40 border border-white/5 p-3 flex items-center justify-between group rounded-md hover:border-red-500/50 transition-all"
+                  className="w-full bg-surface border border-white/10 p-3 flex items-center justify-between group rounded-md hover:border-slate-500 transition-all"
                 >
-                  <span className="text-slate-600 font-bold text-[10px] uppercase tracking-widest font-league group-hover:text-red-500">
-                    LOGOUT SESSION
+                  <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest font-league group-hover:text-white">
+                    VENUE LOGIN
                   </span>
-                  <LogOut className="w-4 h-4 text-slate-800 group-hover:text-red-500 transition-colors" />
+                  <ChevronRight className="w-4 h-4 text-slate-700 group-hover:text-white" />
                 </button>
-              )}
 
-              <div className="flex justify-center gap-4 py-2">
-                <button onClick={() => handleMenuNavigation('/terms')} className="text-[9px] text-slate-600 font-bold uppercase hover:text-primary">TERMS</button>
-                <button onClick={() => handleMenuNavigation('/privacy')} className="text-[9px] text-slate-600 font-bold uppercase hover:text-primary">PRIVACY</button>
+                {userRole === 'guest' && (
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        if (onMemberLoginClick) onMemberLoginClick('login');
+                        else onProfileClick?.();
+                        setShowMenu(false);
+                      }}
+                      className="w-full bg-slate-800 border border-white/10 p-3 flex items-center justify-between group rounded-md hover:border-primary/50 transition-all font-league"
+                    >
+                      <span className="text-white font-bold text-[10px] uppercase tracking-widest group-hover:text-primary">
+                        MEMBER LOGIN
+                      </span>
+                      <LogIn className="w-4 h-4 text-slate-500 group-hover:text-primary transition-colors" />
+                    </button>
+                  </div>
+                )}
+
+                {userRole !== 'guest' && (
+                  <button
+                    onClick={() => {
+                      onLogout?.();
+                      setShowMenu(false);
+                    }}
+                    className="w-full bg-slate-900/40 border border-white/5 p-3 flex items-center justify-between group rounded-md hover:border-red-500/50 transition-all"
+                  >
+                    <span className="text-slate-600 font-bold text-[10px] uppercase tracking-widest font-league group-hover:text-red-500">
+                      LOGOUT SESSION
+                    </span>
+                    <LogOut className="w-4 h-4 text-slate-800 group-hover:text-red-500 transition-colors" />
+                  </button>
+                )}
+
+                <div className="flex justify-center gap-4 py-2">
+                  <button onClick={() => handleMenuNavigation('/terms')} className="text-[9px] text-slate-600 font-bold uppercase hover:text-primary">TERMS</button>
+                  <button onClick={() => handleMenuNavigation('/privacy')} className="text-[9px] text-slate-600 font-bold uppercase hover:text-primary">PRIVACY</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Santa Artie Festive FAB */}
-      <ArtieHoverIcon onClick={() => setShowArtie(true)} />
+      <ArtieHoverIcon onClick={() => setShowArtie?.(true)} />
 
       {/* Artie Chat Modal */}
-      <ArtieChatModal isOpen={showArtie} onClose={() => setShowArtie(false)} />
+      <ArtieChatModal isOpen={showArtie} onClose={() => setShowArtie?.(false)} />
 
       {/* Cookie Banner */}
       <CookieBanner />
-    </div>
+    </div >
   );
 };

@@ -1,6 +1,10 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { onCall } from 'firebase-functions/v2/https';
+import { setGlobalOptions } from 'firebase-functions/v2';
 import { artieChatLogic } from './flows/artieChat';
+
+// Set Global Options (Region)
+setGlobalOptions({ region: 'us-west1' });
 
 // --- ARTIE AI GATEWAY ---
 // This is the clean 'Infrastructure Trigger'. It wraps the pure logic flow.

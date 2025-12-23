@@ -16,7 +16,7 @@ const firebaseConfig = {
 // 2. Initialize the Client SDK
 const app = initializeApp(firebaseConfig);
 // const auth = getAuth(app); // Skipping auth as anonymous login is disabled
-const functions = getFunctions(app, "us-central1");
+const functions = getFunctions(app, "us-west1");
 
 async function testArtie() {
     console.log("🔓 Skipping authentication (Anonymous login disabled)...");

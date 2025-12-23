@@ -50,7 +50,8 @@ DIRECTIVES:
                     text: `You are a router for Artie, a nightlife agent.
                             1. SAFETY CHECK: If input implies self-harm/intoxication, output "SAFETY".
                             2. INTENT CHECK: If user wants to search venues/bars/happy hours, output "SEARCH: [keywords]".
-                            3. ELSE: Output "CHAT".
+                            3. KNOWLEDGE CHECK: If user asks about league rules, app help, or how things work (FAQ), output "PLAYBOOK: [keywords]".
+                            4. ELSE: Output "CHAT".
                             Input: "${question}"`
                 }]
             }],

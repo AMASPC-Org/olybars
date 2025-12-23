@@ -31,7 +31,7 @@ const ArtieBioScreen = () => {
                     </div>
 
                     <h1 className="font-black text-4xl text-primary font-league uppercase tracking-tighter mb-2">
-                        Artie Actual
+                        Artie Wells
                     </h1>
                     <p className="text-sm font-bold text-primary/60 uppercase tracking-widest border-y border-primary/20 py-2 w-full">
                         The 98501 Original
@@ -71,6 +71,55 @@ const ArtieBioScreen = () => {
                     </section>
                 </div>
 
+                {/* New Section: Ask Artie */}
+                <div className="mt-12 mb-12">
+                    <h2 className="text-white font-league font-black text-2xl uppercase tracking-tight mb-6 flex items-center gap-3">
+                        ASK THE ARCHITECT
+                    </h2>
+
+                    {/* Chat Bubble Mockup */}
+                    <div className="space-y-4 mb-8">
+                        <div className="flex justify-end">
+                            <div className="bg-slate-800/80 border border-white/5 p-4 rounded-2xl rounded-tr-sm max-w-[80%] shadow-lg">
+                                <p className="text-sm text-slate-300 font-medium">"Artie, who's got the best trivia tonight?"</p>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-start">
+                            <div className="bg-primary p-4 rounded-2xl rounded-tl-sm max-w-[85%] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]">
+                                <p className="text-sm text-black font-black leading-tight">
+                                    "Well 80 is the spot for trivia on Tuesdays. Starts at 7:00 sharp. Get there early to snag a table—it gets busy when the water's flowing."
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-start">
+                            <div className="bg-primary/20 border border-primary/30 p-4 rounded-2xl rounded-tl-sm max-w-[85%]">
+                                <p className="text-[10px] text-primary font-black uppercase tracking-widest mb-1">PRO-TIP from Artie:</p>
+                                <p className="text-xs text-white/80 font-medium italic">
+                                    "You can also ask me about happy hours, specific drink deals, or where to find karaoke on a Thursday."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Final CTA */}
+                    <div className="bg-white/5 border border-white/10 p-6 rounded-[2rem] text-center relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+                        <h3 className="text-primary font-black uppercase tracking-widest text-xs mb-3">Ready to chat?</h3>
+                        <p className="text-white font-league text-lg mb-6 leading-tight">
+                            TRY IT OUT NOW. JUST CLICK ARTIE'S LOGO IN THE CORNER.
+                        </p>
+
+                        <div className="flex flex-col items-center gap-2">
+                            <span className="text-xs font-black text-slate-500 uppercase flex items-center gap-2">
+                                He's Right Here
+                                <span className="animate-bounce">↓</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 {/* EASTER EGG: Note from Grandpa */}
                 <div className="mt-12 relative transform rotate-1 hover:rotate-0 transition-transform duration-300">
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-4 bg-yellow-100/20 blur-sm rounded-full" />
@@ -92,7 +141,7 @@ const ArtieBioScreen = () => {
                 {/* Footer Signature */}
                 <div className="mt-12 pt-8 border-t border-white/10 text-center">
                     <p className="font-league uppercase text-2xl text-slate-500 font-black opacity-20">
-                        EST. 98501
+                        EST. 2025
                     </p>
                 </div>
             </div>
