@@ -9,13 +9,37 @@ interface AdminDashboardScreenProps {
     userProfile: any;
 }
 
+import { fetchAllUsers, fetchSystemStats } from '../../../services/userService';
+import { UserProfile } from '../../../types';
+
+interface AdminDashboardScreenProps {
+    userProfile: any;
+}
+
 export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ userProfile }) => {
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'system'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'league' | 'system'>('overview');
+    const [systemStats, setSystemStats] = useState({ totalUsers: 0, activeUsers: 0, totalPoints: 0 });
+    const [leagueUsers, setLeagueUsers] = useState<UserProfile[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    React.useEffect(() => {
+        const loadDashboard = async () => {
+            const stats = await fetchSystemStats();
+            setSystemStats(stats);
+            const users = await fetchAllUsers();
+            setLeagueUsers(users);
+        };
+        loadDashboard();
+    }, []);
+
+    const filteredLeagueUsers = leagueUsers
+        .filter(u => u.handle?.toLowerCase().includes(searchTerm.toLowerCase()) || u.uid.includes(searchTerm))
+        .sort((a, b) => (b.stats?.seasonPoints || 0) - (a.stats?.seasonPoints || 0));
 
     const stats = [
-        { label: 'Total Users', value: '1,284', icon: Users, color: 'text-blue-400' },
-        { label: 'Active tonight', value: '142', icon: Activity, color: 'text-primary' },
-        { label: 'Total Points', value: '8.4M', icon: Database, color: 'text-purple-400' },
+        { label: 'Total Users', value: systemStats.totalUsers.toLocaleString(), icon: Users, color: 'text-blue-400' },
+        { label: 'Active Users', value: systemStats.activeUsers.toString(), icon: Activity, color: 'text-primary' },
+        { label: 'Total Points', value: systemStats.totalPoints.toLocaleString(), icon: Database, color: 'text-purple-400' },
         { label: 'System Health', value: '100%', icon: CheckCircle2, color: 'text-green-400' },
     ];
 
@@ -50,14 +74,14 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 mb-6 bg-black/40 p-1 rounded-xl">
-                {(['overview', 'users', 'system'] as const).map((tab) => (
+            <div className="flex gap-2 mb-6 bg-black/40 p-1 rounded-xl overflow-x-auto">
+                {(['overview', 'users', 'league', 'system'] as const).map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === tab
-                                ? 'bg-primary text-black shadow-lg'
-                                : 'text-slate-500 hover:text-white'
+                        className={`flex-1 py-2 px-4 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${activeTab === tab
+                            ? 'bg-primary text-black shadow-lg'
+                            : 'text-slate-500 hover:text-white'
                             }`}
                     >
                         {tab}
@@ -76,27 +100,9 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                 Live
                             </span>
                         </div>
-
-                        <div className="space-y-3">
-                            {[1, 2, 3].map(i => (
-                                <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
-                                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-black text-xs text-primary">
-                                        U{i}
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-[11px] font-bold">User_{i} checked into <span className="text-primary">The Crypt</span></p>
-                                        <p className="text-[9px] text-slate-500 font-medium">2 minutes ago • us-west1-a</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black font-mono text-green-400">+10pts</p>
-                                    </div>
-                                </div>
-                            ))}
+                        <div className="text-center py-10 opacity-50">
+                            <p className="text-xs uppercase tracking-widest">Live Feed Connecting...</p>
                         </div>
-
-                        <button className="w-full py-4 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                            View All Insights <ExternalLink className="w-3 h-3" />
-                        </button>
                     </div>
                 )}
 
@@ -104,7 +110,59 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                     <div className="flex flex-col items-center justify-center py-20 text-center opacity-50">
                         <Users className="w-12 h-12 mb-4 text-slate-600" />
                         <p className="text-sm font-bold uppercase tracking-widest">User Management</p>
-                        <p className="text-[10px] text-slate-500">Feature locked for Super-Admin only</p>
+                        <p className="text-[10px] text-slate-500">System Role Management (Coming Soon)</p>
+                    </div>
+                )}
+
+                {activeTab === 'league' && (
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center bg-black/20 p-3 rounded-xl border border-white/5">
+                            <h2 className="text-lg font-black font-league uppercase">League Roster</h2>
+                            <div className="relative">
+                                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="text"
+                                    placeholder="Find Member..."
+                                    className="bg-slate-800 border-none rounded-lg py-2 pl-9 pr-4 text-xs font-bold text-white focus:ring-1 focus:ring-primary outline-none"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="text-[9px] text-slate-500 uppercase tracking-widest border-b border-white/10">
+                                        <th className="p-3">Rank</th>
+                                        <th className="p-3">Handle</th>
+                                        <th className="p-3 text-right">Points</th>
+                                        <th className="p-3 text-right">Role</th>
+                                        <th className="p-3 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {filteredLeagueUsers.map((user, idx) => (
+                                        <tr key={user.uid} className="hover:bg-white/5 transition-colors">
+                                            <td className="p-3 font-mono font-bold text-slate-400">#{idx + 1}</td>
+                                            <td className="p-3 font-bold text-white">{user.handle || 'Unknown'}</td>
+                                            <td className="p-3 text-right font-mono text-primary font-black">
+                                                {(user.stats?.seasonPoints || 0).toLocaleString()}
+                                            </td>
+                                            <td className="p-3 text-right text-[10px] uppercase font-bold text-slate-500">
+                                                {user.role}
+                                            </td>
+                                            <td className="p-3 text-center">
+                                                <div className={`w-2 h-2 rounded-full mx-auto ${user.role !== 'guest' ? 'bg-green-500' : 'bg-slate-700'}`} />
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {filteredLeagueUsers.length === 0 && (
+                                <div className="text-center py-8 text-slate-500 text-xs uppercase">No members found</div>
+                            )}
+                        </div>
                     </div>
                 )}
 
@@ -120,10 +178,10 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                 <span className="text-[10px] font-bold uppercase">Firestore</span>
                                 <span className="text-[10px] font-mono text-green-400">OPERATIONAL</span>
                             </div>
-                            <div className="p-3 bg-black/20 border border-white/5 rounded-xl flex justify-between items-center">
+                            {/* <div className="p-3 bg-black/20 border border-white/5 rounded-xl flex justify-between items-center">
                                 <span className="text-[10px] font-bold uppercase">Gemini SDK</span>
                                 <span className="text-[10px] font-mono text-green-400">READY</span>
-                            </div>
+                             </div> */}
                         </div>
                     </div>
                 )}

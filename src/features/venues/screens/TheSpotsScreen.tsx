@@ -10,15 +10,17 @@ import {
     Star
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Venue } from '../../../types';
+import { Venue, UserProfile } from '../../../types';
 import { calculateDistance } from '../../../utils/geoUtils';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 
 interface TheSpotsScreenProps {
     venues: Venue[];
+    userProfile: UserProfile;
+    handleToggleFavorite: (venueId: string) => void;
 }
 
-const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues }) => {
+const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, handleToggleFavorite }) => {
     const navigate = useNavigate();
     const { coords } = useGeolocation();
     const [searchQuery, setSearchQuery] = useState('');
@@ -39,6 +41,8 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues }) => {
         // 2. Category filter
         if (activeFilter === 'buzzing') {
             result = result.filter(v => (v.currentBuzz?.score || 0) > 70);
+        } else if (activeFilter === 'favorites') {
+            result = result.filter(v => userProfile.favorites?.includes(v.id));
         }
 
         // 3. Sort by Distance (Proximity Rule)
@@ -112,35 +116,48 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues }) => {
                             : null;
 
                         return (
-                            <button
-                                key={venue.id}
-                                onClick={() => navigate(`/venue/${venue.id}`)}
-                                className="w-full bg-slate-900/50 border border-slate-800 hover:border-primary/30 p-4 rounded-2xl flex items-center justify-between group transition-all"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-surface rounded-xl flex items-center justify-center border border-white/5 group-hover:bg-primary group-hover:scale-105 transition-all">
-                                        <Navigation className="w-5 h-5 text-primary group-hover:text-black" />
-                                    </div>
-                                    <div className="text-left">
-                                        <h3 className="text-sm font-black uppercase tracking-tight font-league group-hover:text-primary transition-colors">
-                                            {venue.name}
-                                        </h3>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-[9px] font-bold text-slate-500 uppercase">{venue.type}</span>
-                                            {distance !== null && (
-                                                <>
-                                                    <span className="text-[8px] text-slate-700">•</span>
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter flex items-center gap-1">
-                                                        <MapPin className="w-2.5 h-2.5" />
-                                                        {Math.round(distance)}m AWAY
-                                                    </span>
-                                                </>
-                                            )}
+                            <div key={venue.id} className="flex items-center gap-2">
+                                <button
+                                    onClick={() => navigate(`/venue/${venue.id}`)}
+                                    className="flex-1 bg-slate-900/50 border border-slate-800 hover:border-primary/30 p-4 rounded-2xl flex items-center justify-between group transition-all"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-surface rounded-xl flex items-center justify-center border border-white/5 group-hover:bg-primary group-hover:scale-105 transition-all">
+                                            <Navigation className="w-5 h-5 text-primary group-hover:text-black" />
+                                        </div>
+                                        <div className="text-left">
+                                            <h3 className="text-sm font-black uppercase tracking-tight font-league group-hover:text-primary transition-colors">
+                                                {venue.name}
+                                            </h3>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="text-[9px] font-bold text-slate-500 uppercase">{venue.type}</span>
+                                                {distance !== null && (
+                                                    <>
+                                                        <span className="text-[8px] text-slate-700">•</span>
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter flex items-center gap-1">
+                                                            <MapPin className="w-2.5 h-2.5" />
+                                                            {Math.round(distance)}m AWAY
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <ChevronRight className="w-5 h-5 text-slate-700 group-hover:text-primary transition-all" />
-                            </button>
+                                    <ChevronRight className="w-4 h-4 text-slate-800 group-hover:text-primary" />
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleToggleFavorite(venue.id);
+                                    }}
+                                    className={`p-4 rounded-2xl border transition-all active:scale-95 shadow-lg ${userProfile.favorites?.includes(venue.id)
+                                        ? 'bg-primary/20 border-primary text-primary'
+                                        : 'bg-white/5 border-white/10 text-slate-700 hover:border-primary/30 hover:text-primary/50'
+                                        }`}
+                                >
+                                    <Star className={`w-6 h-6 ${userProfile.favorites?.includes(venue.id) ? 'fill-primary' : ''}`} />
+                                </button>
+                            </div>
                         );
                     })
                 ) : (
@@ -161,7 +178,7 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues }) => {
                     Claim Your Listing & Manage The Vibe →
                 </button>
             </footer>
-        </div>
+        </div >
     );
 };
 

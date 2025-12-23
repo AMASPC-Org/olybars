@@ -29,7 +29,7 @@ async function seedAdmin() {
             handle: adminHandle,
             role: 'admin',
             stats: {
-                seasonPoints: 9999,
+                seasonPoints: 0,
                 lifetimeCheckins: 100,
                 currentStreak: 42
             }

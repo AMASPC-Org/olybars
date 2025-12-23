@@ -12,7 +12,7 @@ import {
 // --- REAL SERVICES ---
 import { fetchVenues } from './services/venueService';
 import {
-  saveAlertPreferences, logUserActivity, syncCheckIns
+  saveAlertPreferences, logUserActivity, syncCheckIns, fetchUserRank, toggleFavorite, updateUserProfile
 } from './services/userService';
 
 // --- MODULAR COMPONENTS ---
@@ -30,6 +30,7 @@ import { OwnerDashboardScreen } from './features/owner/screens/OwnerDashboardScr
 import { ClockInModal } from './features/venues/components/ClockInModal';
 import { OnboardingModal } from './components/ui/OnboardingModal';
 import { VibeCheckModal } from './features/venues/components/VibeCheckModal';
+import { useToast } from './components/ui/BrandedToast';
 
 // --- UTILS & HELPERS ---
 import { cookieService } from './services/cookieService';
@@ -66,7 +67,7 @@ export default function OlyBarsApp() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [userPoints, setUserPoints] = useState(() => parseInt(localStorage.getItem('oly_points') || '1250'));
+  const [userPoints, setUserPoints] = useState(() => parseInt(localStorage.getItem('oly_points') || '0'));
   const [checkInHistory, setCheckInHistory] = useState<CheckInRecord[]>(() => JSON.parse(localStorage.getItem('oly_checkins') || '[]'));
   const [alertPrefs, setAlertPrefs] = useState<UserAlertPreferences>(() => JSON.parse(localStorage.getItem('oly_prefs') || '{"nightlyDigest":true,"weeklyDigest":true,"followedVenues":[],"interests":[]}'));
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
@@ -81,6 +82,7 @@ export default function OlyBarsApp() {
 
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginMode, setLoginMode] = useState<'user' | 'owner'>('user');
+  const [userSubMode, setUserSubMode] = useState<'login' | 'signup'>('signup');
   const [showOwnerDashboard, setShowOwnerDashboard] = useState(false);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(() => cookieService.get('oly_terms') === 'true');
   const [infoContent, setInfoContent] = useState<{ title: string, text: string } | null>(null);
@@ -88,13 +90,27 @@ export default function OlyBarsApp() {
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [vibeVenue, setVibeVenue] = useState<Venue | null>(null);
   const [showVibeCheckModal, setShowVibeCheckModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [clockedInVenue, setClockedInVenue] = useState<string | null>(null);
   const [vibeCheckedVenue, setVibeCheckedVenue] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState('');
+  const { showToast } = useToast();
   // const [artieMessages, setArtieMessages] = useState<{ sender: string, text: string }[]>([
   //   { sender: 'artie', text: "Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water." }
   // ]);
-  // const messagesEndRef = useRef<HTMLDivElement>(null); // Unused in App.tsx now as Chat Logic is in Modal
+  const [userRank, setUserRank] = useState<number | undefined>(undefined);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Fetch Rank Logic
+  useEffect(() => {
+    const getRank = async () => {
+      if (userProfile.uid !== 'guest' && userPoints !== undefined) {
+        const rank = await fetchUserRank(userPoints);
+        setUserRank(rank);
+      }
+    };
+    getRank();
+  }, [userPoints, userProfile.uid]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -156,11 +172,11 @@ export default function OlyBarsApp() {
 
     // 2. Nightly Cap Check (Engagement Integrity)
     if (nightlyChecks.length >= 2) {
-      alert("Nightly Cap reached! You've checked into 2 bars tonight. See you tomorrow at 4:00 AM!");
+      showToast("Nightly Cap reached! You've checked into 2 bars tonight. See you tomorrow at 4:00 AM!", 'error');
       return;
     }
 
-    if (clockedInVenue === venue.id) { alert("You're already checked in here!"); return; }
+    if (clockedInVenue === venue.id) { showToast("You're already checked in here!", 'info'); return; }
 
     // 3. Impossible Movement Check (Ops/Anti-Gaming)
     if (nightlyChecks.length > 0) {
@@ -177,7 +193,7 @@ export default function OlyBarsApp() {
 
         // Threshold: 100mph city movement is likely GPS spoofing or irresponsible
         if (speedMph > 100 && timeDiffSec > 0) {
-          alert("Impossible Movement detected! Engage responsibly. Ops team has been notified.");
+          showToast("Impossible Movement detected! Engage responsibly. Ops team has been notified.", 'error');
           logUserActivity(userId, { type: 'bonus', venueId: venue.id, points: 0, metadata: { flagged: 'impossible_movement', speedMph } });
           return;
         }
@@ -195,7 +211,7 @@ export default function OlyBarsApp() {
     const lastGlobal = userProfile.lastGlobalVibeCheck;
     if (lastGlobal && (now - lastGlobal) < 30 * 60 * 1000) {
       const minsLeft = Math.ceil((30 * 60 * 1000 - (now - lastGlobal)) / 60000);
-      alert(`Global Cooldown! Wait ${minsLeft}m before checking another vibe.`);
+      showToast(`Global Cooldown! Wait ${minsLeft}m before checking another vibe.`, 'info');
       return;
     }
 
@@ -203,7 +219,7 @@ export default function OlyBarsApp() {
     const lastCheck = userProfile.lastVibeChecks?.[venue.id];
     if (lastCheck && (now - lastCheck) < 60 * 60 * 1000) {
       const minsLeft = Math.ceil((60 * 60 * 1000 - (now - lastCheck)) / 60000);
-      alert(`${venue.name} Vibe Check locked! Available in ${minsLeft}m`);
+      showToast(`${venue.name} Vibe Check locked! Available in ${minsLeft}m`, 'info');
       return;
     }
 
@@ -240,6 +256,23 @@ export default function OlyBarsApp() {
     awardPoints('vibe', venue.id, hasConsent);
   };
 
+  const handleToggleFavorite = async (venueId: string) => {
+    if (userProfile.uid === 'guest') {
+      setShowLoginModal(true);
+      return;
+    }
+
+    try {
+      const result = await toggleFavorite(userProfile.uid, venueId, userProfile.favorites || []);
+      if (result.success) {
+        setUserProfile(prev => ({ ...prev, favorites: result.favorites }));
+        showToast(userProfile.favorites?.includes(venueId) ? 'Removed from Favorites' : 'Added to Favorites', 'success');
+      }
+    } catch (e) {
+      showToast('Error updating favorites', 'error');
+    }
+  };
+
   const handleAcceptTerms = () => {
     cookieService.set('oly_terms', 'true');
     // We don't set oly_cookies here automatically so the banner shows up separately
@@ -251,6 +284,17 @@ export default function OlyBarsApp() {
   useEffect(() => { localStorage.setItem('oly_profile', JSON.stringify(userProfile)); }, [userProfile]);
   useEffect(() => { localStorage.setItem('oly_prefs', JSON.stringify(alertPrefs)); saveAlertPreferences(userId, alertPrefs); }, [alertPrefs]);
 
+  const handleLogout = () => {
+    localStorage.removeItem('oly_profile');
+    localStorage.removeItem('oly_points');
+    localStorage.removeItem('oly_checkins');
+    setUserProfile({ uid: 'guest', role: 'guest' });
+    setUserPoints(1250);
+    setCheckInHistory([]);
+    setShowOwnerDashboard(false);
+    window.location.href = '/';
+  };
+
   // Sync points when profile changes (e.g. after login)
   useEffect(() => {
     if (userProfile.stats?.seasonPoints !== undefined) {
@@ -259,7 +303,7 @@ export default function OlyBarsApp() {
   }, [userProfile.uid, userProfile.stats?.seasonPoints]);
 
   if (!hasAcceptedTerms) {
-    return <OnboardingModal isOpen={true} onClose={handleAcceptTerms} />;
+    return <OnboardingModal isOpen={true} onClose={handleAcceptTerms} userRole="guest" />;
   }
 
   return (
@@ -280,6 +324,7 @@ export default function OlyBarsApp() {
                     onProfileClick={() => {
                       if (userProfile.uid === 'guest') {
                         setLoginMode('user');
+                        setUserSubMode('login');
                         setShowLoginModal(true);
                       } else {
                         window.location.href = '/profile';
@@ -287,9 +332,18 @@ export default function OlyBarsApp() {
                     }}
                     onOwnerLoginClick={() => {
                       setLoginMode('owner');
+                      setUserSubMode('login');
+                      setShowLoginModal(true);
+                    }}
+                    onMemberLoginClick={(mode?: 'login' | 'signup') => {
+                      setLoginMode('user');
+                      if (mode) setUserSubMode(mode);
                       setShowLoginModal(true);
                     }}
                     userRole={userProfile.role}
+                    userHandle={userProfile.handle}
+                    userRank={userRank}
+                    onLogout={handleLogout}
                   />
                 }
               >
@@ -319,7 +373,7 @@ export default function OlyBarsApp() {
                 <Route path="live" element={<LiveMusicScreen venues={venues} />} />
                 <Route path="events" element={<EventsScreen venues={venues} />} />
                 <Route path="league" element={<LeagueHQScreen venues={venues} isLeagueMember={userProfile.role !== 'guest'} />} />
-                <Route path="bars" element={<TheSpotsScreen venues={venues} />} />
+                <Route path="bars" element={<TheSpotsScreen venues={venues} userProfile={userProfile} handleToggleFavorite={handleToggleFavorite} />} />
                 <Route path="map" element={<MapScreen />} />
                 <Route path="meet-artie" element={<ArtieBioScreen />} />
                 <Route path="artie-bio" element={<ArtieBioScreen />} />
@@ -333,6 +387,7 @@ export default function OlyBarsApp() {
                       handleClockIn={handleClockIn}
                       handleVibeCheck={handleVibeCheck}
                       clockedInVenue={clockedInVenue}
+                      handleToggleFavorite={handleToggleFavorite}
                     />
                   }
                 />
@@ -366,6 +421,8 @@ export default function OlyBarsApp() {
               onClose={() => setShowLoginModal(false)}
               loginMode={loginMode}
               setLoginMode={setLoginMode}
+              userSubMode={userSubMode}
+              setUserSubMode={setUserSubMode}
               userProfile={userProfile}
               setUserProfile={setUserProfile}
               venues={venues}
@@ -374,6 +431,14 @@ export default function OlyBarsApp() {
               openInfo={openInfo}
               onOwnerSuccess={() => setShowOwnerDashboard(true)}
             />
+
+            {showOnboarding && (
+              <OnboardingModal
+                isOpen={showOnboarding}
+                onClose={() => setShowOnboarding(false)}
+                userRole={userProfile.role}
+              />
+            )}
 
             {showOwnerDashboard && (
               <OwnerDashboardScreen

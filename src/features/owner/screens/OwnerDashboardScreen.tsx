@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../../types';
 import { OwnerMarketingPromotions } from '../../../components/OwnerMarketingPromotions';
+import { useToast } from '../../../components/ui/BrandedToast';
 
 interface OwnerDashboardProps {
     isOpen: boolean;
@@ -35,14 +36,22 @@ const calculatePulseScore = (venue: Venue): number => {
 
 export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({ isOpen, onClose, venues, updateVenue, userProfile }) => {
     const accessibleVenues = venues.filter(v => {
-        if (userProfile.role === 'admin') return true;
+        if (userProfile.role === 'admin' || userProfile.role === 'super-admin') return true;
         if (userProfile.role === 'owner' && v.ownerId === userProfile.uid) return true;
         if (userProfile.role === 'manager' && v.managerIds?.includes(userProfile.uid)) return true;
         return false;
     });
 
-    const [selectedVenueId, setSelectedVenueId] = useState<string | null>(accessibleVenues[0]?.id || null);
-    const myVenue = accessibleVenues.find(v => v.id === selectedVenueId);
+    const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
+
+    // Effect to auto-select first venue if none selected
+    React.useEffect(() => {
+        if (!selectedVenueId && accessibleVenues.length > 0) {
+            setSelectedVenueId(accessibleVenues[0].id);
+        }
+    }, [accessibleVenues, selectedVenueId]);
+
+    const myVenue = accessibleVenues.find(v => v.id === selectedVenueId) || accessibleVenues[0];
 
     const [dealText, setDealText] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
@@ -51,6 +60,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({ isOpen, on
     const [statsPeriod, setStatsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
     const [activityStats, setActivityStats] = useState({ earned: 0, redeemed: 0, activeUsers: 0 });
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const { showToast } = useToast();
 
     React.useEffect(() => {
         if (dashboardView === 'marketing' && myVenue) {
@@ -76,7 +86,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({ isOpen, on
                 photos: myVenue.photos?.map(p => p.id === photoId ? { ...p, [field]: !currentVal } : p)
             });
         } catch (e) {
-            alert("Failed to update photo status.");
+            showToast("Failed to update photo status.", 'error');
         }
     };
 
@@ -96,7 +106,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({ isOpen, on
         if (!dealText || !myVenue) return;
         updateVenue(myVenue.id, { deal: dealText, dealEndsIn: dealDuration });
         setDealText('');
-        alert('FLASH DEAL BROADCASTED TO NETWORK');
+        showToast('FLASH DEAL BROADCASTED TO NETWORK', 'success');
     };
 
     const clearDeal = () => {

@@ -203,6 +203,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
                 { title: "The Silver Chalice", prize: "$200 Gift Pack", requirement: "2nd Place Overall", icon: Gift },
                 { title: "Bronze Medallion", prize: "Limited Edition League Tee", requirement: "3rd Place Overall", icon: Star },
                 { title: "Venue MVP", prize: "Free Appetizer (Nightly)", requirement: "Most Points at a specific HQ", icon: Zap },
+                { title: "Mayor of the Bar", prize: "Custom Bar Stool Plaque", requirement: "Most Check-ins (Monthly)", icon: Crown },
               ].map((p, i) => (
                 <div key={i} className="bg-slate-900/50 border border-white/5 p-5 rounded-2xl flex items-center gap-5 group hover:border-primary/20 transition-all">
                   <div className="bg-slate-800 p-3 rounded-xl border-2 border-slate-700 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all">
@@ -215,6 +216,9 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
                   </div>
                 </div>
               ))}
+              <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-xl text-center">
+                <p className="text-[10px] uppercase font-black text-primary tracking-widest">Season 4 Ends: Feb 28, 2026</p>
+              </div>
             </div>
           </div>
         );
@@ -237,11 +241,19 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
             <div className="space-y-4 px-2">
               <div className="bg-red-900/10 border-2 border-red-900/30 p-5 rounded-2xl">
                 <h3 className="font-league text-red-500 text-xl font-black uppercase tracking-tight mb-2">Rule #1: Respect the Staff</h3>
-                <p className="font-bold text-red-200/70 text-sm leading-relaxed">Bartenders \u0026 staff are the referees. Their decisions are final. Harassment of any kind results in immediate season ban.</p>
+                <p className="font-bold text-red-200/70 text-sm leading-relaxed">Bartenders & staff are the referees. Their decisions are final. Harassment of any kind results in immediate season ban.</p>
               </div>
               <div className="bg-slate-900/50 border border-slate-700/50 p-5 rounded-2xl">
-                <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #2: Points \u0026 Limits</h3>
+                <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #2: Points & Limits</h3>
                 <p className="font-bold text-slate-400 text-sm leading-relaxed">Max two (2) check-ins per 12-hour period. No purchase necessary to earn points. Ghosting (checking in without being present) is prohibited.</p>
+              </div>
+              <div className="bg-slate-900/50 border border-slate-700/50 p-5 rounded-2xl">
+                <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #3: The Vibe Check</h3>
+                <p className="font-bold text-slate-400 text-sm leading-relaxed">Vibe photos must be taken on-site. Dark/blurry/irrelevant photos will be rejected by Artie and points revoked.</p>
+              </div>
+              <div className="bg-slate-900/50 border border-slate-700/50 p-5 rounded-2xl">
+                <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #4: Fair Play</h3>
+                <p className="font-bold text-slate-400 text-sm leading-relaxed">Any attempt to spoof GPS or automate check-ins results in a permanent ban. Play fair, drink responsibly.</p>
               </div>
             </div>
           </div>

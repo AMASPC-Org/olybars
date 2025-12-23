@@ -1,9 +1,7 @@
 import { Venue } from '../types';
 
-// Force production backend for now to verify data
-const API_BASE_URL = 'https://olybars-backend-juthzlaerq-uw.a.run.app/api';
-// const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-// const API_BASE_URL = (isLocalhost ? 'http://localhost:3001' : (import.meta.env.VITE_API_URL || 'https://olybars-backend-juthzlaerq-uw.a.run.app')) + '/api';
+// Forcing production URL for now since user is running frontend-only locally
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'https://olybars-backend-26629455103.us-west1.run.app') + '/api';
 
 /**
  * Fetches the list of venues from the production backend.

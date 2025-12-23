@@ -1,0 +1,25 @@
+
+import * as admin from 'firebase-admin';
+import * as dotenv from 'dotenv';
+import path from 'path';
+
+// Load env for key if needed, or rely on ADC if logged in
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
+// Initialize Firebase Admin (assumes GOOGLE_APPLICATION_CREDENTIALS or ADC is set, or runs in cloud)
+// For local run without credentials file, we might fail unless we use a service account key path.
+// BUT since I can't ask user for key easily, I'll rely on the fact they might have 'firebase-admin' setup or I can try to use a direct write via client SDK in a browser console approach IF this fails.
+// However, the user environment says "OS version is windows". 
+// Let's try to mimic the server's initialization if possible, but the server code uses 'firebase-admin'.
+// A safer bet for a "script" the AGENT runs is to create a client-side friendly script the user can run with `ts-node` IF they have credentials? No.
+// Let's write a script that uses the *Client SDK* (like repair-account.js likely did?) No, repair-account.js used FETCH to hit the backend.
+//
+// BETTER PLAN: Hit the backend endpoint I saw earlier? 
+// No, there isn't an endpoint to "set points".
+//
+// WAIT, I saw `updateUserProfile` in userService.ts which hits `/api/users/:uid`.
+// Does that endpoint allow updating stats?
+// Let's check `server/src/index.ts` again.
+
+// If /api/users/:uid allows updating arbitrary fields including `stats.seasonPoints`, I can use that.
+// If not, I need another way.

@@ -15,6 +15,7 @@ interface VenueProfileScreenProps {
     handleClockIn: (v: Venue) => void;
     handleVibeCheck: (v: Venue, hasConsent?: boolean, photoUrl?: string) => void;
     clockedInVenue?: string | null;
+    handleToggleFavorite: (venueId: string) => void;
 }
 
 export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
@@ -22,7 +23,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
     userProfile,
     handleClockIn,
     handleVibeCheck,
-    clockedInVenue
+    clockedInVenue,
+    handleToggleFavorite
 }) => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -117,6 +119,15 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     >
                         <MapPin className="w-4 h-4" />
                         {clockedInVenue === venue.id ? 'Checked In' : 'Clock In (+10)'}
+                    </button>
+                    <button
+                        onClick={() => handleToggleFavorite(venue.id)}
+                        className={`w-14 h-14 bg-surface border-2 rounded-2xl flex items-center justify-center transition-all active:scale-95 shadow-xl ${userProfile.favorites?.includes(venue.id)
+                            ? 'border-primary text-primary'
+                            : 'border-slate-700 text-slate-400 hover:border-primary/50 hover:text-primary/70'
+                            }`}
+                    >
+                        <Star className={`w-6 h-6 ${userProfile.favorites?.includes(venue.id) ? 'fill-primary' : ''}`} />
                     </button>
                     <button
                         onClick={() => handleVibeCheck(venue)}

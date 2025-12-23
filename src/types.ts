@@ -111,8 +111,13 @@ export interface UserProfile {
     seasonPoints: number;
     lifetimeCheckins: number;
     currentStreak: number;
+    vibeCheckCount: number;
+    competitionPoints: number;
   };
   handleLastChanged?: number;
   leaguePreferences?: string[];
+  favorites?: string[];
   weeklyBuzz?: boolean;
+  showMemberSince?: boolean;
+  createdAt?: number;
 }

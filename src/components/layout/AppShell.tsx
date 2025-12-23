@@ -16,6 +16,7 @@ import {
   MoreHorizontal,
   User,
   LogIn,
+  LogOut,
   Search,
   Star,
   Bell,
@@ -32,13 +33,17 @@ import { CookieBanner } from '../ui/CookieBanner';
 interface AppShellProps {
   venues: Venue[];
   userPoints: number;
+  userRank?: number;
   // if undefined, we default to showing the scoreboard for now
   isLeagueMember?: boolean;
   alertPrefs: any;
   setAlertPrefs: (prefs: any) => void;
   onProfileClick?: () => void;
   onOwnerLoginClick?: () => void;
+  onMemberLoginClick?: (mode?: 'login' | 'signup') => void;
   userRole?: string;
+  userHandle?: string;
+  onLogout?: () => void;
 }
 
 // --- Component: BuzzClock ---
@@ -99,12 +104,16 @@ const BuzzClock: React.FC<{ venues: Venue[] }> = ({ venues }) => {
 export const AppShell: React.FC<AppShellProps> = ({
   venues,
   userPoints,
+  userRank,
   isLeagueMember,
   alertPrefs,
   setAlertPrefs,
   onProfileClick,
   onOwnerLoginClick,
+  onMemberLoginClick,
   userRole,
+  userHandle,
+  onLogout
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -212,11 +221,11 @@ export const AppShell: React.FC<AppShellProps> = ({
               onClick={() => navigate('/league?tab=standings')}
             >
               <p className="text-[9px] text-slate-500 font-bold uppercase mx-1">
-                Season ends Dec 31
+                Season ends Feb 28, 2026
               </p>
               <div className="flex items-center justify-end gap-1 mt-0.5">
                 <span className="text-[10px] text-black font-black bg-primary border-2 border-white px-2 py-0.5 transform -skew-x-12 inline-block">
-                  RANK: #42
+                  RANK: #{userRank || '-'}
                 </span>
                 <Star className="w-4 h-4 text-primary fill-primary" />
               </div>
@@ -257,7 +266,11 @@ export const AppShell: React.FC<AppShellProps> = ({
               <div
                 className="flex items-center gap-3 cursor-pointer group"
                 onClick={() => {
-                  onProfileClick?.();
+                  if (userRole === 'guest') {
+                    onMemberLoginClick?.('signup');
+                  } else {
+                    onProfileClick?.();
+                  }
                   setShowMenu(false);
                 }}
               >
@@ -266,10 +279,10 @@ export const AppShell: React.FC<AppShellProps> = ({
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xl font-black text-black leading-none uppercase font-league">
-                    CREATE PROFILE
+                    {userHandle || "CREATE OLYBARS ID"}
                   </span>
                   <span className="text-[10px] font-black text-black/60 uppercase tracking-widest mt-0.5">
-                    GUEST USER
+                    {userRole === 'guest' ? "GUEST USER" : userRole?.toUpperCase() || "MEMBER"}
                   </span>
                 </div>
               </div>
@@ -378,24 +391,14 @@ export const AppShell: React.FC<AppShellProps> = ({
                   <ChevronRight className="w-4 h-4 text-slate-600" />
                 </button>
 
-                <div className="bg-surface/30 border border-white/5 rounded-xl p-4 space-y-4">
+                <div className="bg-surface/30 border border-white/5 rounded-xl p-4 space-y-4 text-left">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Bell className="w-4 h-4 text-slate-500" />
-                      <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">Nightly Buzz</span>
-                    </div>
-                    <button
-                      onClick={() => setAlertPrefs({ ...alertPrefs, nightlyDigest: !alertPrefs.nightlyDigest })}
-                      title="Receive notifications about nightly drink deals and events."
-                      className={`w-10 h-5 rounded-full p-1 transition-colors ${alertPrefs.nightlyDigest ? 'bg-primary' : 'bg-slate-700'}`}
-                    >
-                      <div className={`w-3 h-3 bg-black rounded-full transition-transform ${alertPrefs.nightlyDigest ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                    <div className="flex items-center gap-3">
-                      <Bell className="w-4 h-4 text-slate-500" />
-                      <span className="text-[10px] text-slate-300 font-black uppercase tracking-widest">Weekly Buzz</span>
+                      <div>
+                        <span className="block text-[10px] text-slate-300 font-black uppercase tracking-widest">Weekly Buzz</span>
+                        <span className="block text-[8px] text-slate-500 font-bold uppercase mt-0.5">Standings & Artie's Weekly Recs</span>
+                      </div>
                     </div>
                     <button
                       onClick={() => setAlertPrefs({ ...alertPrefs, weeklyDigest: !alertPrefs.weeklyDigest })}
@@ -414,14 +417,14 @@ export const AppShell: React.FC<AppShellProps> = ({
                   <Star className="w-3.5 h-3.5" strokeWidth={3} /> FAVORITE SPOTS
                 </h3>
                 <div className="bg-surface/30 border border-white/5 rounded-xl overflow-hidden divide-y divide-white/5">
-                  {venues.map((venue) => {
-                    const isFav = alertPrefs.followedVenues?.includes(venue.id);
-                    return (
+                  {(venues.filter(v => alertPrefs.followedVenues?.includes(v.id)).length > 0) ? (
+                    venues.filter(v => alertPrefs.followedVenues?.includes(v.id)).map((venue) => (
                       <div
                         key={venue.id}
                         className="p-3.5 flex justify-between items-center group cursor-pointer hover:bg-slate-800 transition-colors"
                         onClick={() => {
                           const followed = alertPrefs.followedVenues || [];
+                          const isFav = followed.includes(venue.id);
                           const newFollowed = isFav
                             ? followed.filter((id: string) => id !== venue.id)
                             : [...followed, venue.id];
@@ -429,10 +432,15 @@ export const AppShell: React.FC<AppShellProps> = ({
                         }}
                       >
                         <span className="text-white font-bold text-xs tracking-tight font-league">{venue.name.toUpperCase()}</span>
-                        <Star className={`w-4 h-4 transition-all ${isFav ? 'text-primary fill-primary' : 'text-slate-700 group-hover:text-primary/50'}`} strokeWidth={3} />
+                        <Star className="w-4 h-4 text-primary fill-primary" strokeWidth={3} />
                       </div>
-                    );
-                  })}
+                    ))
+                  ) : (
+                    <div className="p-4 text-center">
+                      <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">No favorites yet</p>
+                      <p className="text-[8px] text-slate-600 uppercase mt-1">Star the spots you love to track them here.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -448,7 +456,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                   <span className="text-red-500 font-black text-[10px] uppercase tracking-widest font-league">
                     ADMIN DASHBOARD
                   </span>
-                  <Lock className="w-4 h-4 text-red-500" />
+                  <ChevronRight className="w-4 h-4 text-red-500" />
                 </button>
               )}
 
@@ -460,10 +468,43 @@ export const AppShell: React.FC<AppShellProps> = ({
                 className="w-full bg-surface border border-white/10 p-3 flex items-center justify-between group rounded-md hover:border-slate-500 transition-all"
               >
                 <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest font-league group-hover:text-white">
-                  OWNER LOGIN
+                  VENUE LOGIN
                 </span>
-                <Lock className="w-4 h-4 text-slate-700 group-hover:text-white" />
+                <ChevronRight className="w-4 h-4 text-slate-700 group-hover:text-white" />
               </button>
+
+              {userRole === 'guest' && (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      if (onMemberLoginClick) onMemberLoginClick('login');
+                      else onProfileClick?.();
+                      setShowMenu(false);
+                    }}
+                    className="w-full bg-slate-800 border border-white/10 p-3 flex items-center justify-between group rounded-md hover:border-primary/50 transition-all font-league"
+                  >
+                    <span className="text-white font-bold text-[10px] uppercase tracking-widest group-hover:text-primary">
+                      MEMBER LOGIN
+                    </span>
+                    <LogIn className="w-4 h-4 text-slate-500 group-hover:text-primary transition-colors" />
+                  </button>
+                </div>
+              )}
+
+              {userRole !== 'guest' && (
+                <button
+                  onClick={() => {
+                    onLogout?.();
+                    setShowMenu(false);
+                  }}
+                  className="w-full bg-slate-900/40 border border-white/5 p-3 flex items-center justify-between group rounded-md hover:border-red-500/50 transition-all"
+                >
+                  <span className="text-slate-600 font-bold text-[10px] uppercase tracking-widest font-league group-hover:text-red-500">
+                    LOGOUT SESSION
+                  </span>
+                  <LogOut className="w-4 h-4 text-slate-800 group-hover:text-red-500 transition-colors" />
+                </button>
+              )}
 
               <div className="flex justify-center gap-4 py-2">
                 <button onClick={() => handleMenuNavigation('/terms')} className="text-[9px] text-slate-600 font-bold uppercase hover:text-primary">TERMS</button>

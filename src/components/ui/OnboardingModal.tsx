@@ -5,6 +5,7 @@ import { Flame, Clock, Trophy, MessageCircle, Star, X } from 'lucide-react';
 interface OnboardingModalProps {
     isOpen: boolean;
     onClose: () => void;
+    userRole: 'user' | 'guest' | string; // Assuming these are the primary roles for pathing
 }
 
 // --- Helper Functions ---
@@ -50,55 +51,90 @@ const MAX_ONBOARDING_STEPS = 5;
 
 // --- Main Component ---
 
-export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose }) => {
-    const [onboardingStep, setOnboardingStep] = useState(1);
+export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClose, userRole }) => {
+    const [step, setStep] = useState(1);
+    // Removed: const [path, setPath] = useState<'league' | 'guest' | null>(null);
 
-    if (!isOpen) {
-        return null;
-    }
+    if (!isOpen) return null;
+
+    // Removed: const handlePathSelect = (selectedPath: 'league' | 'guest') => {
+    // Removed:     setPath(selectedPath);
+    // Removed:     setStep(1);
+    // Removed: };
 
     const handleNext = () => {
-        if (onboardingStep < MAX_ONBOARDING_STEPS) {
-            setOnboardingStep(prev => prev + 1);
+        if (step < 5) {
+            setStep(prev => prev + 1);
         } else {
+            // Save preference if needed, then close
+            // Removed: if (path === 'league') {
+            // Removed:     localStorage.setItem('oly_onboarding_path', 'league');
+            // Removed: }
             onClose();
         }
     };
 
+    // Content based on Path (derived from Role)
+    const getContent = (s: number) => {
+        // Guest Path
+        if (userRole === 'guest') {
+            switch (s) {
+                case 1: return { title: "Find the Vibe", text: "The Oly Pulse shows you where the crowd is real-time. Navigate by 'Chill', 'Lively', or 'Buzzing'." };
+                case 2: return { title: "Happy Hour Tracker", text: "Never miss a deal. We track every special in Olympia and sort them by 'Ending Soonest'." };
+                case 3: return { title: "Curated Events", text: "From Karaoke to Trivia to Live Bands. Filter the map to find your scene tonight." };
+                case 4: return { title: "Artie the Concierge", text: "Not sure where to go? Ask Artie. He knows every tap list and food special in town." };
+                case 5: return { title: "Start Exploring", text: "Create a free account to track your Favorite Spots and get 50pts just for joining." };
+                default: return { title: "", text: "" };
+            }
+        }
+        // League Path (Default)
+        switch (s) {
+            case 1: return { title: "Welcome to the League", text: "OlyBars isn't just a map—it's a game. Earn points, climb the ranks, and win real prizes." };
+            case 2: return { title: "Earn Points", text: "Clock In at venues (10pts), Post Vibe Checks (20pts), and hold the 'Mayor' title at your favorite bar." };
+            case 3: return { title: "Win Prizes", text: "Top ranked players at the end of the season win cash, gift cards, and exclusive OlyBars swag." };
+            case 4: return { title: "Verification", text: "We use GPS to verify you're actually at the bar. No cheating allowed—we keep the playing field fair." };
+            case 5: return { title: "Claim Your Bonus", text: "Join as a League Member today and start with a 500pt Signing Bonus. Your glory awaits." };
+            default: return { title: "", text: "" };
+        }
+    };
+
+    const currentContent = getContent(step);
+
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
-            <div className="bg-surface w-full max-w-sm overflow-hidden rounded-xl border border-slate-700 shadow-lg p-6 relative text-center">
-                <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-transform hover:scale-110">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+            <div className="bg-surface w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 shadow-2xl relative text-center">
+                <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-transform hover:scale-110 z-10">
                     <X className="w-6 h-6" />
                 </button>
 
-                <div className="mb-6">
-                    <div className="w-20 h-20 bg-background rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700 shadow-md">
-                        {renderIconForOnboarding(onboardingStep)}
+                <div className="p-8">
+                    <div className="mb-8 relative">
+                        <div className="w-20 h-20 bg-background rounded-2xl flex items-center justify-center mx-auto mb-6 border-2 border-white/10 shadow-xl rotate-3">
+                            {renderIconForOnboarding(step)}
+                        </div>
+
+                        {/* Progress Dots */}
+                        <div className="flex justify-center gap-1.5 mb-6">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                                <div key={i} className={`h-1 rounded-full transition-all duration-300 ${step === i ? 'w-6 bg-primary' : 'w-2 bg-slate-700'}`} />
+                            ))}
+                        </div>
+
+                        <h2 className="text-2xl font-black text-white mb-3 uppercase tracking-tight font-league animate-in fade-in slide-in-from-bottom-2">
+                            {currentContent.title}
+                        </h2>
+
+                        <p className="text-sm text-slate-300 font-medium leading-relaxed px-2 h-20 flex items-center justify-center">
+                            {currentContent.text}
+                        </p>
                     </div>
 
-                    <h2 className="text-2xl font-bold text-white mb-2 uppercase tracking-wide">
-                        {renderOnboardingContent(onboardingStep).title}
-                    </h2>
-
-                    <p className="text-sm text-slate-300 leading-relaxed px-2">
-                        {renderOnboardingContent(onboardingStep).text}
-                    </p>
-                </div>
-
-                <div className="flex flex-col gap-4">
                     <button
                         onClick={handleNext}
-                        className="w-full bg-primary hover:bg-yellow-400 text-black font-bold text-lg uppercase tracking-wider py-3 rounded-md shadow-md active:scale-95 transition-all"
+                        className="w-full bg-primary hover:bg-yellow-400 text-black font-black text-lg uppercase tracking-widest py-4 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
                     >
-                        {onboardingStep < MAX_ONBOARDING_STEPS ? `NEXT (${onboardingStep}/${MAX_ONBOARDING_STEPS})` : "GET STARTED"}
+                        {step < 5 ? 'NEXT' : (userRole === 'user' ? 'JOIN THE LEAGUE' : 'START EXPLORING')}
                     </button>
-
-                    <div className="flex justify-center gap-2">
-                        {Array.from({ length: MAX_ONBOARDING_STEPS }).map((_, i) => (
-                            <div key={i} className={`w-2.5 h-2.5 rounded-full border border-slate-600 transition-colors ${onboardingStep === i + 1 ? 'bg-primary' : 'bg-slate-700'}`} />
-                        ))}
-                    </div>
                 </div>
             </div>
         </div>

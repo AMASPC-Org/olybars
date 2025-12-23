@@ -6,12 +6,16 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'fire
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../../lib/firebase';
 import { UserProfile, Venue } from '../../../types';
+import { useToast } from '../../../components/ui/BrandedToast';
+import { mapAuthErrorToMessage } from '../utils/authErrorHandler';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   loginMode: 'user' | 'owner';
   setLoginMode: (mode: 'user' | 'owner') => void;
+  userSubMode: 'login' | 'signup';
+  setUserSubMode: (mode: 'login' | 'signup') => void;
   userProfile: UserProfile;
   setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
   venues: Venue[];
@@ -26,6 +30,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onClose,
   loginMode,
   setLoginMode,
+  userSubMode,
+  setUserSubMode,
   userProfile,
   setUserProfile,
   venues,
@@ -34,6 +40,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   openInfo,
   onOwnerSuccess
 }) => {
+  const { showToast } = useToast();
   const [email, setEmail] = useState(userProfile.email || '');
   const [password, setPassword] = useState('');
   const [handle, setHandle] = useState(userProfile.handle || '');
@@ -49,8 +56,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [weeklyBuzz, setWeeklyBuzz] = useState(true);
 
-  const [userSubMode, setUserSubMode] = useState<'login' | 'signup'>('signup');
   const [isLoading, setIsLoading] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   const interestOptions = [
     { id: 'karaoke', label: 'Karaoke', icon: '🎤' },
@@ -62,8 +69,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   if (!isOpen) return null;
 
   const handleUserLogin = async () => {
-    if (!email.includes('@')) { alert('Please enter a valid email.'); return; }
-    if (!password) { alert('Please enter your password.'); return; }
+    if (!email.includes('@')) { showToast('Please enter a valid email.'); return; }
+    if (!password) { showToast('Please enter your password.'); return; }
 
     setIsLoading(true);
     try {
@@ -75,22 +82,23 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         const profileData = profileSnap.data() as UserProfile;
         setUserProfile(profileData);
         onClose();
-        alert(`Welcome back, ${profileData.handle || 'Legend'}!`);
+        showToast(`Welcome back, ${profileData.handle || 'Legend'}!`, 'success');
       } else {
-        alert('Profile not found. Please register.');
+        showToast('Profile not found. Please register.');
         setUserSubMode('signup');
       }
     } catch (error: any) {
-      alert(`Login Failed: ${error.message}`);
+      showToast(mapAuthErrorToMessage(error.code));
     } finally {
       setIsLoading(false);
     }
   };
 
   const saveUser = async () => {
-    if (!handle.trim()) { alert('You need a Handle for the League!'); return; }
-    if (!email.includes('@')) { alert('Please enter a valid email.'); return; }
-    if (password.length < 6) { alert('Password must be at least 6 characters.'); return; }
+    if (!handle.trim()) { showToast('You need a Handle for the League!'); return; }
+    if (!email.includes('@')) { showToast('Please enter a valid email.'); return; }
+    if (password.length < 6) { showToast('Password must be at least 6 characters.'); return; }
+    if (!acceptTerms) { showToast('Please accept the Terms & Conditions.'); return; }
 
     setIsLoading(true);
     try {
@@ -104,11 +112,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         email,
         phone,
         homeBase,
-        favoriteDrink: drink,
+        favoriteDrinks: drink ? [drink] : [],
+        weeklyBuzz: weeklyBuzz,
+        showMemberSince: true,
+        createdAt: Date.now(),
         stats: joinLeague ? {
           seasonPoints: 50,
           lifetimeCheckins: 0,
-          currentStreak: 0
+          currentStreak: 0,
+          vibeCheckCount: 0,
+          competitionPoints: 0
         } : undefined
       };
 
@@ -121,35 +134,56 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       await setDoc(doc(db, 'users', uid), newProfile);
       setUserProfile(newProfile);
       onClose();
-      alert(joinLeague ? `Welcome to the League, ${handle}!` : `Welcome to OlyBars, ${handle}!`);
+      showToast(joinLeague ? `Welcome to the League, ${handle}!` : `Welcome to OlyBars, ${handle}!`, 'success');
     } catch (error: any) {
       console.error("Registration Error:", error);
-      alert(error.message);
+      showToast(mapAuthErrorToMessage(error.code));
     }
   };
 
   const handleOwnerLogin = async () => {
-    if (!ownerEmail.includes('@')) { alert('Please enter a valid email.'); return; }
+    if (!ownerEmail.includes('@')) { showToast('Please enter a valid email.'); return; }
     try {
       const userCredential = await signInWithEmailAndPassword(auth, ownerEmail, ownerPassword);
       const uid = userCredential.user.uid;
       const profileSnap = await getDoc(doc(db, 'users', uid));
       if (profileSnap.exists()) {
         const profileData = profileSnap.data() as UserProfile;
+
+        if (userCredential.user.email === 'ryan@amaspc.com') {
+          // The Ryan Rule: Always force super-admin rights
+          await setDoc(doc(db, 'users', userCredential.user.uid), {
+            role: 'super-admin',
+            handle: 'Ryan (Admin)',
+            email: 'ryan@amaspc.com',
+            // Fix: Reset 9999 points if present
+            ...(profileData.stats?.seasonPoints === 9999 ? { stats: { ...profileData.stats, seasonPoints: 0 } } : {})
+          }, { merge: true });
+          // Re-fetch the profile to ensure the new role is loaded
+          const freshSnap = await getDoc(doc(db, 'users', userCredential.user.uid));
+          if (freshSnap.exists()) {
+            setUserProfile(freshSnap.data() as UserProfile);
+            onOwnerSuccess();
+            onClose();
+            showToast(`Logged in as SUPER-ADMIN (Golden Ticket)`, 'success');
+            return;
+          }
+        }
+
         setUserProfile(profileData);
-        if (['admin', 'owner', 'manager'].includes(profileData.role)) {
+        if (['admin', 'owner', 'manager', 'super-admin'].includes(profileData.role)) {
           onOwnerSuccess();
           onClose();
-          alert(`Logged in as ${profileData.role.toUpperCase()}`);
+          showToast(`Logged in as ${profileData.role.toUpperCase()}`, 'success');
         } else {
-          alert(`Access Denied: Staff account required.`);
+          showToast(`Access Denied: Venue account required.`);
           onClose();
         }
       } else {
-        alert('Profile not found.');
+        showToast('Profile not found.');
       }
     } catch (error: any) {
-      alert(`Login Failed: ${error.message}`);
+      showToast(mapAuthErrorToMessage(error.code));
     }
   };
 
@@ -158,17 +192,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
       <div className="bg-surface w-full max-w-sm border-2 border-slate-700 shadow-lg rounded-xl relative flex flex-col max-h-[90vh] overflow-hidden">
-        <div className="flex border-b-2 border-slate-700">
-          <button onClick={() => setLoginMode('user')} className={`flex-1 py-3 font-bold uppercase ${loginMode === 'user' ? 'bg-primary text-black' : 'text-slate-400'}`}>OlyBars ID</button>
-          <button onClick={() => setLoginMode('owner')} className={`flex-1 py-3 font-bold uppercase ${loginMode === 'owner' ? 'bg-primary text-black' : 'text-slate-400'}`}>Staff</button>
-        </div>
+        {userSubMode === 'login' && (
+          <div className="flex border-b-2 border-slate-700">
+            <button onClick={() => setLoginMode('user')} className={`flex-1 py-3 font-bold uppercase ${loginMode === 'user' ? 'bg-primary text-black' : 'text-slate-400'}`}>Member</button>
+            <button onClick={() => setLoginMode('owner')} className={`flex-1 py-3 font-bold uppercase ${loginMode === 'owner' ? 'bg-primary text-black' : 'text-slate-400'}`}>Venue</button>
+          </div>
+        )}
 
         <div className="p-6 overflow-y-auto text-white">
           <button onClick={onClose} className="absolute top-3 right-3 text-slate-500"><X className="w-5 h-5" /></button>
+
           {loginMode === 'user' ? (
             <div className="space-y-4">
               <div className="text-center">
-                <h3 className="text-xl font-bold uppercase">{userSubMode === 'signup' ? 'Create OlyBars ID' : 'Login to OlyBars'}</h3>
+                <h3 className="text-xl font-bold uppercase">{userSubMode === 'signup' ? 'Create Account' : 'Member Login'}</h3>
                 <p className="text-[10px] text-slate-400 uppercase">{userSubMode === 'signup' ? 'Save favorites & earn points' : 'Level up your night'}</p>
               </div>
 
@@ -190,6 +227,20 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               </div>
 
               {userSubMode === 'signup' && (
+                <>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                    <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone (Optional)" className={inputClasses} />
+                  </div>
+
+                  <div className="relative">
+                    <Beer className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                    <input type="text" value={drink} onChange={(e) => setDrink(e.target.value)} placeholder="Preferred Sips (e.g. IPA)" className={inputClasses} />
+                  </div>
+                </>
+              )}
+
+              {userSubMode === 'signup' && (
                 <div className="pt-4 border-t border-slate-700 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase">Join League?</span>
@@ -197,6 +248,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       <div className={`w-3 h-3 bg-white rounded-full transition-transform ${joinLeague ? 'translate-x-5' : 'translate-x-0'}`} />
                     </button>
                   </div>
+
                   {joinLeague && (
                     <div className="grid grid-cols-2 gap-2">
                       {interestOptions.map(opt => (
@@ -207,6 +259,26 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       ))}
                     </div>
                   )}
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase">Weekly Digest?</span>
+                    <button onClick={() => setWeeklyBuzz(!weeklyBuzz)} className={`w-10 h-5 rounded-full p-1 ${weeklyBuzz ? 'bg-primary' : 'bg-slate-700'}`}>
+                      <div className={`w-3 h-3 bg-white rounded-full transition-transform ${weeklyBuzz ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2">
+                    <input
+                      type="checkbox"
+                      id="acceptTerms"
+                      checked={acceptTerms}
+                      onChange={(e) => setAcceptTerms(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="acceptTerms" className="text-[10px] font-bold text-slate-400 uppercase">
+                      I accept the <a href="/terms" target="_blank" className="text-primary hover:underline">Terms & Conditions</a>
+                    </label>
+                  </div>
                 </div>
               )}
 
@@ -229,7 +301,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="bg-red-900/20 p-3 text-[10px] text-red-300 rounded border border-red-800">STAFF ONLY</div>
+              <div className="bg-red-900/20 p-3 text-[10px] text-red-300 rounded border border-red-800 uppercase text-center">Venue Access</div>
               <div className="relative">
                 <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                 <input type="email" value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} placeholder="Email" className={inputClasses} />
@@ -238,29 +310,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                 <input type="password" value={ownerPassword} onChange={(e) => setOwnerPassword(e.target.value)} placeholder="Password" className={inputClasses} />
               </div>
-              <button onClick={handleOwnerLogin} className="w-full bg-slate-800 text-white font-bold py-3 rounded mt-4 uppercase">Login</button>
-
-              {userProfile.role !== 'super-admin' && (
-                <div className="pt-8 border-t border-slate-700">
-                  <button
-                    onClick={async () => {
-                      const secret = prompt("Enter Master Setup Key:");
-                      if (secret) {
-                        try {
-                          const { setupAdmin } = await import('../../../services/userService');
-                          const res = await setupAdmin(ownerEmail || email, secret, ownerPassword || password);
-                          alert(res.message);
-                        } catch (e: any) {
-                          alert(e.message);
-                        }
-                      }
-                    }}
-                    className="text-[9px] text-slate-500 hover:text-primary uppercase font-black tracking-widest transition-colors w-full text-center"
-                  >
-                    [ Initialize Master Admin ]
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={handleOwnerLogin}
+                className="w-full bg-slate-800 text-white font-bold py-3 rounded mt-4 uppercase hover:bg-slate-700 transition-colors"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Processing...' : 'Login'}
+              </button>
             </div>
           )}
         </div>

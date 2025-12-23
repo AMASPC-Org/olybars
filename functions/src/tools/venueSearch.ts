@@ -44,12 +44,16 @@ export const venueSearch = ai.defineTool(
                 };
             });
 
-            const lowerQuery = query.toLowerCase();
-            return allVenues.filter(v =>
-                v.name.toLowerCase().includes(lowerQuery) ||
-                v.description.toLowerCase().includes(lowerQuery) ||
-                v.vibe.toLowerCase().includes(lowerQuery)
-            ).slice(0, 5); // Limit to top 5 matches
+            const normalizedQuery = query.toLowerCase().replace(/[’‘]/g, "'");
+            const queryWords = normalizedQuery.split(/\s+/).filter(w => w.length > 2); // only significant words
+
+            return allVenues.filter(v => {
+                const venueText = `${v.name} ${v.description} ${v.vibe}`.toLowerCase().replace(/[’‘]/g, "'");
+                // Match if the full normalized query is in the text
+                if (venueText.includes(normalizedQuery)) return true;
+                // Or if any significant word matches
+                return queryWords.some(word => venueText.includes(word));
+            }).slice(0, 5); // Limit to top 5 matches
         } catch (error) {
             console.error("Venue search failed:", error);
             return [];
