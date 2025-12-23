@@ -30,6 +30,7 @@ import { OwnerDashboardScreen } from './features/owner/screens/OwnerDashboardScr
 import { ClockInModal } from './features/venues/components/ClockInModal';
 import { OnboardingModal } from './components/ui/OnboardingModal';
 import { VibeCheckModal } from './features/venues/components/VibeCheckModal';
+import { MakerSurveyModal } from './features/marketing/components/MakerSurveyModal'; // New Import
 import { useToast } from './components/ui/BrandedToast';
 
 // --- UTILS & HELPERS ---
@@ -85,6 +86,8 @@ export default function OlyBarsApp() {
   const [loginMode, setLoginMode] = useState<'user' | 'owner'>('user');
   const [userSubMode, setUserSubMode] = useState<'login' | 'signup'>('signup');
   const [showOwnerDashboard, setShowOwnerDashboard] = useState(false);
+  const [ownerDashboardInitialVenueId, setOwnerDashboardInitialVenueId] = useState<string | null>(null);
+  const [ownerDashboardInitialView, setOwnerDashboardInitialView] = useState<'main' | 'marketing' | 'listing'>('main');
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(() => cookieService.get('oly_terms') === 'true');
   const [infoContent, setInfoContent] = useState<{ title: string, text: string } | null>(null);
   const [showClockInModal, setShowClockInModal] = useState(false);
@@ -96,6 +99,7 @@ export default function OlyBarsApp() {
   const [vibeCheckedVenue, setVibeCheckedVenue] = useState<string | null>(null);
   const [showArtie, setShowArtie] = useState(false);
   const [chatInput, setChatInput] = useState('');
+  const [showMakerSurvey, setShowMakerSurvey] = useState(false); // Survey State
   const { showToast } = useToast();
   // const [artieMessages, setArtieMessages] = useState<{ sender: string, text: string }[]>([
   //   { sender: 'artie', text: "Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water." }
@@ -145,6 +149,19 @@ export default function OlyBarsApp() {
   useEffect(() => {
     localStorage.setItem('oly_prefs', JSON.stringify(alertPrefs));
   }, [alertPrefs]);
+
+  // Maker's Trail Survey Trigger: 3 Local Check-ins and Survey Not Done
+  useEffect(() => {
+    if (userProfile.uid !== 'guest' &&
+      userProfile.makersTrailProgress &&
+      userProfile.makersTrailProgress >= 3 &&
+      !userProfile.hasCompletedMakerSurvey &&
+      !showMakerSurvey) {
+      // Add a small delay for UX so it doesn't pop immediately after action
+      const timer = setTimeout(() => setShowMakerSurvey(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [userProfile.makersTrailProgress, userProfile.hasCompletedMakerSurvey, userProfile.uid]);
 
   const openInfo = (title: string, text: string) => { setInfoContent({ title, text }); };
 
@@ -453,6 +470,11 @@ export default function OlyBarsApp() {
                       handleVibeCheck={handleVibeCheck}
                       clockedInVenue={clockedInVenue}
                       handleToggleFavorite={handleToggleFavorite}
+                      onEdit={(vid) => {
+                        setOwnerDashboardInitialVenueId(vid);
+                        setOwnerDashboardInitialView('listing');
+                        setShowOwnerDashboard(true);
+                      }}
                     />
                   }
                 />
@@ -513,6 +535,8 @@ export default function OlyBarsApp() {
                 venues={venues}
                 updateVenue={handleUpdateVenue}
                 userProfile={userProfile}
+                initialVenueId={ownerDashboardInitialVenueId}
+                initialView={ownerDashboardInitialView}
               />
             )}
 
@@ -546,6 +570,18 @@ export default function OlyBarsApp() {
                   setShowClockInModal(true);
                   setShowVibeCheckModal(false);
                 }}
+              />
+            )}
+
+            {showMakerSurvey && (
+              <MakerSurveyModal
+                isOpen={showMakerSurvey}
+                onClose={() => {
+                  setShowMakerSurvey(false);
+                  // Optimistic update to prevent re-trigger in this session
+                  setUserProfile(prev => ({ ...prev, hasCompletedMakerSurvey: true }));
+                }}
+                userId={userProfile.uid}
               />
             )}
 

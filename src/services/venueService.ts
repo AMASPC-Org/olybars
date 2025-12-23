@@ -20,3 +20,23 @@ export const fetchVenues = async (): Promise<Venue[]> => {
     return [];
   }
 };
+
+/**
+ * Updates venue profile details (Listing management)
+ */
+export const updateVenueDetails = async (venueId: string, updates: Partial<Venue>): Promise<{ success: boolean, updates: any }> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/venues/${venueId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to update venue: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error in updateVenueDetails:', error);
+    throw error;
+  }
+};

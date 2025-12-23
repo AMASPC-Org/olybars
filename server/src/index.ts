@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { fetchVenues, checkIn } from './venueService';
-import { getArtieResponse } from './geminiService';
 
 dotenv.config();
 
@@ -101,22 +100,41 @@ app.post('/api/check-in', async (req, res) => {
     }
 });
 
-/**
- * @route POST /api/chat
- * @desc Artie AI Relay endpoint
- */
-app.post('/api/chat', async (req, res) => {
-    const { message, history } = req.body;
 
-    if (!message) {
-        return res.status(400).json({ error: 'Message is required' });
+/**
+ * @route POST /api/requests
+ * @desc Handle Admin Requests (Contact, League, Maker)
+ * @params type, payload, contactEmail
+ */
+app.post('/api/requests', async (req: express.Request, res: express.Response) => {
+    const { type, payload, contactEmail } = req.body;
+
+    if (!type || !payload) {
+        return res.status(400).json({ error: 'Missing type or payload' });
     }
 
     try {
-        const response = await getArtieResponse(message, history || []);
-        res.json({ text: response });
+        const requestData = {
+            type,
+            payload,
+            contactEmail: contactEmail || 'anonymous',
+            status: 'PENDING',
+            createdAt: new Date().toISOString(),
+        };
+
+        log('INFO', `[ADMIN_REQUEST] received: ${type}`, requestData);
+
+        // Simulate Email Notification
+        console.log(`\n📨 --- EMAIL SIMULATION ---`);
+        console.log(`To: ryan@amaspc.com`);
+        console.log(`Subject: New ${type} Request`);
+        console.log(`From: Artie (System)`);
+        console.log(`Body:`, JSON.stringify(requestData, null, 2));
+        console.log(`---------------------------\n`);
+
+        res.json({ success: true, message: 'Request received and logged.' });
     } catch (error: any) {
-        log('ERROR', 'Failed to get Artie response', { error: error.message });
+        log('ERROR', 'Failed to process request', { error: error.message });
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
@@ -164,6 +182,24 @@ app.get('/api/activity', async (req, res) => {
 });
 
 /**
+ * @route PATCH /api/venues/:id
+ * @desc Update general venue information (Listing management)
+ */
+app.patch('/api/venues/:id', async (req, res) => {
+    const { id } = req.params;
+    const updates = req.body;
+
+    try {
+        const { updateVenue } = await import('./venueService');
+        const result = await updateVenue(id, updates);
+        res.json(result);
+    } catch (error: any) {
+        log('ERROR', 'Failed to update venue listing', { venueId: id, error: error.message });
+        res.status(500).json({ error: error.message || 'Internal Server Error' });
+    }
+});
+
+/**
  * @route PATCH /api/venues/:id/photos/:photoId
  * @desc Update photo approval status
  */
@@ -200,7 +236,7 @@ app.post('/api/client-errors', (req, res) => {
  */
 app.patch('/api/users/:uid', async (req, res) => {
     const { uid } = req.params;
-    const { handle, email, phone, favoriteDrink, homeBase, leaguePreferences } = req.body;
+    const { handle, email, phone, favoriteDrink, homeBase, leaguePreferences, hasCompletedMakerSurvey } = req.body;
 
     try {
         const { db } = await import('./firebaseAdmin');
@@ -221,6 +257,7 @@ app.patch('/api/users/:uid', async (req, res) => {
         if (homeBase !== undefined) updates.homeBase = homeBase;
         if (leaguePreferences !== undefined) updates.leaguePreferences = leaguePreferences;
         if (email !== undefined) updates.email = email;
+        if (hasCompletedMakerSurvey !== undefined) updates.hasCompletedMakerSurvey = hasCompletedMakerSurvey;
 
         // Handle cooldown logic
         if (handle !== undefined && handle !== userData?.handle) {
@@ -284,7 +321,8 @@ app.post('/api/admin/setup-super', async (req, res) => {
 
         // 2. Update Firestore
         await db.collection('users').doc(uid).set({
-            role: 'super-admin',
+            role: 'super-admin', // Legacy
+            systemRole: 'admin', // New RBAC
             isAdmin: true,
             status: 'active',
             updatedAt: new Date().toISOString()

@@ -258,6 +258,33 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                             <p className="text-2xl font-black font-league">{userProfile.stats?.competitionPoints || 0}</p>
                         </div>
 
+                        {/* Maker's Trail Progress */}
+                        <div className="col-span-2 bg-gradient-to-r from-amber-950 to-amber-900 border border-amber-500/30 p-5 rounded-2xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-10">
+                                <Trophy className="w-24 h-24 text-amber-500" />
+                            </div>
+                            <div className="relative z-10 flex justify-between items-end mb-2">
+                                <div>
+                                    <h4 className="text-xl font-black text-amber-500 uppercase font-league">Maker's Trail</h4>
+                                    <p className="text-[10px] text-amber-200/60 font-bold uppercase tracking-widest">Support Local, Get Rewards</p>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-2xl font-black text-white font-league">{userProfile.makersTrailProgress || 0}/5</span>
+                                </div>
+                            </div>
+                            <div className="w-full bg-black/50 h-3 rounded-full overflow-hidden border border-white/5">
+                                <div
+                                    className="h-full bg-amber-500 transition-all duration-1000 ease-out"
+                                    style={{ width: `${((userProfile.makersTrailProgress || 0) / 5) * 100}%` }}
+                                />
+                            </div>
+                            <p className="text-[9px] text-amber-200/50 uppercase font-bold mt-2 text-right">
+                                {userProfile.makersTrailProgress && userProfile.makersTrailProgress >= 5
+                                    ? 'TRAIL COMPLETE - LEGEND STATUS'
+                                    : 'Visit High-Score Venues to Advance'}
+                            </p>
+                        </div>
+
                         {/* Vibe Profile Card */}
                         <div className="col-span-2 bg-gradient-to-br from-slate-900 to-black p-6 rounded-3xl border border-white/10 relative overflow-hidden">
                             <div className="flex justify-between items-start mb-6">

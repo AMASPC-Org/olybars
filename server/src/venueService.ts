@@ -121,7 +121,19 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
 
     const timestamp = Date.now();
 
-    // 2. Throttling Logic (Rule 03-C)
+    // 2. LCB Compliance Check (Rule 03-A): Max 2 check-ins per 12-hour window
+    const twelveHoursAgo = timestamp - (12 * 60 * 60 * 1000);
+    const checkInsLast12h = await db.collection('signals')
+        .where('userId', '==', userId)
+        .where('type', '==', 'check_in')
+        .where('timestamp', '>', twelveHoursAgo)
+        .get();
+
+    if (checkInsLast12h.size >= 2) {
+        throw new Error('LCB Compliance Limit: WA State law limits users to 2 League check-ins per 12-hour window. Please try again later.');
+    }
+
+    // 3. Throttling Logic (Rule 03-C)
     // We fetch the most recent check-in to enforce minimum gaps
     const recentSignals = await db.collection('signals')
         .where('userId', '==', userId)
@@ -135,7 +147,7 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
         const timeSinceLast = timestamp - lastCheckIn.timestamp;
         const minutesSinceLast = Math.floor(timeSinceLast / (60 * 1000));
 
-        // Global Throttle: 120 minutes
+        // Global Throttle: 120 minutes (2 hours)
         if (timeSinceLast < (120 * 60 * 1000)) {
             const waitTime = 120 - minutesSinceLast;
             throw new Error(`Slow down, League Legend! The Pulse needs a bit more time. You can clock in again in ${waitTime} minutes.`);
@@ -172,13 +184,35 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
         checkIns: (venueData.checkIns || 0) + 1
     });
 
-    // Calculate points (placeholder for user service)
-    console.log(`User ${userId} earned 10 points for checking in at ${venueId}`);
+    // Calculate Dynamic Points
+    // Base: 10
+    // Multiplier 1: localScore > 50 -> 1.5x
+    // Multiplier 2: Hybrid (isLocalMaker + isBar) -> 2x (Overrides 1.5x)
+
+    let points = 10;
+    const isHybrid = venueData.isLocalMaker && venueData.type !== 'Distillery' && venueData.type !== 'Brewery'; // Rough check for "Bar + Maker"
+    // BETTER HYBRID CHECK: If they have a "bar-like" type AND isLocalMaker
+    const isBarLike = !['Store', 'Shop'].includes(venueData.type);
+
+    if (venueData.isLocalMaker && isBarLike) {
+        points = 20; // 2x
+    } else if ((venueData.localScore || 0) > 50) {
+        points = 15; // 1.5x
+    }
+
+    // Pass calculated points to the activity logger (handled mostly by frontend currently, but backend needs to support it)
+    // We return the points so the frontend can display the correct amount
 
     // Recalculate Buzz
     await updateVenueBuzz(venueId);
 
-    return { success: true, message: `Checked in at ${venueData.name}!` };
+    return {
+        success: true,
+        message: `Checked in at ${venueData.name}!`,
+        pointsAwarded: points,
+        isLocalMaker: venueData.isLocalMaker,
+        localScore: venueData.localScore
+    };
 };
 
 /**
@@ -288,4 +322,33 @@ export const updatePhotoStatus = async (
 
     await venueRef.update({ photos: updatedPhotos });
     return { success: true };
+};
+/**
+ * Update general venue information (Listing management)
+ */
+export const updateVenue = async (venueId: string, updates: Partial<Venue>) => {
+    const venueRef = db.collection('venues').doc(venueId);
+
+    // Whitelist allowable fields for owner updates to prevent integrity issues
+    const allowedFields: (keyof Venue)[] = [
+        'description', 'hours', 'phone', 'website',
+        'email', 'instagram', 'facebook', 'twitter',
+        'amenities', 'vibe'
+    ];
+
+    const filteredUpdates: any = {};
+    Object.keys(updates).forEach(key => {
+        if (allowedFields.includes(key as keyof Venue)) {
+            filteredUpdates[key] = updates[key as keyof Venue];
+        }
+    });
+
+    if (Object.keys(filteredUpdates).length === 0) {
+        throw new Error('No valid update fields provided');
+    }
+
+    filteredUpdates.updatedAt = Date.now();
+    await venueRef.update(filteredUpdates);
+
+    return { success: true, updates: filteredUpdates };
 };

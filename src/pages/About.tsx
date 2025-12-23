@@ -1,10 +1,50 @@
-import React from 'react';
-import { ShieldCheck, Users, Trophy, ChevronRight, Mail, ExternalLink, Star } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShieldCheck, Users, Trophy, ChevronRight, Mail, ExternalLink, Star, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../components/ui/BrandedToast'; // Assuming this hook exists or we use similar
+
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const AboutPage = () => {
     const navigate = useNavigate();
     const [showContact, setShowContact] = React.useState(false);
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(false);
+    // useToast hook manual implementation if not available easily here, but simpler to just alert or simulate logic
+    // Let's assume standard fetch logic for now.
+
+    const handleSend = async () => {
+        if (!email || !message) {
+            alert("Please fill in both fields");
+            return;
+        }
+        setLoading(true);
+        try {
+            const response = await fetch(`${apiUrl}/api/requests`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'CONTACT',
+                    contactEmail: email,
+                    payload: { message }
+                })
+            });
+            if (response.ok) {
+                alert("Message Sent! Artie will get back to you soon.");
+                setShowContact(false);
+                setEmail('');
+                setMessage('');
+            } else {
+                alert("Error sending message.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Network error.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="min-h-full bg-background text-white p-6 pb-24 font-body animate-in fade-in duration-500">
@@ -16,21 +56,44 @@ const AboutPage = () => {
 
                         <h2 className="text-2xl font-black text-primary uppercase tracking-tight mb-6 font-league">Drop a Line</h2>
 
-                        <div className="space-y-6 relative z-10">
-                            <p className="text-sm text-slate-300 font-medium leading-relaxed">
+                        <div className="space-y-4 relative z-10">
+                            <p className="text-sm text-slate-300 font-medium leading-relaxed mb-2">
                                 Artie is usually at the tap or checking the lines, but he'll get back to you within 24 hours.
                             </p>
 
-                            <a
-                                href="mailto:hello@olybars.com"
-                                className="block w-full bg-primary text-black font-black uppercase text-center py-4 rounded-xl text-sm tracking-widest hover:scale-[1.02] transition-transform"
+                            <div>
+                                <label className="text-[10px] font-black uppercase text-slate-500">Your Email</label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={e => setEmail(e.target.value)}
+                                    placeholder="ryan@amaspc.com"
+                                    className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white text-sm outline-none focus:border-primary/50"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-black uppercase text-slate-500">Message</label>
+                                <textarea
+                                    value={message}
+                                    onChange={e => setMessage(e.target.value)}
+                                    placeholder="What's on your mind?"
+                                    className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white text-sm outline-none focus:border-primary/50 min-h-[100px]"
+                                />
+                            </div>
+
+                            <button
+                                onClick={handleSend}
+                                disabled={loading}
+                                className="block w-full bg-primary text-black font-black uppercase text-center py-4 rounded-xl text-sm tracking-widest hover:scale-[1.02] transition-transform disabled:opacity-50 flex justify-center gap-2"
                             >
-                                EMAIL ARTIE DIRECTLY
-                            </a>
+                                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                {loading ? 'SENDING...' : 'SEND MESSAGE'}
+                            </button>
 
                             <button
                                 onClick={() => setShowContact(false)}
-                                className="w-full text-slate-500 font-black uppercase text-[10px] tracking-widest mt-4 hover:text-white transition-colors"
+                                className="w-full text-slate-500 font-black uppercase text-[10px] tracking-widest mt-2 hover:text-white transition-colors"
                             >
                                 NEVERMIND
                             </button>

@@ -1,3 +1,5 @@
+import { SystemRole, VenueRole } from './types/auth_schema';
+
 export type VenueStatus = 'chill' | 'lively' | 'buzzing';
 
 export interface Venue {
@@ -26,9 +28,13 @@ export interface Venue {
   isFavorite?: boolean;
   description?: string;
   address?: string;
+  email?: string;
   hours?: string | { [key: string]: { open: string; close: string } };
   phone?: string;
   website?: string;
+  instagram?: string;
+  facebook?: string;
+  twitter?: string;
   ownerId?: string;
   managerIds?: string[];
   amenities?: string[];
@@ -51,6 +57,19 @@ export interface Venue {
     userId: string;
     id: string; // Add id for management
   }[];
+  // Local Maker / Artesian Anchor Fields
+  isLocalMaker?: boolean; // Toggled by owner/admin
+  localScore?: number; // 0-100 score for impact
+  carryingMakers?: string[]; // IDs of other makers this venue carries
+  isVerifiedMaker?: boolean; // Gatekeeper: Must be true to enable Maker tools
+  isVerifiedHost?: boolean; // Gatekeeper: Must be true to enable League Host tools
+
+  // Strategic Market Audit Fields (Dec 2025)
+  originStory?: string; // Rich text origin story
+  geoLoop?: 'Downtown_Walkable' | 'Warehouse_Tumwater' | 'Destination_Quest';
+  isLowCapacity?: boolean; // "Tiny Taproom" warning
+  isSoberFriendly?: boolean; // "Self Care" tag
+  isActive?: boolean; // For Ghost List / Legacy soft-delete
 }
 
 export interface Message {
@@ -120,4 +139,12 @@ export interface UserProfile {
   weeklyBuzz?: boolean;
   showMemberSince?: boolean;
   createdAt?: number;
+
+  // RBAC Fields (Optional for backward compat until migration)
+  systemRole?: SystemRole;
+  venuePermissions?: Record<string, VenueRole>;
+
+  // Maker's Trail
+  makersTrailProgress?: number; // 0-5
+  hasCompletedMakerSurvey?: boolean;
 }

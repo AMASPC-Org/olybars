@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import {
-    Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight
+    Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../../types';
 import { OwnerMarketingPromotions } from '../../../components/OwnerMarketingPromotions';
 import { useToast } from '../../../components/ui/BrandedToast';
+import { ListingManagementTab } from '../components/ListingManagementTab';
+import { LocalMakerManagementTab } from '../components/LocalMakerManagementTab'; // New Component
+import { LeagueHostManagementTab } from '../components/LeagueHostManagementTab'; // New Component
+import { isVenueOwner } from '../../../types/auth_schema';
+import { Layout } from 'lucide-react';
 
 interface OwnerDashboardProps {
     isOpen: boolean;
@@ -12,6 +17,8 @@ interface OwnerDashboardProps {
     venues: Venue[];
     updateVenue: (venueId: string, updates: Partial<Venue>) => void;
     userProfile: UserProfile;
+    initialVenueId?: string | null;
+    initialView?: 'main' | 'marketing' | 'listing';
 }
 
 const WEEKLY_STATS = { totalCheckIns: 142, newMembers: 18, returnRate: "34%", topNights: "Fri, Sat" };
@@ -34,7 +41,10 @@ const calculatePulseScore = (venue: Venue): number => {
     return Math.min(Math.round(score), 100);
 };
 
-export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({ isOpen, onClose, venues, updateVenue, userProfile }) => {
+export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
+    isOpen, onClose, venues, updateVenue, userProfile,
+    initialVenueId, initialView = 'main'
+}) => {
     const accessibleVenues = venues.filter(v => {
         if (userProfile.role === 'admin' || userProfile.role === 'super-admin') return true;
         if (userProfile.role === 'owner' && v.ownerId === userProfile.uid) return true;
@@ -42,7 +52,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({ isOpen, on
         return false;
     });
 
-    const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
+    const [selectedVenueId, setSelectedVenueId] = useState<string | null>(initialVenueId || null);
 
     // Effect to auto-select first venue if none selected
     React.useEffect(() => {
@@ -53,14 +63,24 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({ isOpen, on
 
     const myVenue = accessibleVenues.find(v => v.id === selectedVenueId) || accessibleVenues[0];
 
+    // Gatekeeper Notice State (Session based for demo simplicity)
+    const [showWelcome, setShowWelcome] = useState(true);
+
     const [dealText, setDealText] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
     const [showArtieCommands, setShowArtieCommands] = useState(false);
-    const [dashboardView, setDashboardView] = useState<'main' | 'marketing'>('main');
+    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'maker' | 'host'>(initialView as any); // Added 'host'
     const [statsPeriod, setStatsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
     const [activityStats, setActivityStats] = useState({ earned: 0, redeemed: 0, activeUsers: 0 });
     const [isRefreshing, setIsRefreshing] = useState(false);
     const { showToast } = useToast();
+
+    React.useEffect(() => {
+        if (isOpen) {
+            if (initialVenueId) setSelectedVenueId(initialVenueId);
+            if (initialView) setDashboardView(initialView);
+        }
+    }, [isOpen, initialVenueId, initialView]);
 
     React.useEffect(() => {
         if (dashboardView === 'marketing' && myVenue) {
@@ -126,12 +146,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({ isOpen, on
             <div className="p-4 border-b border-white/10 flex justify-between items-start shrink-0 bg-black">
                 <div className="flex items-center gap-4">
                     <div className="bg-primary p-3 rounded-lg border border-white/20">
-                        <Settings className="w-8 h-8 text-black" strokeWidth={3} />
+                        <Beer className="w-8 h-8 text-black" strokeWidth={2.5} />
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
                             <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league leading-none">
-                                COMMAND CENTER
+                                THE BREW HOUSE
                             </h2>
                             <HelpCircle className="w-4 h-4 text-slate-500" />
                         </div>
@@ -162,6 +182,29 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({ isOpen, on
                 </button>
             </div>
 
+            {/* Gatekeeper Welcome Notice */}
+            {showWelcome && (
+                <div className="bg-blue-900/20 border-b border-blue-500/20 p-4 relative animate-in fade-in slide-in-from-top-2">
+                    <div className="flex gap-4 items-start max-w-4xl mx-auto">
+                        <Info className="w-6 h-6 text-blue-400 shrink-0 mt-1" />
+                        <div>
+                            <h4 className="text-blue-400 font-black uppercase tracking-widest text-sm mb-1">Welcome to The Brew House</h4>
+                            <p className="text-slate-300 text-xs leading-relaxed">
+                                This is where the 98501 League is crafted.
+                                <span className="block mt-2 text-slate-400">
+                                    <strong>Note:</strong> League Host tools and Local Maker designations are gated features.
+                                    To activate these for your venue, click the "Request Activation" button in your settings.
+                                    The Commish manually vets all hosts to ensure we maintain the quality of the Artesian Anchor network.
+                                </span>
+                            </p>
+                        </div>
+                        <button onClick={() => setShowWelcome(false)} className="ml-auto text-slate-500 hover:text-white">
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Navigation Tabs */}
             <div className="flex bg-black px-4 border-b border-white/5">
                 <button
@@ -176,10 +219,35 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({ isOpen, on
                 >
                     Marketing
                 </button>
+                <button
+                    onClick={() => setDashboardView('listing')}
+                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'listing' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                >
+                    Listing
+                </button>
+                {myVenue && isVenueOwner(userProfile, myVenue.id) && (
+                    <>
+                        {/* Only show Maker tab if they are already active or verified */}
+                        {(myVenue.isLocalMaker || myVenue.isVerifiedMaker) && (
+                            <button
+                                onClick={() => setDashboardView('maker')}
+                                className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'maker' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                            >
+                                Maker
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setDashboardView('host')}
+                            className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'host' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                        >
+                            League
+                        </button>
+                    </>
+                )}
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-8 p-6 pb-24 scrollbar-hide">
-                {myVenue && dashboardView === 'main' ? (
+                {myVenue && dashboardView === 'main' && (
                     <>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-surface p-4 border border-white/10 rounded-lg shadow-xl">
@@ -240,7 +308,9 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({ isOpen, on
                             )}
                         </div>
                     </>
-                ) : myVenue ? (
+                )}
+
+                {myVenue && dashboardView === 'marketing' && (
                     <div className="space-y-10">
                         {/* Points Reporting Section */}
                         <section className="space-y-6">
@@ -325,7 +395,19 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({ isOpen, on
                             </div>
                         </section>
                     </div>
-                ) : null}
+                )}
+
+                {myVenue && dashboardView === 'listing' && (
+                    <ListingManagementTab venue={myVenue} onUpdate={updateVenue} />
+                )}
+
+                {myVenue && dashboardView === 'maker' && isVenueOwner(userProfile, myVenue.id) && (
+                    <LocalMakerManagementTab venue={myVenue} onUpdate={updateVenue} venues={venues} />
+                )}
+
+                {myVenue && dashboardView === 'host' && isVenueOwner(userProfile, myVenue.id) && (
+                    <LeagueHostManagementTab venue={myVenue} onUpdate={updateVenue} />
+                )}
             </div>
 
             {/* Footer */}
@@ -339,24 +421,26 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({ isOpen, on
             </div>
 
             {/* Artie Commands Modal */}
-            {showArtieCommands && (
-                <div className="fixed inset-0 bg-black/95 z-[90] flex items-center justify-center p-6 animate-in fade-in" onClick={() => setShowArtieCommands(false)}>
-                    <div className="bg-surface border border-white/10 shadow-2xl w-full max-w-sm relative p-8 rounded-2xl" onClick={e => e.stopPropagation()}>
-                        <button onClick={() => setShowArtieCommands(false)} className="absolute top-4 right-4 text-slate-500">
-                            <X className="w-8 h-8" />
-                        </button>
-                        <h3 className="text-3xl font-black text-primary uppercase mb-6 font-league text-center">Manage via Text</h3>
-                        <p className="text-sm text-slate-400 mb-8 text-center">Text These commands to Artie to update your venue instantly.</p>
-                        <div className="space-y-4">
-                            <div className="bg-black/50 p-4 border border-white/10 rounded-xl">
-                                <p className="text-slate-500 mb-1 text-[10px] font-black uppercase font-league">Set Event:</p>
-                                <p className="font-bold text-white text-xs italic">"karaoke league night Friday 9pm"</p>
+            {
+                showArtieCommands && (
+                    <div className="fixed inset-0 bg-black/95 z-[90] flex items-center justify-center p-6 animate-in fade-in" onClick={() => setShowArtieCommands(false)}>
+                        <div className="bg-surface border border-white/10 shadow-2xl w-full max-w-sm relative p-8 rounded-2xl" onClick={e => e.stopPropagation()}>
+                            <button onClick={() => setShowArtieCommands(false)} className="absolute top-4 right-4 text-slate-500">
+                                <X className="w-8 h-8" />
+                            </button>
+                            <h3 className="text-3xl font-black text-primary uppercase mb-6 font-league text-center">Manage via Text</h3>
+                            <p className="text-sm text-slate-400 mb-8 text-center">Text These commands to Artie to update your venue instantly.</p>
+                            <div className="space-y-4">
+                                <div className="bg-black/50 p-4 border border-white/10 rounded-xl">
+                                    <p className="text-slate-500 mb-1 text-[10px] font-black uppercase font-league">Set Event:</p>
+                                    <p className="font-bold text-white text-xs italic">"karaoke league night Friday 9pm"</p>
+                                </div>
                             </div>
+                            <button onClick={() => setShowArtieCommands(false)} className="w-full mt-10 bg-primary text-black font-black py-4 uppercase rounded-xl font-league">Got it</button>
                         </div>
-                        <button onClick={() => setShowArtieCommands(false)} className="w-full mt-10 bg-primary text-black font-black py-4 uppercase rounded-xl font-league">Got it</button>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };

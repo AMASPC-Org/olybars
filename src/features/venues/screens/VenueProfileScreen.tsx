@@ -3,7 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     MapPin, Clock, Beer, Trophy, Music, Users,
     ChevronLeft, Navigation, Star, Shield, Info,
-    Flame, Calendar, Share2, ChevronRight, Zap
+    Flame, Calendar, Share2, ChevronRight, Zap,
+    Settings, Instagram, Facebook, Twitter, Mail, Phone,
+    Scroll, Sparkles, Feather
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../../types';
 import { VenueGallery } from '../components/VenueGallery';
@@ -16,6 +18,7 @@ interface VenueProfileScreenProps {
     handleVibeCheck: (v: Venue, hasConsent?: boolean, photoUrl?: string) => void;
     clockedInVenue?: string | null;
     handleToggleFavorite: (venueId: string) => void;
+    onEdit?: (venueId: string) => void;
 }
 
 export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
@@ -24,7 +27,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
     handleClockIn,
     handleVibeCheck,
     clockedInVenue,
-    handleToggleFavorite
+    handleToggleFavorite,
+    onEdit
 }) => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -71,6 +75,15 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     className="w-full h-full object-cover opacity-60"
                     alt={venue.name}
                 />
+
+                {/* Hybrid "Master Maker" Badge (Bar + Maker) */}
+                {venue.isLocalMaker && venue.type !== 'Distillery' && venue.type !== 'Brewery' && (
+                    <div className="absolute top-24 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-xl border border-primary/50 px-6 py-2 rounded-full shadow-[0_0_20px_rgba(251,191,36,0.2)] flex items-center gap-2 transform hover:scale-105 transition-transform cursor-help z-20">
+                        <Trophy className="w-4 h-4 text-primary fill-primary animate-pulse" />
+                        <span className="text-xs font-black text-primary uppercase tracking-widest font-league">Master Maker</span>
+                    </div>
+                )}
+
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
 
                 <button
@@ -96,6 +109,14 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     >
                         <Share2 className="w-5 h-5" />
                     </button>
+                    {(userProfile.role === 'admin' || userProfile.role === 'super-admin' || venue.ownerId === userProfile.uid) && (
+                        <button
+                            onClick={() => onEdit?.(venue.id)}
+                            className="p-2 bg-primary/20 backdrop-blur-md rounded-full text-primary border border-primary/30 hover:bg-primary/40 transition-colors"
+                        >
+                            <Settings className="w-5 h-5" />
+                        </button>
+                    )}
                 </div>
 
                 <div className="absolute bottom-6 left-6 right-6">
@@ -146,6 +167,66 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                         </span>
                     </div>
                 </div>
+
+                {/* Strategic Tags: Capacity & Sober Friendly */}
+                {(venue.isLowCapacity || venue.isSoberFriendly) && (
+                    <div className="flex gap-2 flex-wrap">
+                        {venue.isLowCapacity && (
+                            <div className="bg-red-900/20 border border-red-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                <Users className="w-3 h-3 text-red-400" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-red-300">Micro-Venue: Low Capacity</span>
+                            </div>
+                        )}
+                        {venue.isSoberFriendly && (
+                            <div className="bg-blue-900/20 border border-blue-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                <Sparkles className="w-3 h-3 text-blue-400" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">Sober Friendly Choice</span>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Loop Quest Logic */}
+                {venue.geoLoop && (
+                    <div className="bg-surface border border-white/10 rounded-2xl p-4 overflow-hidden relative">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <MapPin className="w-3 h-3" />
+                            {venue.geoLoop.replace('_', ' ')}
+                        </h4>
+
+                        {/* Progress Bar Mockup */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs font-bold text-white">
+                                <span>Quest Progress</span>
+                                <span>1/4 Venues</span>
+                            </div>
+                            <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-primary to-yellow-200 w-[25%]" />
+                            </div>
+                            <p className="text-[10px] text-slate-400 italic mt-1">Visit all venues in this loop for a 500pt bonus.</p>
+                        </div>
+                    </div>
+                )}
+
+
+                {/* Origin Story */}
+                {venue.originStory && (
+                    <div className="bg-surface border border-white/5 p-6 rounded-2xl shadow-lg relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-10 transition-opacity duration-700" />
+                        <Scroll className="w-8 h-8 text-primary/20 absolute top-4 right-4" />
+
+                        <h3 className="text-lg font-black text-white uppercase font-league mb-4 relative z-10 flex items-center gap-2">
+                            <Feather className="w-4 h-4 text-primary" />
+                            The Origin Story
+                        </h3>
+                        <div className="prose prose-invert prose-sm">
+                            <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line relative z-10 font-serif italic opacity-90">
+                                {venue.originStory}
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 {/* Action Bar */}
                 <div className="flex gap-3">
@@ -198,7 +279,68 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                             </div>
                         </div>
                     )}
+
+                    {/* Social & Contact info */}
+                    {(venue.instagram || venue.facebook || venue.twitter || venue.email || venue.phone) && (
+                        <div className="bg-surface border border-white/5 rounded-2xl p-5 space-y-4">
+                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Users className="w-3 h-3" />
+                                Connect & Inquire
+                            </h4>
+                            <div className="flex flex-wrap gap-3">
+                                {venue.instagram && (
+                                    <a href={`https://instagram.com/${venue.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-black/40 rounded-lg text-primary hover:text-white transition-colors">
+                                        <Instagram className="w-5 h-5" />
+                                    </a>
+                                )}
+                                {venue.facebook && (
+                                    <a href={venue.facebook.startsWith('http') ? venue.facebook : `https://${venue.facebook}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-black/40 rounded-lg text-primary hover:text-white transition-colors">
+                                        <Facebook className="w-5 h-5" />
+                                    </a>
+                                )}
+                                {venue.twitter && (
+                                    <a href={`https://twitter.com/${venue.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-black/40 rounded-lg text-primary hover:text-white transition-colors">
+                                        <Twitter className="w-5 h-5" />
+                                    </a>
+                                )}
+                                {venue.email && (
+                                    <a href={`mailto:${venue.email}`} className="p-2 bg-black/40 rounded-lg text-primary hover:text-white transition-colors">
+                                        <Mail className="w-5 h-5" />
+                                    </a>
+                                )}
+                                {venue.phone && (
+                                    <a href={`tel:${venue.phone}`} className="p-2 bg-black/40 rounded-lg text-primary hover:text-white transition-colors">
+                                        <Phone className="w-5 h-5" />
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
+
+                {/* "Where to find us" - ONLY for Pure Makers (Brewery/Distillery/Roaster) */}
+                {venue.isLocalMaker && (venue.type === 'Brewery' || venue.type === 'Distillery' || venue.type === 'Roaster') && (
+                    <div className="space-y-4">
+                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">Where to Find Us</h3>
+                        <div className="bg-surface border border-white/5 rounded-2xl p-5 space-y-3">
+                            <p className="text-xs text-slate-400 mb-2">Our products are proudly poured at:</p>
+                            <div className="grid grid-cols-1 gap-2">
+                                {venues.filter(v => v.carryingMakers?.includes(venue.id)).map(carrier => (
+                                    <div key={carrier.id} onClick={() => navigate(`/venues/${carrier.id}`)} className="flex items-center justify-between p-3 bg-black/40 rounded-lg border border-white/5 cursor-pointer hover:bg-white/5 transition-colors group">
+                                        <div className="flex items-center gap-3">
+                                            <Beer className="w-4 h-4 text-slate-500 group-hover:text-primary transition-colors" />
+                                            <span className="font-bold text-sm text-white">{carrier.name}</span>
+                                        </div>
+                                        <ChevronRight className="w-4 h-4 text-slate-700 group-hover:text-white" />
+                                    </div>
+                                ))}
+                                {venues.filter(v => v.carryingMakers?.includes(venue.id)).length === 0 && (
+                                    <p className="text-[10px] text-slate-600 font-bold uppercase py-2">Distribution list updating...</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Gallery */}
                 <div className="space-y-4">

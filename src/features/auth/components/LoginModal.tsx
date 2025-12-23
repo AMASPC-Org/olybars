@@ -107,7 +107,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
       const newProfile: UserProfile = {
         uid: uid,
-        role: joinLeague ? 'user' : 'guest',
+        role: joinLeague ? 'user' : 'guest', // Legacy support
+        systemRole: 'guest', // RBAC Default
+        venuePermissions: {}, // RBAC Default
         handle,
         email,
         phone,
@@ -153,7 +155,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         if (userCredential.user.email === 'ryan@amaspc.com') {
           // The Ryan Rule: Always force super-admin rights
           await setDoc(doc(db, 'users', userCredential.user.uid), {
-            role: 'super-admin',
+            role: 'super-admin', // Legacy
+            systemRole: 'admin', // RBAC Master Key
             handle: 'Ryan (Admin)',
             email: 'ryan@amaspc.com',
             // Fix: Reset 9999 points if present
@@ -171,10 +174,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         }
 
         setUserProfile(profileData);
-        if (['admin', 'owner', 'manager', 'super-admin'].includes(profileData.role)) {
+
+        // RBAC Access Check
+        // Allow if: System Admin OR has ANY venue permission OR has legacy role
+        const hasAccess =
+          profileData.systemRole === 'admin' ||
+          (profileData.venuePermissions && Object.keys(profileData.venuePermissions).length > 0) ||
+          ['admin', 'owner', 'manager', 'super-admin'].includes(profileData.role);
+
+        if (hasAccess) {
           onOwnerSuccess();
           onClose();
-          showToast(`Logged in as ${profileData.role.toUpperCase()}`, 'success');
+          showToast(`Logged in as ${profileData.handle || 'Owner'}`, 'success');
         } else {
           showToast(`Access Denied: Venue account required.`);
           onClose();
