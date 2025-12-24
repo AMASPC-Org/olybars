@@ -5,5 +5,5 @@ export const AMENITY_LORE: Record<string, string> = {
     pinball: "The silver ball never lies. Tilt it and you leave empty-handed.",
     cornhole: "A game of precision, patience, and precisely one beer in the non-throwing hand. Standard Oly rules apply.",
     karaoke: "The stage is a sacred space. Artie's go-to is 'Sittin' on the Dock of the Bay'. What's yours?",
-    trivia: "The well of knowledge runs deep tonight. League points are double for top-3 finishes at Well 80 and The Broho.",
+    trivia: "The well of knowledge runs deep tonight. League points are double for top-3 finishes at Well 80 and Hannah's.",
 };

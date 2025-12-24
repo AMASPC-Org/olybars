@@ -396,7 +396,6 @@ const venues = [
         },
         isHistoricalAnchor: true,
         historySnippet: "Rumored entrance to the tunnels and Oly's oldest bar.",
-        leagueEvent: 'trivia',
         cheatCodeUrl: '/history/tunnels-of-olympia',
         isPaidLeagueMember: true
     },
@@ -610,7 +609,16 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 50, y: 50 },
-        website: 'https://hannahsoly.com/'
+        website: 'https://hannahsoly.com/',
+        happyHour: {
+            startTime: '15:00',
+            endTime: '18:00',
+            description: 'Classic Happy Hour',
+            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+        },
+        leagueEvent: 'trivia',
+        triviaTime: '19:00',
+        isPaidLeagueMember: true
     },
     {
         id: 'charlies-bar-grill',
