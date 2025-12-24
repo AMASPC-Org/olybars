@@ -26,12 +26,13 @@ DIRECTIVES:
 `;
 
     constructor() {
-        const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GOOGLE_API_KEY;
+        const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
 
         if (!apiKey) {
-            console.warn("⚠️ GeminiService: No API key found. Checked GOOGLE_GENAI_API_KEY and GOOGLE_API_KEY.");
+            console.warn("⚠️ GeminiService: No API key found. Checked GOOGLE_GENAI_API_KEY, GOOGLE_API_KEY, and GEMINI_API_KEY.");
         } else {
-            const source = process.env.GOOGLE_GENAI_API_KEY ? "GOOGLE_GENAI_API_KEY" : "GOOGLE_API_KEY";
+            const source = process.env.GOOGLE_GENAI_API_KEY ? "GOOGLE_GENAI_API_KEY" :
+                (process.env.GOOGLE_API_KEY ? "GOOGLE_API_KEY" : "GEMINI_API_KEY");
             console.log(`📡 GeminiService: Initialized using secret from ${source}`);
         }
 

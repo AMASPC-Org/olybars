@@ -27,7 +27,7 @@ export const artieChatLogic = genkitAi.defineFlow({
 }, async (input) => {
     const { history, question } = input;
 
-    if (!process.env.GOOGLE_GENAI_API_KEY && !process.env.GOOGLE_API_KEY) {
+    if (!process.env.GOOGLE_GENAI_API_KEY && !process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY) {
         return "I'm having trouble connecting to my brain (API Key missing). Please check the server logs.";
     }
 
