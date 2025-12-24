@@ -83,7 +83,7 @@ export const BuzzScreen: React.FC<{
     }
 
     // Global Visibility Check
-    if (v.isVisible === false) return false;
+    if (v.isVisible === false || v.isActive === false) return false;
 
     // Home Pulse Specific: Hide closed bars unless featured
     const open = isVenueOpen(v);

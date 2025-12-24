@@ -38,6 +38,7 @@ export interface Venue {
   ownerId?: string;
   managerIds?: string[];
   amenities?: string[];
+  amenityDetails?: AmenityDetail[];
   deals?: {
     title: string;
     description: string;
@@ -65,11 +66,20 @@ export interface Venue {
   isVerifiedHost?: boolean; // Gatekeeper: Must be true to enable League Host tools
 
   // Strategic Market Audit Fields (Dec 2025)
+  makerType?: 'Brewery' | 'Distillery' | 'Cidery' | 'Winery';
+  physicalRoom?: boolean; // Yes/No - if No, mark as 'Production Only'
+  insiderVibe?: string; // 2-sentence 'Insider Vibe' for the app listing
   originStory?: string; // Rich text origin story
   geoLoop?: 'Downtown_Walkable' | 'Warehouse_Tumwater' | 'Destination_Quest';
   isLowCapacity?: boolean; // "Tiny Taproom" warning
   isSoberFriendly?: boolean; // "Self Care" tag
+  isBoutique?: boolean; // For small capacity like Whitewood Cider
   isActive?: boolean; // For Ghost List / Legacy soft-delete
+  scavengerHunts?: {
+    title: string;
+    partnerVenues: string[]; // IDs of bars where they are typically tapped
+    badgeId: string;
+  }[];
 }
 
 export interface Message {
@@ -100,9 +110,19 @@ export interface Signal {
   type: SignalType;
   value: any;
   timestamp: number;
+  verificationMethod?: 'gps' | 'qr'; // Added for Vibe Check QR System
 }
 
-export type PointsReason = 'checkin' | 'photo' | 'share' | 'vibe' | 'redeem' | 'bonus';
+export interface AmenityDetail {
+  id: string; // e.g. "darts"
+  name: string; // e.g. "Darts"
+  count: number; // total units
+  available?: number; // currently free
+  isLeaguePartner?: boolean; // If this specific amenity is part of the league
+  artieLore?: string; // Specific lore for this amenity
+}
+
+export type PointsReason = 'checkin' | 'photo' | 'share' | 'vibe' | 'redeem' | 'bonus' | 'play' | 'social_share';
 
 export interface ActivityLogItem {
   userId: string;
@@ -118,6 +138,7 @@ export type UserRole = 'guest' | 'user' | 'manager' | 'owner' | 'admin' | 'super
 export interface UserProfile {
   uid: string;
   handle?: string;
+  displayName?: string;
   email?: string;
   phone?: string;
   favoriteDrink?: string; // Legacy
@@ -139,6 +160,7 @@ export interface UserProfile {
   weeklyBuzz?: boolean;
   showMemberSince?: boolean;
   createdAt?: number;
+  badges?: Record<string, UserBadgeProgress>; // Map of badgeId -> Progress
 
   // RBAC Fields (Optional for backward compat until migration)
   systemRole?: SystemRole;
@@ -147,4 +169,62 @@ export interface UserProfile {
   // Maker's Trail
   makersTrailProgress?: number; // 0-5
   hasCompletedMakerSurvey?: boolean;
+  vouchers?: UserVoucher[];
+}
+
+export interface ActivityLog {
+  id: string;
+  userId: string;
+  type: string;
+  venueId?: string;
+  points: number;
+  timestamp: number;
+  hasConsent?: boolean;
+  metadata?: any;
+  verificationMethod?: 'gps' | 'qr';
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon?: string;
+  points: number;
+  criteria: {
+    type: 'checkin_set' | 'count';
+    venueIds?: string[];
+    count?: number;
+    category?: string;
+  };
+  secret?: boolean;
+}
+
+export interface UserBadgeProgress {
+  badgeId: string;
+  progress: number;
+  unlocked: boolean;
+  unlockedAt?: number;
+  completedVenueIds?: string[];
+}
+
+export interface MerchItem {
+  id: string;
+  venueId: string;
+  name: string;
+  description: string;
+  price: number;
+  imageURL: string;
+  category: 'T-Shirt' | 'Hoodie' | 'Hat' | 'Other';
+  sizes?: string[];
+}
+
+export interface UserVoucher {
+  id: string;
+  userId: string;
+  itemId: string;
+  venueId: string;
+  status: 'active' | 'redeemed' | 'cancelled';
+  purchaseDate: number;
+  redeemedAt?: number;
+  qrToken: string;
 }

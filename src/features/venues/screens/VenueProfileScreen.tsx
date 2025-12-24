@@ -10,6 +10,7 @@ import {
 import { Venue, UserProfile } from '../../../types';
 import { VenueGallery } from '../components/VenueGallery';
 import { getVenueStatus, isVenueOpen } from '../../../utils/venueUtils';
+import { useToast } from '../../../components/ui/BrandedToast';
 
 interface VenueProfileScreenProps {
     venues: Venue[];
@@ -32,6 +33,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
 }) => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { showToast } = useToast();
     const venue = venues.find(v => v.id === id);
 
     const handleShare = async () => {
@@ -127,19 +129,26 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                                     {venue.name}
                                 </h1>
                                 {venue.isHQ && <Shield className="w-5 h-5 text-primary fill-primary" />}
+                                {venue.isBoutique && <Sparkles className="w-5 h-5 text-yellow-400 fill-yellow-400" />}
                             </div>
                             <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                <span>{venue.type}</span>
+                                <span>{venue.makerType || venue.type}</span>
                                 <span>•</span>
                                 <span className="text-primary italic">"{venue.vibe}"</span>
                             </div>
                         </div>
-                        <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${status === 'open' ? 'bg-green-500/10 text-green-400 border-green-400/30' :
-                            status === 'last_call' ? 'bg-red-600/20 text-red-500 border-red-500/50 animate-pulse' :
-                                'bg-red-500/10 text-red-400 border-red-400/30'
-                            }`}>
-                            {status === 'open' ? 'Open Now' : status === 'last_call' ? 'LAST CALL' : 'Closed'}
-                        </div>
+                        {venue.physicalRoom !== false ? (
+                            <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${status === 'open' ? 'bg-green-500/10 text-green-400 border-green-400/30' :
+                                status === 'last_call' ? 'bg-red-600/20 text-red-500 border-red-500/50 animate-pulse' :
+                                    'bg-red-500/10 text-red-400 border-red-400/30'
+                                }`}>
+                                {status === 'open' ? 'Open Now' : status === 'last_call' ? 'LAST CALL' : 'Closed'}
+                            </div>
+                        ) : (
+                            <div className="px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest">
+                                Production Only
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -186,35 +195,27 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     </div>
                 )}
 
-                {/* Loop Quest Logic */}
-                {venue.geoLoop && (
-                    <div className="bg-surface border border-white/10 rounded-2xl p-4 overflow-hidden relative">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                            <MapPin className="w-3 h-3" />
-                            {venue.geoLoop.replace('_', ' ')}
-                        </h4>
+                {/* Insider Vibe (Pit/Stephanie/Chris Personas) */}
+                {venue.insiderVibe && (
+                    <div className="bg-primary/10 border border-primary/30 p-6 rounded-2xl shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 -translate-y-1/2 translate-x-1/2 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-1000" />
+                        <Sparkles className="w-6 h-6 text-primary absolute top-4 right-4" />
 
-                        {/* Progress Bar Mockup */}
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-xs font-bold text-white">
-                                <span>Quest Progress</span>
-                                <span>1/4 Venues</span>
-                            </div>
-                            <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-primary to-yellow-200 w-[25%]" />
-                            </div>
-                            <p className="text-[10px] text-slate-400 italic mt-1">Visit all venues in this loop for a 500pt bonus.</p>
-                        </div>
+                        <h3 className="text-sm font-black text-primary uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+                            <Info className="w-4 h-4" />
+                            Insider Vibe
+                        </h3>
+                        <p className="text-sm font-bold text-white leading-relaxed italic">
+                            "{venue.insiderVibe}"
+                        </p>
                     </div>
                 )}
-
 
                 {/* Origin Story */}
                 {venue.originStory && (
                     <div className="bg-surface border border-white/5 p-6 rounded-2xl shadow-lg relative overflow-hidden group">
                         <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-10 transition-opacity duration-700" />
-                        <Scroll className="w-8 h-8 text-primary/20 absolute top-4 right-4" />
+                        <Scroll className="w-8 h-8 text-white/5 absolute top-4 right-4" />
 
                         <h3 className="text-lg font-black text-white uppercase font-league mb-4 relative z-10 flex items-center gap-2">
                             <Feather className="w-4 h-4 text-primary" />
@@ -229,24 +230,38 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                 )}
 
                 {/* Action Bar */}
-                <div className="flex gap-3">
-                    <button
-                        onClick={() => handleClockIn(venue)}
-                        disabled={clockedInVenue === venue.id}
-                        className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/10 ${clockedInVenue === venue.id ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-primary text-black hover:scale-[1.02] active:scale-95'
-                            }`}
-                    >
-                        <MapPin className="w-4 h-4" />
-                        {clockedInVenue === venue.id ? 'Checked In' : 'Clock In (+10)'}
-                    </button>
-                    <button
-                        onClick={() => handleVibeCheck(venue)}
-                        className="flex-1 py-4 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 text-slate-100 hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 shadow-xl"
-                    >
-                        <Zap className="w-4 h-4 text-primary" />
-                        Vibe Check (+5)
-                    </button>
-                </div>
+                {venue.physicalRoom !== false ? (
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => handleClockIn(venue)}
+                            disabled={clockedInVenue === venue.id}
+                            className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/10 ${clockedInVenue === venue.id ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-primary text-black hover:scale-[1.02] active:scale-95'
+                                }`}
+                        >
+                            <MapPin className="w-4 h-4" />
+                            {clockedInVenue === venue.id ? 'Checked In' : 'Clock In (+10)'}
+                        </button>
+                        <button
+                            onClick={() => showToast('Find the Vibe Spot QR code inside ' + venue.name + ' to report a vibe!', 'info')}
+                            className="flex-1 py-4 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex flex-col items-center justify-center text-slate-100 hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 shadow-xl"
+                        >
+                            <div className="flex items-center gap-2">
+                                <Zap className="w-4 h-4 text-primary" />
+                                <span>Scan QR for Vibe</span>
+                            </div>
+                            <span className="text-[7px] text-primary/60 mt-1">FIND THE VIBE SPOT STICKER</span>
+                        </button>
+                    </div>
+                ) : (
+                    <div className="bg-blue-900/20 border-2 border-blue-500/30 rounded-3xl p-6 text-center shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                        <Sparkles className="w-8 h-8 text-blue-400 mx-auto mb-3 animate-pulse" />
+                        <h4 className="text-lg font-black text-white uppercase font-league mb-2 tracking-tight">Production Only Maker</h4>
+                        <p className="text-xs text-blue-300/80 mb-4 font-bold uppercase tracking-widest leading-relaxed">
+                            This maker doesn't have a taproom yet. Join the scavenger hunt to find their brews in the wild!
+                        </p>
+                    </div>
+                )}
 
                 {/* Intelligence Section */}
                 <div className="space-y-4">
@@ -318,23 +333,32 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     )}
                 </div>
 
-                {/* "Where to find us" - ONLY for Pure Makers (Brewery/Distillery/Roaster) */}
-                {venue.isLocalMaker && (venue.type === 'Brewery' || venue.type === 'Distillery' || venue.type === 'Roaster') && (
+                {/* "Where to find us" / Scavenger Hunt */}
+                {venue.isLocalMaker && (
                     <div className="space-y-4">
-                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">Where to Find Us</h3>
+                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">
+                            {venue.physicalRoom === false ? 'Scavenger Hunt: Find the Brew' : 'Where to Find Us'}
+                        </h3>
                         <div className="bg-surface border border-white/5 rounded-2xl p-5 space-y-3">
-                            <p className="text-xs text-slate-400 mb-2">Our products are proudly poured at:</p>
+                            <p className="text-xs text-slate-400 mb-2">
+                                {venue.physicalRoom === false
+                                    ? `Scan a Vibe Spot at these partner bars to unlock the '${venue.scavengerHunts?.[0]?.badgeId || 'Maker'}' badge!`
+                                    : "Our products are proudly poured at:"}
+                            </p>
                             <div className="grid grid-cols-1 gap-2">
-                                {venues.filter(v => v.carryingMakers?.includes(venue.id)).map(carrier => (
+                                {venues.filter(v => v.carryingMakers?.includes(venue.id) || venue.scavengerHunts?.[0]?.partnerVenues.includes(v.id)).map(carrier => (
                                     <div key={carrier.id} onClick={() => navigate(`/venues/${carrier.id}`)} className="flex items-center justify-between p-3 bg-black/40 rounded-lg border border-white/5 cursor-pointer hover:bg-white/5 transition-colors group">
                                         <div className="flex items-center gap-3">
                                             <Beer className="w-4 h-4 text-slate-500 group-hover:text-primary transition-colors" />
                                             <span className="font-bold text-sm text-white">{carrier.name}</span>
                                         </div>
-                                        <ChevronRight className="w-4 h-4 text-slate-700 group-hover:text-white" />
+                                        <div className="flex items-center gap-2">
+                                            {venue.physicalRoom === false && <Sparkles className="w-3 h-3 text-primary animate-pulse" />}
+                                            <ChevronRight className="w-4 h-4 text-slate-700 group-hover:text-white" />
+                                        </div>
                                     </div>
                                 ))}
-                                {venues.filter(v => v.carryingMakers?.includes(venue.id)).length === 0 && (
+                                {venues.filter(v => v.carryingMakers?.includes(venue.id) || venue.scavengerHunts?.[0]?.partnerVenues.includes(v.id)).length === 0 && (
                                     <p className="text-[10px] text-slate-600 font-bold uppercase py-2">Distribution list updating...</p>
                                 )}
                             </div>
@@ -350,22 +374,25 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     </div>
                 </div>
 
-                {/* Location Info */}
-                <div className="space-y-4">
-                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">Navigation</h3>
-                    <div className="bg-surface border border-white/5 rounded-2xl p-4 flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-slate-800 p-2.5 rounded-xl">
-                                <Navigation className="w-5 h-5 text-blue-400" />
+                {/* Location Info / Conditional Navigation */}
+                {venue.physicalRoom !== false && (
+                    <div className="space-y-4">
+                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">Navigation</h3>
+                        <div className="bg-surface border border-white/5 rounded-2xl p-4 flex justify-between items-center transition-all hover:border-primary/30 cursor-pointer"
+                            onClick={() => venue.address && window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.address)}`, '_blank')}>
+                            <div className="flex items-center gap-3">
+                                <div className="bg-slate-800 p-2.5 rounded-xl">
+                                    <Navigation className="w-5 h-5 text-blue-400" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-black text-slate-500 uppercase">Address</span>
+                                    <p className="text-sm font-bold text-white uppercase tracking-tight">{venue.address || 'Olympia, WA'}</p>
+                                </div>
                             </div>
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-black text-slate-500 uppercase">Address</span>
-                                <p className="text-sm font-bold text-white uppercase tracking-tight">{venue.address || 'Olympia, WA'}</p>
-                            </div>
+                            <ChevronRight className="w-5 h-5 text-slate-700" />
                         </div>
-                        <ChevronRight className="w-5 h-5 text-slate-700" />
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

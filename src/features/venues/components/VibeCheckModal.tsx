@@ -8,9 +8,10 @@ interface VibeCheckModalProps {
     isOpen: boolean;
     onClose: () => void;
     venue: Venue;
-    onConfirm: (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string) => void;
+    onConfirm: (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod?: 'gps' | 'qr') => void;
     clockedIn?: boolean;
     onClockInPrompt?: () => void;
+    verificationMethod?: 'gps' | 'qr';
 }
 
 export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
@@ -20,6 +21,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     onConfirm,
     clockedIn,
     onClockInPrompt,
+    verificationMethod = 'gps'
 }) => {
     const [selectedStatus, setSelectedStatus] = useState<VenueStatus>(venue.status || 'chill');
     const [showCamera, setShowCamera] = useState(false);
@@ -87,11 +89,16 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
             return;
         }
 
+        if (verificationMethod !== 'qr') {
+            setErrorMessage("QR Verification Required. You must scan the physical Vibe Spot QR code to submit a vibe.");
+            return;
+        }
+
         setIsSubmitting(true);
         setErrorMessage(null);
 
         try {
-            await onConfirm(venue, selectedStatus, allowMarketingUse, capturedPhoto || undefined);
+            await onConfirm(venue, selectedStatus, allowMarketingUse, capturedPhoto || undefined, verificationMethod);
             setIsSuccess(true);
 
             if (clockedIn) {

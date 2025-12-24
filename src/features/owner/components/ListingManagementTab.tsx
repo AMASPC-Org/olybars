@@ -112,6 +112,63 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                         />
                     </div>
 
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Insider Vibe (2 Sentences)</label>
+                        <textarea
+                            name="insiderVibe"
+                            value={(formData as any).insiderVibe || ''}
+                            onChange={handleChange}
+                            rows={2}
+                            placeholder="The Council's Micro Reality Check..."
+                            className="w-full bg-blue-900/10 border border-primary/30 rounded-xl py-3 px-4 text-sm text-blue-100 placeholder:text-blue-900/50 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all font-medium resize-none"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Maker Type</label>
+                            <div className="relative group">
+                                <Info className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4" />
+                                <select
+                                    name="makerType"
+                                    value={(formData as any).makerType || ''}
+                                    onChange={(e: any) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-100 focus:border-primary/50 outline-none appearance-none cursor-pointer"
+                                >
+                                    <option value="" className="bg-black text-slate-500">Not a Maker</option>
+                                    <option value="Brewery" className="bg-black">Brewery</option>
+                                    <option value="Distillery" className="bg-black">Distillery</option>
+                                    <option value="Cidery" className="bg-black">Cidery</option>
+                                    <option value="Winery" className="bg-black">Winery</option>
+                                </select>
+                                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4 rotate-90" />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-4 justify-end pb-2">
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${(formData as any).physicalRoom !== false ? 'bg-primary border-primary' : 'border-slate-600 bg-transparent'}`}>
+                                    {(formData as any).physicalRoom !== false && <ChevronRight className="w-3 h-3 text-black font-bold" />}
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    name="physicalRoom"
+                                    checked={(formData as any).physicalRoom !== false}
+                                    onChange={e => setFormData(prev => ({ ...prev, physicalRoom: e.target.checked }))}
+                                    className="hidden"
+                                />
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">Has Taproom (Physical)</span>
+                            </label>
+
+                            {/* Visual Helper for Production Only */}
+                            {(formData as any).physicalRoom === false && (
+                                <p className="text-[9px] text-amber-500 font-bold uppercase tracking-widest ml-1 animate-pulse">
+                                    Marked as "Production Only" - Scavenger Hunt Mode Active
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">The Loop Strategy</label>

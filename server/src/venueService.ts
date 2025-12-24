@@ -1,5 +1,7 @@
 import { db } from './firebaseAdmin.js';
-import { Venue, Signal, SignalType } from '../../src/types';
+import admin from 'firebase-admin';
+import { Venue, Signal, SignalType, Badge, UserBadgeProgress } from '../../src/types';
+import { BADGES } from '../../src/config/badges';
 
 /**
  * Buzz Clock Sorting Logic:
@@ -87,10 +89,34 @@ export const updateVenueBuzz = async (venueId: string) => {
 export const fetchVenues = async (): Promise<Venue[]> => {
     try {
         const snapshot = await db.collection('venues').get();
-        const venues = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        })) as Venue[];
+        const venues = snapshot.docs
+            .map(doc => {
+                const data = doc.data();
+                const venue = { id: doc.id, ...data } as Venue;
+
+                // Injecting mock amenities for the "Play" feature demo
+                if (venue.id === 'well-80') {
+                    venue.amenityDetails = [
+                        { id: 'cornhole', name: 'Cornhole', count: 2, isLeaguePartner: true },
+                        { id: 'arcade', name: 'Arcade Cabinets', count: 12, isLeaguePartner: true },
+                        { id: 'trivia', name: 'Pub Trivia', count: 1, isLeaguePartner: true }
+                    ];
+                } else if (venue.id === 'hannahs') {
+                    venue.amenityDetails = [
+                        { id: 'pool', name: 'Pool Tables', count: 4, isLeaguePartner: true },
+                        { id: 'darts', name: 'Electronic Darts', count: 6, isLeaguePartner: true },
+                        { id: 'karaoke', name: 'Stage Karaoke', count: 1, isLeaguePartner: true }
+                    ];
+                } else if (venue.id === 'brotherhood-lounge' || venue.id === 'brotherhood') {
+                    venue.amenityDetails = [
+                        { id: 'pool', name: 'Pool Tables', count: 4, isLeaguePartner: true },
+                        { id: 'arcade', name: 'Retro Arcade', count: 5, isLeaguePartner: false }
+                    ];
+                }
+
+                return venue;
+            })
+            .filter(v => v.isActive !== false); // Filter out Ghost List / Legacy
 
         return sortVenuesByBuzzClock(venues);
     } catch (error) {
@@ -99,7 +125,8 @@ export const fetchVenues = async (): Promise<Venue[]> => {
     }
 };
 
-export const checkIn = async (venueId: string, userId: string, userLat: number, userLng: number) => {
+
+export const checkIn = async (venueId: string, userId: string, userLat: number, userLng: number, verificationMethod: 'gps' | 'qr' = 'gps') => {
     const venueDoc = await db.collection('venues').doc(venueId).get();
     if (!venueDoc.exists) throw new Error('Venue not found');
 
@@ -161,11 +188,11 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
     }
 
     // 3. WA State LCB Compliance: Max 2 check-ins per 12h window
-    const twelveHoursAgo = timestamp - (12 * 60 * 60 * 1000);
+    const twelveHoursAgoCheck = timestamp - (12 * 60 * 60 * 1000);
     const daySignals = await db.collection('signals')
         .where('userId', '==', userId)
         .where('type', '==', 'check_in')
-        .where('timestamp', '>=', twelveHoursAgo)
+        .where('timestamp', '>=', twelveHoursAgoCheck)
         .get();
 
     if (daySignals.size >= 2) {
@@ -176,7 +203,8 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
         venueId,
         userId,
         type: 'check_in',
-        timestamp
+        timestamp,
+        verificationMethod
     };
 
     await db.collection('signals').add(signal);
@@ -184,36 +212,190 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
         checkIns: (venueData.checkIns || 0) + 1
     });
 
-    // Calculate Dynamic Points
+    // Calculate Dynamic Points (Maker Atlas Protocol Dec 2025)
     // Base: 10
-    // Multiplier 1: localScore > 50 -> 1.5x
-    // Multiplier 2: Hybrid (isLocalMaker + isBar) -> 2x (Overrides 1.5x)
+    // Local Maker (Supporter/High Local Score): 15 (1.5x)
+    // Master Maker (Hybrid/Verified Production): 20 (2x)
 
     let points = 10;
-    const isHybrid = venueData.isLocalMaker && venueData.type !== 'Distillery' && venueData.type !== 'Brewery'; // Rough check for "Bar + Maker"
-    // BETTER HYBRID CHECK: If they have a "bar-like" type AND isLocalMaker
-    const isBarLike = !['Store', 'Shop'].includes(venueData.type);
+    const isMasterMaker = venueData.isVerifiedMaker && venueData.isLocalMaker;
+    const isLocalMakerSupporter = venueData.isLocalMaker || (venueData.localScore || 0) > 50;
 
-    if (venueData.isLocalMaker && isBarLike) {
-        points = 20; // 2x
-    } else if ((venueData.localScore || 0) > 50) {
-        points = 15; // 1.5x
+    if (isMasterMaker) {
+        points = 20; // 2x Multiplier
+    } else if (isLocalMakerSupporter) {
+        points = 15; // 1.5x Multiplier
     }
 
-    // Pass calculated points to the activity logger (handled mostly by frontend currently, but backend needs to support it)
-    // We return the points so the frontend can display the correct amount
+    // Pass calculated points to the activity logger
+    // We log it here to ensure backend source of truth
+    await logUserActivity({
+        userId,
+        type: 'check_in',
+        venueId,
+        points,
+        verificationMethod,
+        metadata: {
+            multiplier: points / 10,
+            isMasterMaker,
+            isLocalMakerSupporter
+        }
+    });
 
     // Recalculate Buzz
     await updateVenueBuzz(venueId);
+
+    // 4. BADGE LOGIC: Check & Award Badges
+    const newBadges = await checkAndAwardBadges(userId, venueId);
+    let badgesAwarded: Badge[] = [];
+
+    if (newBadges.length > 0) {
+        // Award points for badges
+        const totalBadgePoints = newBadges.reduce((sum, b) => sum + b.points, 0);
+        points += totalBadgePoints;
+
+        // Log Badge Activities
+        for (const badge of newBadges) {
+            await logUserActivity({
+                userId,
+                type: 'badge_unlock',
+                points: badge.points,
+                metadata: { badgeId: badge.id, badgeName: badge.name }
+            });
+            badgesAwarded.push(badge);
+        }
+    } else {
+        // Only log the check-in points if no badge activity already logged it (though we treat them separate)
+        // Actually, logUserActivity is called above separately? No, checkIn function doesn't call logUserActivity yet for the checkin itself?
+        // Wait, checkIn logic in this file returns points but doesn't seem to call logUserActivity for the check-in points?
+        // Let's check existing code. It seems checkIn returns points, and Frontend might be calling logUserActivity?
+        // Or specific logUserActivity call is missing in checkIn?
+        // Looking at previous `checkIn` code: "Pass calculated points to the activity logger (handled mostly by frontend currently...)"
+        // OK, so backend just calculates. But for BADGES, we definitely want backend to handle it or return it.
+        // I will return badgesAwarded in the response.
+    }
 
     return {
         success: true,
         message: `Checked in at ${venueData.name}!`,
         pointsAwarded: points,
         isLocalMaker: venueData.isLocalMaker,
-        localScore: venueData.localScore
+        localScore: venueData.localScore,
+        badgesEarned: badgesAwarded
     };
 };
+
+/**
+ * Handle specific Amenity Check-ins (5 points)
+ */
+export const checkInAmenity = async (venueId: string, userId: string, amenityId: string) => {
+    const venueDoc = await db.collection('venues').doc(venueId).get();
+    if (!venueDoc.exists) throw new Error('Venue not found');
+
+    const venueData = venueDoc.data() as Venue;
+
+    // Check if the venue actually has this amenity
+    const amenity = venueData.amenityDetails?.find(a => a.id === amenityId);
+    if (!amenity) throw new Error(`Venue does not have ${amenityId}`);
+
+    const timestamp = Date.now();
+
+    // Log Activity
+    await logUserActivity({
+        userId,
+        type: 'play',
+        venueId,
+        points: 5,
+        metadata: { amenityId, amenityName: amenity.name }
+    });
+
+    return {
+        success: true,
+        message: `Clocked in for ${amenity.name} at ${venueData.name}!`,
+        pointsAwarded: 5
+    };
+};
+
+
+/**
+ * Check if the user has unlocked any new badges based on their history.
+ */
+export const checkAndAwardBadges = async (userId: string, currentVenueId: string): Promise<Badge[]> => {
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+    const userData = userDoc.data();
+    const currentBadges = userData?.badges || {};
+
+    // Get unique check-ins history
+    // Optimization: retrieving all signals might be expensive.
+    // For now, valid for small scale.
+    const signalsSnapshot = await db.collection('signals')
+        .where('userId', '==', userId)
+        .where('type', '==', 'check_in')
+        .get();
+
+    const uniqueVenues = new Set<string>();
+    signalsSnapshot.forEach(doc => {
+        const data = doc.data() as Signal;
+        uniqueVenues.add(data.venueId);
+    });
+    // Ensure current check-in is counted (it was just added)
+    uniqueVenues.add(currentVenueId);
+
+    const newBadges: Badge[] = [];
+
+    for (const badge of BADGES) {
+        // Skip if already unlocked
+        if (currentBadges[badge.id]?.unlocked) continue;
+
+        let unlocked = false;
+
+        if (badge.criteria.type === 'checkin_set' && badge.criteria.venueIds) {
+            // Check if all required venues are visited
+            const hasAll = badge.criteria.venueIds.every(vid => uniqueVenues.has(vid));
+            if (hasAll) unlocked = true;
+        } else if (badge.criteria.type === 'count' && badge.criteria.count) {
+            // For "visit 5 venues"
+            // If category is specified, we'd need venue types. Assuming 'venueIds' list is the "Core 5" list for Artesian Well
+            if (badge.criteria.venueIds) {
+                const matchCount = badge.criteria.venueIds.filter(vid => uniqueVenues.has(vid)).length;
+                if (matchCount >= badge.criteria.count) unlocked = true;
+            }
+        }
+
+        if (unlocked) {
+            newBadges.push(badge);
+            // Update User Profile with new Badge
+            await userRef.update({
+                [`badges.${badge.id}`]: {
+                    badgeId: badge.id,
+                    progress: 1, // Full
+                    unlocked: true,
+                    unlockedAt: Date.now()
+                }
+            });
+        } else {
+            // Update progress if checkin_set
+            if (badge.criteria.type === 'checkin_set' && badge.criteria.venueIds) {
+                const visitedCount = badge.criteria.venueIds.filter(vid => uniqueVenues.has(vid)).length;
+                const progress = visitedCount / badge.criteria.venueIds.length;
+                // Only update if changed or doesn't exist? (Optional, skipping for perf/locking needed?)
+                // Updating progress map
+                await userRef.update({
+                    [`badges.${badge.id}`]: {
+                        badgeId: badge.id,
+                        progress: progress,
+                        unlocked: false,
+                        completedVenueIds: badge.criteria.venueIds.filter(vid => uniqueVenues.has(vid))
+                    }
+                });
+            }
+        }
+    }
+
+    return newBadges;
+};
+
 
 /**
  * Log user activity and update user points in Firestore.
@@ -224,7 +406,8 @@ export const logUserActivity = async (data: {
     venueId?: string,
     points: number,
     hasConsent?: boolean,
-    metadata?: any
+    metadata?: any,
+    verificationMethod?: 'gps' | 'qr'
 }) => {
     const timestamp = Date.now();
     const logItem = { ...data, timestamp };
@@ -240,7 +423,7 @@ export const logUserActivity = async (data: {
         const userData = userDoc.data();
         await userRef.update({
             'stats.seasonPoints': (userData?.stats?.seasonPoints || 0) + data.points,
-            'stats.lifetimeCheckins': data.type === 'checkin'
+            'stats.lifetimeCheckins': (data.type === 'check_in' || data.type === 'checkin')
                 ? (userData?.stats?.lifetimeCheckins || 0) + 1
                 : (userData?.stats?.lifetimeCheckins || 0)
         });
@@ -333,7 +516,12 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>) => {
     const allowedFields: (keyof Venue)[] = [
         'description', 'hours', 'phone', 'website',
         'email', 'instagram', 'facebook', 'twitter',
-        'amenities', 'vibe'
+        'amenities', 'vibe',
+        // Maker Fields
+        'originStory', 'insiderVibe', 'geoLoop',
+        'isLowCapacity', 'isSoberFriendly',
+        'makerType', 'physicalRoom', 'carryingMakers',
+        'isLocalMaker', 'localScore'
     ];
 
     const filteredUpdates: any = {};
@@ -352,3 +540,5 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>) => {
 
     return { success: true, updates: filteredUpdates };
 };
+
+

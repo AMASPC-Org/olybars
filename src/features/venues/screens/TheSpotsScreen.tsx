@@ -20,9 +20,10 @@ interface TheSpotsScreenProps {
     venues: Venue[];
     userProfile: UserProfile;
     handleToggleFavorite: (venueId: string) => void;
+    mode?: 'bars' | 'makers';
 }
 
-const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, handleToggleFavorite }) => {
+const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, handleToggleFavorite, mode = 'bars' }) => {
     const navigate = useNavigate();
     const { coords } = useGeolocation();
     const [searchQuery, setSearchQuery] = useState('');
@@ -30,7 +31,26 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
 
     // Logic for sorting and filtering
     const filteredVenues = useMemo(() => {
-        let result = [...venues];
+        let result = [...venues].filter(v => v.isActive !== false && v.isVisible !== false);
+
+        // 0. Context Filter (Bars vs Makers)
+        if (mode === 'makers') {
+            result = result.filter(v =>
+                v.isVerifiedMaker ||
+                v.isLocalMaker ||
+                v.type.toLowerCase().includes('brewery') ||
+                v.type.toLowerCase().includes('distillery') ||
+                v.isHQ
+            );
+        } else if (mode === 'bars') {
+            // General Directory context - Show all active venues
+            // (Optional: You could filter out makers if you want strict separation, 
+            // but for a "Directory" it's usually better to list everything or just non-makers.
+            // Given the user wants "The OlyBars Index", showing all seems safest, or perhaps excluding pure makers if redundant.)
+            // For now, let's simply return all active venues that aren't purely makers if we want to de-dupe, 
+            // but let's just allow all for maximum visibility as requested by "I am seeing no bars".
+            result = result;
+        }
 
         // 1. Search filter
         if (searchQuery) {
@@ -64,7 +84,7 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
         }
 
         return result;
-    }, [venues, searchQuery, activeFilter, coords]);
+    }, [venues, searchQuery, activeFilter, coords, mode, userProfile.favorites]);
 
     return (
         <div className="min-h-screen bg-background text-white p-6 pb-24 font-body animate-in fade-in duration-500">
@@ -77,9 +97,15 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
                     <ArrowLeft className="w-4 h-4" /> BACK
                 </button>
                 <h1 className="text-4xl font-black uppercase tracking-tighter font-league">
-                    LEAGUE <span className="text-primary">BARS</span>
+                    {mode === 'makers' ? (
+                        <>LOCAL <span className="text-primary">MAKERS</span></>
+                    ) : (
+                        <>LEAGUE <span className="text-primary">BARS</span></>
+                    )}
                 </h1>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">THE OLYBARS 98501 DIRECTORY</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
+                    {mode === 'makers' ? 'THE 98501 PRODUCER INDEX' : 'THE OLYBARS 98501 DIRECTORY'}
+                </p>
             </header>
 
             {/* Search Bar */}
@@ -87,7 +113,7 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
                 <input
                     type="text"
-                    placeholder="SEARCH BARS OR VIBES..."
+                    placeholder={mode === 'makers' ? "SEARCH MAKERS..." : "SEARCH BARS OR VIBES..."}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full bg-slate-900 border-2 border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-white font-bold placeholder:text-slate-600 focus:border-primary/50 outline-none transition-all shadow-inner"
@@ -188,7 +214,7 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
                     Claim Your Listing & Manage The Vibe →
                 </button>
             </footer>
-        </div >
+        </div>
     );
 };
 

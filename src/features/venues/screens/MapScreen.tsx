@@ -80,6 +80,9 @@ const MapScreen = () => {
     // Clear existing markers (In a real app, track them in a ref)
     venues.forEach(venue => {
       if (!venue.location?.lat || !venue.location?.lng) return;
+      if (venue.isActive === false || venue.isVisible === false) return; // Ghost List filter
+      if (venue.physicalRoom === false) return; // Production Only filter for Map
+
       const isBuzzing = venue.status === 'buzzing';
       const marker = new (window as any).google.maps.Marker({
         position: { lat: venue.location.lat, lng: venue.location.lng },

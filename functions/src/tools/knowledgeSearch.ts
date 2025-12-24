@@ -23,11 +23,15 @@ export const knowledgeSearch = ai.defineTool(
             const normalizedQuery = query.toLowerCase();
             const queryWords = normalizedQuery.split(/\s+/).filter(w => w.length > 2);
 
-            return kb.faq.filter(item => {
+            const timeline = Object.entries(kb.history_timeline).map(([k, v]) => ({ question: `History: ${k}`, answer: v }));
+            const market = Object.entries(kb.market_context).map(([k, v]) => ({ question: `Market Context: ${k}`, answer: v }));
+            const allKnowledge = [...kb.faq, ...timeline, ...market];
+
+            return allKnowledge.filter(item => {
                 const combinedText = `${item.question} ${item.answer}`.toLowerCase();
                 if (combinedText.includes(normalizedQuery)) return true;
                 return queryWords.some(word => combinedText.includes(word));
-            }).slice(0, 3);
+            }).slice(0, 5);
         } catch (error) {
             console.error("Knowledge search failed:", error);
             return [];

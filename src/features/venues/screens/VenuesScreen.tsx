@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
     Beer, Bot, ChevronRight, Clock, Crown, Filter, Flame, MapPin, Music, Navigation, Search, Sparkles, Star, Trophy, Users
 } from 'lucide-react';
@@ -8,6 +8,7 @@ import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
 import { isVenueOpen, getVenueStatus } from '../../../utils/venueUtils';
 import { VenueGallery } from '../components/VenueGallery';
+import { useToast } from '../../../components/ui/BrandedToast';
 
 interface VenuesScreenProps {
     venues: Venue[];
@@ -16,15 +17,17 @@ interface VenuesScreenProps {
     lastGlobalVibeCheck?: number;
 }
 
-type SortOption = 'alpha' | 'distance' | 'energy';
+type SortOption = 'alpha' | 'distance' | 'energy' | 'buzz';
 
 export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCheck, lastVibeChecks, lastGlobalVibeCheck }) => {
     const navigate = useNavigate();
     const { coords } = useGeolocation();
+    const { showToast } = useToast();
+    const [searchParams] = useSearchParams();
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeSort, setActiveSort] = useState<SortOption>('alpha');
+    const [activeSort, setActiveSort] = useState<SortOption>('buzz');
     const [showOpenOnly, setShowOpenOnly] = useState(false);
-    const [activeTag, setActiveTag] = useState<string | null>(null);
+    const [activeTag, setActiveTag] = useState<string | null>(searchParams.get('filter') === 'makers' ? 'Makers' : null);
 
     // Filter and Sort Logic
     const processedVenues = useMemo(() => {
@@ -53,7 +56,13 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
         // 3. Tag Filter (Karaoke, Trivia, Deals)
         if (activeTag) {
             if (activeTag === 'Deals') result = result.filter(v => !!v.deal || (v.deals && v.deals.length > 0));
-            else if (activeTag === 'Karaoke') result = result.filter(v => v.leagueEvent === 'karaoke');
+            else if (activeTag === 'Makers') {
+                result = result.filter(v =>
+                    v.isHQ ||
+                    v.type.toLowerCase().includes('brewery') ||
+                    v.type.toLowerCase().includes('distillery')
+                );
+            }
             else if (activeTag === 'Trivia') result = result.filter(v => v.leagueEvent === 'trivia');
         }
 
@@ -71,6 +80,34 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                 return distA - distB;
             }
             if (activeSort === 'energy') {
+                const order = { buzzing: 0, lively: 1, chill: 2 };
+                return order[a.status] - order[b.status];
+            }
+            if (activeSort === 'buzz') {
+                // Priority 1: Has Deal?
+                const aHasDeal = !!(a.deal || (a.deals && a.deals.length > 0));
+                const bHasDeal = !!(b.deal || (b.deals && b.deals.length > 0));
+
+                if (aHasDeal && !bHasDeal) return -1;
+                if (!aHasDeal && bHasDeal) return 1;
+
+                // Priority 2: Time Remaining (Urgency)
+                // If both have deals, sort by dealEndsIn (shortest first)
+                if (aHasDeal && bHasDeal) {
+                    const aTime = a.dealEndsIn ?? Infinity;
+                    const bTime = b.dealEndsIn ?? Infinity;
+
+                    // "Buzz Clock Priority": Deals > 4 hours (240 mins) go to bottom of deal list
+                    const aIsLong = aTime > 240;
+                    const bIsLong = bTime > 240;
+
+                    if (aIsLong && !bIsLong) return 1;
+                    if (!aIsLong && bIsLong) return -1;
+
+                    return aTime - bTime;
+                }
+
+                // If neither has deal, fallback to energy/buzz score logic (implied by status) or just alpha
                 const order = { buzzing: 0, lively: 1, chill: 2 };
                 return order[a.status] - order[b.status];
             }
@@ -106,6 +143,12 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
                         <button
+                            onClick={() => setActiveSort('buzz')}
+                            className={`flex items-center gap-1 px-4 py-2 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap font-league ${activeSort === 'buzz' ? 'bg-primary text-black border-black shadow-[2px_2px_0px_0px_#fff]' : 'bg-surface text-slate-400 border-slate-800'}`}
+                        >
+                            <Flame size={12} fill="currentColor" /> Buzz Clock
+                        </button>
+                        <button
                             onClick={() => setActiveSort('alpha')}
                             className={`px-4 py-2 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap font-league ${activeSort === 'alpha' ? 'bg-primary text-black border-black shadow-[2px_2px_0px_0px_#fff]' : 'bg-surface text-slate-400 border-slate-800'}`}
                         >
@@ -127,7 +170,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
 
                     <div className="flex items-center justify-between">
                         <div className="flex gap-2">
-                            {['Karaoke', 'Trivia', 'Deals'].map(tag => (
+                            {['Makers', 'Trivia', 'Deals'].map(tag => (
                                 <button
                                     key={tag}
                                     onClick={() => setActiveTag(activeTag === tag ? null : tag)}
@@ -243,43 +286,16 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    if (handleVibeCheck) handleVibeCheck(venue);
+                                                    showToast('Find the physical Vibe Spot QR code inside ' + venue.name + ' to report a vibe.', 'info');
                                                 }}
-                                                className={`px-3 py-1.5 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all border outline-none ${(() => {
-                                                    const now = Date.now();
-                                                    const lastCheck = lastVibeChecks?.[venue.id];
-                                                    const isVenueCooldown = lastCheck && (now - lastCheck) < 60 * 60 * 1000;
-
-                                                    const lastGlobal = lastGlobalVibeCheck;
-                                                    const isGlobalCooldown = lastGlobal && (now - lastGlobal) < 30 * 60 * 1000;
-
-                                                    return (isVenueCooldown || isGlobalCooldown)
-                                                        ? 'bg-slate-800/50 border-slate-700 text-slate-600 cursor-not-allowed'
-                                                        : 'bg-primary/5 border-primary/20 text-primary hover:bg-primary/20';
-                                                })()}`}
+                                                className={`px-3 py-1.5 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all border outline-none bg-primary/5 border-primary/20 text-primary hover:bg-primary/20`}
                                             >
-                                                {(() => {
-                                                    const now = Date.now();
-                                                    const lastCheck = lastVibeChecks?.[venue.id];
-                                                    const isVenueCooldown = lastCheck && (now - lastCheck) < 60 * 60 * 1000;
-
-                                                    const lastGlobal = lastGlobalVibeCheck;
-                                                    const isGlobalCooldown = lastGlobal && (now - lastGlobal) < 30 * 60 * 1000;
-
-                                                    if (isVenueCooldown) {
-                                                        const minsLeft = Math.ceil((60 * 60 * 1000 - (now - lastCheck)) / 60000);
-                                                        return `Locked (${minsLeft}m)`;
-                                                    }
-                                                    if (isGlobalCooldown) {
-                                                        const minsLeft = Math.ceil((30 * 60 * 1000 - (now - lastGlobal)) / 60000);
-                                                        return `Global (${minsLeft}m)`;
-                                                    }
-                                                    return (
-                                                        <span className="flex items-center gap-1">
-                                                            <Users size={10} strokeWidth={3} /> Vibe Check (+5)
-                                                        </span>
-                                                    );
-                                                })()}
+                                                <span className="flex flex-col items-center">
+                                                    <span className="flex items-center gap-1">
+                                                        <Users size={10} strokeWidth={3} /> Vibe Check (+5)
+                                                    </span>
+                                                    <span className="text-[6px] opacity-60">SCAN QR REQUIRED</span>
+                                                </span>
                                             </button>
                                         </div>
                                     </div>

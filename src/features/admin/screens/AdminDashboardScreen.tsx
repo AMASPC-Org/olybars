@@ -2,15 +2,11 @@ import React, { useState } from 'react';
 import {
     Shield, Users, BarChart3, Settings,
     Search, Filter, ExternalLink, Activity,
-    Database, AlertTriangle, CheckCircle2
+    Database, AlertTriangle, CheckCircle2, QrCode // Added QrCode
 } from 'lucide-react';
 
-interface AdminDashboardScreenProps {
-    userProfile: any;
-}
-
-import { fetchAllUsers, fetchSystemStats } from '../../../services/userService';
-import { UserProfile } from '../../../types';
+import { fetchAllUsers, fetchSystemStats, fetchRecentActivity } from '../../../services/userService';
+import { UserProfile, ActivityLog } from '../../../types';
 
 interface AdminDashboardScreenProps {
     userProfile: any;
@@ -20,6 +16,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
     const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'league' | 'system'>('overview');
     const [systemStats, setSystemStats] = useState({ totalUsers: 0, activeUsers: 0, totalPoints: 0 });
     const [leagueUsers, setLeagueUsers] = useState<UserProfile[]>([]);
+    const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
     React.useEffect(() => {
@@ -28,6 +25,8 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
             setSystemStats(stats);
             const users = await fetchAllUsers();
             setLeagueUsers(users);
+            const activity = await fetchRecentActivity();
+            setRecentActivity(activity);
         };
         loadDashboard();
     }, []);
@@ -100,8 +99,38 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                 Live
                             </span>
                         </div>
-                        <div className="text-center py-10 opacity-50">
-                            <p className="text-xs uppercase tracking-widest">Live Feed Connecting...</p>
+
+                        <div className="space-y-2">
+                            {recentActivity.length === 0 ? (
+                                <div className="text-center py-10 opacity-50">
+                                    <p className="text-xs uppercase tracking-widest">No recent activity found.</p>
+                                </div>
+                            ) : (
+                                recentActivity.map((log) => (
+                                    <div key={log.id} className="flex justify-between items-center bg-black/20 p-3 rounded-lg border border-white/5">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${log.verificationMethod === 'qr' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-slate-700/50 text-slate-400'}`}>
+                                                {log.verificationMethod === 'qr' ? <QrCode className="w-4 h-4" /> : <Activity className="w-4 h-4" />}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-white uppercase">{log.type.replace('_', ' ')}</p>
+                                                <p className="text-[10px] text-slate-500 font-mono">
+                                                    User: {log.userId.substring(0, 6)}... {log.venueId ? `@ ${log.venueId}` : ''}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="flex items-center justify-end gap-1">
+                                                {log.verificationMethod === 'qr' && (
+                                                    <span className="text-[9px] font-black bg-yellow-500 text-black px-1.5 rounded uppercase">Verified</span>
+                                                )}
+                                                <span className="text-primary font-black font-mono text-xs">+{log.points}</span>
+                                            </div>
+                                            <p className="text-[9px] text-slate-600">{new Date(log.timestamp).toLocaleTimeString()}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 )}

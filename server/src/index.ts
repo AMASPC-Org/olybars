@@ -86,20 +86,42 @@ app.get('/api/venues', async (req, res) => {
  * @desc Verify location and log a check-in signal
  */
 app.post('/api/check-in', async (req, res) => {
-    const { venueId, userId, lat, lng } = req.body;
+    const { venueId, userId, lat, lng, verificationMethod } = req.body;
 
     if (!venueId || !userId || lat === undefined || lng === undefined) {
         return res.status(400).json({ error: 'Missing required check-in data' });
     }
 
     try {
-        const result = await checkIn(venueId, userId, lat, lng);
+        const result = await checkIn(venueId, userId, lat, lng, verificationMethod);
         res.json(result);
     } catch (error: any) {
         log('WARNING', 'Check-in failed', { venueId, userId, error: error.message });
         res.status(400).json({ error: error.message });
     }
 });
+
+/**
+ * @route POST /api/play/check-in
+ * @desc Log an amenity-specific "Play" check-in
+ */
+app.post('/api/play/check-in', async (req, res) => {
+    const { venueId, userId, amenityId } = req.body;
+
+    if (!venueId || !userId || !amenityId) {
+        return res.status(400).json({ error: 'Missing required play data' });
+    }
+
+    try {
+        const { checkInAmenity } = await import('./venueService');
+        const result = await checkInAmenity(venueId, userId, amenityId);
+        res.json(result);
+    } catch (error: any) {
+        log('WARNING', 'Play check-in failed', { venueId, userId, amenityId, error: error.message });
+        res.status(400).json({ error: error.message });
+    }
+});
+
 
 
 /**
@@ -334,6 +356,22 @@ app.post('/api/admin/setup-super', async (req, res) => {
     } catch (error: any) {
         log('ERROR', 'Super-Admin promotion failed', { error: error.message });
         res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.get('/api/activity/recent', async (req, res) => {
+    try {
+        const { db } = await import('./firebaseAdmin'); // Import db here
+        const limit = parseInt(req.query.limit as string) || 20;
+        const snapshot = await db.collection('activity_logs')
+            .orderBy('timestamp', 'desc')
+            .limit(limit)
+            .get();
+
+        const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.json(logs);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
     }
 });
 

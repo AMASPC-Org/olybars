@@ -9,7 +9,9 @@ import {
   User,
   Coffee,
   ExternalLink,
-  Trophy
+  Trophy,
+  ShoppingBag,
+  QrCode
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UserProfile, UserRole } from '../../../types';
@@ -26,7 +28,9 @@ const MoreScreen: React.FC<MoreScreenProps> = ({ userProfile, setUserProfile }) 
 
   const menuItems = [
     { id: 'profile', label: 'My League ID', icon: User, path: '/profile', color: 'text-primary' },
-    { id: 'faq', label: 'Help & FAQ', icon: HelpCircle, path: '/faq', color: 'text-blue-400' },
+    { id: 'vouchers', label: 'My Vouchers', icon: QrCode, path: '/vouchers', color: 'text-amber-400' },
+    { id: 'merch', label: 'Merch Stand', icon: ShoppingBag, path: '/merch', color: 'text-blue-400' },
+    { id: 'faq', label: 'Help & FAQ', icon: HelpCircle, path: '/faq', color: 'text-slate-400' },
     { id: 'settings', label: 'Alert Settings', icon: Settings, path: '/', color: 'text-slate-400' },
     { id: 'terms', label: 'Terms of Service', icon: Shield, path: '/terms', color: 'text-slate-400' },
     { id: 'privacy', label: 'Privacy Policy', icon: Eye, path: '/privacy', color: 'text-slate-400' },
@@ -112,7 +116,7 @@ const MoreScreen: React.FC<MoreScreenProps> = ({ userProfile, setUserProfile }) 
         <div className="bg-gradient-to-br from-slate-900 to-[#0f172a] border border-white/10 p-6 rounded-3xl relative overflow-hidden">
           <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
           <Coffee className="w-8 h-8 text-primary mb-4" />
-          <h3 className="text-lg font-black uppercase tracking-tight font-league text-white mb-2">Powered by Hannah's Bar & Grill</h3>
+          <h3 className="text-lg font-black uppercase tracking-tight font-league text-white mb-2">Powered by Well 80 Artesian Brewing</h3>
           <p className="text-xs text-slate-400 leading-relaxed font-body mb-4">
             OlyBars is a community project built for the love of Downtown Olympia. Support your local establishments and drink responsible.
           </p>

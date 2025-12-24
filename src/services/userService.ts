@@ -3,7 +3,7 @@ import { db } from '../lib/firebase';
 import { UserAlertPreferences, CheckInRecord, UserProfile } from '../types';
 
 // Forcing production URL for now since user is running frontend-only locally
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'https://olybars-backend-26629455103.us-west1.run.app') + '/api';
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
 
 export const toggleFavorite = async (userId: string, venueId: string, favorites: string[]) => {
   try {
@@ -36,7 +36,8 @@ export const logUserActivity = async (userId: string, activity: {
   venueId?: string,
   points: number,
   hasConsent?: boolean,
-  metadata?: any
+  metadata?: any,
+  verificationMethod?: 'gps' | 'qr'
 }) => {
   try {
     const response = await fetch(`${API_BASE_URL}/activity`, {
@@ -87,12 +88,12 @@ export const updatePhotoApproval = async (venueId: string, photoId: string, upda
 /**
  * Perform a geofenced check-in via the production backend.
  */
-export const performCheckIn = async (venueId: string, userId: string, lat: number, lng: number) => {
+export const performCheckIn = async (venueId: string, userId: string, lat: number, lng: number, verificationMethod: 'gps' | 'qr' = 'gps') => {
   try {
     const response = await fetch(`${API_BASE_URL}/check-in`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ venueId, userId, lat, lng })
+      body: JSON.stringify({ venueId, userId, lat, lng, verificationMethod })
     });
 
     if (!response.ok) {
@@ -106,6 +107,30 @@ export const performCheckIn = async (venueId: string, userId: string, lat: numbe
     throw e;
   }
 };
+
+/**
+ * Perform an amenity-specific "Play" check-in.
+ */
+export const performPlayCheckIn = async (venueId: string, userId: string, amenityId: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/play/check-in`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ venueId, userId, amenityId })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Play check-in failed');
+    }
+
+    return await response.json();
+  } catch (e) {
+    console.error('Play check-in error:', e);
+    throw e;
+  }
+};
+
 
 export const syncCheckIns = async (userId: string, history: CheckInRecord[]) => {
   try {
@@ -199,5 +224,16 @@ export const fetchSystemStats = async () => {
   } catch (e) {
     console.error('Error fetching system stats:', e);
     return { totalUsers: 0, activeUsers: 0, totalPoints: 0 };
+  }
+};
+
+export const fetchRecentActivity = async (limit: number = 20) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/activity/recent?limit=${limit}`);
+    if (!response.ok) throw new Error('Failed to fetch recent activity');
+    return await response.json();
+  } catch (e) {
+    console.error('Error fetching recent activity:', e);
+    return [];
   }
 };

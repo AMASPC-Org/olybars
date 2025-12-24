@@ -15,6 +15,11 @@ const VenueSchema = z.object({
     happyHour: z.string().optional(),
     vibe: z.string().optional(),
     status: z.string().optional(),
+    makerType: z.string().optional(),
+    isLocalMaker: z.boolean().optional(),
+    originStory: z.string().optional(),
+    insiderVibe: z.string().optional(),
+    address: z.string().optional(),
 });
 
 const VenueInputSchema = z.object({
@@ -40,7 +45,13 @@ export const venueSearch = ai.defineTool(
                     description: data.description || '',
                     happyHour: data.happyHour || '',
                     vibe: data.vibe || 'chill',
-                    status: data.status || 'unknown'
+                    status: data.status || 'unknown',
+                    // Maker Data
+                    makerType: data.makerType || undefined,
+                    isLocalMaker: data.isLocalMaker || false,
+                    originStory: data.originStory || '',
+                    insiderVibe: data.insiderVibe || '',
+                    address: data.address || ''
                 };
             });
 

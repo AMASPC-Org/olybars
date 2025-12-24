@@ -1,103 +1,212 @@
-import React, { useState } from 'react';
-import { BookOpen, Zap, Users, Trophy, Plus } from 'lucide-react';
-import { Venue } from '../../../types';
+import React, { useState, useMemo } from 'react';
+import { ArenaLayout } from '../../../components/layout/ArenaLayout';
+import { UniversalEventCard } from '../../../components/ui/UniversalEventCard';
+import { AmenityCard } from '../components/AmenityCard';
+import { ArtieFieldNote } from '../../artie/components/ArtieFieldNote';
+import { Venue, AmenityDetail } from '../../../types';
+import { Trophy, Zap, Search as SearchIcon } from 'lucide-react';
+import { AMENITY_LORE } from '../config/playConfig';
+import { performPlayCheckIn } from '../../../services/userService';
+import { useToast } from '../../../components/ui/BrandedToast';
+import { VibeReceiptModal } from '../../social/components/VibeReceiptModal';
+import { VibeReceiptData, generateArtieHook } from '../../social/services/VibeReceiptService';
 
 interface TriviaScreenProps {
   venues: Venue[];
+  userProfile?: any;
 }
 
-export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues }) => {
-  // Use the specific trivia venue from the passed venues
-  const selectedVenue = venues.find(v => v.leagueEvent === 'trivia');
+export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentReceipt, setCurrentReceipt] = useState<VibeReceiptData | null>(null);
+  const { showToast } = useToast();
+
+  // 1. "Active Now" Scheduled Events (Trivia, Karaoke)
+  const activeNow = useMemo(() => {
+    return venues.filter(v =>
+      (v.leagueEvent === 'trivia' || v.leagueEvent === 'karaoke') &&
+      (!searchQuery || v.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    ).slice(0, 3);
+  }, [venues, searchQuery]);
+
+  // 2. Filtered Amenities based on Search
+  const searchResults = useMemo(() => {
+    if (!searchQuery) return [];
+
+    const results: { venue: Venue, amenity: AmenityDetail }[] = [];
+    venues.forEach(v => {
+      const matchingAmenities = v.amenityDetails?.filter(a =>
+        a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.id.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+      matchingAmenities?.forEach(a => {
+        results.push({ venue: v, amenity: a });
+      });
+    });
+
+    return results.sort((a, b) => (b.amenity.isLeaguePartner ? 1 : 0) - (a.amenity.isLeaguePartner ? 1 : 0));
+  }, [venues, searchQuery]);
+
+  // Artie Lore for the current search
+  const activeLore = useMemo(() => {
+    if (!searchQuery) return null;
+    const key = Object.keys(AMENITY_LORE).find(k => searchQuery.toLowerCase().includes(k.toLowerCase()));
+    return key ? { title: key.charAt(0).toUpperCase() + key.slice(1), note: AMENITY_LORE[key] } : null;
+  }, [searchQuery]);
+
+  const handlePlayCheckIn = async (venueId: string, amenityId: string) => {
+    if (!userProfile || userProfile.uid === 'guest') {
+      showToast("Create an OlyBars ID to log check-ins!", "error");
+      return;
+    }
+
+    try {
+      const result = await performPlayCheckIn(venueId, userProfile.uid, amenityId);
+      showToast(result.message, "success");
+
+      const venue = venues.find(v => v.id === venueId);
+
+      // Generate Vibe Receipt
+      const receipt: VibeReceiptData = {
+        type: 'play',
+        venueName: venue?.name || 'Local Bar',
+        venueId: venueId,
+        pointsEarned: result.pointsAwarded || 5,
+        vibeStatus: venue?.status || 'lively',
+        artieHook: generateArtieHook('play', 'lively'),
+        username: userProfile.displayName || userProfile.email || 'Member',
+        userId: userProfile.uid,
+        timestamp: new Date().toISOString()
+      };
+      setCurrentReceipt(receipt);
+
+    } catch (e: any) {
+      showToast(e.message, "error");
+    }
+  };
 
   return (
-    <div className="bg-background text-white min-h-screen p-4 font-sans">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-primary tracking-wider">TRIVIA BLOCK</h1>
-        <p className="text-sm font-semibold text-slate-300">KNOWLEDGE IS POWER</p>
-      </div>
+    <ArenaLayout
+      title="The Arcade & Play"
+      subtitle="Olympia's Activity Engine"
+      activeCategory="play"
+      artieTip="Static check-ins at darts or pool tables earn 5 points toward the season leaderboard. Go get 'em."
+      onSearchChange={setSearchQuery}
+      searchPlaceholder="Search Darts, Pool, Pinball..."
+    >
+      <div className="space-y-8">
 
-      {!selectedVenue ? (
-        <div className="bg-surface rounded-lg border border-slate-700 p-8 text-center mb-6">
-          <p className="text-slate-500 font-bold uppercase">No Trivia Venue Loaded Today</p>
-        </div>
-      ) : (
-        /* Main Content Card */
-        <div className="bg-surface rounded-lg border border-slate-700 shadow-md p-4">
-          {/* Venue Info */}
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-bold">{selectedVenue.name}</h2>
-              <p className="text-xs text-slate-400">TRIVIA NIGHT: Sundays @ 7pm</p>
+        {/* Search Results / Lore */}
+        {searchQuery && (
+          <div className="space-y-6 animate-in fade-in duration-500">
+            {activeLore && (
+              <ArtieFieldNote title={activeLore.title} note={activeLore.note} />
+            )}
+
+            <div className="flex items-center gap-2 px-2">
+              <SearchIcon size={16} className="text-primary" />
+              <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                {searchResults.length} Results for "{searchQuery}"
+              </h2>
             </div>
-            <div className="text-right">
-              <p className="text-lg font-bold text-primary">8 TEAMS</p>
-              <p className="text-xs text-slate-400">CURRENTLY PLAYING</p>
-            </div>
+
+            {searchResults.length > 0 ? (
+              <div className="grid grid-cols-1 gap-2">
+                {searchResults.map(({ venue, amenity }, idx) => (
+                  <AmenityCard
+                    key={`${venue.id}-${amenity.id}-${idx}`}
+                    venue={venue}
+                    amenity={amenity}
+                    onCheckIn={handlePlayCheckIn}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-slate-900/50 rounded-3xl border border-dashed border-white/5 mx-2">
+                <p className="text-slate-600 font-black uppercase text-[10px] tracking-widest">No amenities matched your intel.</p>
+              </div>
+            )}
           </div>
+        )}
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <button className="bg-primary hover:bg-yellow-400 text-black font-bold py-3 rounded-md transition-all flex items-center justify-center gap-2 font-league uppercase">
-              <BookOpen size={16} /> REGISTER
-            </button>
-            <button
-              onClick={() => alert("League Team Scout activated! We'll notify you when a team at Well 80 needs a ringer. Drink some water while you wait!")}
-              className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-md transition-all flex items-center justify-center gap-2 font-league uppercase"
-            >
-              <Users size={16} /> FIND A TEAM
-            </button>
-          </div>
-
-          {/* Trivia Details */}
-          <div className="space-y-3">
-            <div className="bg-background/50 p-3 rounded-md">
-              <h3 className="font-semibold text-primary mb-1">Weekly Challenge</h3>
-              <p className="text-sm text-slate-300">"80s Movie Quotes" - double points round!</p>
-            </div>
-
-            <div className="bg-background/50 p-3 rounded-md">
-              <h3 className="font-semibold text-primary mb-1">Grand Prize</h3>
-              <p className="text-sm text-slate-300">$100 Bar Tab & Eternal Glory</p>
-            </div>
-
-            <div className="bg-background/50 p-3 rounded-md flex items-center justify-between">
+        {/* Top Tier: "Active Now" Scheduled Events */}
+        {!searchQuery && activeNow.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-2">
-                <Trophy size={18} className="text-yellow-400" />
-                <div>
-                  <h3 className="font-semibold text-primary">LEAGUE PLAY</h3>
-                  <p className="text-xs text-slate-400">Counts towards season standings.</p>
-                </div>
+                <Zap size={16} className="text-primary animate-pulse" />
+                <h2 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Live in the 98501</h2>
               </div>
-              <div className="text-center">
-                <p className="font-bold text-lg">250</p>
-                <p className="text-xs text-slate-500 font-bold">PTS TO WIN</p>
+              <span className="text-[9px] font-bold text-slate-500 uppercase">Featured Events</span>
+            </div>
+
+            {activeNow.map(venue => (
+              <UniversalEventCard
+                key={venue.id}
+                venue={venue}
+                title={venue.deal || (venue.leagueEvent === 'trivia' ? "Trivia Night" : "Karaoke Night")}
+                time="LIVE NOW"
+                category="play"
+                points={venue.leagueEvent === 'trivia' ? 20 : 15}
+                onCheckIn={() => console.log('Check-in', venue.id)}
+                onShare={() => console.log('Share', venue.id)}
+                onVibeChange={(v) => console.log('Vibe', venue.id, v)}
+                contextSlot={
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Trophy size={14} className="text-primary" />
+                      <span className="text-[10px] text-white font-black uppercase font-league">League Protocol Active</span>
+                    </div>
+                  </div>
+                }
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Static Play Guide (Empty Search State) */}
+        {!searchQuery && (
+          <div className="space-y-6">
+            <div className="mx-2 p-8 border-2 border-dashed border-slate-800 rounded-[2rem] text-center space-y-4">
+              <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto border border-white/5">
+                <Trophy size={32} className="text-slate-700" />
+              </div>
+              <div>
+                <p className="text-white font-black uppercase font-league tracking-wide">Enter the Directory</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 leading-relaxed px-4">
+                  Search for an activity above to see where the tables are open and where to score League points.
+                </p>
               </div>
             </div>
-          </div>
 
-          {/* Power-Up Footer */}
-          <div className="mt-4 pt-4 border-t border-slate-700 text-center">
-            <h3 className="text-sm font-bold tracking-wide uppercase text-slate-400 mb-2">POWER-UPS ACTIVE</h3>
-            <div className="flex items-center justify-center gap-2 bg-slate-900/50 border border-dashed border-slate-600 py-2 px-4 rounded-md">
-              <Zap size={16} className="text-primary animate-pulse" />
-              <span className="text-sm font-medium text-slate-300">First Timers get a <span className="font-bold text-primary">Free Answer</span></span>
+            <div className="grid grid-cols-2 gap-2 px-2">
+              {['Darts', 'Pool', 'Pinball', 'Arcade', 'Cornhole', 'Trivia'].map(activity => (
+                <button
+                  key={activity}
+                  onClick={() => setSearchQuery(activity)}
+                  className="bg-slate-900/50 border border-white/5 p-4 rounded-2xl text-left hover:border-primary/50 transition-all group"
+                >
+                  <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">Quick Search</span>
+                  <span className="text-sm font-black text-white uppercase font-league group-hover:text-primary transition-colors">{activity}</span>
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Submit CTA */}
-      <div className="mt-8 bg-surface/50 border border-slate-700/50 rounded-2xl p-6 text-center">
-        <p className="text-[10px] text-slate-500 font-black uppercase mb-3 tracking-[0.2em]">Hosting a Game?</p>
-        <button
-          onClick={() => alert("Trivia submission coming soon! Get your questions ready.")}
-          className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-widest text-sm font-league shadow-lg shadow-primary/10 flex items-center justify-center gap-2"
-        >
-          <Plus size={18} /> Add Trivia Night
-        </button>
+
       </div>
-    </div>
+
+      {currentReceipt && (
+        <VibeReceiptModal
+          data={currentReceipt}
+          onClose={() => setCurrentReceipt(null)}
+        />
+      )}
+    </ArenaLayout>
   );
 };
+
+
+

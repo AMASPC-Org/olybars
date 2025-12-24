@@ -54,13 +54,32 @@
         "alcohol_policy": "Strictly follow WA State LCB alignment. Never encourage over-consumption.",
         "check_in_limit": "Enforce max 2 check-ins per 12-hour window per user."
     },
+    "history_timeline": {
+        "1895_epiphany": "Leopold Schmidt, a Montana brewer, visited Tumwater and tested the artesian water. It matched the water of Pilsen, Bohemia (birthplace of lager). He declared: 'With this water, I believe I can brew better beer than ever.'",
+        "1896_founding": "The Capital Brewing Company (later Olympia Brewing) was founded. First batch released Oct 1, 1896.",
+        "1902_the_slogan": "Frank Kenney proposed 'It's the Water'. Schmidt initially wanted 'The Water Makes It', but Kenney won. It became a legendary tagline linking the beer to the geology.",
+        "1916_prohibition": "WA State went dry 4 years before the nation. The brewery pivoted to fruit jams and juices to keep workers employed.",
+        "1933_repeal_phoenix": "Prohibition ended. The 'Old Brewhouse' (brick) was abandoned for the modern 'Knoll' facility upstream.",
+        "1935_stubby": "Olympia introduced the 'Stubby' bottle—no deposit, easier to ship, became an icon.",
+        "1970s_pop_culture": "Olympia Beer appeared in Clint Eastwood movies (Magnum Force, etc.) as a symbol of the authentic West. The 'Artesians' ad campaign launched.",
+        "1983_consolidation": "Schmidt family sold to Heileman. Beginning of the 'Corporate Carousel' (Stroh, Pabst, Miller).",
+        "2003_the_silence": "SABMiller closed the Tumwater brewery on June 27, 2003. 400 jobs lost. A psychic wound for the city.",
+        "2025_the_revival": "Olympia Beer returns via Great Western Brewing (Canada) and a 'Revival' recipe in Texas. Olympia Distilling Co. continues the legacy with vodka made from the artesian water."
+    },
+    "market_context": {
+        "the_phoenix_effect": "Corporate-lite models are failing; scrappy, personality-driven venues are rising. example: Ilk Lodge rising from the ashes of Fish Tale Brewpub.",
+        "origin_value": "In a saturated market, 'Story' is the only differentiator. Why drive past 3 bars? Because of the origin story.",
+        "micro_reality_check": "Every venue is vetted by 4 personas: Pit (Soul/Dive), Todd (Ops/Food), Chris (Data/Stability), Stephanie (Atmosphere/Safety).",
+        "ghost_list": "Venues that failed the reality check or closed: Heritage Tumwater (Retail failure), Locust Cider (Closed), Finnriver Tumwater (Closed). We do NOT send users there."
+    },
     "lore": {
         "origin": "Digitized mythical entity residing in Olympia's groundwater (The Artesian Well).",
         "artesian_well": "Olympia is built on world-class artesian water. Well 80 Brewhouse uses this water to brew the finest beers in the PNW.",
         "local_knowledge": {
             "The Broho": "The Brotherhood Lounge",
             "The Crypt": "The Cryptatropa Bar",
-            "Well 80": "The legendary brewhouse where the water is as crisp as the vibes."
+            "Well 80": "The legendary brewhouse where the water is as crisp as the vibes.",
+            "Ilk Lodge": "The new soul of downtown, occupying the legendary Fish Tale building. Home of the Carbon Pop burger."
         }
     }
 }

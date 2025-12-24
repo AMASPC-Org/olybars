@@ -26,6 +26,8 @@ import {
   Bot,
   Info,
   Home,
+  ShoppingBag,
+  Hammer
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../types';
 import { ArtieChatModal } from '../../features/venues/components/ArtieChatModal';
@@ -54,78 +56,6 @@ interface AppShellProps {
   setShowArtie?: (show: boolean) => void;
 }
 
-// --- Component: BuzzClock ---
-const BuzzClock: React.FC<{ venues: Venue[] }> = ({ venues }) => {
-  const activeDeals = venues
-    .filter((v) => v.deal && v.dealEndsIn && v.dealEndsIn > 0)
-    .sort((a, b) => {
-      const aTime = a.dealEndsIn || 0;
-      const bTime = b.dealEndsIn || 0;
-
-      // Rule: Deals > 4 hours (240 mins) go to the bottom
-      const aIsLong = aTime > 240;
-      const bIsLong = bTime > 240;
-
-      if (aIsLong && !bIsLong) return 1;
-      if (!aIsLong && bIsLong) return -1;
-
-      // Otherwise sort by time remaining (shortest first)
-      return aTime - bTime;
-    });
-
-  const getNextHappyHour = () => {
-    const now = new Date();
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-    return venues
-      .filter(v => v.happyHour && !v.deal)
-      .map(v => {
-        const [h, m] = v.happyHour!.startTime.split(':').map(Number);
-        const startMinutes = h * 60 + m;
-        return { venue: v, startMinutes, diff: startMinutes - currentMinutes };
-      })
-      .filter(v => v.diff > 0 && v.diff < 180) // Starts within 3 hours
-      .sort((a, b) => a.diff - b.diff)[0];
-  };
-
-  const nextHH = getNextHappyHour();
-
-  return (
-    <div className="bg-black border-b border-primary/30 p-2 z-20 relative overflow-hidden group">
-      {/* Subtle scrolling text background for "Buzz" feel */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none select-none font-black text-4xl whitespace-nowrap overflow-hidden flex items-center">
-        <span className="animate-pulse text-primary tracking-tighter">BUZZ BUZZ BUZZ BUZZ BUZZ BUZZ</span>
-      </div>
-
-      <div className="flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-2">
-          <Clock className={`w-4 h-4 text-primary ${activeDeals.length > 0 ? 'animate-pulse' : ''}`} strokeWidth={3} />
-          <div className="flex flex-col">
-            <h2 className="text-[10px] font-black text-primary/80 leading-none uppercase font-league tracking-widest">
-              {activeDeals.length > 0 ? 'LIVE BUZZ CLOCK' : nextHH ? 'UPCOMING VIBES' : 'THE PULSE'}
-            </h2>
-            <span className="text-[11px] text-white font-bold uppercase tracking-tight truncate max-w-[280px]">
-              {activeDeals.length > 0
-                ? `${activeDeals[0].name}: ${activeDeals[0].deal} (${activeDeals[0].dealEndsIn}m left)`
-                : nextHH
-                  ? `${nextHH.venue.name} HH in ${nextHH.diff} mins`
-                  : 'All quiet in the 98501... for now.'}
-            </span>
-          </div>
-        </div>
-        <div className="flex flex-col items-end">
-          {activeDeals.length > 1 && (
-            <span className="text-[8px] text-primary font-black animate-bounce mb-0.5">+{activeDeals.length - 1} MORE DEALS</span>
-          )}
-          <span className="text-[9px] font-black tracking-widest text-black bg-primary px-1.5 py-0.5 transform -skew-x-12 inline-block">
-            {activeDeals.length > 0 ? 'ACTIVE' : nextHH ? 'WARMUP' : 'QUIET'}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // --- The App Shell Component ---
 export const AppShell: React.FC<AppShellProps> = ({
   venues,
@@ -144,11 +74,36 @@ export const AppShell: React.FC<AppShellProps> = ({
   onToggleFavorite,
   onToggleWeeklyBuzz,
   showArtie,
-  setShowArtie,
+  setShowArtie
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showMenu, setShowMenu] = useState(false);
+
+  // Pulse & Buzz Logic
+  const activeDeals = venues
+    .filter((v) => v.deal && v.dealEndsIn && v.dealEndsIn > 0)
+    .sort((a, b) => (a.dealEndsIn || 0) - (b.dealEndsIn || 0));
+
+  const getPulseStatus = () => {
+    if (activeDeals.length > 0) return 'buzzing';
+
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const nextHH = venues
+      .filter(v => v.happyHour && !v.deal)
+      .map(v => {
+        const [h, m] = v.happyHour!.startTime.split(':').map(Number);
+        const startMinutes = h * 60 + m;
+        return { venue: v, startMinutes, diff: startMinutes - currentMinutes };
+      })
+      .filter(v => v.diff > 0 && v.diff < 180)
+      .sort((a, b) => a.diff - b.diff)[0];
+
+    return nextHH ? 'lively' : 'quiet';
+  };
+
+  const pulseStatus = getPulseStatus();
 
   const getActiveTab = () => {
     const path = location.pathname.split('/')[1];
@@ -163,8 +118,8 @@ export const AppShell: React.FC<AppShellProps> = ({
     { id: 'map', label: 'MAP', icon: MapIcon, path: '/map' },
     { id: 'league', label: 'LEAGUE', icon: Crown, path: '/league' },
     { id: 'events', label: 'EVENTS', icon: Ticket, path: '/events' },
-    { id: 'trivia', label: 'TRIVIA', icon: Brain, path: '/trivia' },
-    { id: 'karaoke', label: 'KARAOKE', icon: Mic, path: '/karaoke' },
+    { id: 'trivia', label: 'PLAY', icon: Brain, path: '/trivia' },
+    { id: 'makers', label: 'MAKERS', icon: Hammer, path: '/makers' },
     { id: 'live', label: 'LIVE', icon: Music, path: '/live' },
   ];
 
@@ -201,23 +156,48 @@ export const AppShell: React.FC<AppShellProps> = ({
           </button>
         </div>
 
-        <BuzzClock venues={venues} />
+        {/* Restored Buzz Bar: Happy Hour Utility */}
+        <div className="bg-black border-b border-primary/20 p-2 flex justify-between items-center relative overflow-hidden group">
+          <div className="absolute inset-0 bg-primary/5 animate-pulse" />
+          <div className="flex items-center gap-2 z-10">
+            <Clock className="w-3.5 h-3.5 text-primary animate-pulse" />
+            <div className="flex flex-col">
+              <h2 className="text-[10px] font-black text-primary/80 leading-none uppercase tracking-widest font-league">
+                The Pulse
+              </h2>
+              <span className="text-[10px] text-white font-bold uppercase tracking-tight">
+                {activeDeals.length} Happy Hours Active — {venues.filter(v => v.status === 'buzzing').length} Spots Buzzing
+              </span>
+            </div>
+          </div>
+          {activeDeals.length > 0 && (
+            <div className="z-10 bg-primary/20 border border-primary/50 rounded-lg px-2 py-1 flex items-center gap-1.5">
+              <span className="text-[9px] font-black text-primary uppercase">Ending in</span>
+              <span className="text-[11px] font-mono font-black text-white">{activeDeals[0].dealEndsIn}m</span>
+            </div>
+          )}
+        </div>
 
-        {/* Tab Navigation */}
-        <div className="bg-background p-1 border-b-4 border-black">
-          <div className="grid grid-cols-4 gap-1">
+        {/* Fixed 2x4 Grid Navigation: Legibility Focus */}
+        <div className="bg-background border-b-2 border-black">
+          <div className="grid grid-cols-4 gap-[1px] bg-black/40">
             {navItems.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => navigate(tab.path)}
-                className={`flex flex-col items-center justify-center py-2 transition-all border-2 border-black ${activeTab === tab.id
-                  ? 'bg-primary text-black shadow-[2px_2px_0px_0px_#000]'
-                  : 'bg-surface text-slate-200 hover:bg-surface/80'
+                className={`flex flex-col items-center justify-center py-3.5 transition-all relative overflow-hidden ${activeTab === tab.id
+                  ? 'bg-primary text-black shadow-inner'
+                  : tab.id === 'pulse' && pulseStatus === 'buzzing'
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-surface text-slate-400 hover:bg-surface/80'
                   }`}
               >
-                <tab.icon className="w-5 h-5 mb-1" strokeWidth={3} />
-                <span className="text-[10px] font-black tracking-wider font-league uppercase">
-                  {tab.label}
+                {tab.id === 'pulse' && (pulseStatus === 'buzzing' || pulseStatus === 'lively') && (
+                  <div className={`absolute top-1 right-1 w-2 h-2 rounded-full ${pulseStatus === 'buzzing' ? 'bg-primary animate-ping' : 'bg-blue-400'}`} />
+                )}
+                <tab.icon className="w-4 h-4 mb-1" strokeWidth={activeTab === tab.id ? 4 : 3} />
+                <span className={`text-[10px] font-black tracking-widest font-league uppercase leading-none ${activeTab === tab.id ? 'text-black' : ''}`}>
+                  {tab.id === 'pulse' && pulseStatus !== 'quiet' ? pulseStatus : tab.label}
                 </span>
               </button>
             ))}
@@ -385,6 +365,23 @@ export const AppShell: React.FC<AppShellProps> = ({
                   <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
                 </button>
 
+                {/* [NEW] THE MERCH STAND */}
+                <button
+                  onClick={() => handleMenuNavigation('/merch')}
+                  className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-blue-500/50 transition-all shadow-[0_4px_20px_-5px_rgba(59,130,246,0.2)]"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="bg-blue-500/10 p-2 rounded-lg">
+                      <ShoppingBag className="w-5 h-5 text-blue-400" strokeWidth={2.5} />
+                    </div>
+                    <div className="text-left">
+                      <span className="block text-white font-black text-xs uppercase tracking-tight group-hover:text-blue-400 transition-colors">MERCH STAND</span>
+                      <span className="block text-slate-500 text-[8px] font-bold uppercase tracking-widest leading-none mt-1">Gears & Apparel</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-blue-400 transition-colors" />
+                </button>
+
                 {/* 2. THE PLAYBOOK (Renamed from FAQ) */}
                 <button
                   onClick={() => handleMenuNavigation('/faq')}
@@ -404,14 +401,14 @@ export const AppShell: React.FC<AppShellProps> = ({
                 </button>
 
                 {/* 3. DISCOVERY LINKS */}
-                <div className="space-y-2">
-                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1 mb-3">Discovery</h3>
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1 mb-1">Discovery</h3>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { label: 'Map', icon: MapIcon, path: '/map' },
                       { label: 'Events', icon: Ticket, path: '/events' },
-                      { label: 'Trivia', icon: Brain, path: '/trivia' },
-                      { label: 'Karaoke', icon: Mic, path: '/karaoke' },
+                      { label: 'Play', icon: Brain, path: '/trivia' },
+                      { label: 'Makers', icon: Hammer, path: '/makers' },
                       { label: 'Live Music', icon: Music, path: '/live' },
                       { label: 'Bars', icon: Search, path: '/bars' },
                     ].map((item) => (
@@ -586,8 +583,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       {/* Artie Chat Modal */}
       <ArtieChatModal isOpen={showArtie} onClose={() => setShowArtie?.(false)} />
 
-      {/* Cookie Banner */}
       <CookieBanner />
-    </div >
+    </div>
   );
 };

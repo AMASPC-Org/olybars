@@ -1,7 +1,7 @@
 import { Venue } from '../types';
 
 // Forcing production URL for now since user is running frontend-only locally
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'https://olybars-backend-26629455103.us-west1.run.app') + '/api';
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
 
 /**
  * Fetches the list of venues from the production backend.

@@ -6,13 +6,17 @@ import { X } from 'lucide-react';
 // --- CONFIG & TYPES ---
 import { queryClient } from './lib/queryClient';
 import {
-  Venue, PointsReason, UserProfile, CheckInRecord, UserAlertPreferences, VenueStatus
+  Venue, PointsReason, UserProfile, CheckInRecord, UserAlertPreferences, VenueStatus, ActivityLog
 } from './types';
 
 // --- REAL SERVICES ---
 import { fetchVenues } from './services/venueService';
 import {
-  saveAlertPreferences, logUserActivity, syncCheckIns, fetchUserRank, toggleFavorite, updateUserProfile
+  saveAlertPreferences, logUserActivity, syncCheckIns,
+  fetchUserRank,
+  toggleFavorite,
+  updateUserProfile,
+  fetchRecentActivity // New Export
 } from './services/userService';
 
 // --- MODULAR COMPONENTS ---
@@ -32,6 +36,8 @@ import { OnboardingModal } from './components/ui/OnboardingModal';
 import { VibeCheckModal } from './features/venues/components/VibeCheckModal';
 import { MakerSurveyModal } from './features/marketing/components/MakerSurveyModal'; // New Import
 import { useToast } from './components/ui/BrandedToast';
+import { VibeReceiptModal } from './features/social/components/VibeReceiptModal';
+import { VibeReceiptData, generateArtieHook } from './features/social/services/VibeReceiptService';
 
 // --- UTILS & HELPERS ---
 import { cookieService } from './services/cookieService';
@@ -49,6 +55,10 @@ import UserProfileScreen from './features/profile/screens/UserProfileScreen';
 import { VenueProfileScreen } from './features/venues/screens/VenueProfileScreen';
 import AboutPage from './pages/About';
 import ArtieBioScreen from './features/artie/screens/ArtieBioScreen'; // [NEW] Import
+import { QRVibeCheckScreen } from './features/vibe-check/screens/QRVibeCheckScreen'; // [NEW] QR Screen
+import MerchStandScreen from './features/merch/screens/MerchStandScreen';
+import MerchDetailScreen from './features/merch/screens/MerchDetailScreen';
+import VoucherRedemptionScreen from './features/merch/screens/VoucherRedemptionScreen';
 import ScrollToTop from './components/layout/ScrollToTop';
 
 
@@ -100,6 +110,7 @@ export default function OlyBarsApp() {
   const [showArtie, setShowArtie] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [showMakerSurvey, setShowMakerSurvey] = useState(false); // Survey State
+  const [currentReceipt, setCurrentReceipt] = useState<VibeReceiptData | null>(null);
   const { showToast } = useToast();
   // const [artieMessages, setArtieMessages] = useState<{ sender: string, text: string }[]>([
   //   { sender: 'artie', text: "Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water." }
@@ -165,13 +176,13 @@ export default function OlyBarsApp() {
 
   const openInfo = (title: string, text: string) => { setInfoContent({ title, text }); };
 
-  const awardPoints = (reason: PointsReason, venueId?: string, hasConsent?: boolean) => {
+  const awardPoints = (reason: PointsReason, venueId?: string, hasConsent?: boolean, verificationMethod?: 'gps' | 'qr') => {
     let delta = 0;
     if (reason === 'checkin' || reason === 'photo') delta = 10;
-    else if (reason === 'share') delta = 5;
+    else if (reason === 'share' || reason === 'social_share') delta = 5;
     else if (reason === 'vibe') delta = hasConsent ? 20 : 5;
 
-    if (hasConsent && reason !== 'vibe') delta += 15; // Generic bonus for consent if not vibe
+    if (hasConsent && (reason as string) !== 'vibe') delta += 15; // Generic bonus for consent if not vibe
 
     setUserPoints(prev => prev + delta);
 
@@ -187,7 +198,7 @@ export default function OlyBarsApp() {
       }));
     }
 
-    logUserActivity(userId, { type: reason, venueId, hasConsent, points: delta });
+    logUserActivity(userId, { type: reason, venueId, hasConsent, points: delta, verificationMethod });
   };
 
   const handleUpdateVenue = (venueId: string, updates: Partial<Venue>) => {
@@ -263,7 +274,7 @@ export default function OlyBarsApp() {
     setShowVibeCheckModal(true);
   };
 
-  const confirmVibeCheck = async (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string) => {
+  const confirmVibeCheck = async (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod: 'gps' | 'qr' = 'gps') => {
     const now = Date.now();
 
     // 1. If not already clocked in, perform a background check-in to unify signals
@@ -289,7 +300,21 @@ export default function OlyBarsApp() {
       ] : venue.photos
     });
 
-    awardPoints('vibe', venue.id, hasConsent);
+    awardPoints('vibe', venue.id, hasConsent, verificationMethod);
+
+    // Generate Vibe Receipt
+    const receipt: VibeReceiptData = {
+      type: 'vibe',
+      venueName: venue.name,
+      venueId: venue.id,
+      pointsEarned: 5 + (photoUrl ? 10 : 0) + (hasConsent ? 15 : 0),
+      vibeStatus: status,
+      artieHook: generateArtieHook('vibe', status),
+      username: userProfile.handle || userProfile.displayName || 'Member',
+      userId: userProfile.uid,
+      timestamp: new Date().toISOString()
+    };
+    setCurrentReceipt(receipt);
   };
 
   const handleToggleWeeklyBuzz = async () => {
@@ -437,7 +462,7 @@ export default function OlyBarsApp() {
                   }
                 />
                 <Route path="karaoke" element={<KaraokeScreen venues={venues} />} />
-                <Route path="trivia" element={<TriviaScreen venues={venues} />} />
+                <Route path="trivia" element={<TriviaScreen venues={venues} userProfile={userProfile} />} />
                 <Route path="live" element={<LiveMusicScreen venues={venues} />} />
                 <Route path="events" element={<EventsScreen venues={venues} />} />
                 <Route
@@ -455,8 +480,12 @@ export default function OlyBarsApp() {
                     />
                   }
                 />
-                <Route path="bars" element={<TheSpotsScreen venues={venues} userProfile={userProfile} handleToggleFavorite={handleToggleFavorite} />} />
+                <Route path="bars" element={<TheSpotsScreen venues={venues} userProfile={userProfile} handleToggleFavorite={handleToggleFavorite} mode="bars" />} />
+                <Route path="makers" element={<TheSpotsScreen venues={venues} userProfile={userProfile} handleToggleFavorite={handleToggleFavorite} mode="makers" />} />
                 <Route path="map" element={<MapScreen />} />
+                <Route path="merch" element={<MerchStandScreen venues={venues} />} />
+                <Route path="merch/:itemId" element={<MerchDetailScreen venues={venues} userProfile={userProfile} setUserProfile={setUserProfile} />} />
+                <Route path="vouchers" element={<VoucherRedemptionScreen userProfile={userProfile} venues={venues} />} />
                 <Route path="meet-artie" element={<ArtieBioScreen />} />
                 <Route path="artie-bio" element={<ArtieBioScreen />} />
                 <Route path="more" element={<MoreScreen userProfile={userProfile} setUserProfile={setUserProfile} />} />
@@ -475,6 +504,15 @@ export default function OlyBarsApp() {
                         setOwnerDashboardInitialView('listing');
                         setShowOwnerDashboard(true);
                       }}
+                    />
+                  }
+                />
+                <Route
+                  path="vc/:venueId"
+                  element={
+                    <QRVibeCheckScreen
+                      venues={venues}
+                      handleVibeCheck={confirmVibeCheck}
                     />
                   }
                 />
@@ -582,6 +620,13 @@ export default function OlyBarsApp() {
                   setUserProfile(prev => ({ ...prev, hasCompletedMakerSurvey: true }));
                 }}
                 userId={userProfile.uid}
+              />
+            )}
+
+            {currentReceipt && (
+              <VibeReceiptModal
+                data={currentReceipt}
+                onClose={() => setCurrentReceipt(null)}
               />
             )}
 

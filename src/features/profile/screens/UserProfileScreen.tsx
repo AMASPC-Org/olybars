@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { format } from 'date-fns';
 import {
-    User, Mail, Smartphone, Beer, Home, Trophy, Shield,
+    User, Mail, Smartphone, Beer, Home, Trophy, Medal,
     Settings, Save, Lock, ChevronRight, Info, AlertTriangle,
-    History, LogOut, CheckCircle2, X, Zap, Star, Clock
+    History, LogOut, CheckCircle2, X, Zap, Star, Clock, Share2, Shield // Added Shield
 } from 'lucide-react';
-import { UserProfile, UserRole, Venue } from '../../../types';
+import { UserProfile, Badge, UserRole, Venue, UserBadgeProgress } from '../../../types'; // Restored UserRole, Venue
+import { BADGES } from '../../../config/badges';
+import { shareAchievement } from '../../social/ShareService';
 import { updatePassword, updateEmail } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { updateUserProfile } from '../../../services/userService';
 import { useToast } from '../../../components/ui/BrandedToast';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface UserProfileScreenProps {
     userProfile: UserProfile;
@@ -19,9 +21,10 @@ interface UserProfileScreenProps {
 }
 
 const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setUserProfile, venues }) => {
+    const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState<'overview' | 'settings' | 'league'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'settings' | 'league' | 'badges'>('overview');
     const { showToast } = useToast();
 
     // Form State
@@ -94,7 +97,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [isDirty, isEditing]);
 
-    const handleTabSwitch = (tab: 'overview' | 'settings' | 'league') => {
+    const handleTabSwitch = (tab: 'overview' | 'settings' | 'league' | 'badges') => {
         if (isDirty && isEditing) {
             if (!window.confirm("You have unsaved changes. Save them before switching?")) {
                 return;
@@ -155,6 +158,49 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
     const toggleLeaguePref = (prefId: string) => {
         setLeaguePrefs(prev =>
             prev.includes(prefId) ? prev.filter(p => p !== prefId) : [...prev, prefId]
+        );
+    };
+
+    const handleShareBadge = async (badgeProgress: UserBadgeProgress) => {
+        const badgeConfig = BADGES.find(b => b.id === badgeProgress.badgeId);
+        if (!badgeConfig) return;
+
+        const venueId = badgeConfig.criteria.venueIds?.[0];
+        const venue = venueId ? venues.find(v => v.id === venueId) : null;
+        const venueName = venue?.name || "OlyBars";
+
+        const shareCopy = `Pit-approved! Just unlocked the ${badgeConfig.name} badge at ${venueName}! check out olybars.com #OlyBars #98501`;
+
+        await shareAchievement(
+            badgeConfig.name,
+            venueName,
+            shareCopy,
+            async () => {
+                const newPoints = (userProfile.stats?.competitionPoints || 0) + 5;
+
+                const updates = {
+                    stats: {
+                        ...userProfile.stats,
+                        competitionPoints: newPoints
+                    }
+                };
+
+                try {
+                    const result = await updateUserProfile(userProfile.uid, updates);
+                    if (result.success) {
+                        setUserProfile(prev => ({
+                            ...prev,
+                            stats: {
+                                ...prev.stats!,
+                                competitionPoints: newPoints
+                            }
+                        }));
+                        showToast("+5 SOCIAL BOUNTY AWARDED!", "success");
+                    }
+                } catch (e) {
+                    console.error("Social bounty update failed:", e);
+                }
+            }
         );
     };
 
@@ -223,7 +269,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
 
             {/* Tabs */}
             <div className="flex px-6 border-b border-white/5 bg-black/20 backdrop-blur-md sticky top-0 z-10">
-                {(['overview', 'settings', 'league'] as const).map(tab => (
+                {(['overview', 'settings', 'league', 'badges'] as const).map(tab => (
                     <button
                         key={tab}
                         onClick={() => handleTabSwitch(tab)}
@@ -283,6 +329,16 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                                     ? 'TRAIL COMPLETE - LEGEND STATUS'
                                     : 'Visit High-Score Venues to Advance'}
                             </p>
+
+                            {/* [NEW] REDEEM GEAR BUTTON */}
+                            {userProfile.makersTrailProgress && userProfile.makersTrailProgress >= 5 && (
+                                <button
+                                    onClick={() => navigate('/merch')}
+                                    className="w-full mt-4 py-3 bg-[#D4AF37] text-black font-black text-xs uppercase tracking-[0.2em] rounded-xl shadow-lg hover:scale-[1.02] transition-transform active:scale-95 border-2 border-black"
+                                >
+                                    REDEEM EXCLUSIVE GEAR
+                                </button>
+                            )}
                         </div>
 
                         {/* Vibe Profile Card */}
@@ -622,6 +678,55 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                         >
                             Sync Preferences
                         </button>
+                    </div>
+                )}
+
+                {activeTab === 'badges' && (
+                    <div className="space-y-8 animate-in zoom-in-95 duration-300">
+                        <header>
+                            <h3 className="text-2xl font-black uppercase tracking-tighter font-league">Honor Roll</h3>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Your unlocked achievements</p>
+                        </header>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            {(() => {
+                                const unlockedBadges = Object.values(userProfile.badges || {}).filter(b => b.unlocked);
+
+                                if (unlockedBadges.length === 0) {
+                                    return (
+                                        <div className="col-span-2 py-12 text-center bg-white/5 rounded-3xl border border-dashed border-white/10">
+                                            <Medal className="w-12 h-12 text-slate-700 mx-auto mb-4 opacity-20" />
+                                            <p className="text-sm font-black text-slate-600 uppercase font-league">Level up to earn badges</p>
+                                            <p className="text-[10px] text-slate-700 font-bold uppercase mt-1">Visit venues to start your trail</p>
+                                        </div>
+                                    );
+                                }
+
+                                return unlockedBadges.map((badgeProgress) => {
+                                    const badgeConfig = BADGES.find(b => b.id === badgeProgress.badgeId);
+                                    if (!badgeConfig) return null;
+
+                                    return (
+                                        <div key={badgeProgress.badgeId} className="bg-surface p-4 rounded-2xl border border-white/5 flex flex-col items-center text-center group relative">
+                                            <div className="w-16 h-16 bg-black/40 rounded-full flex items-center justify-center mb-3 border-2 border-primary/20 group-hover:border-primary transition-all">
+                                                <Medal className="w-8 h-8 text-primary" />
+                                            </div>
+                                            <h4 className="text-xs font-black uppercase font-league leading-tight mb-1">{badgeConfig.name}</h4>
+                                            <p className="text-[8px] text-slate-500 font-bold uppercase mb-3 line-clamp-2">
+                                                {badgeConfig.description}
+                                            </p>
+                                            <button
+                                                onClick={() => handleShareBadge(badgeProgress)}
+                                                className="w-full py-2 bg-white/5 rounded-lg flex items-center justify-center gap-2 hover:bg-white/10 transition-colors border border-white/5"
+                                            >
+                                                <Share2 className="w-3 h-3 text-primary" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest">+5 BOUNTY</span>
+                                            </button>
+                                        </div>
+                                    );
+                                });
+                            })()}
+                        </div>
                     </div>
                 )}
             </div>
