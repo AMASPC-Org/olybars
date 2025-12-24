@@ -2,9 +2,17 @@ console.log("Starting OlyBars Server...");
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 import { fetchVenues, checkIn } from './venueService';
 
 dotenv.config();
+
+// Load functions/.env as fallback for AI keys
+const functionsEnvPath = path.resolve(process.cwd(), 'functions/.env');
+if (fs.existsSync(functionsEnvPath)) {
+    dotenv.config({ path: functionsEnvPath });
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -372,6 +380,30 @@ app.get('/api/activity/recent', async (req, res) => {
         res.json(logs);
     } catch (error: any) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// --- ARTIE AI CHAT GATEWAY ---
+/**
+ * @route POST /api/chat
+ * @desc Artie AI Chat Relay (Direct Backend Path)
+ */
+app.post('/api/chat', async (req, res) => {
+    try {
+        const { history, question } = req.body;
+
+        if (!question) {
+            return res.status(400).json({ error: 'Question is required' });
+        }
+
+        // Import the logic dynamically to keep dependencies clean
+        const { artieChatLogic } = await import('../../functions/src/flows/artieChat');
+        const result = await artieChatLogic({ history: history || [], question });
+
+        res.json({ data: result });
+    } catch (error: any) {
+        log('ERROR', 'Artie Local Relay Failure', { error: error.message });
+        res.status(500).json({ error: `Artie is having a moment: ${error.message}` });
     }
 });
 

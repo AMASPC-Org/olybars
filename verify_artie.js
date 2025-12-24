@@ -1,8 +1,12 @@
-
-const url = 'https://olybars-backend-juthzlaerq-uw.a.run.app/api/chat';
-const data = { message: 'Hello, are you there?' };
+// Local verification script for Artie's Brain
+const url = 'http://localhost:3001/api/chat';
+const data = {
+    question: 'Who has the best happy hour in Olympia?',
+    history: []
+};
 
 (async () => {
+    console.log(`📡 Sending test query to: ${url}`);
     try {
         const response = await fetch(url, {
             method: 'POST',
@@ -14,8 +18,8 @@ const data = { message: 'Hello, are you there?' };
 
         const result = await response.json();
         console.log('Status:', response.status);
-        console.log('Body:', JSON.stringify(result, null, 2));
+        console.log('🤖 Artie Response:', JSON.stringify(result, null, 2));
     } catch (error) {
-        console.error('Error:', error);
+        console.error('❌ Verification Failed:', error);
     }
 })();

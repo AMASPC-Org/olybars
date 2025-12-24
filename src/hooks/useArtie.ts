@@ -24,27 +24,36 @@ export function useArtie() {
         setMessages(newHistory);
 
         try {
-            const artieChat = httpsCallable<{ history: Message[], question: string }, string>(functions, 'artieChat');
+            const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
 
             // Convert internal message format to the simple role/content pairs Artie expects
             const historyForArtie = messages.map(m => ({
                 role: m.role,
                 content: m.content
-            })).slice(-10); // Hardening: prevent context overflow
+            })).slice(-10);
 
-            const result = await artieChat({
-                question: prompt,
-                history: historyForArtie
+            const response = await fetch(`${API_BASE_URL}/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question: prompt,
+                    history: historyForArtie
+                })
             });
+
+            if (!response.ok) {
+                throw new Error(`Artie connection failed: ${response.statusText}`);
+            }
+
+            const result = await response.json();
 
             // Add model response
             const modelMessage: Message = { role: 'model', content: result.data };
             setMessages(prev => [...prev, modelMessage]);
 
         } catch (err: any) {
-            console.error("Artie connection failed:", err);
+            console.error("Artie hook failure:", err);
             setError(err.message || "Artie is having trouble connecting to the hive mind.");
-            // Optionally remove the optimistic user message or show an error state
         } finally {
             setIsLoading(false);
         }
