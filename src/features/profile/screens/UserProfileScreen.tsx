@@ -708,8 +708,16 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
 
                                     return (
                                         <div key={badgeProgress.badgeId} className="bg-surface p-4 rounded-2xl border border-white/5 flex flex-col items-center text-center group relative">
-                                            <div className="w-16 h-16 bg-black/40 rounded-full flex items-center justify-center mb-3 border-2 border-primary/20 group-hover:border-primary transition-all">
-                                                <Medal className="w-8 h-8 text-primary" />
+                                            <div className="w-16 h-16 bg-black/40 rounded-full flex items-center justify-center mb-3 border-2 border-primary/20 group-hover:border-primary transition-all overflow-hidden">
+                                                {badgeConfig.icon ? (
+                                                    <img
+                                                        src={`/assets/${badgeConfig.icon}`}
+                                                        alt={badgeConfig.name}
+                                                        className="w-10 h-10 object-contain"
+                                                    />
+                                                ) : (
+                                                    <Medal className="w-8 h-8 text-primary" />
+                                                )}
                                             </div>
                                             <h4 className="text-xs font-black uppercase font-league leading-tight mb-1">{badgeConfig.name}</h4>
                                             <p className="text-[8px] text-slate-500 font-bold uppercase mb-3 line-clamp-2">

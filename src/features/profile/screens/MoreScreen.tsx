@@ -11,7 +11,8 @@ import {
   ExternalLink,
   Trophy,
   ShoppingBag,
-  QrCode
+  QrCode,
+  Zap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UserProfile, UserRole } from '../../../types';
@@ -29,6 +30,7 @@ const MoreScreen: React.FC<MoreScreenProps> = ({ userProfile, setUserProfile }) 
   const menuItems = [
     { id: 'profile', label: 'My League ID', icon: User, path: '/profile', color: 'text-primary' },
     { id: 'vouchers', label: 'My Vouchers', icon: QrCode, path: '/vouchers', color: 'text-amber-400' },
+    { id: 'playbook', label: 'Pulse Playbook', icon: Zap, path: '/pulse-playbook', color: 'text-yellow-400' },
     { id: 'merch', label: 'Merch Stand', icon: ShoppingBag, path: '/merch', color: 'text-blue-400' },
     { id: 'faq', label: 'Help & FAQ', icon: HelpCircle, path: '/faq', color: 'text-slate-400' },
     { id: 'settings', label: 'Alert Settings', icon: Settings, path: '/', color: 'text-slate-400' },

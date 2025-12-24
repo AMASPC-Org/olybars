@@ -61,5 +61,18 @@ export const BADGES: Badge[] = [
             count: 5,
             venueIds: ['well80', 'ilklodge', 'threemagnets', 'headlessmumby', 'whitewood'] // Core 5 Assumption
         }
+    },
+    {
+        id: 'the_historian',
+        name: 'The Historian',
+        description: "You've walked in the footsteps of loggers and politicians. By visiting 3 historic landmarks in a single moon, you've unlocked the secrets of the past.",
+        points: 500,
+        icon: 'icon_scroll_parchment.svg',
+        criteria: {
+            type: 'count', // Fallback type, simplified for TS, specific logic handled in service
+            count: 3,
+            isHistoricalAnchor: true,
+            timeWindowDays: 30
+        }
     }
 ];

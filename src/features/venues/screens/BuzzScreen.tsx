@@ -9,6 +9,7 @@ import { Venue, VenueStatus, UserProfile } from '../../../types';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
 import { isVenueOpen, getVenueStatus } from '../../../utils/venueUtils';
+import { PULSE_CONFIG } from '../../../config/pulse';
 
 const PulseMeter = ({ status }: { status: VenueStatus }) => {
   if (status === 'chill') {
@@ -124,14 +125,54 @@ export const BuzzScreen: React.FC<{
       if (filterKind === 'deals') {
         const timeA = a.dealEndsIn !== undefined ? a.dealEndsIn : 9999;
         const timeB = b.dealEndsIn !== undefined ? b.dealEndsIn : 9999;
-        const isShortA = timeA <= 240;
-        const isShortB = timeB <= 240;
+        const isShortA = timeA <= PULSE_CONFIG.THRESHOLDS.BUZZ_CLOCK_PRIORITY;
+        const isShortB = timeB <= PULSE_CONFIG.THRESHOLDS.BUZZ_CLOCK_PRIORITY;
         if (isShortA !== isShortB) return isShortA ? -1 : 1;
         return timeA - timeB;
       }
 
       return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
     });
+
+  // --- NEW LOGIC: Buzz Clock (Happy Hours) & Flash Deals ---
+  const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
+  const now = new Date();
+  const currentHm = now.getHours() * 100 + now.getMinutes();
+
+  const getHHTime = (timeStr: string) => {
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 100 + m;
+  };
+
+  // 1. Check Active Happy Hours
+  let buzzClockVenues = venues.filter(v => {
+    if (!v.happyHour) return false;
+    if (v.happyHour.days && !v.happyHour.days.includes(currentDay)) return false;
+    const startVal = getHHTime(v.happyHour.startTime);
+    const endVal = getHHTime(v.happyHour.endTime);
+    return currentHm >= startVal && currentHm < endVal;
+  });
+
+  let isUpcomingBuzz = false;
+
+  // 2. Fallback to Upcoming Happy Hours (Today)
+  if (buzzClockVenues.length === 0) {
+    buzzClockVenues = venues.filter(v => {
+      if (!v.happyHour) return false;
+      if (v.happyHour.days && !v.happyHour.days.includes(currentDay)) return false;
+      const startVal = getHHTime(v.happyHour.startTime);
+      return startVal > currentHm;
+    }).sort((a, b) => {
+      return getHHTime(a.happyHour!.startTime) - getHHTime(b.happyHour!.startTime);
+    });
+    if (buzzClockVenues.length > 0) isUpcomingBuzz = true;
+  }
+
+  const flashDealVenues = venues.filter(v =>
+    !!v.deal && // Has a deal text
+    (v.dealEndsIn || 0) > 0 && // Has time remaining
+    (v.dealEndsIn || 999) < PULSE_CONFIG.THRESHOLDS.FLASH_DEAL // Less than 3 hours (Flash!)
+  );
 
   const isFallbackActive = filteredVenues.length === 0 && venuesWithDistance.length > 0;
 
@@ -174,9 +215,18 @@ export const BuzzScreen: React.FC<{
             <h3 className="text-white text-xl font-bold tracking-tight text-center font-league uppercase">
               The Oly Pulse
             </h3>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">
-              {filteredVenues.length} Spots Active
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+                {filteredVenues.length} Spots Active
+              </span>
+              <span className="text-slate-700 font-black text-[10px]">•</span>
+              <button
+                onClick={() => navigate('/pulse-playbook')}
+                className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-0.5"
+              >
+                How it Works <ChevronRight className="w-2.5 h-2.5" />
+              </button>
+            </div>
           </div>
 
           <div className="flex justify-center items-center gap-2 pb-2 flex-wrap">
@@ -241,6 +291,56 @@ export const BuzzScreen: React.FC<{
             </button>
           </div>
         </div>
+
+        {/* BUZZ CLOCK (Happy Hours) */}
+        {buzzClockVenues.length > 0 && (
+          <div className={`bg-gradient-to-r ${isUpcomingBuzz ? 'from-blue-500/10 border-blue-500' : 'from-amber-500/10 border-amber-500'} to-transparent border-l-4 pl-4 py-2`}>
+            <h4 className={`text-[10px] font-black ${isUpcomingBuzz ? 'text-blue-400' : 'text-amber-500'} uppercase tracking-widest mb-1 flex items-center gap-2`}>
+              <Clock className="w-3 h-3" /> {isUpcomingBuzz ? 'Upcoming Happy Hours' : 'Buzz Clock'}
+            </h4>
+            <div className="flex overflow-x-auto gap-4 scrollbar-hide">
+              {buzzClockVenues.map(hh => (
+                <div key={hh.id} className="min-w-[200px] shrink-0">
+                  <span className="text-white font-bold text-xs">{hh.name}</span>
+                  <p className="text-slate-400 text-[10px] uppercase truncate">{hh.happyHour?.description}</p>
+                  <p className={`${isUpcomingBuzz ? 'text-blue-400' : 'text-amber-500'} text-[9px] font-bold`}>
+                    {isUpcomingBuzz
+                      ? `Starts ${parseInt(hh.happyHour?.startTime.split(':')[0] || '0') > 12 ? parseInt(hh.happyHour?.startTime.split(':')[0] || '0') - 12 : hh.happyHour?.startTime.split(':')[0]}:${hh.happyHour?.startTime.split(':')[1]} ${parseInt(hh.happyHour?.startTime.split(':')[0] || '0') >= 12 ? 'PM' : 'AM'}`
+                      : `Ends ${parseInt(hh.happyHour?.endTime.split(':')[0] || '0') > 12 ? parseInt(hh.happyHour?.endTime.split(':')[0] || '0') - 12 : hh.happyHour?.endTime.split(':')[0]}:${hh.happyHour?.endTime.split(':')[1]} PM`
+                    }
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* FLASH DEALS (Immediate) */}
+        {flashDealVenues.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
+                <Zap className="w-3 h-3" /> Flash Deals
+              </h4>
+              <span className="text-[9px] font-bold text-slate-500 uppercase animate-pulse">Ending Soon</span>
+            </div>
+            <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-2 px-2">
+              {flashDealVenues.map(fd => (
+                <div key={fd.id} onClick={() => navigate(`/venues/${fd.id}`)} className="min-w-[220px] bg-gradient-to-br from-red-900/40 to-black border border-red-500/30 rounded-xl p-3 relative overflow-hidden group">
+                  {/* Timer Badge */}
+                  <div className="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-bl-lg z-10">
+                    {fd.dealEndsIn}m LEFT
+                  </div>
+                  <h5 className="font-bold text-white text-sm truncate pr-16">{fd.name}</h5>
+                  <p className="text-red-400 font-black text-xs uppercase leading-tight mt-1 mb-2">{fd.deal}</p>
+                  <div className="flex items-center gap-1 text-[9px] text-slate-400 font-bold uppercase">
+                    <Users className="w-3 h-3 text-slate-500" /> {fd.checkIns > 0 ? `${fd.checkIns} Checked In` : 'Just Started'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="relative group/list">
           {/* JOIN THE LEAGUE CONVERSION BANNER (FOR GUESTS) */}

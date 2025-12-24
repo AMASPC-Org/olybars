@@ -2,14 +2,35 @@ import { SystemRole, VenueRole } from './types/auth_schema';
 
 export type VenueStatus = 'chill' | 'lively' | 'buzzing';
 
+export interface FlashDeal {
+  id: string;
+  venueId: string;
+  title: string;
+  description?: string;
+  startTime: number;
+  endTime: number;
+  isApproved: boolean; // Admin approval required
+  termsAccepted: boolean;
+  active: boolean;
+}
+
 export interface Venue {
   id: string;
   name: string;
   type: string;
   status: VenueStatus;
   checkIns: number;
-  deal?: string;
-  dealEndsIn?: number; // minutes
+  isPaidLeagueMember?: boolean; // Paid "Venue League Member" status (vs Unpaid Venue)
+
+  // Legacy/Computed fields for Frontend
+  deal?: string;         // Title of active, approved flash deal
+  dealEndsIn?: number;   // Minutes remaining
+
+  // Robust Deal Data
+  flashDeals?: FlashDeal[];
+  activeFlashDealId?: string;
+
+  // ... (rest) ...
   vibe: string;
   coordinates: { x: number; y: number }; // Relative map coordinates
   location?: { lat: number; lng: number }; // Real-world coordinates for geofencing
@@ -23,6 +44,7 @@ export interface Venue {
     startTime: string;
     endTime: string;
     description: string;
+    days?: string[]; // e.g. ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
   };
   alertTags?: string[];
   isFavorite?: boolean;
@@ -35,6 +57,10 @@ export interface Venue {
   instagram?: string;
   facebook?: string;
   twitter?: string;
+  venueName?: string; // This field is not in the original Venue interface, but was in the provided snippet. Assuming it should be added.
+  source?: 'google_calendar' | 'facebook' | 'manual'; // This field is not in the original Venue interface, but was in the provided snippet. Assuming it should be added.
+  ticketLink?: string; // This field is not in the original Venue interface, but was in the provided snippet. Assuming it should be added.
+  cheatCodeUrl?: string; // Link to History Blog for Trivia answers
   ownerId?: string;
   managerIds?: string[];
   amenities?: string[];
@@ -64,6 +90,11 @@ export interface Venue {
   carryingMakers?: string[]; // IDs of other makers this venue carries
   isVerifiedMaker?: boolean; // Gatekeeper: Must be true to enable Maker tools
   isVerifiedHost?: boolean; // Gatekeeper: Must be true to enable League Host tools
+
+  // Local Lore / History Fields
+  isHistoricalAnchor?: boolean;
+  historySnippet?: string;
+  relatedBlogIds?: string[];
 
   // Strategic Market Audit Fields (Dec 2025)
   makerType?: 'Brewery' | 'Distillery' | 'Cidery' | 'Winery';
@@ -195,6 +226,8 @@ export interface Badge {
     venueIds?: string[];
     count?: number;
     category?: string;
+    isHistoricalAnchor?: boolean;
+    timeWindowDays?: number;
   };
   secret?: boolean;
 }

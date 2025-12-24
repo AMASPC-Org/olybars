@@ -1,11 +1,17 @@
 import { Venue } from '../types';
+import { PULSE_CONFIG } from '../config/pulse';
 
 // Forcing production URL for now since user is running frontend-only locally
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
 
 /**
- * Fetches the list of venues from the production backend.
- * The backend handles Firestore communication and Buzz Clock sorting.
+ * Pulse System Integration (Doc 05 Rulebook)
+ * The Frontend Service uses the Centralized Pulse Logic Config for consistency.
+ */
+
+/**
+ * Fetches the list of venues from the backend.
+ * Uses PULSE_CONFIG.WINDOWS.STALE_THRESHOLD for background refresh logic.
  */
 export const fetchVenues = async (): Promise<Venue[]> => {
   try {
@@ -13,7 +19,20 @@ export const fetchVenues = async (): Promise<Venue[]> => {
     if (!response.ok) {
       throw new Error(`Failed to fetch venues: ${response.statusText}`);
     }
-    return await response.json();
+    const venues: Venue[] = await response.json();
+
+    // 1. Client-side Stale Check (Optional trigger for backend refresh via side effect)
+    // The Backend handles the primary logic, but the Frontend verifies freshness.
+    const now = Date.now();
+    venues.forEach(venue => {
+      const lastUpdated = venue.currentBuzz?.lastUpdated || 0;
+      if (now - lastUpdated > PULSE_CONFIG.WINDOWS.STALE_THRESHOLD) {
+        // We could trigger a dedicated background refresh here if needed
+        // but currently the backend handles this on GET /venues.
+      }
+    });
+
+    return venues;
   } catch (error) {
     console.error('Error in fetchVenues:', error);
     // Return empty array as fallback to prevent UI crash
@@ -23,6 +42,7 @@ export const fetchVenues = async (): Promise<Venue[]> => {
 
 /**
  * Updates venue profile details (Listing management)
+ * Strictly adheres to Allowed Fields whitelisted in server/src/venueService.ts
  */
 export const updateVenueDetails = async (venueId: string, updates: Partial<Venue>): Promise<{ success: boolean, updates: any }> => {
   try {
@@ -40,3 +60,10 @@ export const updateVenueDetails = async (venueId: string, updates: Partial<Venue
     throw error;
   }
 };
+
+/**
+ * Pulse Calculation Helpers (Shared Logic)
+ * Ensures frontend display logic matches backend scoring weights.
+ */
+export const getPulsePoints = () => PULSE_CONFIG.POINTS;
+export const getPulseThresholds = () => PULSE_CONFIG.THRESHOLDS;

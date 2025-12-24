@@ -20,7 +20,24 @@ const venues = [
         location: { lat: 47.0424, lng: -122.9009 },
         address: '514 4th Ave E, Olympia, WA 98501',
         isActive: true,
-        isVisible: true
+        isVisible: true,
+        isHistoricalAnchor: true,
+        historySnippet: "Taste the water (literally) from the original Artesian Well.",
+        isPaidLeagueMember: true,
+        flashDeals: [{
+            id: 'fd-w80-01',
+            venueId: 'well-80',
+            title: '$2 Pretzels & Cheese',
+            description: 'Flash Deal: $2 Pretzels valid for next 45 mins.',
+            startTime: Date.now(),
+            endTime: Date.now() + 45 * 60 * 1000,
+            isApproved: true,
+            termsAccepted: true,
+            active: true
+        }],
+        activeFlashDealId: 'fd-w80-01',
+        deal: "$2 Pretzels & Cheese",
+        dealEndsIn: 45, // Flash Deal (Minutes remaining)
     },
     {
         id: 'ilk-lodge',
@@ -369,7 +386,19 @@ const venues = [
         checkIns: 0,
         coordinates: { x: 45, y: 55 },
         address: '119 Capitol Way N, Olympia, WA 98501',
-        website: 'https://thebrotherhoodlounge.com/'
+        website: 'https://thebrotherhoodlounge.com/',
+        // Happy Hour (Scheduled)
+        happyHour: {
+            startTime: '16:00',
+            endTime: '19:00',
+            description: '$4 Wells & $1 Off Drafts',
+            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        },
+        isHistoricalAnchor: true,
+        historySnippet: "Rumored entrance to the tunnels and Oly's oldest bar.",
+        leagueEvent: 'trivia',
+        cheatCodeUrl: '/history/tunnels-of-olympia',
+        isPaidLeagueMember: true
     },
     {
         id: 'mccoys-tavern',
@@ -566,7 +595,9 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 45, y: 45 },
-        website: 'https://www.mcmenamins.com/spar-cafe'
+        website: 'https://www.mcmenamins.com/spar-cafe',
+        isHistoricalAnchor: true,
+        historySnippet: "Sit in the original booths where the loggers drank."
     },
     {
         id: 'hannahs',
@@ -791,7 +822,14 @@ async function seedVenues() {
         const venuesRef = db.collection('venues');
         for (const venue of venues) {
             const { id, ...venueData } = venue;
-            await venuesRef.doc(id).set(venueData);
+
+            // Default to Paid League Member for all active venues (User Request Dec 24)
+            const isPaid = venueData.isActive !== false && (venue as any).isPaidLeagueMember !== false;
+
+            await venuesRef.doc(id).set({
+                ...venueData,
+                isPaidLeagueMember: isPaid
+            });
             console.log(`Seeded venue: ${venue.name} (${id})`);
         }
         console.log('Seeding complete! 🍺');

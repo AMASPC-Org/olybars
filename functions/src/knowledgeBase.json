@@ -72,6 +72,17 @@
         "micro_reality_check": "Every venue is vetted by 4 personas: Pit (Soul/Dive), Todd (Ops/Food), Chris (Data/Stability), Stephanie (Atmosphere/Safety).",
         "ghost_list": "Venues that failed the reality check or closed: Heritage Tumwater (Retail failure), Locust Cider (Closed), Finnriver Tumwater (Closed). We do NOT send users there."
     },
+    "strategy_modules": {
+        "history_revenue_loop": {
+            "core_concept": "Solving the 'Utility Gap' by using history as a hook to drive revenue. We do not publish history for history's sake.",
+            "the_loop": "1. Hook (Blog/SEO) -> 2. Nudge (Trivia Cheat Code) -> 3. Visit (Venue Revenue) -> 4. Reward (Badge).",
+            "compliance_rules": [
+                "No 'Pabst' Branding: Tell the story of the city, not the corporate trademark. Use 'The original 1896 brew'.",
+                "Link to Revenue: Every history nugget must link to a venue action (e.g., 'Sit in the original booths at The Spar')."
+            ],
+            "trivia_integration": "We drive traffic to trivia nights by giving members answers in advance via our content."
+        }
+    },
     "lore": {
         "origin": "Digitized mythical entity residing in Olympia's groundwater (The Artesian Well).",
         "artesian_well": "Olympia is built on world-class artesian water. Well 80 Brewhouse uses this water to brew the finest beers in the PNW.",

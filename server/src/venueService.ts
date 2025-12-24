@@ -2,6 +2,7 @@ import { db } from './firebaseAdmin.js';
 import admin from 'firebase-admin';
 import { Venue, Signal, SignalType, Badge, UserBadgeProgress } from '../../src/types';
 import { BADGES } from '../../src/config/badges';
+import { PULSE_CONFIG } from '../../src/config/pulse';
 
 /**
  * Buzz Clock Sorting Logic:
@@ -46,53 +47,71 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
     return R * c; // in metres
 };
 
+
+
 /**
  * Buzz Algorithm (Doc 05 Rulebook):
- * - Hard Check-in: 10.0 pts
- * - Vibe Report: 3.0 pts
- * - Decay: -50% every 60 mins
+ * Updated Dec 24: Uses Centralized Pulse Logic Config
  */
 export const updateVenueBuzz = async (venueId: string) => {
-    const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
-    // Filter by venueId only to avoid needing a composite index in dev
+    const now = Date.now();
+    const twelveHoursAgo = now - PULSE_CONFIG.WINDOWS.BUZZ_HISTORY;
+    const liveWindowAgo = now - PULSE_CONFIG.WINDOWS.LIVE_HEADCOUNT;
+
+    // Filter by venueId only
     const signalsSnapshot = await db.collection('signals')
         .where('venueId', '==', venueId)
+        .where('timestamp', '>', twelveHoursAgo) // Optimization: limit query
         .get();
 
     let score = 0;
-    const now = Date.now();
+    const activeUserIds = new Set<string>();
 
     signalsSnapshot.forEach(doc => {
         const data = doc.data() as Signal;
-        if (data.timestamp < twelveHoursAgo) return; // In-memory filtering
-        let signalValue = 0;
-        if (data.type === 'check_in') signalValue = 10;
-        if (data.type === 'vibe_report') signalValue = 3;
 
-        // Recency Decay: 50% drop every 60 mins
-        const ageInHours = (now - data.timestamp) / (60 * 60 * 1000);
+        // 1. Calculate Buzz Score
+        let signalValue = 0;
+        if (data.type === 'check_in') signalValue = PULSE_CONFIG.POINTS.CHECK_IN;
+        if (data.type === 'vibe_report') signalValue = PULSE_CONFIG.POINTS.VIBE_REPORT;
+
+        // Recency Decay: 50% drop every HALFLIFE (default 60 mins)
+        const ageInHours = (now - data.timestamp) / PULSE_CONFIG.WINDOWS.DECAY_HALFLIFE;
         const decayedValue = signalValue * Math.pow(0.5, ageInHours);
         score += decayedValue;
+
+        // 2. Calculate Live Headcount (Rolling Window)
+        if (data.timestamp > liveWindowAgo && data.type === 'check_in') {
+            activeUserIds.add(data.userId);
+        }
     });
 
     let status: 'chill' | 'lively' | 'buzzing' = 'chill';
-    if (score > 60) status = 'buzzing';
-    else if (score > 20) status = 'lively';
+    if (score > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
+    else if (score > PULSE_CONFIG.THRESHOLDS.LIVELY) status = 'lively';
 
     await db.collection('venues').doc(venueId).update({
         'currentBuzz.score': score,
         'currentBuzz.lastUpdated': now,
-        'status': status
+        'status': status,
+        'checkIns': activeUserIds.size // Live Rolling Count
     });
 };
 
 export const fetchVenues = async (): Promise<Venue[]> => {
     try {
         const snapshot = await db.collection('venues').get();
+        const now = Date.now();
+
         const venues = snapshot.docs
             .map(doc => {
                 const data = doc.data();
                 const venue = { id: doc.id, ...data } as Venue;
+
+                // STALE CHECK: Trigger refresh if older than STALE_THRESHOLD
+                if (!venue.currentBuzz?.lastUpdated || (now - venue.currentBuzz.lastUpdated > PULSE_CONFIG.WINDOWS.STALE_THRESHOLD)) {
+                    updateVenueBuzz(venue.id).catch(err => console.error(`Background Buzz Update failed for ${venue.id}`, err));
+                }
 
                 // Injecting mock amenities for the "Play" feature demo
                 if (venue.id === 'well-80') {
@@ -136,7 +155,7 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
         console.warn(`Geofencing skipped for ${venueId} - no location set.`);
     } else {
         const distance = calculateDistance(userLat, userLng, venueData.location.lat, venueData.location.lng);
-        if (distance > 100) {
+        if (distance > PULSE_CONFIG.SPATIAL.GEOFENCE_RADIUS) {
             throw new Error(`Too far away! You are ${Math.round(distance)}m from ${venueData.name}.`);
         }
     }
@@ -148,12 +167,12 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
 
     const timestamp = Date.now();
 
-    // 2. LCB Compliance Check (Rule 03-A): Max 2 check-ins per 12-hour window
-    const twelveHoursAgo = timestamp - (12 * 60 * 60 * 1000);
+    // 2. LCB Compliance Check (Rule 03-A): Max 2 check-ins per window
+    const lcbWindowAgo = timestamp - PULSE_CONFIG.WINDOWS.LCB_WINDOW;
     const checkInsLast12h = await db.collection('signals')
         .where('userId', '==', userId)
         .where('type', '==', 'check_in')
-        .where('timestamp', '>', twelveHoursAgo)
+        .where('timestamp', '>', lcbWindowAgo)
         .get();
 
     if (checkInsLast12h.size >= 2) {
@@ -172,31 +191,20 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
     if (!recentSignals.empty) {
         const lastCheckIn = recentSignals.docs[0].data() as Signal;
         const timeSinceLast = timestamp - lastCheckIn.timestamp;
-        const minutesSinceLast = Math.floor(timeSinceLast / (60 * 1000));
 
-        // Global Throttle: 120 minutes (2 hours)
-        if (timeSinceLast < (120 * 60 * 1000)) {
-            const waitTime = 120 - minutesSinceLast;
-            throw new Error(`Slow down, League Legend! The Pulse needs a bit more time. You can clock in again in ${waitTime} minutes.`);
+        // Global Throttle: (e.g. 120 minutes / 2 hours)
+        if (timeSinceLast < PULSE_CONFIG.WINDOWS.CHECK_IN_THROTTLE) {
+            const minutesSinceLast = Math.floor(timeSinceLast / (60 * 1000));
+            const waitTime = (PULSE_CONFIG.WINDOWS.CHECK_IN_THROTTLE / (60 * 1000)) - minutesSinceLast;
+            throw new Error(`Slow down, League Legend! The Pulse needs a bit more time. You can clock in again in ${Math.ceil(waitTime)} minutes.`);
         }
 
-        // Same-Venue Throttle: 360 minutes (6 hours)
-        if (lastCheckIn.venueId === venueId && timeSinceLast < (360 * 60 * 1000)) {
-            const waitTime = 360 - minutesSinceLast;
-            throw new Error(`Already checked in here recently! To keep the Pulse fair, please wait another ${Math.floor(waitTime / 60)} hours and ${waitTime % 60} minutes before checking into ${venueData.name} again.`);
+        // Same-Venue Throttle: (e.g. 360 minutes / 6 hours)
+        if (lastCheckIn.venueId === venueId && timeSinceLast < PULSE_CONFIG.WINDOWS.SAME_VENUE_THROTTLE) {
+            const minutesSinceLast = Math.floor(timeSinceLast / (60 * 1000));
+            const waitTime = (PULSE_CONFIG.WINDOWS.SAME_VENUE_THROTTLE / (60 * 1000)) - minutesSinceLast;
+            throw new Error(`Already checked in here recently! To keep the Pulse fair, please wait another ${Math.floor(waitTime / 60)} hours and ${Math.ceil(waitTime % 60)} minutes before checking into ${venueData.name} again.`);
         }
-    }
-
-    // 3. WA State LCB Compliance: Max 2 check-ins per 12h window
-    const twelveHoursAgoCheck = timestamp - (12 * 60 * 60 * 1000);
-    const daySignals = await db.collection('signals')
-        .where('userId', '==', userId)
-        .where('type', '==', 'check_in')
-        .where('timestamp', '>=', twelveHoursAgoCheck)
-        .get();
-
-    if (daySignals.size >= 2) {
-        throw new Error('League Protocol: Max 2 check-ins per 12-hour window. Take it slow, friend!');
     }
 
     const signal: Partial<Signal> = {
@@ -327,8 +335,6 @@ export const checkAndAwardBadges = async (userId: string, currentVenueId: string
     const currentBadges = userData?.badges || {};
 
     // Get unique check-ins history
-    // Optimization: retrieving all signals might be expensive.
-    // For now, valid for small scale.
     const signalsSnapshot = await db.collection('signals')
         .where('userId', '==', userId)
         .where('type', '==', 'check_in')
@@ -355,32 +361,63 @@ export const checkAndAwardBadges = async (userId: string, currentVenueId: string
             const hasAll = badge.criteria.venueIds.every(vid => uniqueVenues.has(vid));
             if (hasAll) unlocked = true;
         } else if (badge.criteria.type === 'count' && badge.criteria.count) {
-            // For "visit 5 venues"
-            // If category is specified, we'd need venue types. Assuming 'venueIds' list is the "Core 5" list for Artesian Well
-            if (badge.criteria.venueIds) {
-                const matchCount = badge.criteria.venueIds.filter(vid => uniqueVenues.has(vid)).length;
-                if (matchCount >= badge.criteria.count) unlocked = true;
+            const matchCount = (badge.criteria.venueIds || []).filter(vid => uniqueVenues.has(vid)).length;
+            // If no venueIds loop provided (generic count), usually not supported yet or implies ANY venue. 
+            // Assuming venueIds is required for specific counts, else we check basic count.
+            if (badge.criteria.venueIds && matchCount >= badge.criteria.count) {
+                unlocked = true;
+            }
+        }
+
+        // --- Special Logic: The Historian ---
+        if (badge.id === 'the_historian' && badge.criteria.isHistoricalAnchor && badge.criteria.timeWindowDays) {
+            const historyLimit = Date.now() - (badge.criteria.timeWindowDays * 24 * 60 * 60 * 1000);
+
+            const recentSignals = await db.collection('signals')
+                .where('userId', '==', userId)
+                .where('type', '==', 'check_in')
+                .where('timestamp', '>', historyLimit)
+                .get();
+
+            const recentVenueIds = new Set<string>();
+            recentSignals.forEach(d => recentVenueIds.add(d.data().venueId));
+            if (currentVenueId) recentVenueIds.add(currentVenueId);
+
+            let historicalCount = 0;
+            const recentVenues = Array.from(recentVenueIds);
+
+
+
+            for (const vid of recentVenues) {
+                const vDoc = await db.collection('venues').doc(vid).get();
+                if (vDoc.exists && vDoc.data()?.isHistoricalAnchor) {
+                    historicalCount++;
+                }
+            }
+
+            if (historicalCount >= (badge.criteria.count || 3)) {
+                unlocked = true;
             }
         }
 
         if (unlocked) {
             newBadges.push(badge);
+            const badgeProgress: UserBadgeProgress = {
+                badgeId: badge.id,
+                progress: 1,
+                unlocked: true,
+                unlockedAt: Date.now()
+            };
             // Update User Profile with new Badge
             await userRef.update({
-                [`badges.${badge.id}`]: {
-                    badgeId: badge.id,
-                    progress: 1, // Full
-                    unlocked: true,
-                    unlockedAt: Date.now()
-                }
+                [`badges.${badge.id}`]: badgeProgress
             });
         } else {
             // Update progress if checkin_set
             if (badge.criteria.type === 'checkin_set' && badge.criteria.venueIds) {
                 const visitedCount = badge.criteria.venueIds.filter(vid => uniqueVenues.has(vid)).length;
                 const progress = visitedCount / badge.criteria.venueIds.length;
-                // Only update if changed or doesn't exist? (Optional, skipping for perf/locking needed?)
-                // Updating progress map
+
                 await userRef.update({
                     [`badges.${badge.id}`]: {
                         badgeId: badge.id,
@@ -395,7 +432,6 @@ export const checkAndAwardBadges = async (userId: string, currentVenueId: string
 
     return newBadges;
 };
-
 
 /**
  * Log user activity and update user points in Firestore.
@@ -521,7 +557,8 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>) => {
         'originStory', 'insiderVibe', 'geoLoop',
         'isLowCapacity', 'isSoberFriendly',
         'makerType', 'physicalRoom', 'carryingMakers',
-        'isLocalMaker', 'localScore'
+        'isLocalMaker', 'localScore',
+        'isPaidLeagueMember' // Admin/Owner toggle
     ];
 
     const filteredUpdates: any = {};

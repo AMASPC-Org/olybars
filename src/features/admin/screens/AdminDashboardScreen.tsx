@@ -6,16 +6,18 @@ import {
 } from 'lucide-react';
 
 import { fetchAllUsers, fetchSystemStats, fetchRecentActivity } from '../../../services/userService';
-import { UserProfile, ActivityLog } from '../../../types';
+import { fetchVenues, updateVenueDetails } from '../../../services/venueService';
+import { UserProfile, ActivityLog, Venue } from '../../../types';
 
 interface AdminDashboardScreenProps {
     userProfile: any;
 }
 
 export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ userProfile }) => {
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'league' | 'system'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'venues' | 'league' | 'system'>('overview');
     const [systemStats, setSystemStats] = useState({ totalUsers: 0, activeUsers: 0, totalPoints: 0 });
     const [leagueUsers, setLeagueUsers] = useState<UserProfile[]>([]);
+    const [venues, setVenues] = useState<Venue[]>([]);
     const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -25,6 +27,8 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
             setSystemStats(stats);
             const users = await fetchAllUsers();
             setLeagueUsers(users);
+            const venueData = await fetchVenues();
+            setVenues(venueData);
             const activity = await fetchRecentActivity();
             setRecentActivity(activity);
         };
@@ -34,6 +38,22 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
     const filteredLeagueUsers = leagueUsers
         .filter(u => u.handle?.toLowerCase().includes(searchTerm.toLowerCase()) || u.uid.includes(searchTerm))
         .sort((a, b) => (b.stats?.seasonPoints || 0) - (a.stats?.seasonPoints || 0));
+
+    const filteredVenues = venues
+        .filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase()) || v.id.includes(searchTerm))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+    const onToggleVenueMembership = async (venueId: string, currentStatus: boolean) => {
+        // Optimistic Update
+        setVenues(prev => prev.map(v => v.id === venueId ? { ...v, isPaidLeagueMember: !currentStatus } : v));
+        try {
+            await updateVenueDetails(venueId, { isPaidLeagueMember: !currentStatus });
+        } catch (error) {
+            console.error('Failed to toggle membership', error);
+            // Revert
+            setVenues(prev => prev.map(v => v.id === venueId ? { ...v, isPaidLeagueMember: currentStatus } : v));
+        }
+    };
 
     const stats = [
         { label: 'Total Users', value: systemStats.totalUsers.toLocaleString(), icon: Users, color: 'text-blue-400' },
@@ -131,6 +151,59 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                     </div>
                                 ))
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'venues' && (
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center bg-black/20 p-3 rounded-xl border border-white/5">
+                            <h2 className="text-lg font-black font-league uppercase">Venue Roster</h2>
+                            <div className="relative">
+                                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="text"
+                                    placeholder="Find Venue..."
+                                    className="bg-slate-800 border-none rounded-lg py-2 pl-9 pr-4 text-xs font-bold text-white focus:ring-1 focus:ring-primary outline-none"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="text-[9px] text-slate-500 uppercase tracking-widest border-b border-white/10">
+                                        <th className="p-3">Venue Name</th>
+                                        <th className="p-3">ID</th>
+                                        <th className="p-3 text-center">Paid Member</th>
+                                        <th className="p-3 text-right">Visible</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {filteredVenues.map((venue) => (
+                                        <tr key={venue.id} className="hover:bg-white/5 transition-colors">
+                                            <td className="p-3 font-bold text-white">{venue.name}</td>
+                                            <td className="p-3 font-mono text-[10px] text-slate-500">{venue.id}</td>
+                                            <td className="p-3 text-center">
+                                                <button
+                                                    onClick={() => onToggleVenueMembership(venue.id, !!venue.isPaidLeagueMember)}
+                                                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${venue.isPaidLeagueMember
+                                                        ? 'bg-primary text-black shadow-[0_0_10px_rgba(251,191,36,0.5)]'
+                                                        : 'bg-slate-800 text-slate-500 hover:bg-slate-700'
+                                                        }`}
+                                                >
+                                                    {venue.isPaidLeagueMember ? 'Active' : 'Unpaid'}
+                                                </button>
+                                            </td>
+                                            <td className="p-3 text-right">
+                                                <div className={`w-2 h-2 rounded-full ml-auto ${venue.isVisible ? 'bg-green-500' : 'bg-red-500'}`} />
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 )}

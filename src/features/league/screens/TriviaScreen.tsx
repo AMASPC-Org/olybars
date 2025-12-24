@@ -10,6 +10,7 @@ import { performPlayCheckIn } from '../../../services/userService';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { VibeReceiptModal } from '../../social/components/VibeReceiptModal';
 import { VibeReceiptData, generateArtieHook } from '../../social/services/VibeReceiptService';
+import { CheatCodeWidget } from '../../history/components/CheatCodeWidget';
 
 interface TriviaScreenProps {
   venues: Venue[];
@@ -153,11 +154,14 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile 
                 onShare={() => console.log('Share', venue.id)}
                 onVibeChange={(v) => console.log('Vibe', venue.id, v)}
                 contextSlot={
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Trophy size={14} className="text-primary" />
-                      <span className="text-[10px] text-white font-black uppercase font-league">League Protocol Active</span>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Trophy size={14} className="text-primary" />
+                        <span className="text-[10px] text-white font-black uppercase font-league">League Protocol Active</span>
+                      </div>
                     </div>
+                    {venue.cheatCodeUrl && <CheatCodeWidget url={venue.cheatCodeUrl} />}
                   </div>
                 }
               />
@@ -207,6 +211,3 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile 
     </ArenaLayout>
   );
 };
-
-
-

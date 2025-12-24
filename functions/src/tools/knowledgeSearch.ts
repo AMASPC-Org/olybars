@@ -25,7 +25,15 @@ export const knowledgeSearch = ai.defineTool(
 
             const timeline = Object.entries(kb.history_timeline).map(([k, v]) => ({ question: `History: ${k}`, answer: v }));
             const market = Object.entries(kb.market_context).map(([k, v]) => ({ question: `Market Context: ${k}`, answer: v }));
-            const allKnowledge = [...kb.faq, ...timeline, ...market];
+            // Flatten strategy modules
+            const strategy = Object.entries(kb.strategy_modules || {}).flatMap(([moduleName, content]) =>
+                Object.entries(content).map(([k, v]) => {
+                    const valStr = Array.isArray(v) ? v.join(' ') : v;
+                    return { question: `Strategy (${moduleName}): ${k}`, answer: valStr as string };
+                })
+            );
+
+            const allKnowledge = [...kb.faq, ...timeline, ...market, ...strategy];
 
             return allKnowledge.filter(item => {
                 const combinedText = `${item.question} ${item.answer}`.toLowerCase();

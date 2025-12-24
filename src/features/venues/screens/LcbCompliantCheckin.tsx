@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Clock, Beer, AlertCircle } from 'lucide-react';
+import { PULSE_CONFIG } from '../../../config/pulse';
 
 interface Deal {
   id: string;
@@ -19,8 +20,8 @@ export const LcbCompliantCheckin: React.FC = () => {
 
   // Rule 3: Enforcement Logic
   const canCheckIn = useMemo(() => {
-    const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
-    const recentCheckIns = checkInTimestamps.filter(ts => ts > twelveHoursAgo);
+    const lcbWindowAgo = Date.now() - PULSE_CONFIG.WINDOWS.LCB_WINDOW;
+    const recentCheckIns = checkInTimestamps.filter(ts => ts > lcbWindowAgo);
     return recentCheckIns.length < 2;
   }, [checkInTimestamps]);
 
@@ -43,10 +44,11 @@ export const LcbCompliantCheckin: React.FC = () => {
 
   const sortedDeals = useMemo(() => {
     return [...deals].sort((a, b) => {
-      const aIsLong = a.timeRemaining > 4;
-      const bIsLong = b.timeRemaining > 4;
+      const priorityThreshold = PULSE_CONFIG.THRESHOLDS.BUZZ_CLOCK_PRIORITY / 60; // Convert mins to hours
+      const aIsLong = a.timeRemaining > priorityThreshold;
+      const bIsLong = b.timeRemaining > priorityThreshold;
 
-      // Primary Sort: Push > 4h to bottom
+      // Primary Sort: Push long-running deals to bottom
       if (aIsLong && !bIsLong) return 1;
       if (!aIsLong && bIsLong) return -1;
 
@@ -73,19 +75,18 @@ export const LcbCompliantCheckin: React.FC = () => {
             <span className="text-xs px-2 py-1 bg-rose-500/20 text-rose-400 rounded-full border border-rose-500/30">LOCKED (Rule 3)</span>
           )}
         </div>
-        
-        <button 
+
+        <button
           onClick={handleCheckIn}
           disabled={!canCheckIn}
-          className={`w-full py-3 px-4 rounded-lg font-bold transition-all duration-200 flex items-center justify-center gap-2 ${
-            canCheckIn 
-              ? 'bg-amber-500 text-slate-900 hover:bg-amber-400 active:scale-95 shadow-lg shadow-amber-500/20' 
-              : 'bg-slate-700 text-slate-500 cursor-not-allowed grayscale'
-          }`}
+          className={`w-full py-3 px-4 rounded-lg font-bold transition-all duration-200 flex items-center justify-center gap-2 ${canCheckIn
+            ? 'bg-amber-500 text-slate-900 hover:bg-amber-400 active:scale-95 shadow-lg shadow-amber-500/20'
+            : 'bg-slate-700 text-slate-500 cursor-not-allowed grayscale'
+            }`}
         >
           Check In Now
         </button>
-        
+
         {!canCheckIn && (
           <p className="mt-3 text-[10px] text-rose-400/80 leading-tight flex items-start gap-1">
             <AlertCircle className="w-3 h-3 mt-0.5" />
@@ -100,13 +101,12 @@ export const LcbCompliantCheckin: React.FC = () => {
         </h3>
         <div className="space-y-3">
           {sortedDeals.map(deal => (
-            <div 
-              key={deal.id} 
-              className={`p-3 rounded border flex justify-between items-center ${
-                deal.timeRemaining > 4 
-                  ? 'bg-slate-800/30 border-slate-700/50 opacity-60' 
-                  : 'bg-slate-800 border-slate-700'
-              }`}
+            <div
+              key={deal.id}
+              className={`p-3 rounded border flex justify-between items-center ${deal.timeRemaining > (PULSE_CONFIG.THRESHOLDS.BUZZ_CLOCK_PRIORITY / 60)
+                ? 'bg-slate-800/30 border-slate-700/50 opacity-60'
+                : 'bg-slate-800 border-slate-700'
+                }`}
             >
               <span className="font-roboto-condensed font-medium">{deal.name}</span>
               <span className={`text-xs font-mono ${deal.timeRemaining <= 1 ? 'text-rose-400 animate-pulse' : 'text-slate-400'}`}>

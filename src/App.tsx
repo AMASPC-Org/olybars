@@ -60,6 +60,9 @@ import MerchStandScreen from './features/merch/screens/MerchStandScreen';
 import MerchDetailScreen from './features/merch/screens/MerchDetailScreen';
 import VoucherRedemptionScreen from './features/merch/screens/VoucherRedemptionScreen';
 import ScrollToTop from './components/layout/ScrollToTop';
+import { HistoryFeedScreen } from './features/history/screens/HistoryFeedScreen';
+import { HistoryArticleScreen } from './features/history/screens/HistoryArticleScreen';
+import { PulsePlaybookScreen } from './features/marketing/screens/PulsePlaybookScreen';
 
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
@@ -539,6 +542,10 @@ export default function OlyBarsApp() {
                       : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
                   }
                 />
+                <Route path="history" element={<HistoryFeedScreen />} />
+                <Route path="history/:slug" element={<HistoryArticleScreen venues={venues} />} />
+                <Route path="playbook" element={<PulsePlaybookScreen />} />
+                <Route path="pulse-playbook" element={<PulsePlaybookScreen />} />
               </Route>
             </Routes>
 
