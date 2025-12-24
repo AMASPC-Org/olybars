@@ -96,7 +96,21 @@ export interface Venue {
   historySnippet?: string;
   relatedBlogIds?: string[];
 
-  // Strategic Market Audit Fields (Dec 2025)
+  // Strategic Market Audit & Two-Tier Model (Dec 2025)
+  category: 'Dive' | 'Cocktail Lounge' | 'Brewery' | 'Restaurant Bar' | 'Club' | 'Arcade/Activity';
+
+  tier_config: {
+    is_directory_listed: boolean;   // Passed the Stool Test (Visible on Map)
+    is_league_eligible: boolean;    // "Anchor" status (Gamification enabled)
+  };
+
+  attributes: {
+    has_manned_bar: boolean;        // Hard requirement for listing
+    food_service: 'Full Kitchen' | 'Snacks' | 'None' | 'BYOF';
+    minors_allowed: boolean;        // Critical for dining/bar separation
+    noise_level: 'Conversational' | 'Lively' | 'Loud/Music';
+  };
+
   makerType?: 'Brewery' | 'Distillery' | 'Cidery' | 'Winery';
   physicalRoom?: boolean; // Yes/No - if No, mark as 'Production Only'
   insiderVibe?: string; // 2-sentence 'Insider Vibe' for the app listing

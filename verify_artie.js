@@ -1,7 +1,7 @@
 // Local verification script for Artie's Brain
 const url = 'http://localhost:3001/api/chat';
 const data = {
-    question: 'Who has the best happy hour in Olympia?',
+    question: "When is trivia night at Hannah's?",
     history: []
 };
 

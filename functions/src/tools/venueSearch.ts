@@ -12,7 +12,12 @@ const db = getFirestore();
 const VenueSchema = z.object({
     name: z.string(),
     description: z.string().optional(),
-    happyHour: z.string().optional(),
+    happyHour: z.object({
+        startTime: z.string(),
+        endTime: z.string(),
+        description: z.string(),
+        days: z.array(z.string()).optional(),
+    }).optional().nullable(),
     vibe: z.string().optional(),
     status: z.string().optional(),
     makerType: z.string().optional(),
@@ -20,6 +25,19 @@ const VenueSchema = z.object({
     originStory: z.string().optional(),
     insiderVibe: z.string().optional(),
     address: z.string().optional(),
+    leagueEvent: z.string().optional().nullable(),
+    triviaTime: z.string().optional(),
+    category: z.string().optional(),
+    tier_config: z.object({
+        is_directory_listed: z.boolean(),
+        is_league_eligible: z.boolean(),
+    }).optional(),
+    attributes: z.object({
+        has_manned_bar: z.boolean(),
+        food_service: z.string(),
+        minors_allowed: z.boolean(),
+        noise_level: z.string(),
+    }).optional(),
 });
 
 const VenueInputSchema = z.object({
@@ -43,7 +61,7 @@ export const venueSearch = ai.defineTool(
                 return {
                     name: data.name || 'Unknown',
                     description: data.description || '',
-                    happyHour: data.happyHour || '',
+                    happyHour: data.happyHour || null,
                     vibe: data.vibe || 'chill',
                     status: data.status || 'unknown',
                     // Maker Data
@@ -51,7 +69,12 @@ export const venueSearch = ai.defineTool(
                     isLocalMaker: data.isLocalMaker || false,
                     originStory: data.originStory || '',
                     insiderVibe: data.insiderVibe || '',
-                    address: data.address || ''
+                    address: data.address || '',
+                    leagueEvent: data.leagueEvent || null,
+                    triviaTime: data.triviaTime || '',
+                    category: data.category || '',
+                    tier_config: data.tier_config || undefined,
+                    attributes: data.attributes || undefined
                 };
             });
 

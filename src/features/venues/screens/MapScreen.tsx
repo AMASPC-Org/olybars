@@ -83,7 +83,9 @@ const MapScreen = () => {
       if (venue.isActive === false || venue.isVisible === false) return; // Ghost List filter
       if (venue.physicalRoom === false) return; // Production Only filter for Map
 
+      const isLeagueAnchor = venue.tier_config?.is_league_eligible;
       const isBuzzing = venue.status === 'buzzing';
+
       const marker = new (window as any).google.maps.Marker({
         position: { lat: venue.location.lat, lng: venue.location.lng },
         map: map,
@@ -91,16 +93,18 @@ const MapScreen = () => {
         label: {
           text: venue.name,
           color: "#ffffff",
-          fontSize: "10px",
-          fontWeight: "900",
+          fontSize: isLeagueAnchor ? "11px" : "9px",
+          fontWeight: isLeagueAnchor ? "900" : "500",
         },
         icon: {
-          path: (window as any).google.maps.SymbolPath.CIRCLE,
-          scale: isBuzzing ? 12 : 9,
-          fillColor: isBuzzing ? "#fbbf24" : "#94a3b8",
+          path: isLeagueAnchor
+            ? (window as any).google.maps.SymbolPath.CIRCLE
+            : (window as any).google.maps.SymbolPath.BACKWARD_CLOSED_ARROW, // Different shape for social
+          scale: isLeagueAnchor ? (isBuzzing ? 14 : 11) : 8,
+          fillColor: isLeagueAnchor ? "#fbbf24" : "#64748b", // Gold for anchors, slate for directory
           fillOpacity: 1,
-          strokeWeight: 2,
-          strokeColor: "#0f172a",
+          strokeWeight: isLeagueAnchor ? 3 : 1,
+          strokeColor: isLeagueAnchor ? "#0f172a" : "#ffffff",
           labelOrigin: new (window as any).google.maps.Point(0, 3)
         },
       });
@@ -108,12 +112,22 @@ const MapScreen = () => {
       let infoWindow = new (window as any).google.maps.InfoWindow();
 
       marker.addListener('click', () => {
+        const tierTag = isLeagueAnchor ? '[LEAGUE READY]' : '[SOCIAL/DINING]';
         const contentString = `
-          <div style="padding: 8px; color: #0f172a;">
-            <h3 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 900;">${venue.name}</h3>
-            <p style="margin: 0; font-size: 12px; color: #64748b;">${venue.status.toUpperCase()} • ${venue.vibe}</p>
-            <div style="margin-top: 8px; text-align: right;">
-               <button id="view-listing-${venue.id}" style="background: #0f172a; color: #fbbf24; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase;">
+          <div style="padding: 12px; color: #0f172a; max-width: 200px; font-family: 'Roboto Condensed', sans-serif;">
+            <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+              <span style="background: ${isLeagueAnchor ? '#fbbf24' : '#e2e8f0'}; color: #000; font-size: 8px; font-weight: 900; padding: 2px 4px; border-radius: 4px;">
+                ${venue.category?.toUpperCase() || 'BAR'}
+              </span>
+              <span style="color: ${isLeagueAnchor ? '#1e293b' : '#64748b'}; font-size: 8px; font-weight: bold;">
+                ${tierTag}
+              </span>
+            </div>
+            <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 900; font-family: 'Oswald', sans-serif; text-transform: uppercase;">${venue.name}</h3>
+            <p style="margin: 0; font-size: 11px; color: #475569; line-height: 1.2;">${venue.vibe}</p>
+            ${venue.attributes?.minors_allowed ? '<p style="margin: 4px 0 0 0; font-size: 10px; color: #059669; font-weight: bold;">✓ Minors Allowed</p>' : ''}
+            <div style="margin-top: 12px;">
+               <button id="view-listing-${venue.id}" style="width: 100%; background: #0f172a; color: #fbbf24; border: none; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;">
                  View Listing
                </button>
             </div>
