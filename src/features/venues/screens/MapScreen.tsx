@@ -86,6 +86,12 @@ const MapScreen = () => {
       const isLeagueAnchor = venue.tier_config?.is_league_eligible;
       const isBuzzing = venue.status === 'buzzing';
 
+      const BEER_MUG_PATH = "M4,3h12v15c0,2.2-1.8,4-4,4H8c-2.2,0-4-1.8-4-4V3z M16,6h2c1.7,0,3,1.3,3,3v4c0,1.7-1.3,3-3,3h-2";
+
+      const showBeerMug = venue.establishmentType === 'Bar Only' ||
+        venue.establishmentType === 'Bar & Restaurant' ||
+        (!venue.establishmentType && isLeagueAnchor);
+
       const marker = new (window as any).google.maps.Marker({
         position: { lat: venue.location.lat, lng: venue.location.lng },
         map: map,
@@ -97,15 +103,16 @@ const MapScreen = () => {
           fontWeight: isLeagueAnchor ? "900" : "500",
         },
         icon: {
-          path: isLeagueAnchor
-            ? (window as any).google.maps.SymbolPath.CIRCLE
-            : (window as any).google.maps.SymbolPath.BACKWARD_CLOSED_ARROW, // Different shape for social
-          scale: isLeagueAnchor ? (isBuzzing ? 14 : 11) : 8,
+          path: showBeerMug
+            ? BEER_MUG_PATH
+            : (window as any).google.maps.SymbolPath.CIRCLE, // Simplified from arrow to circle
+          scale: showBeerMug ? (isBuzzing ? 1.4 : 1.1) : 7,
           fillColor: isLeagueAnchor ? "#fbbf24" : "#64748b", // Gold for anchors, slate for directory
           fillOpacity: 1,
-          strokeWeight: isLeagueAnchor ? 3 : 1,
+          strokeWeight: isLeagueAnchor ? 2 : 1,
           strokeColor: isLeagueAnchor ? "#0f172a" : "#ffffff",
-          labelOrigin: new (window as any).google.maps.Point(0, 3)
+          anchor: showBeerMug ? new (window as any).google.maps.Point(12, 12) : new (window as any).google.maps.Point(0, 0),
+          labelOrigin: showBeerMug ? new (window as any).google.maps.Point(12, 28) : new (window as any).google.maps.Point(0, 3)
         },
       });
 

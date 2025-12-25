@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Info, Phone, Globe, Instagram, Facebook, Twitter,
-    Save, Clock, MapPin, Mail, ChevronRight
+    Save, Clock, MapPin, Mail, ChevronRight, Beer
 } from 'lucide-react';
 import { Venue } from '../../../types';
 import { updateVenueDetails } from '../../../services/venueService';
@@ -26,9 +26,11 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         twitter: venue.twitter || '',
         vibe: venue.vibe || '',
         originStory: venue.originStory || '',
-        geoLoop: venue.geoLoop,
         isLowCapacity: venue.isLowCapacity || false,
-        isSoberFriendly: venue.isSoberFriendly || false
+        isSoberFriendly: venue.isSoberFriendly || false,
+        establishmentType: venue.establishmentType || 'Bar Only',
+        subtypes: venue.subtypes || [],
+        isVisible: venue.isVisible !== false
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -122,6 +124,44 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                             placeholder="The Council's Micro Reality Check..."
                             className="w-full bg-blue-900/10 border border-primary/30 rounded-xl py-3 px-4 text-sm text-blue-100 placeholder:text-blue-900/50 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all font-medium resize-none"
                         />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Establishment Type</label>
+                            <div className="relative group">
+                                <Beer className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4" />
+                                <select
+                                    name="establishmentType"
+                                    value={formData.establishmentType || 'Bar Only'}
+                                    onChange={(e: any) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-100 focus:border-primary/50 outline-none appearance-none cursor-pointer"
+                                >
+                                    <option value="Bar Only" className="bg-black">Bar Only</option>
+                                    <option value="Bar & Restaurant" className="bg-black">Bar & Restaurant</option>
+                                    <option value="Restaurant with Bar" className="bg-black">Restaurant with Bar</option>
+                                </select>
+                                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4 rotate-90" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Subtypes (Comma Separated)</label>
+                            <div className="relative group">
+                                <Info className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4" />
+                                <input
+                                    type="text"
+                                    name="subtypes"
+                                    value={Array.isArray(formData.subtypes) ? formData.subtypes.join(', ') : ''}
+                                    onChange={(e) => {
+                                        const types = e.target.value.split(',').map(s => s.trim()).filter(s => s !== '');
+                                        setFormData(prev => ({ ...prev, subtypes: types }));
+                                    }}
+                                    placeholder="Ex: Wine Bar, Martini Bar, Dive Bar"
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-100 placeholder:text-slate-800 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-all font-medium"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -236,6 +276,47 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                     <InputField label="Instagram Handle" name="instagram" value={formData.instagram} icon={Instagram} placeholder="@handle" />
                     <InputField label="Facebook Page" name="facebook" value={formData.facebook} icon={Facebook} placeholder="facebook.com/yourvenue" />
                     <InputField label="Twitter / X" name="twitter" value={formData.twitter} icon={Twitter} placeholder="@handle" />
+                </div>
+            </section>
+
+            {/* Visibility Strategy Section */}
+            <section className="space-y-6">
+                <div>
+                    <h3 className="text-xl font-black text-white uppercase font-league leading-none">VISIBILITY STRATEGY</h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest italic">Control your presence on the map</p>
+                </div>
+
+                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6">
+                    <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div className="flex-1">
+                            <h4 className="text-sm font-black text-white uppercase mb-2">Public Directory Status</h4>
+                            <p className="text-xs text-slate-400 leading-relaxed">
+                                <strong className="text-white">Active Listing:</strong> Visible to all users on the Map and List.<br />
+                                <strong className="text-white">Ghost Mode:</strong> Hidden from public view. Accessible only via direct link or QR code. Useful for soft launches or private events.
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-3 bg-black/40 p-1 rounded-xl border border-white/10">
+                            <button
+                                onClick={() => setFormData(prev => ({ ...prev, isVisible: true }))}
+                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${(formData as any).isVisible !== false
+                                        ? 'bg-primary text-black shadow-lg'
+                                        : 'text-slate-500 hover:text-white'
+                                    }`}
+                            >
+                                Public
+                            </button>
+                            <button
+                                onClick={() => setFormData(prev => ({ ...prev, isVisible: false }))}
+                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${(formData as any).isVisible === false
+                                        ? 'bg-red-500 text-white shadow-lg'
+                                        : 'text-slate-500 hover:text-white'
+                                    }`}
+                            >
+                                Ghost Mode
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </section>
 

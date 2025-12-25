@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     Shield, Users, BarChart3, Settings,
     Search, Filter, ExternalLink, Activity,
-    Database, AlertTriangle, CheckCircle2, QrCode // Added QrCode
+    Database, AlertTriangle, CheckCircle2, QrCode,
+    Eye, EyeOff, Power, Archive
 } from 'lucide-react';
 
 import { fetchAllUsers, fetchSystemStats, fetchRecentActivity } from '../../../services/userService';
@@ -28,6 +29,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
         enabled: activeTab === 'venues' || activeTab === 'overview',
     });
     const [searchTerm, setSearchTerm] = useState('');
+    const [venueFilter, setVenueFilter] = useState<'all' | 'visible' | 'ghost' | 'archived'>('all');
 
     useEffect(() => {
         const loadDashboard = async () => {
@@ -47,6 +49,12 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
 
     const filteredVenues = venues
         .filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase()) || v.id.includes(searchTerm))
+        .filter(v => {
+            if (venueFilter === 'visible') return v.isVisible !== false && v.isActive !== false;
+            if (venueFilter === 'ghost') return v.isVisible === false && v.isActive !== false;
+            if (venueFilter === 'archived') return v.isActive === false;
+            return true;
+        })
         .sort((a, b) => a.name.localeCompare(b.name));
 
     const onToggleVenueMembership = async (venueId: string, currentStatus: boolean) => {
@@ -60,6 +68,36 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
             queryClient.invalidateQueries({ queryKey: ['venues'] });
         } catch (error) {
             console.error('Failed to toggle membership', error);
+            queryClient.invalidateQueries({ queryKey: ['venues'] });
+        }
+    };
+
+    const onToggleVisibility = async (venueId: string, currentStatus: boolean) => {
+        // Optimistic Update
+        queryClient.setQueryData(['venues'], (old: Venue[] | undefined) => {
+            return old?.map(v => v.id === venueId ? { ...v, isVisible: !currentStatus } : v);
+        });
+
+        try {
+            await updateVenueDetails(venueId, { isVisible: !currentStatus });
+            queryClient.invalidateQueries({ queryKey: ['venues'] });
+        } catch (error) {
+            console.error('Failed to toggle visibility', error);
+            queryClient.invalidateQueries({ queryKey: ['venues'] });
+        }
+    };
+
+    const onToggleActivity = async (venueId: string, currentStatus: boolean) => {
+        // Optimistic Update
+        queryClient.setQueryData(['venues'], (old: Venue[] | undefined) => {
+            return old?.map(v => v.id === venueId ? { ...v, isActive: !currentStatus } : v);
+        });
+
+        try {
+            await updateVenueDetails(venueId, { isActive: !currentStatus });
+            queryClient.invalidateQueries({ queryKey: ['venues'] });
+        } catch (error) {
+            console.error('Failed to toggle activity', error);
             queryClient.invalidateQueries({ queryKey: ['venues'] });
         }
     };
@@ -168,6 +206,18 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                     <div className="space-y-4">
                         <div className="flex justify-between items-center bg-black/20 p-3 rounded-xl border border-white/5">
                             <h2 className="text-lg font-black font-league uppercase">Venue Roster</h2>
+                            <div className="flex gap-2 mr-4">
+                                {(['all', 'visible', 'ghost', 'archived'] as const).map(f => (
+                                    <button
+                                        key={f}
+                                        onClick={() => setVenueFilter(f)}
+                                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${venueFilter === f ? 'bg-primary text-black' : 'text-slate-500 hover:text-white bg-black/40'
+                                            }`}
+                                    >
+                                        {f}
+                                    </button>
+                                ))}
+                            </div>
                             <div className="relative">
                                 <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                                 <input
@@ -187,13 +237,17 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                         <th className="p-3">Venue Name</th>
                                         <th className="p-3">ID</th>
                                         <th className="p-3 text-center">Paid Member</th>
-                                        <th className="p-3 text-right">Visible</th>
+                                        <th className="p-3 text-center">Ghost Mode</th>
+                                        <th className="p-3 text-right">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {filteredVenues.map((venue) => (
                                         <tr key={venue.id} className="hover:bg-white/5 transition-colors">
-                                            <td className="p-3 font-bold text-white">{venue.name}</td>
+                                            <td className="p-3">
+                                                <div className="font-bold text-white">{venue.name}</div>
+                                                <div className="text-[9px] text-slate-500 uppercase">{venue.vibe}</div>
+                                            </td>
                                             <td className="p-3 font-mono text-[10px] text-slate-500">{venue.id}</td>
                                             <td className="p-3 text-center">
                                                 <button
@@ -206,8 +260,29 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                                     {venue.isPaidLeagueMember ? 'Active' : 'Unpaid'}
                                                 </button>
                                             </td>
+                                            <td className="p-3 text-center">
+                                                <button
+                                                    onClick={() => onToggleVisibility(venue.id, venue.isVisible !== false)}
+                                                    className={`p-2 rounded-lg transition-all ${venue.isVisible !== false
+                                                            ? 'text-slate-600 hover:text-white'
+                                                            : 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
+                                                        }`}
+                                                    title={venue.isVisible !== false ? "Visible Publicly" : "Ghost Mode (Hidden)"}
+                                                >
+                                                    {venue.isVisible !== false ? <Eye size={16} /> : <EyeOff size={16} />}
+                                                </button>
+                                            </td>
                                             <td className="p-3 text-right">
-                                                <div className={`w-2 h-2 rounded-full ml-auto ${venue.isVisible ? 'bg-green-500' : 'bg-red-500'}`} />
+                                                <button
+                                                    onClick={() => onToggleActivity(venue.id, venue.isActive !== false)}
+                                                    className={`p-2 rounded-lg transition-all ${venue.isActive !== false
+                                                            ? 'text-green-500 hover:text-green-400'
+                                                            : 'text-slate-600 hover:text-white'
+                                                        }`}
+                                                    title={venue.isActive !== false ? "Active" : "Archived"}
+                                                >
+                                                    {venue.isActive !== false ? <Power size={16} /> : <Archive size={16} />}
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}

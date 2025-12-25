@@ -36,7 +36,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
             isOpen: isVenueOpen(v),
             hourStatus: getVenueStatus(v),
             distance: coords && v.location ? metersToMiles(calculateDistance(coords.latitude, coords.longitude, v.location.lat, v.location.lng)) : null
-        }));
+        })).filter(v => v.isActive !== false); // Filter out Soft Deleted / Archived venues
 
         // 1. Search Filter
         if (searchQuery) {

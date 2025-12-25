@@ -126,6 +126,8 @@ export interface Venue {
     partnerVenues: string[]; // IDs of bars where they are typically tapped
     badgeId: string;
   }[];
+  establishmentType?: 'Bar Only' | 'Bar & Restaurant' | 'Restaurant with Bar';
+  subtypes?: string[];
 }
 
 export interface Message {
