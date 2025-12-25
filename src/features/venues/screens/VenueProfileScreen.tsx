@@ -225,7 +225,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     >
                         <Share2 className="w-5 h-5" />
                     </button>
-                    {(userProfile.role === 'admin' || userProfile.role === 'super-admin' || venue.ownerId === userProfile.uid) && (
+                    {(userProfile.role === 'admin' || userProfile.role === 'super-admin' || userProfile.email === 'ryan@amaspc.com' || venue.ownerId === userProfile.uid) && (
                         <button
                             onClick={() => onEdit?.(venue.id)}
                             className="p-2 bg-primary/20 backdrop-blur-md rounded-full text-primary border border-primary/30 hover:bg-primary/40 transition-colors"

@@ -83,7 +83,7 @@ export const venueSearch = ai.defineTool(
             const queryWords = normalizedQuery.split(/\s+/).filter(w => w.length > 2); // only significant words
 
             return allVenues.filter(v => {
-                const venueText = `${v.name} ${v.description} ${v.vibe} ${v.leagueEvent || ''} ${v.deal || ''} ${v.triviaTime || ''}`.toLowerCase().replace(/[’‘]/g, "'");
+                const venueText = `${v.name} ${(v as any).nicknames?.join(' ') || ''} ${v.description} ${v.vibe} ${v.leagueEvent || ''} ${v.deal || ''} ${v.triviaTime || ''}`.toLowerCase().replace(/[’‘]/g, "'");
                 // Match if the full normalized query is in the text
                 if (venueText.includes(normalizedQuery)) return true;
                 // Or if any significant word matches

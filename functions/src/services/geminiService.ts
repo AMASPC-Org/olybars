@@ -52,7 +52,12 @@ DIRECTIVES:
                             1. SAFETY CHECK: If input implies self-harm/intoxication, output "SAFETY".
                             2. INTENT CHECK: If user wants to search venues/bars/happy hours, output "SEARCH: [keywords]".
                             3. KNOWLEDGE CHECK: If user asks about league rules, app help, or how things work (FAQ), output "PLAYBOOK: [keywords]".
-                            4. VENUE OPS: If user (VENUE OWNER) wants to update their venue info (flash deals, hours, contact), output "VENUE_OPS: [keywords]".
+                            4. VENUE_OPS: If user (VENUE OWNER) wants to update their venue info, output "VENUE_OPS: [skill_id] [keywords]". 
+                               Available Skills: 
+                               - update_flash_deal (post deals, specials)
+                               - update_hours (change operating hours)
+                               - update_happy_hour (change happy hour times/deals)
+                               - add_event (add trivia, music, etc.)
                             5. ELSE: Output "CHAT".
                             Input: "${question}"`
                 }]
@@ -62,10 +67,11 @@ DIRECTIVES:
         return triageResponse.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase() || 'CHAT';
     }
 
-    async generateArtieResponse(model: string, contents: any[], temperature: number = 0.7) {
+    async generateArtieResponse(model: string, contents: any[], temperature: number = 0.7, systemInstruction?: string) {
         const response = await this.genAI.models.generateContent({
             model,
             contents,
+            systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
             config: { temperature }
         });
         return response.candidates?.[0]?.content?.parts?.[0]?.text;

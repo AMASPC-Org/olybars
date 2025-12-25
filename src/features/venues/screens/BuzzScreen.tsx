@@ -93,14 +93,14 @@ export const BuzzScreen: React.FC<{
     return true;
   };
 
-  const venuesWithDistance = venues.map(v => ({
+  const venuesWithDistance = React.useMemo(() => venues.map(v => ({
     ...v,
     isOpen: isVenueOpen(v),
     hourStatus: getVenueStatus(v),
     distance: coords && v.location ? metersToMiles(calculateDistance(coords.latitude, coords.longitude, v.location.lat, v.location.lng)) : null
-  }));
+  })), [venues, coords]);
 
-  const filteredVenues = [...venuesWithDistance]
+  const filteredVenues = React.useMemo(() => [...venuesWithDistance]
     .filter(applyFilter)
     .sort((a, b) => {
       // 1. Featured Weighting (Primary Sort for Pulse)
@@ -132,7 +132,7 @@ export const BuzzScreen: React.FC<{
       }
 
       return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
-    });
+    }), [venuesWithDistance, filterKind, statusFilter]);
 
   // --- NEW LOGIC: Buzz Clock (Happy Hours) & Flash Deals ---
   const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];

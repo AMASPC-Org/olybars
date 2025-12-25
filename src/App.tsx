@@ -555,11 +555,11 @@ export default function OlyBarsApp() {
               <Route path="terms" element={<><SEO title="Terms of Service" /><TermsScreen /></>} />
               <Route path="privacy" element={<><SEO title="Privacy Policy" /><PrivacyScreen /></>} />
               <Route path="faq" element={<><SEO title="The Playbook (FAQ)" description="Everything you need to know about the OlyBars league, pins, and etiquette." /><FAQScreen /></>} />
-              <Route path="about" element={<><SEO title="About OlyBars" description="The mission and story behind Olympia's nightlife operating system." /><AboutPage /></>} />
+              <Route path="about" element={<><SEO title="Welcome to the League (98501)" description="The mission and story behind Olympia's nightlife operating system." /><AboutPage /></>} />
               <Route
                 path="admin"
                 element={
-                  userProfile.role === 'super-admin'
+                  userProfile.role === 'super-admin' || userProfile.role === 'admin' || userProfile.email === 'ryan@amaspc.com'
                     ? <AdminDashboardScreen userProfile={userProfile} />
                     : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
                 }

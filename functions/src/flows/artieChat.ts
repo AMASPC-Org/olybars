@@ -48,82 +48,82 @@ export const artieChatLogic = genkitAi.defineFlow({
         // Fetch Real-time Pulse
         const pulseContext = await ArtieContextService.getPulsePromptSnippet();
 
-        const baseContents = [
-            {
-                role: 'user',
-                parts: [{
-                    text: `${GeminiService.ARTIE_PERSONA}\n\n${pulseContext}\n\n[TIME RESOLVABILITY]\nUse the 'Timestamp' in the context to resolve relative time questions (e.g., "today", "tomorrow", "tonight"). For tomorrow's events, look for 'Upcoming Events' or venues with tomorrow-aligned schedules.`
-                }]
-            },
-            ...history.map(h => ({
-                role: h.role,
-                parts: [{ text: h.content }]
-            }))
-        ];
+        // 2. Sanitize and build history
+        // IMPORTANT: Strip [ACTION] tags from history so the model doesn't get confused 
+        // by its own previous JSON outputs when we want it to follow new instructions.
+        const cleanContents = history.map(h => ({
+            role: h.role,
+            parts: [{ text: h.content.split('[ACTION]:')[0].trim() }]
+        }));
 
-        // 2. Playbook/FAQ Intent
+        const systemBase = `${GeminiService.ARTIE_PERSONA}\n\n${pulseContext}\n\n[TIME RESOLVABILITY]\nUse the 'Timestamp' in the context to resolve relative time questions (e.g., "today", "tomorrow", "tonight").\n\n[SUGGESTIONS PROTOCOL]\nAt the end of EVERY response, you MUST provide 2-3 short, clickable follow-up "Suggestion Bubbles" for the user. These should be relevant to the context (e.g., if you just updated a deal, suggest "What's the happy hour?" or "Show me the map"). Use this format on its own line:\n[SUGGESTIONS]: ["Suggestion 1", "Suggestion 2"]`;
+
+        // 3. Playbook/FAQ Intent
         if (rawTriage.includes('PLAYBOOK')) {
             const kbKeywords = rawTriage.split('PLAYBOOK:')[1]?.trim().toLowerCase() || question;
             const kbResult = await knowledgeSearch({ query: kbKeywords });
 
-            baseContents.push({
+            cleanContents.push({
                 role: 'user',
                 parts: [{ text: `User Query: ${question}\n\nOlyBars Playbook Knowledge: ${JSON.stringify(kbResult)}` }]
             });
 
-            return await service.generateArtieResponse('gemini-2.0-flash', baseContents, 0.4)
+            return await service.generateArtieResponse('gemini-2.0-flash', cleanContents, 0.4, systemBase)
                 || "I've got the playbook right here, but I'm blanking. Ask me about league rules again?";
         }
 
-        // 3. Search Intent
+        // 4. Search Intent
         if (rawTriage.includes('SEARCH')) {
             const searchKeywords = rawTriage.split('SEARCH:')[1]?.trim().toLowerCase() || question;
             const queryResult = await venueSearch({ query: searchKeywords });
 
-            baseContents.push({
+            cleanContents.push({
                 role: 'user',
                 parts: [{ text: `User Query: ${question}\n\nVenue Search Data: ${JSON.stringify(queryResult)}` }]
             });
 
-            return await service.generateArtieResponse('gemini-2.0-flash', baseContents, 0.5)
+            return await service.generateArtieResponse('gemini-2.0-flash', cleanContents, 0.5, systemBase)
                 || "I found some spots, but my voice is a bit dry. Try asking again?";
         }
 
-        // 4. Venue Ops Intent
+        // 5. Venue Ops Intent
         if (rawTriage.includes('VENUE_OPS')) {
             if (!userId || (userRole !== 'owner' && userRole !== 'manager' && userRole !== 'super-admin' && userRole !== 'admin')) {
                 return "I'd love to help with that, but I'm only allowed to take orders from Venue Operators or League Officials. Want to join the league?";
             }
 
-            // [STUB] For Now, Artie summarizes what they want to do
-            // In a future sprint, this will trigger the ProposeAction UI
-            const actionTarget = rawTriage.split('VENUE_OPS:')[1]?.trim() || question;
+            const { ARTIE_SKILLS } = await import('../config/artieSkills');
+            const triageParts = rawTriage.split('VENUE_OPS:')[1]?.trim().toLowerCase().split(' ') || [];
+            const skillId = triageParts[0];
+            const skill = ARTIE_SKILLS[skillId] || ARTIE_SKILLS['update_flash_deal']; // Fallback to flash deal for safety
 
-            baseContents.push({
-                role: 'user',
-                parts: [{
-                    text: `User (Operator ${userId}) wants to update: ${actionTarget}. 
-                Respond as Artie acknowledging the request and stating that a confirmation link has been prepared (Stubbed for prototype). 
-                Ask them to verify the change details.` }]
-            });
+            const venueOpsSystem = `${systemBase}\n\nSYSTEM INSTRUCTION for VENUE_OPS (Operator ${userId}):
+            You are helping a venue operator (Home Base: ${userRole === 'admin' || userRole === 'super-admin' ? 'Global Admin' : 'Home Base Search Req'}) with the following skill: **${skill.name}**.
+            
+            DESCRIPTION: ${skill.description}
+            
+            STRICT PROTOCOL:
+            ${skill.protocol}
+            
+            1. DO NOT GENERATE THE [ACTION] TAG if ANY required detail is missing.
+            
+            2. If the user provides partial info, POLITELY ask for the rest. Do not be a robot; stay in Artie's persona.
+            
+            3. If the user presents a correction ("Draft Correction: ..."), acknowledge it and RE-EVALUATE if the final data is complete.
+            
+            4. ONLY when ready, append the tag on its own line:
+               ${skill.actionTemplate.replace('{{venueId}}', '<TARGET_VENUE_ID_OR_HOMEBASE>')}
+               
+            Remember: Use the venueId if known, otherwise the system will fallback.`;
 
-            const artieResponse = await service.generateArtieResponse('gemini-2.0-flash', baseContents, 0.4)
-                || "Got it, Boss! I'll get that update ready for your signal.";
+            cleanContents.push({ role: 'user', parts: [{ text: question }] });
 
-            // For now, simulate the action payload for the frontend to pick up
-            const actionPayload = {
-                type: 'VENUE_UPDATE',
-                action: 'CONFIRM_FLASH_DEAL',
-                summary: actionTarget,
-                timestamp: new Date().toISOString()
-            };
-
-            return `${artieResponse}\n\n[ACTION]: ${JSON.stringify(actionPayload)}`;
+            return await service.generateArtieResponse('gemini-2.0-flash', cleanContents, 0.1, venueOpsSystem);
         }
 
-        // 5. General Chat
-        baseContents.push({ role: 'user', parts: [{ text: question }] });
-        return await service.generateArtieResponse('gemini-2.0-flash', baseContents, 0.7) || "Cheers!";
+        // 6. General Chat
+        cleanContents.push({ role: 'user', parts: [{ text: question }] });
+        return await service.generateArtieResponse('gemini-2.0-flash', cleanContents, 0.7, systemBase) || "Cheers!";
 
     } catch (e: any) {
         console.error("Artie Generative Error:", e);

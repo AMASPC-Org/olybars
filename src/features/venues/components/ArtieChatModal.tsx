@@ -11,10 +11,9 @@ interface ArtieChatModalProps {
 }
 
 interface ArtieAction {
+    skill: string;
+    params: Record<string, any>;
     venueId?: string;
-    summary?: string;
-    details?: string;
-    price?: string;
 }
 
 export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, userProfile }) => {
@@ -22,6 +21,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
     const { showToast } = useToast();
     const [input, setInput] = useState('');
     const [pendingAction, setPendingAction] = useState<ArtieAction | null>(null);
+    const [suggestions, setSuggestions] = useState<string[]>([]);
     const [actionStatus, setActionStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -31,26 +31,48 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
     useEffect(() => {
         scrollToBottom();
-        // Check for pending actions in the last message
+        // Check for pending actions or suggestions in the last message
         const lastMessage = messages[messages.length - 1];
-        if (lastMessage?.role === 'model' && lastMessage.content.includes('[ACTION]:')) {
-            try {
-                const actionJson = lastMessage.content.split('[ACTION]:')[1].trim();
-                const action = JSON.parse(actionJson) as ArtieAction;
-                setPendingAction(action);
-            } catch (e) {
-                console.error("Failed to parse Artie action:", e);
+        if (lastMessage?.role === 'model') {
+            // Actions
+            if (lastMessage.content.includes('[ACTION]:')) {
+                try {
+                    const actionJson = lastMessage.content.split('[ACTION]:')[1].trim();
+                    const action = JSON.parse(actionJson) as ArtieAction;
+                    setPendingAction(action);
+                } catch (e) {
+                    console.error("Failed to parse Artie action:", e);
+                }
+            }
+
+            // Suggestions
+            if (lastMessage.content.includes('[SUGGESTIONS]:')) {
+                try {
+                    const suggJson = lastMessage.content.split('[SUGGESTIONS]:')[1].trim();
+                    const suggs = JSON.parse(suggJson) as string[];
+                    setSuggestions(suggs);
+                } catch (e) {
+                    console.error("Failed to parse Artie suggestions:", e);
+                }
+            } else {
+                setSuggestions([]);
             }
         }
     }, [messages, isLoading]);
 
-    const handleSend = async () => {
-        if (!input.trim() || isLoading) return;
-        const userText = input.trim();
+    const handleSend = async (text?: string) => {
+        const userText = text || input.trim();
+        if (!userText || isLoading) return;
+
         setInput('');
-        setPendingAction(null); // Clear pending action on new input
+        setPendingAction(null);
+        setSuggestions([]);
         setActionStatus('idle');
         await sendMessage(userText, userProfile?.uid, userProfile?.role);
+    };
+
+    const handleSuggestionClick = (suggestion: string) => {
+        handleSend(suggestion);
     };
 
     const handleConfirmAction = async () => {
@@ -68,15 +90,43 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                 return;
             }
 
-            await VenueOpsService.updateFlashDeal(venueId, {
-                title: pendingAction.summary || "Flash Deal",
-                description: pendingAction.details || "",
-                price: pendingAction.price || "",
-                isActive: true
-            });
+            let successMessage = "Update complete!";
+
+            switch (pendingAction.skill) {
+                case 'update_flash_deal':
+                    await VenueOpsService.updateFlashDeal(venueId, {
+                        title: pendingAction.params.summary,
+                        description: pendingAction.params.details,
+                        price: pendingAction.params.price,
+                        isActive: true
+                    });
+                    successMessage = `FLASH DEAL: ${pendingAction.params.summary} is now LIVE!`;
+                    break;
+                case 'update_hours':
+                    await VenueOpsService.updateHours(venueId, pendingAction.params.hours);
+                    successMessage = `OFFICIAL HOURS: Updated to ${pendingAction.params.hours}`;
+                    break;
+                case 'update_happy_hour':
+                    await VenueOpsService.updateHappyHour(venueId, {
+                        schedule: pendingAction.params.schedule,
+                        specials: pendingAction.params.specials
+                    });
+                    successMessage = `HAPPY HOUR: ${pendingAction.params.schedule} is now set!`;
+                    break;
+                case 'add_event':
+                    await VenueOpsService.addEvent(venueId, {
+                        type: pendingAction.params.type,
+                        time: pendingAction.params.time,
+                        description: pendingAction.params.description
+                    });
+                    successMessage = `NEW EVENT: ${pendingAction.params.type} added for ${pendingAction.params.time}!`;
+                    break;
+                default:
+                    throw new Error(`Unknown skill: ${pendingAction.skill}`);
+            }
 
             setActionStatus('success');
-            showToast(`SUCCESS: ${pendingAction.summary} is now LIVE!`, 'success');
+            showToast(`SUCCESS: ${successMessage}`, 'success');
 
             // Auto-clear success message after 3 seconds
             setTimeout(() => {
@@ -87,6 +137,23 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
             console.error("Action Failed:", e);
             showToast(`Action failed: ${e.message}`, 'error');
             setActionStatus('error');
+        }
+    };
+
+    const handleEditAction = () => {
+        if (!pendingAction) return;
+
+        // Simplify Edit template for better parsing
+        const editContent = `Draft Correction: "${pendingAction.params.summary || pendingAction.params.hours || pendingAction.params.type}". Let's change it to: `;
+
+        setInput(editContent);
+        setPendingAction(null);
+        setActionStatus('idle');
+
+        // Focus the input field
+        const inputElement = document.querySelector('input[placeholder="Ask Artie..."]') as HTMLInputElement;
+        if (inputElement) {
+            inputElement.focus();
         }
     };
 
@@ -136,7 +203,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                 ? 'bg-primary text-black rounded-tr-none'
                                 : 'bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none'
                                 }`}>
-                                {m.content.split('[ACTION]:')[0].trim()}
+                                {m.content.split('[ACTION]:')[0].split('[SUGGESTIONS]:')[0].trim()}
                             </div>
                         </div>
                     ))}
@@ -167,9 +234,16 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                             {actionStatus === 'loading' ? 'Deploying...' : 'Deploy Now'}
                                         </button>
                                         <button
+                                            onClick={handleEditAction}
+                                            disabled={actionStatus === 'loading'}
+                                            className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-black text-[10px] py-2 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50"
+                                        >
+                                            Edit
+                                        </button>
+                                        <button
                                             onClick={() => setPendingAction(null)}
                                             disabled={actionStatus === 'loading'}
-                                            className="px-4 bg-slate-700 hover:bg-slate-600 text-white font-black text-[10px] py-2 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50"
+                                            className="px-4 bg-slate-800 hover:bg-slate-700 text-slate-400 font-black text-[10px] py-2 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50"
                                         >
                                             Cancel
                                         </button>
@@ -197,8 +271,23 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input */}
-                <div className="p-4 bg-surface border-t border-white/5">
+                {/* Input Area */}
+                <div className="p-4 bg-surface border-t border-white/5 space-y-3">
+                    {/* Suggestions */}
+                    {!isLoading && suggestions.length > 0 && (
+                        <div className="flex flex-wrap gap-2 justify-center animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            {suggestions.map((s, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => handleSuggestionClick(s)}
+                                    className="bg-slate-800 hover:bg-slate-700 text-primary text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full border border-primary/20 transition-all active:scale-95"
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
                     <div className="flex gap-2 bg-black/40 border-2 border-slate-800 focus-within:border-primary/50 rounded-2xl p-1.5 transition-all">
                         <input
                             type="text"

@@ -20,7 +20,8 @@ export interface Venue {
   type: string;
   status: VenueStatus;
   checkIns: number;
-  isPaidLeagueMember?: boolean; // Paid "Venue League Member" status (vs Unpaid Venue)
+  isPaidLeagueMember?: boolean;
+  nicknames?: string[]; // [NEW] AI Resolution Helper // Paid "Venue League Member" status (vs Unpaid Venue)
 
   // Legacy/Computed fields for Frontend
   deal?: string;         // Title of active, approved flash deal

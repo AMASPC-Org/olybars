@@ -18,7 +18,11 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return hasRole('admin');
+      return isAuthenticated() && (
+        getUserData().role == 'admin' || 
+        getUserData().role == 'super-admin' || 
+        getUserData().email == 'ryan@amaspc.com'
+      );
     }
     
     function isOwner(venueData) {

@@ -11,7 +11,7 @@ const MOCK_VENUES: Venue[] = [
   },
   {
     id: 'hannahs-bar',
-    name: "Hannah's Bar",
+    name: "Hannah's Bar & Grill",
     type: 'cocktail',
     location: { distance: '0.5 mi' },
     current_buzz: { status: 'buzzing' },

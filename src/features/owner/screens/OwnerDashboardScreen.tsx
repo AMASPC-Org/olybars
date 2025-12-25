@@ -47,7 +47,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     initialVenueId, initialView = 'main'
 }) => {
     const accessibleVenues = venues.filter(v => {
-        if (userProfile.role === 'admin' || userProfile.role === 'super-admin') return true;
+        if (userProfile.role === 'admin' || userProfile.role === 'super-admin' || userProfile.email === 'ryan@amaspc.com') return true;
         if (userProfile.role === 'owner' && v.ownerId === userProfile.uid) return true;
         if (userProfile.role === 'manager' && v.managerIds?.includes(userProfile.uid)) return true;
         return false;

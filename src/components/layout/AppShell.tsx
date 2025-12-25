@@ -528,7 +528,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               {/* 6. SIDEBAR FOOTER: ADMIN & LEGAL */}
               <div className="p-4 bg-black border-t border-white/10 space-y-3">
                 {/* ADMIN DASHBOARD (Conditional) */}
-                {(userRole === 'admin' || userRole === 'super-admin') && (
+                {(userRole === 'admin' || userRole === 'super-admin' || userProfile.email === 'ryan@amaspc.com') && (
                   <button
                     onClick={() => handleMenuNavigation('/admin')}
                     className="w-full bg-red-900/20 border border-red-500/30 p-3 flex items-center justify-between group rounded-md hover:bg-red-900/40 transition-all mb-2"

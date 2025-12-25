@@ -54,4 +54,39 @@ export class VenueOpsService {
             throw new Error(`Failed to update hours: ${error.message}`);
         }
     }
+
+    static async updateHappyHour(venueId: string, hh: { schedule: string, specials: string }) {
+        if (!venueId) throw new Error("Venue ID is required for happy hour update.");
+
+        try {
+            const venueRef = doc(db, 'venues', venueId);
+            await updateDoc(venueRef, {
+                'happyHourSimple': hh.schedule,
+                'happyHourSpecials': hh.specials,
+                'happyHourUpdatedAt': serverTimestamp()
+            });
+            return { success: true };
+        } catch (error: any) {
+            console.error('Error updating happy hour:', error);
+            throw new Error(`Failed to update happy hour: ${error.message}`);
+        }
+    }
+
+    static async addEvent(venueId: string, event: { type: string, time: string, description?: string }) {
+        if (!venueId) throw new Error("Venue ID is required for adding an event.");
+
+        try {
+            const venueRef = doc(db, 'venues', venueId);
+            await updateDoc(venueRef, {
+                'leagueEvent': event.type,
+                'triviaTime': event.time,
+                'eventDescription': event.description || "",
+                'eventUpdatedAt': serverTimestamp()
+            });
+            return { success: true };
+        } catch (error: any) {
+            console.error('Error adding event:', error);
+            throw new Error(`Failed to add event: ${error.message}`);
+        }
+    }
 }

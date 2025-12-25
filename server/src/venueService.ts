@@ -604,7 +604,7 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         // Fetch the user's role to check for admin bypass
         const userDoc = await db.collection('users').doc(requestingUserId).get();
         const userData = userDoc.data();
-        const isAdmin = userData?.role === 'super-admin' || userData?.role === 'admin';
+        const isAdmin = userData?.role === 'super-admin' || userData?.role === 'admin' || userData?.email === 'ryan@amaspc.com';
 
         const isOwner = venueData.ownerId === requestingUserId;
         const isManager = venueData.managerIds?.includes(requestingUserId);
@@ -619,6 +619,7 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
 
     // Whitelist allowable fields for owner updates to prevent integrity issues
     const allowedFields: (keyof Venue)[] = [
+        'name', 'nicknames', // [NEW] Allow name corrections & AI nicknames
         'description', 'hours', 'phone', 'website',
         'email', 'instagram', 'facebook', 'twitter',
         'amenities', 'amenityDetails', 'vibe',
@@ -628,8 +629,8 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'makerType', 'physicalRoom', 'carryingMakers',
         'isLocalMaker', 'localScore',
         'isPaidLeagueMember', // Admin/Owner toggle
-        // Event & Deal Fields
-        'leagueEvent', 'triviaTime', 'deal', 'dealEndsIn', 'checkIns'
+        'leagueEvent', 'triviaTime', 'deal', 'dealEndsIn', 'checkIns',
+        'isVisible', 'isActive' // [FIX] Access Control Fields
     ];
 
     const filteredUpdates: any = {};

@@ -1,4 +1,4 @@
-console.log("Starting OlyBars Server...");
+console.log("Starting OlyBars Server..."); // Trigger restart
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -16,7 +16,7 @@ if (fs.existsSync(functionsEnvPath)) {
 }
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const port = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
@@ -245,11 +245,12 @@ app.get('/api/activity', async (req, res) => {
  */
 app.patch('/api/venues/:id', async (req, res) => {
     const { id } = req.params;
-    const { updates, userId } = req.body; // Extract userId from body for now (simulated session)
+    const { updates } = req.body;
+    const requestingUserId = req.header('x-user-id') || req.body.userId;
 
     try {
         const { updateVenue } = await import('./venueService');
-        const result = await updateVenue(id, updates, userId);
+        const result = await updateVenue(id, updates, requestingUserId);
         res.json(result);
     } catch (error: any) {
         log('ERROR', 'Failed to update venue listing', { venueId: id, error: error.message });
@@ -506,6 +507,6 @@ app.get('/api/venues/:id/semantic', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    log('INFO', `OlyBars Backend running on http://localhost:${PORT}`);
+app.listen(port, () => {
+    log('INFO', `OlyBars Backend running on http://localhost:${port}`);
 });

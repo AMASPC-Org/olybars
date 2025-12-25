@@ -727,7 +727,8 @@ const venues = [
     },
     {
         id: 'hannahs',
-        name: 'Hannah’s Bar & Grille',
+        name: "Hannah's Bar & Grill", // Canonical Name
+        nicknames: ["Hannah's", "Hannahs", "The Grill", "Hannah's Bar"], // AI Resolution Helpers
         type: 'Bar',
         category: 'Dive',
         tier_config: { is_directory_listed: true, is_league_eligible: true },
