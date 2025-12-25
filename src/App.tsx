@@ -212,7 +212,7 @@ export default function OlyBarsApp() {
 
     // 2. Persist to Backend
     try {
-      await updateVenueDetails(venueId, updates);
+      await updateVenueDetails(venueId, updates, userProfile.uid);
     } catch (err) {
       console.error('[OlyBars] Failed to persist venue update:', err);
       showToast('Connection issue: Update might not be permanent.', 'error');
@@ -450,6 +450,7 @@ export default function OlyBarsApp() {
                   onLogout={handleLogout}
                   userProfile={userProfile}
                   onToggleFavorite={handleToggleFavorite}
+                  onVenueDashboardClick={() => setShowOwnerDashboard(true)}
                   showArtie={showArtie}
                   setShowArtie={setShowArtie}
                 />

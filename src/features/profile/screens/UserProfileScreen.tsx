@@ -58,6 +58,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
 
     const handleRoleSwitch = (newRole: UserRole) => {
         setUserProfile(prev => ({ ...prev, role: newRole }));
+        autoSaveUpdates({ role: newRole });
         showToast(`View Switched to: ${newRole.toUpperCase()}`, 'success');
     }
 
@@ -303,6 +304,26 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                             <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">League XP</p>
                             <p className="text-2xl font-black font-league">{userProfile.stats?.competitionPoints || 0}</p>
                         </div>
+
+                        {/* [NEW] SUPER-ADMIN QUICK ACCESS */}
+                        {isSuperAdmin && (
+                            <div className="col-span-2 bg-gradient-to-r from-red-950/40 to-black border border-red-500/30 p-5 rounded-2xl relative overflow-hidden group hover:border-red-500/60 transition-all cursor-pointer" onClick={() => navigate('/admin')}>
+                                <div className="absolute top-0 right-0 p-4 opacity-10">
+                                    <Shield className="w-24 h-24 text-red-500" />
+                                </div>
+                                <div className="relative z-10 flex justify-between items-center">
+                                    <div>
+                                        <h4 className="text-xl font-black text-red-500 uppercase font-league">System Control</h4>
+                                        <p className="text-[10px] text-red-200/60 font-bold uppercase tracking-widest">Global Management & Integrity</p>
+                                    </div>
+                                    <button
+                                        className="py-2 px-4 bg-red-600 text-white font-black text-[10px] uppercase tracking-widest rounded-lg shadow-lg group-hover:bg-red-500 transition-colors"
+                                    >
+                                        ENTER ADMIN PANEL
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Maker's Trail Progress */}
                         <div className="col-span-2 bg-gradient-to-r from-amber-950 to-amber-900 border border-amber-500/30 p-5 rounded-2xl relative overflow-hidden">

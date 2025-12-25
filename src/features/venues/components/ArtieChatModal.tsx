@@ -1,15 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, Sparkles, Bot } from 'lucide-react';
+import { X, Send, Sparkles, Bot, CheckCircle2 } from 'lucide-react';
 import { useArtie } from '../../../hooks/useArtie';
+import { useToast } from '../../../components/ui/BrandedToast';
+import { UserProfile } from '../../../types';
 
 interface ArtieChatModalProps {
     isOpen: boolean;
     onClose: () => void;
+    userProfile?: UserProfile;
 }
 
-export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose }) => {
+interface ArtieAction {
+    venueId?: string;
+    summary?: string;
+    details?: string;
+    price?: string;
+}
+
+export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, userProfile }) => {
     const { messages, sendMessage, isLoading, error } = useArtie();
+    const { showToast } = useToast();
     const [input, setInput] = useState('');
+    const [pendingAction, setPendingAction] = useState<ArtieAction | null>(null);
+    const [actionStatus, setActionStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -18,13 +31,63 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose 
 
     useEffect(() => {
         scrollToBottom();
+        // Check for pending actions in the last message
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage?.role === 'model' && lastMessage.content.includes('[ACTION]:')) {
+            try {
+                const actionJson = lastMessage.content.split('[ACTION]:')[1].trim();
+                const action = JSON.parse(actionJson) as ArtieAction;
+                setPendingAction(action);
+            } catch (e) {
+                console.error("Failed to parse Artie action:", e);
+            }
+        }
     }, [messages, isLoading]);
 
     const handleSend = async () => {
         if (!input.trim() || isLoading) return;
         const userText = input.trim();
         setInput('');
-        await sendMessage(userText);
+        setPendingAction(null); // Clear pending action on new input
+        setActionStatus('idle');
+        await sendMessage(userText, userProfile?.uid, userProfile?.role);
+    };
+
+    const handleConfirmAction = async () => {
+        if (!pendingAction || !userProfile) return;
+
+        setActionStatus('loading');
+        try {
+            const { VenueOpsService } = await import('../../../services/VenueOpsService');
+            // Use venueId from action, or fallback to user's homeBase
+            const venueId = pendingAction.venueId || userProfile.homeBase;
+
+            if (!venueId) {
+                showToast("No venue context found. Please specify which venue to update.", "error");
+                setActionStatus('error');
+                return;
+            }
+
+            await VenueOpsService.updateFlashDeal(venueId, {
+                title: pendingAction.summary || "Flash Deal",
+                description: pendingAction.details || "",
+                price: pendingAction.price || "",
+                isActive: true
+            });
+
+            setActionStatus('success');
+            showToast(`SUCCESS: ${pendingAction.summary} is now LIVE!`, 'success');
+
+            // Auto-clear success message after 3 seconds
+            setTimeout(() => {
+                setPendingAction(null);
+                setActionStatus('idle');
+            }, 3000);
+        } catch (e: any) {
+            console.error("Action Failed:", e);
+            showToast(`Action failed: ${e.message}`, 'error');
+            setActionStatus('error');
+        }
     };
 
     if (!isOpen) return null;
@@ -62,7 +125,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose 
                     {messages.length === 0 && (
                         <div className="flex justify-start">
                             <div className="max-w-[85%] p-3 rounded-2xl text-sm font-medium leading-relaxed bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none">
-                                Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water. Ask me anything about Oly's bars, deals, or events!
+                                Cheers! I&apos;m Artie, your local guide powered by Well 80 Artesian Water. Ask me anything about Oly&apos;s bars, deals, or events!
                             </div>
                         </div>
                     )}
@@ -73,10 +136,48 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose 
                                 ? 'bg-primary text-black rounded-tr-none'
                                 : 'bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none'
                                 }`}>
-                                {m.content}
+                                {m.content.split('[ACTION]:')[0].trim()}
                             </div>
                         </div>
                     ))}
+
+                    {/* Pending Action Card */}
+                    {pendingAction && (
+                        <div className="flex justify-center my-4 animate-in slide-in-from-bottom-4 duration-500">
+                            <div className="bg-gradient-to-br from-slate-800 to-black border-2 border-primary/50 p-4 rounded-2xl shadow-xl w-full max-w-[90%]">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Sparkles className="w-4 h-4 text-primary" />
+                                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">Action Required</span>
+                                </div>
+                                <h4 className="text-white font-bold text-sm mb-1">Update Flash Deal</h4>
+                                <p className="text-slate-400 text-xs mb-4 italic">&ldquo;{pendingAction.summary}&rdquo;</p>
+
+                                {actionStatus === 'success' ? (
+                                    <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-xl flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                        <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Update Deployed!</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleConfirmAction}
+                                            disabled={actionStatus === 'loading'}
+                                            className="flex-1 bg-primary hover:bg-yellow-400 text-black font-black text-[10px] py-2 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50"
+                                        >
+                                            {actionStatus === 'loading' ? 'Deploying...' : 'Deploy Now'}
+                                        </button>
+                                        <button
+                                            onClick={() => setPendingAction(null)}
+                                            disabled={actionStatus === 'loading'}
+                                            className="px-4 bg-slate-700 hover:bg-slate-600 text-white font-black text-[10px] py-2 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                     {isLoading && (
                         <div className="flex justify-start">
                             <div className="bg-slate-800 p-3 rounded-2xl rounded-tl-none border border-white/5 flex gap-1">
@@ -129,7 +230,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose 
                             }}
                             className="text-[10px] text-slate-600 font-bold uppercase tracking-widest hover:text-primary transition-colors cursor-pointer"
                         >
-                            Artie's Story
+                            Artie&apos;s Story
                         </a>
                     </div>
                 </div>

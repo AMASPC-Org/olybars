@@ -12,7 +12,7 @@ export function useArtie() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const sendMessage = async (prompt: string) => {
+    const sendMessage = async (prompt: string, userId?: string, userRole?: string) => {
         if (!prompt.trim()) return;
 
         setIsLoading(true);
@@ -37,7 +37,9 @@ export function useArtie() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     question: prompt,
-                    history: historyForArtie
+                    history: historyForArtie,
+                    userId,
+                    userRole
                 })
             });
 

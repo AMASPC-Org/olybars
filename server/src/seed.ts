@@ -41,6 +41,8 @@ const venues = [
         activeFlashDealId: 'fd-w80-01',
         deal: "$2 Pretzels & Cheese",
         dealEndsIn: 45, // Flash Deal (Minutes remaining)
+        ownerId: "KU9KvRYzzrZfVU7BV4gaPYAFlKS2", // Ryan (Admin/Owner)
+        managerIds: ["KU9KvRYzzrZfVU7BV4gaPYAFlKS2"]
     },
     {
         id: 'ilk-lodge',
@@ -748,7 +750,9 @@ const venues = [
         },
         leagueEvent: 'trivia',
         triviaTime: '19:00',
-        isPaidLeagueMember: true
+        isPaidLeagueMember: true,
+        ownerId: "KU9KvRYzzrZfVU7BV4gaPYAFlKS2", // Test Owner
+        managerIds: ["KU9KvRYzzrZfVU7BV4gaPYAFlKS2"]
     },
     {
         id: 'charlies-bar-grill',

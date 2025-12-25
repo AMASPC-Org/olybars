@@ -24,10 +24,12 @@ export const artieChatLogic = genkitAi.defineFlow({
     inputSchema: z.object({
         history: z.array(MessageSchema),
         question: z.string(),
+        userId: z.string().optional(),
+        userRole: z.string().optional(),
     }),
     outputSchema: z.string(),
 }, async (input) => {
-    const { history, question } = input;
+    const { history, question, userId, userRole } = input;
 
     if (!process.env.GOOGLE_GENAI_API_KEY && !process.env.GOOGLE_API_KEY && !process.env.GEMINI_API_KEY) {
         return "I'm having trouble connecting to my brain (API Key missing). Please check the server logs.";
@@ -87,7 +89,39 @@ export const artieChatLogic = genkitAi.defineFlow({
                 || "I found some spots, but my voice is a bit dry. Try asking again?";
         }
 
-        // 3. General Chat
+        // 4. Venue Ops Intent
+        if (rawTriage.includes('VENUE_OPS')) {
+            if (!userId || (userRole !== 'owner' && userRole !== 'manager' && userRole !== 'super-admin' && userRole !== 'admin')) {
+                return "I'd love to help with that, but I'm only allowed to take orders from Venue Operators or League Officials. Want to join the league?";
+            }
+
+            // [STUB] For Now, Artie summarizes what they want to do
+            // In a future sprint, this will trigger the ProposeAction UI
+            const actionTarget = rawTriage.split('VENUE_OPS:')[1]?.trim() || question;
+
+            baseContents.push({
+                role: 'user',
+                parts: [{
+                    text: `User (Operator ${userId}) wants to update: ${actionTarget}. 
+                Respond as Artie acknowledging the request and stating that a confirmation link has been prepared (Stubbed for prototype). 
+                Ask them to verify the change details.` }]
+            });
+
+            const artieResponse = await service.generateArtieResponse('gemini-2.0-flash', baseContents, 0.4)
+                || "Got it, Boss! I'll get that update ready for your signal.";
+
+            // For now, simulate the action payload for the frontend to pick up
+            const actionPayload = {
+                type: 'VENUE_UPDATE',
+                action: 'CONFIRM_FLASH_DEAL',
+                summary: actionTarget,
+                timestamp: new Date().toISOString()
+            };
+
+            return `${artieResponse}\n\n[ACTION]: ${JSON.stringify(actionPayload)}`;
+        }
+
+        // 5. General Chat
         baseContents.push({ role: 'user', parts: [{ text: question }] });
         return await service.generateArtieResponse('gemini-2.0-flash', baseContents, 0.7) || "Cheers!";
 

@@ -44,12 +44,12 @@ export const fetchVenues = async (): Promise<Venue[]> => {
  * Updates venue profile details (Listing management)
  * Strictly adheres to Allowed Fields whitelisted in server/src/venueService.ts
  */
-export const updateVenueDetails = async (venueId: string, updates: Partial<Venue>): Promise<{ success: boolean, updates: any }> => {
+export const updateVenueDetails = async (venueId: string, updates: Partial<Venue>, userId?: string): Promise<{ success: boolean, updates: any }> => {
   try {
     const response = await fetch(`${API_BASE_URL}/venues/${venueId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
+      body: JSON.stringify({ updates, userId }),
     });
     if (!response.ok) {
       throw new Error(`Failed to update venue: ${response.statusText}`);

@@ -245,11 +245,11 @@ app.get('/api/activity', async (req, res) => {
  */
 app.patch('/api/venues/:id', async (req, res) => {
     const { id } = req.params;
-    const updates = req.body;
+    const { updates, userId } = req.body; // Extract userId from body for now (simulated session)
 
     try {
         const { updateVenue } = await import('./venueService');
-        const result = await updateVenue(id, updates);
+        const result = await updateVenue(id, updates, userId);
         res.json(result);
     } catch (error: any) {
         log('ERROR', 'Failed to update venue listing', { venueId: id, error: error.message });
@@ -294,7 +294,7 @@ app.post('/api/client-errors', (req, res) => {
  */
 app.patch('/api/users/:uid', async (req, res) => {
     const { uid } = req.params;
-    const { handle, email, phone, favoriteDrink, homeBase, leaguePreferences, hasCompletedMakerSurvey } = req.body;
+    const { handle, email, phone, favoriteDrink, homeBase, leaguePreferences, hasCompletedMakerSurvey, role } = req.body;
 
     try {
         const { db } = await import('./firebaseAdmin');
@@ -316,6 +316,7 @@ app.patch('/api/users/:uid', async (req, res) => {
         if (leaguePreferences !== undefined) updates.leaguePreferences = leaguePreferences;
         if (email !== undefined) updates.email = email;
         if (hasCompletedMakerSurvey !== undefined) updates.hasCompletedMakerSurvey = hasCompletedMakerSurvey;
+        if (role !== undefined) updates.role = role; // [SECURITY REMEDIATION L-01]
 
         // Handle cooldown logic
         if (handle !== undefined && handle !== userData?.handle) {
@@ -417,15 +418,22 @@ app.get('/api/activity/recent', async (req, res) => {
  */
 app.post('/api/chat', async (req, res) => {
     try {
-        const { history, question } = req.body;
+        const { history, question, userId, userRole } = req.body;
 
         if (!question) {
             return res.status(400).json({ error: 'Question is required' });
         }
 
+        // [SECURITY REMEDIATION A-02]
+        // Fetch real role from DB instead of trusting request body
+        const { db } = await import('./firebaseAdmin');
+        const userDoc = await db.collection('users').doc(userId).get();
+        const userData = userDoc.data();
+        const realRole = userData?.role || 'user';
+
         // Import the logic dynamically to keep dependencies clean
         const { artieChatLogic } = await import('../../functions/src/flows/artieChat');
-        const result = await artieChatLogic({ history: history || [], question });
+        const result = await artieChatLogic({ history: history || [], question, userId, userRole: realRole });
 
         res.json({ data: result });
     } catch (error: any) {

@@ -591,8 +591,31 @@ export const updatePhotoStatus = async (
 /**
  * Update general venue information (Listing management)
  */
-export const updateVenue = async (venueId: string, updates: Partial<Venue>) => {
+export const updateVenue = async (venueId: string, updates: Partial<Venue>, requestingUserId?: string) => {
     const venueRef = db.collection('venues').doc(venueId);
+    const venueDoc = await venueRef.get();
+
+    if (!venueDoc.exists) throw new Error('Venue not found');
+    const venueData = venueDoc.data() as Venue;
+
+    // [SECURITY REMEDIATION A-01]
+    // Verify ownership or management role
+    if (requestingUserId) {
+        // Fetch the user's role to check for admin bypass
+        const userDoc = await db.collection('users').doc(requestingUserId).get();
+        const userData = userDoc.data();
+        const isAdmin = userData?.role === 'super-admin' || userData?.role === 'admin';
+
+        const isOwner = venueData.ownerId === requestingUserId;
+        const isManager = venueData.managerIds?.includes(requestingUserId);
+
+        if (!isOwner && !isManager && !isAdmin) {
+            throw new Error('Unauthorized: You do not have permission to update this venue listing.');
+        }
+    } else {
+        // If no user ID is provided, we strictly deny unless it's a known internal call (none yet)
+        throw new Error('Unauthorized: Authentication required for venue updates.');
+    }
 
     // Whitelist allowable fields for owner updates to prevent integrity issues
     const allowedFields: (keyof Venue)[] = [

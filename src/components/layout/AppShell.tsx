@@ -52,6 +52,7 @@ interface AppShellProps {
   onLogout?: () => void;
   onToggleFavorite?: (venueId: string) => void;
   onToggleWeeklyBuzz?: () => void;
+  onVenueDashboardClick?: () => void;
   showArtie?: boolean;
   setShowArtie?: (show: boolean) => void;
 }
@@ -73,6 +74,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   onLogout,
   onToggleFavorite,
   onToggleWeeklyBuzz,
+  onVenueDashboardClick,
   showArtie,
   setShowArtie
 }) => {
@@ -526,15 +528,34 @@ export const AppShell: React.FC<AppShellProps> = ({
               {/* 6. SIDEBAR FOOTER: ADMIN & LEGAL */}
               <div className="p-4 bg-black border-t border-white/10 space-y-3">
                 {/* ADMIN DASHBOARD (Conditional) */}
-                {userRole === 'super-admin' && (
+                {(userRole === 'admin' || userRole === 'super-admin') && (
                   <button
                     onClick={() => handleMenuNavigation('/admin')}
-                    className="w-full bg-red-900/20 border border-red-500/30 p-3 flex items-center justify-between group rounded-md hover:bg-red-900/40 transition-all"
+                    className="w-full bg-red-900/20 border border-red-500/30 p-3 flex items-center justify-between group rounded-md hover:bg-red-900/40 transition-all mb-2"
                   >
                     <span className="text-red-500 font-black text-[10px] uppercase tracking-widest font-league">
-                      ADMIN DASHBOARD
+                      SYSTEM ADMIN DASHBOARD
                     </span>
                     <ChevronRight className="w-4 h-4 text-red-500" />
+                  </button>
+                )}
+
+                {/* VENUE DASHBOARD (Conditional for Owners/Managers) */}
+                {(userRole === 'owner' || userRole === 'manager') && (
+                  <button
+                    onClick={() => {
+                      onVenueDashboardClick?.();
+                      setShowMenu(false);
+                    }}
+                    className="w-full bg-primary/20 border border-primary/30 p-3 flex items-center justify-between group rounded-md hover:bg-primary/30 transition-all mb-2 shadow-[0_0_15px_-5px_rgba(251,191,36,0.4)]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Hammer className="w-4 h-4 text-primary" />
+                      <span className="text-primary font-black text-[10px] uppercase tracking-widest font-league">
+                        VENUE OPS DASHBOARD
+                      </span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-primary" />
                   </button>
                 )}
 
@@ -598,7 +619,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       <ArtieHoverIcon onClick={() => setShowArtie?.(true)} />
 
       {/* Artie Chat Modal */}
-      <ArtieChatModal isOpen={showArtie} onClose={() => setShowArtie?.(false)} />
+      <ArtieChatModal isOpen={showArtie} onClose={() => setShowArtie?.(false)} userProfile={userProfile} />
 
       <CookieBanner />
     </div>
