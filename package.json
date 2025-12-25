@@ -14,8 +14,9 @@
     "build:prod": "vite build --mode production",
     "smoke:dev": "curl.exe -fI https://olybars-dev.web.app/ && curl.exe -f https://olybars-backend-juthzlaerq-uw.a.run.app/health && curl.exe -f https://olybars-backend-juthzlaerq-uw.a.run.app/api/venues",
     "smoke:prod": "curl.exe -fI https://olybars.com/ && curl.exe -f https://olybars-backend-26629455103.us-west1.run.app/health && curl.exe -f https://olybars-backend-26629455103.us-west1.run.app/api/venues",
-    "deploy:dev": "npm run build:dev && node scripts/check-env.js development && firebase deploy --only hosting:dev",
-    "deploy:prod": "npm run build:prod && node scripts/check-env.js production && firebase deploy --only hosting:prod",
+    "artie:sync": "node --import tsx functions/src/scripts/sync-artie-kb.ts",
+    "deploy:dev": "npm run artie:sync && npm run build:dev && node scripts/check-env.js development && firebase deploy --only hosting:dev",
+    "deploy:prod": "npm run artie:sync && npm run build:prod && node scripts/check-env.js production && firebase deploy --only hosting:prod",
     "deploy:backend": "gcloud builds submit --tag us-west1-docker.pkg.dev/ama-ecosystem-prod/olybars/backend:latest . && gcloud run deploy olybars-backend --image us-west1-docker.pkg.dev/ama-ecosystem-prod/olybars/backend:latest --region us-west1 --allow-unauthenticated",
     "generate-sitemap": "tsx scripts/generate-sitemap.ts"
   },

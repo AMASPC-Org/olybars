@@ -12,7 +12,8 @@ import {
   Trophy,
   ShoppingBag,
   QrCode,
-  Zap
+  Zap,
+  Bot
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UserProfile, UserRole } from '../../../types';
@@ -36,6 +37,7 @@ const MoreScreen: React.FC<MoreScreenProps> = ({ userProfile, setUserProfile }) 
     { id: 'settings', label: 'Alert Settings', icon: Settings, path: '/', color: 'text-slate-400' },
     { id: 'terms', label: 'Terms of Service', icon: Shield, path: '/terms', color: 'text-slate-400' },
     { id: 'privacy', label: 'Privacy Policy', icon: Eye, path: '/privacy', color: 'text-slate-400' },
+    { id: 'ai', label: 'AI & Developers', icon: Bot, path: '/ai', color: 'text-amber-500' },
   ];
 
   const handleRoleSwitch = (newRole: UserRole) => {

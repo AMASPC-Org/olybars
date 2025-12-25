@@ -1,8 +1,12 @@
+import { PULSE_CONFIG } from '../../src/config/pulse';
 import { db } from './firebaseAdmin.js';
 import admin from 'firebase-admin';
 import { Venue, Signal, SignalType, Badge, UserBadgeProgress } from '../../src/types';
 import { BADGES } from '../../src/config/badges';
-import { PULSE_CONFIG } from '../../src/config/pulse';
+
+// In-memory cache for venues (TTL: 60 seconds)
+let venueCache: { data: Venue[], lastFetched: number } | null = null;
+const CACHE_TTL = 60 * 1000;
 
 /**
  * Buzz Clock Sorting Logic:
@@ -98,20 +102,54 @@ export const updateVenueBuzz = async (venueId: string) => {
     });
 };
 
+/**
+ * calculateVirtualBuzz (Rule 05-V):
+ * Calculates real-time decayed score without DB writes.
+ */
+const applyVirtualDecay = (venue: Venue): Venue => {
+    if (!venue.currentBuzz?.score) return venue;
+
+    const now = Date.now();
+    const ageInMs = now - (venue.currentBuzz.lastUpdated || now);
+    const ageInHours = ageInMs / (60 * 60 * 1000);
+
+    // Decay Formula: Score * 0.5^(Age/HalfLife)
+    const decayHours = PULSE_CONFIG.WINDOWS.DECAY_HALFLIFE / (60 * 60 * 1000);
+    const decayedScore = venue.currentBuzz.score * Math.pow(0.5, ageInHours / decayHours);
+
+    // Update status based on virtual score
+    let status: 'chill' | 'lively' | 'buzzing' = 'chill';
+    if (decayedScore > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
+    else if (decayedScore > PULSE_CONFIG.THRESHOLDS.LIVELY) status = 'lively';
+
+    return {
+        ...venue,
+        currentBuzz: {
+            ...venue.currentBuzz,
+            score: decayedScore
+        },
+        status
+    };
+};
+
 export const fetchVenues = async (): Promise<Venue[]> => {
+    const now = Date.now();
+
+    // 1. Return Cache if valid
+    if (venueCache && (now - venueCache.lastFetched < CACHE_TTL)) {
+        return venueCache.data.map(applyVirtualDecay);
+    }
+
     try {
         const snapshot = await db.collection('venues').get();
-        const now = Date.now();
 
         const venues = snapshot.docs
             .map(doc => {
                 const data = doc.data();
                 const venue = { id: doc.id, ...data } as Venue;
 
-                // STALE CHECK: Trigger refresh if older than STALE_THRESHOLD
-                if (!venue.currentBuzz?.lastUpdated || (now - venue.currentBuzz.lastUpdated > PULSE_CONFIG.WINDOWS.STALE_THRESHOLD)) {
-                    updateVenueBuzz(venue.id).catch(err => console.error(`Background Buzz Update failed for ${venue.id}`, err));
-                }
+                // Note: We no longer trigger background refreshes here. 
+                // Buzz is updated physically on signals, and virtually on GET.
 
                 // Injecting mock amenities for the "Play" feature demo
                 if (venue.id === 'well-80') {
@@ -137,7 +175,15 @@ export const fetchVenues = async (): Promise<Venue[]> => {
             })
             .filter(v => v.isActive !== false); // Filter out Ghost List / Legacy
 
-        return sortVenuesByBuzzClock(venues);
+        const sortedVenues = sortVenuesByBuzzClock(venues);
+
+        // 2. Update Cache
+        venueCache = {
+            data: sortedVenues,
+            lastFetched: now
+        };
+
+        return sortedVenues.map(applyVirtualDecay);
     } catch (error) {
         console.error('Error fetching venues from Firestore:', error);
         throw error;
@@ -552,13 +598,15 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>) => {
     const allowedFields: (keyof Venue)[] = [
         'description', 'hours', 'phone', 'website',
         'email', 'instagram', 'facebook', 'twitter',
-        'amenities', 'vibe',
+        'amenities', 'amenityDetails', 'vibe',
         // Maker Fields
         'originStory', 'insiderVibe', 'geoLoop',
         'isLowCapacity', 'isSoberFriendly',
         'makerType', 'physicalRoom', 'carryingMakers',
         'isLocalMaker', 'localScore',
-        'isPaidLeagueMember' // Admin/Owner toggle
+        'isPaidLeagueMember', // Admin/Owner toggle
+        // Event & Deal Fields
+        'leagueEvent', 'triviaTime', 'deal', 'dealEndsIn', 'checkIns'
     ];
 
     const filteredUpdates: any = {};

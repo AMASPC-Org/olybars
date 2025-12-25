@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     Shield, Users, BarChart3, Settings,
     Search, Filter, ExternalLink, Activity,
@@ -8,27 +9,32 @@ import {
 import { fetchAllUsers, fetchSystemStats, fetchRecentActivity } from '../../../services/userService';
 import { fetchVenues, updateVenueDetails } from '../../../services/venueService';
 import { UserProfile, ActivityLog, Venue } from '../../../types';
+import { AiAccessTab } from '../components/AiAccessTab';
 
 interface AdminDashboardScreenProps {
     userProfile: any;
 }
 
 export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ userProfile }) => {
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'venues' | 'league' | 'system'>('overview');
+    const queryClient = useQueryClient();
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'venues' | 'league' | 'system' | 'ai'>('overview');
     const [systemStats, setSystemStats] = useState({ totalUsers: 0, activeUsers: 0, totalPoints: 0 });
     const [leagueUsers, setLeagueUsers] = useState<UserProfile[]>([]);
-    const [venues, setVenues] = useState<Venue[]>([]);
     const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
+
+    const { data: venues = [] } = useQuery({
+        queryKey: ['venues'],
+        queryFn: fetchVenues,
+        enabled: activeTab === 'venues' || activeTab === 'overview',
+    });
     const [searchTerm, setSearchTerm] = useState('');
 
-    React.useEffect(() => {
+    useEffect(() => {
         const loadDashboard = async () => {
             const stats = await fetchSystemStats();
             setSystemStats(stats);
             const users = await fetchAllUsers();
             setLeagueUsers(users);
-            const venueData = await fetchVenues();
-            setVenues(venueData);
             const activity = await fetchRecentActivity();
             setRecentActivity(activity);
         };
@@ -45,13 +51,16 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
 
     const onToggleVenueMembership = async (venueId: string, currentStatus: boolean) => {
         // Optimistic Update
-        setVenues(prev => prev.map(v => v.id === venueId ? { ...v, isPaidLeagueMember: !currentStatus } : v));
+        queryClient.setQueryData(['venues'], (old: Venue[] | undefined) => {
+            return old?.map(v => v.id === venueId ? { ...v, isPaidLeagueMember: !currentStatus } : v);
+        });
+
         try {
             await updateVenueDetails(venueId, { isPaidLeagueMember: !currentStatus });
+            queryClient.invalidateQueries({ queryKey: ['venues'] });
         } catch (error) {
             console.error('Failed to toggle membership', error);
-            // Revert
-            setVenues(prev => prev.map(v => v.id === venueId ? { ...v, isPaidLeagueMember: currentStatus } : v));
+            queryClient.invalidateQueries({ queryKey: ['venues'] });
         }
     };
 
@@ -94,7 +103,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
 
             {/* Tabs */}
             <div className="flex gap-2 mb-6 bg-black/40 p-1 rounded-xl overflow-x-auto">
-                {(['overview', 'users', 'league', 'system'] as const).map((tab) => (
+                {(['overview', 'users', 'venues', 'league', 'system', 'ai'] as const).map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -103,7 +112,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                             : 'text-slate-500 hover:text-white'
                             }`}
                     >
-                        {tab}
+                        {tab === 'ai' ? 'AI Access' : tab}
                     </button>
                 ))}
             </div>
@@ -287,6 +296,8 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                         </div>
                     </div>
                 )}
+
+                {activeTab === 'ai' && <AiAccessTab />}
             </div>
 
             <div className="mt-8 p-4 bg-amber-400/10 border border-amber-400/20 rounded-2xl flex gap-3">

@@ -23,6 +23,12 @@ export const knowledgeSearch = ai.defineTool(
             const normalizedQuery = query.toLowerCase();
             const queryWords = normalizedQuery.split(/\s+/).filter(w => w.length > 2);
 
+            const snapshot = await db.collection('knowledge').get();
+            const liveKnowledge = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return { question: data.question, answer: data.answer };
+            });
+
             const timeline = Object.entries(kb.history_timeline).map(([k, v]) => ({ question: `History: ${k}`, answer: v }));
             const market = Object.entries(kb.market_context).map(([k, v]) => ({ question: `Market Context: ${k}`, answer: v }));
             // Flatten strategy modules
@@ -33,13 +39,13 @@ export const knowledgeSearch = ai.defineTool(
                 })
             );
 
-            const allKnowledge = [...kb.faq, ...timeline, ...market, ...strategy];
+            const allKnowledge = [...kb.faq, ...timeline, ...market, ...strategy, ...liveKnowledge];
 
             return allKnowledge.filter(item => {
                 const combinedText = `${item.question} ${item.answer}`.toLowerCase();
                 if (combinedText.includes(normalizedQuery)) return true;
                 return queryWords.some(word => combinedText.includes(word));
-            }).slice(0, 5);
+            }).slice(0, 10);
         } catch (error) {
             console.error("Knowledge search failed:", error);
             return [];

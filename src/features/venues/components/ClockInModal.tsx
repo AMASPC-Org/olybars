@@ -4,6 +4,7 @@ import { Venue, CheckInRecord, PointsReason } from '../../../types';
 import { performCheckIn } from '../../../services/userService';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance } from '../../../utils/geoUtils';
+import { queryClient } from '../../../lib/queryClient';
 
 interface ClockInModalProps {
     isOpen: boolean;
@@ -12,7 +13,6 @@ interface ClockInModalProps {
     awardPoints: (reason: PointsReason, venueId?: string, hasConsent?: boolean) => void;
     setCheckInHistory: React.Dispatch<React.SetStateAction<CheckInRecord[]>>;
     setClockedInVenue: React.Dispatch<React.SetStateAction<string | null>>;
-    setVenues: React.Dispatch<React.SetStateAction<Venue[]>>;
     vibeChecked?: boolean;
     onVibeCheckPrompt?: () => void;
 }
@@ -24,7 +24,6 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     awardPoints,
     setCheckInHistory,
     setClockedInVenue,
-    setVenues,
     vibeChecked,
     onVibeCheckPrompt,
 }) => {
@@ -110,7 +109,12 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
             awardPoints('checkin', selectedVenue.id, allowMarketingUse);
             setCheckInHistory(prev => [...prev, { venueId: selectedVenue.id, timestamp: Date.now() }]);
             setClockedInVenue(selectedVenue.id);
-            setVenues(prev => prev.map(v => v.id === selectedVenue.id ? { ...v, checkIns: v.checkIns + 1 } : v));
+
+            // Optimistic UI Update (TanStack Query Cache)
+            queryClient.setQueryData(['venues'], (oldVenues: Venue[] | undefined) => {
+                if (!oldVenues) return [];
+                return oldVenues.map(v => v.id === selectedVenue.id ? { ...v, checkIns: (v.checkIns || 0) + 1 } : v);
+            });
 
             setIsSuccess(true);
             if (vibeChecked) {

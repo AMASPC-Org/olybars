@@ -8,6 +8,7 @@ import {
     Scroll, Sparkles, Feather
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../../types';
+import { SEO } from '../../../components/common/SEO';
 import { VenueGallery } from '../components/VenueGallery';
 import { getVenueStatus, isVenueOpen } from '../../../utils/venueUtils';
 import { useToast } from '../../../components/ui/BrandedToast';
@@ -35,6 +36,110 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
     const navigate = useNavigate();
     const { showToast } = useToast();
     const venue = venues.find(v => v.id === id);
+
+    // AI SEO: Generate Schema.org JSON-LD
+    const generateLDSchema = () => {
+        if (!venue) return null;
+
+        const baseSchema: any = {
+            "@context": "https://schema.org",
+            "@type": venue.type === 'Restaurant' ? 'Restaurant' : 'Bar',
+            "name": venue.name,
+            "image": venue.photos?.[0]?.url,
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": venue.address || "Downtown Olympia",
+                "addressLocality": "Olympia",
+                "addressRegion": "WA",
+                "postalCode": "98501",
+                "addressCountry": "US"
+            },
+            "url": window.location.href,
+            "telephone": venue.phone,
+            "servesCuisine": venue.type === 'Restaurant' ? venue.vibe : undefined,
+            "priceRange": "$$",
+            "description": venue.insiderVibe || venue.originStory,
+            "publicAccess": venue.physicalRoom !== false,
+            "additionalProperty": [
+                {
+                    "@type": "PropertyValue",
+                    "name": "Oly Pulse Status",
+                    "value": venue.status || "chill",
+                    "description": "Real-time activity level from OlyBars.com"
+                }
+            ],
+            "eventStatus": isVenueOpen(venue) ? "https://schema.org/EventScheduled" : "https://schema.org/EventCancelled"
+        };
+
+        // Add Events
+        const events: any[] = [];
+        if (venue.leagueEvent) {
+            events.push({
+                "@type": "Event",
+                "name": `${venue.leagueEvent} at ${venue.name}`,
+                "startDate": new Date().toISOString().split('T')[0] + "T19:00:00",
+                "location": {
+                    "@type": "Place",
+                    "name": venue.name,
+                    "address": venue.address
+                },
+                "description": "Artesian Bar League Sanctioned Event",
+                "keywords": "League Play, Trivia, Olympia Bar League"
+            });
+        }
+
+        if (venue.deal) {
+            events.push({
+                "@type": "Event",
+                "name": "Happy Hour Deal",
+                "description": venue.deal,
+                "location": {
+                    "@type": "Place",
+                    "name": venue.name
+                }
+            });
+        }
+
+        if (events.length > 0) {
+            baseSchema.event = events;
+        }
+
+        const breadcrumbSchema = {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": "https://olybars.com/"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "Bars",
+                    "item": "https://olybars.com/bars"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 3,
+                    "name": venue.name,
+                    "item": `https://olybars.com/venues/${venue.id}`
+                }
+            ]
+        };
+
+        return (
+            <>
+                <script type="application/ld+json">
+                    {JSON.stringify(baseSchema)}
+                </script>
+                <script type="application/ld+json">
+                    {JSON.stringify(breadcrumbSchema)}
+                </script>
+            </>
+        );
+    };
 
     const handleShare = async () => {
         if (!venue) return;
@@ -70,6 +175,15 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
 
     return (
         <div className="bg-background min-h-screen pb-32 font-body text-slate-100 animate-in fade-in duration-500">
+            {/* AI SEO: Metadata & JSON-LD */}
+            <SEO
+                title={venue.name}
+                description={venue.insiderVibe || `Explore ${venue.name} in downtown Olympia. Live vibes, happy hours, and league play.`}
+                ogImage={venue.photos?.[0]?.url}
+                ogType="profile"
+            />
+            {generateLDSchema()}
+
             {/* Hero Header */}
             <div className="relative h-64 overflow-hidden">
                 <img

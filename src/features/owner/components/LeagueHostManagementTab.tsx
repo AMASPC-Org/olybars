@@ -79,8 +79,21 @@ export const LeagueHostManagementTab: React.FC<LeagueHostManagementTabProps> = (
     };
 
     const handleCreateEvent = () => {
-        showToast('Event Scheduled! (Mock)', 'success');
-        // Logic to update venue.leagueEvent or similar
+        if (!eventDate) {
+            showToast('Please specify a schedule/time.', 'error');
+            return;
+        }
+
+        const updates: Partial<Venue> = {
+            leagueEvent: eventType as any
+        };
+
+        if (eventType === 'trivia') {
+            updates.triviaTime = eventDate;
+        }
+
+        onUpdate(venue.id, updates);
+        showToast('Event Scheduled! The Commish has been notified.', 'success');
     };
 
     return (
@@ -245,7 +258,9 @@ export const LeagueHostManagementTab: React.FC<LeagueHostManagementTabProps> = (
                                         <option value="karaoke">Karaoke League</option>
                                         <option value="trivia">Trivia Knights</option>
                                         <option value="darts">Dart League</option>
-                                        <option value="live">Live Music</option>
+                                        <option value="live_music">Live Music</option>
+                                        <option value="pool">Pool Tournament</option>
+                                        <option value="arcade">Arcade Challenge</option>
                                     </select>
                                 </div>
                                 <div>

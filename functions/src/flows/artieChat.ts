@@ -4,6 +4,8 @@ import { venueSearch } from '../tools/venueSearch';
 import { knowledgeSearch } from '../tools/knowledgeSearch';
 import { GeminiService } from '../services/geminiService';
 
+import { ArtieContextService } from '../services/ArtieContextService';
+
 // Lazy-load the service to ensure environment variables are ready
 let geminiInstance: GeminiService;
 
@@ -41,8 +43,16 @@ export const artieChatLogic = genkitAi.defineFlow({
             return "Whoa there, friend. Sounds like a rough night. If you need a safe ride, call Red Cab: (360) 555-0100. Let's keep it safe.";
         }
 
+        // Fetch Real-time Pulse
+        const pulseContext = await ArtieContextService.getPulsePromptSnippet();
+
         const baseContents = [
-            { role: 'user', parts: [{ text: GeminiService.ARTIE_PERSONA }] },
+            {
+                role: 'user',
+                parts: [{
+                    text: `${GeminiService.ARTIE_PERSONA}\n\n${pulseContext}\n\n[TIME RESOLVABILITY]\nUse the 'Timestamp' in the context to resolve relative time questions (e.g., "today", "tomorrow", "tonight"). For tomorrow's events, look for 'Upcoming Events' or venues with tomorrow-aligned schedules.`
+                }]
+            },
             ...history.map(h => ({
                 role: h.role,
                 parts: [{ text: h.content }]

@@ -207,8 +207,46 @@ export const BuzzScreen: React.FC<{
 
   const baseChipClasses = 'px-3 py-1.5 text-xs font-bold rounded-full border transition-all whitespace-nowrap';
 
+  const generateOrgSchema = () => {
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "OlyBars",
+      "url": "https://olybars.com",
+      "logo": "https://olybars.com/og-image.png",
+      "description": "The Nightlife Operating System for Olympia, WA.",
+      "sameAs": [
+        "https://instagram.com/olybars"
+      ]
+    };
+
+    const websiteSchema = {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "url": "https://olybars.com",
+      "name": "OlyBars",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://olybars.com/bars?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    };
+
+    return (
+      <>
+        <script type="application/ld+json">
+          {JSON.stringify(schema)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify(websiteSchema)}
+        </script>
+      </>
+    );
+  };
+
   return (
     <div className="bg-background min-h-screen pb-24 font-sans text-slate-100">
+      {generateOrgSchema()}
       <div className="p-4 space-y-6">
         <div className="space-y-3">
           <div className="flex flex-col items-center gap-1">

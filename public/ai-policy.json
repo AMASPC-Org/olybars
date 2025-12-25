@@ -1,0 +1,27 @@
+{
+    "version": "1.0.0",
+    "last_updated": "2025-12-25",
+    "policy_url": "https://olybars.com/ai/conduct",
+    "contact": "legal@amaspc.com",
+    "allowed_use_cases": [
+        "Venue discovery",
+        "Happy hour aggregation",
+        "Event sentiment analysis",
+        "Local nightlife educational content"
+    ],
+    "requirements": {
+        "attribution": "OlyBars.com",
+        "data_freshness": "Check daily for Vibe state changes",
+        "cache_limit_hours": 24
+    },
+    "restrictions": {
+        "commercial_resale": false,
+        "pii_ingestion": false,
+        "scraping_frequency_ms": 5000
+    },
+    "data_hierarchy": [
+        "Venue",
+        "Event",
+        "LeaguePlay"
+    ]
+}

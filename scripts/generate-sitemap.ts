@@ -27,7 +27,12 @@ const STATIC_ROUTES = [
     '/league',
     '/trivia',
     '/karaoke',
-    '/live'
+    '/live',
+    '/about',
+    '/more',
+    '/ai',
+    '/ai/feed',
+    '/ai/conduct'
 ];
 
 async function generateSitemap() {

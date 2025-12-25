@@ -72,6 +72,7 @@ export const venueSearch = ai.defineTool(
                     address: data.address || '',
                     leagueEvent: data.leagueEvent || null,
                     triviaTime: data.triviaTime || '',
+                    deal: data.deal || '',
                     category: data.category || '',
                     tier_config: data.tier_config || undefined,
                     attributes: data.attributes || undefined
@@ -82,12 +83,12 @@ export const venueSearch = ai.defineTool(
             const queryWords = normalizedQuery.split(/\s+/).filter(w => w.length > 2); // only significant words
 
             return allVenues.filter(v => {
-                const venueText = `${v.name} ${v.description} ${v.vibe}`.toLowerCase().replace(/[’‘]/g, "'");
+                const venueText = `${v.name} ${v.description} ${v.vibe} ${v.leagueEvent || ''} ${v.deal || ''} ${v.triviaTime || ''}`.toLowerCase().replace(/[’‘]/g, "'");
                 // Match if the full normalized query is in the text
                 if (venueText.includes(normalizedQuery)) return true;
                 // Or if any significant word matches
                 return queryWords.some(word => venueText.includes(word));
-            }).slice(0, 5); // Limit to top 5 matches
+            }).slice(0, 10); // Limit to top 10 matches for more event visibility
         } catch (error) {
             console.error("Venue search failed:", error);
             return [];

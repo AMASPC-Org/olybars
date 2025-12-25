@@ -6,6 +6,7 @@ import { ChevronLeft, Share2, EyeOff } from 'lucide-react';
 import { VenueCard } from '../components/VenueCard';
 import { HistoryFooter } from '../components/HistoryFooter';
 import { useToast } from '../../../components/ui/BrandedToast';
+import { SEO } from '../../../components/common/SEO';
 
 interface HistoryArticleScreenProps {
     venues: Venue[];
@@ -17,6 +18,38 @@ export const HistoryArticleScreen: React.FC<HistoryArticleScreenProps> = ({ venu
     const { showToast } = useToast();
 
     const article = HISTORY_ARTICLES.find(a => a.slug === slug);
+
+    const generateArticleSchema = () => {
+        if (!article) return null;
+
+        const schema = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": article.title,
+            "description": article.subtitle,
+            "image": article.coverImage,
+            "author": {
+                "@type": "Person",
+                "name": article.author,
+                "url": "https://olybars.com/meet-artie" // Assuming Artie or similar persona
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "OlyBars",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://olybars.com/assets/Artie-Only-Logo.png"
+                }
+            },
+            "datePublished": new Date().toISOString() // Fallback since article.date might be "Oct 2024"
+        };
+
+        return (
+            <script type="application/ld+json">
+                {JSON.stringify(schema)}
+            </script>
+        );
+    };
 
     useEffect(() => {
         // Scroll to top on mount
@@ -53,6 +86,13 @@ export const HistoryArticleScreen: React.FC<HistoryArticleScreenProps> = ({ venu
 
     return (
         <div className="min-h-full bg-background pb-32">
+            <SEO
+                title={article.title}
+                description={article.subtitle}
+                ogImage={article.coverImage}
+                ogType="article"
+            />
+            {generateArticleSchema()}
             {/* Header Image */}
             <div className="relative h-72 w-full">
                 <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-background z-10" />

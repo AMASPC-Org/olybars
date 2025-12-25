@@ -1,13 +1,60 @@
 import React from 'react';
-import { User, Beer, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ArtieLogo from '../../../assets/Artie-Only-Logo.png';
+import { SEO } from '../../../components/common/SEO';
 
 const ArtieBioScreen = () => {
     const navigate = useNavigate();
 
+    const generateArtieSchema = () => {
+        const personSchema = {
+            "@context": "https://schema.org",
+            "@type": "Person",
+            "name": "Artie Wells",
+            "jobTitle": "OlyBars Concierge",
+            "description": "The 98501 Original and Nightlife OS Concierge, powered by Well 80.",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "OlyBars",
+                "url": "https://olybars.com"
+            },
+            "url": "https://olybars.com/meet-artie",
+            "image": "https://olybars.com/assets/Artie-Only-Logo.png"
+        };
+
+        const softwareSchema = {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Artie Wells",
+            "operatingSystem": "Web",
+            "applicationCategory": "Nightlife OS",
+            "description": "Interactive concierge for Olympia nightlife.",
+            "author": {
+                "@type": "Organization",
+                "name": "OlyBars"
+            }
+        };
+
+        return (
+            <>
+                <script type="application/ld+json">
+                    {JSON.stringify(personSchema)}
+                </script>
+                <script type="application/ld+json">
+                    {JSON.stringify(softwareSchema)}
+                </script>
+            </>
+        );
+    };
+
     return (
         <div className="min-h-full bg-[#0f172a] text-secondary p-6 relative overflow-hidden">
+            <SEO
+                title="Meet Artie Wells"
+                description="Get to know the architect of the OlyBars Nightlife OS. Artie Wells, the 98501 original, sharing the lore of Olympia's bars."
+                ogType="profile"
+            />
+            {generateArtieSchema()}
             {/* Background Motifs */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />

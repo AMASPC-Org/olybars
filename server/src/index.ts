@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import { fetchVenues, checkIn } from './venueService';
+import { isAiBot, getBotName } from './utils/botDetector';
 
 dotenv.config();
 
@@ -33,9 +34,34 @@ const log = (severity: string, message: string, payload: any = {}) => {
     console.log(JSON.stringify(logEntry));
 };
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
     const start = Date.now();
     const correlation_id = req.header('x-correlation-id') || `req-${Math.random().toString(36).substring(2, 11)}`;
+    const userAgent = req.get('user-agent') || '';
+
+    // AI Bot Tracking
+    if (isAiBot(userAgent)) {
+        const botName = getBotName(userAgent);
+        const resource = req.url;
+
+        // Non-blocking log to Firestore
+        (async () => {
+            try {
+                const { db } = await import('./firebaseAdmin');
+                await db.collection('ai_access_logs').add({
+                    botName,
+                    userAgent,
+                    resource,
+                    timestamp: new Date().toISOString(),
+                    method: req.method,
+                    ip: req.ip || req.header('x-forwarded-for') || 'unknown'
+                });
+                log('INFO', `[AI_BOT_DETECTED] ${botName} accessed ${resource}`);
+            } catch (err) {
+                console.error('[AI_ERROR] Failed to log bot access:', err);
+            }
+        })();
+    }
 
     res.on('finish', () => {
         const latencyMs = Date.now() - start;
@@ -44,7 +70,7 @@ app.use((req, res, next) => {
             route: req.route?.path || req.url,
             status: res.statusCode,
             latencyMs,
-            userAgent: req.get('user-agent'),
+            userAgent,
         });
     });
     next();
@@ -79,6 +105,7 @@ app.get('/health', (req, res) => {
 app.get('/api/venues', async (req, res) => {
     try {
         const venues = await fetchVenues();
+        res.setHeader('Cache-Control', 'public, max-age=30'); // Cache for 30s
         res.json(venues);
     } catch (error: any) {
         log('ERROR', 'CRITICAL ERROR fetching venues', {
@@ -404,6 +431,70 @@ app.post('/api/chat', async (req, res) => {
     } catch (error: any) {
         log('ERROR', 'Artie Local Relay Failure', { error: error.message });
         res.status(500).json({ error: `Artie is having a moment: ${error.message}` });
+    }
+});
+
+/**
+ * @route GET /api/ai/access-logs
+ * @desc Fetch recent AI bot activity
+ */
+app.get('/api/ai/access-logs', async (req, res) => {
+    try {
+        const { db } = await import('./firebaseAdmin');
+        const snapshot = await db.collection('ai_access_logs')
+            .orderBy('timestamp', 'desc')
+            .limit(50)
+            .get();
+
+        const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.json(logs);
+    } catch (error: any) {
+        log('ERROR', 'Failed to fetch AI access logs', { error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route GET /api/venues/:id/semantic
+ * @desc Get Gemini-enriched semantic metadata for a venue
+ */
+app.get('/api/venues/:id/semantic', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { db } = await import('./firebaseAdmin');
+        const venueDoc = await db.collection('venues').doc(id).get();
+        if (!venueDoc.exists) {
+            return res.status(404).json({ error: 'Venue not found' });
+        }
+        const venue = venueDoc.data();
+
+        // Dynamically import Gemini Service
+        const { GeminiService } = await import('../../functions/src/services/geminiService');
+        const gemini = new GeminiService();
+
+        const prompt = `You are an SEO & AI Authority specialist for OlyBars.
+        Analyze this venue and produce a structured semantic profile for AI agents.
+        Venue: ${venue.name}
+        Type: ${venue.type}
+        Vibe: ${venue.vibe}
+        Lore: ${venue.originStory}
+        Insider: ${venue.insiderVibe}
+        
+        Output ONLY a JSON object with:
+        "keywords": [top 5 niche keywords],
+        "mood": [3 mood descriptors],
+        "era": [dominant historical era signature],
+        "botContext": [1-sentence summary for LLM ingestion]`;
+
+        const response = await gemini.generateArtieResponse('gemini-2.0-flash', [
+            { role: 'user', parts: [{ text: prompt }] }
+        ], 0.3);
+
+        const semanticData = JSON.parse(response || '{}');
+        res.json(semanticData);
+    } catch (error: any) {
+        log('ERROR', 'Semantic Enrichment Failed', { venueId: id, error: error.message });
+        res.status(500).json({ error: 'Failed to enrich venue context.' });
     }
 });
 

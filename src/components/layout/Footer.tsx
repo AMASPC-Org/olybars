@@ -16,12 +16,13 @@ export const Footer = () => {
             <div className="flex justify-center gap-4 my-3 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
                 <Link to="/about" className="hover:text-primary transition-colors">About</Link>
                 <Link to="/faq" className="hover:text-primary transition-colors">Playbook</Link>
+                <Link to="/more" className="hover:text-primary transition-colors">More</Link>
                 <Link to="/terms" className="hover:text-primary transition-colors">Terms</Link>
                 <Link to="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
             </div>
 
             <p className="text-[7px] text-slate-700 font-bold uppercase tracking-widest">
-                © 2025 OlyBars | Part of the AMA Agentic Ecosystem
+                © 2025 OlyBars | Part of the AMA Network
             </p>
         </footer>
     );

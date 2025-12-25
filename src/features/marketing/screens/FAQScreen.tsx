@@ -7,8 +7,30 @@ const FAQScreen: React.FC = () => {
     const navigate = useNavigate();
     const [openIndex, setOpenIndex] = useState<number | null>(null);
 
+    const generateFAQSchema = () => {
+        const schema = {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": kb.faq.map(item => ({
+                "@type": "Question",
+                "name": item.question,
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": item.answer
+                }
+            }))
+        };
+
+        return (
+            <script type="application/ld+json">
+                {JSON.stringify(schema)}
+            </script>
+        );
+    };
+
     return (
         <div className="min-h-screen bg-background text-white p-6 pb-24 font-body">
+            {generateFAQSchema()}
             <button
                 onClick={() => navigate(-1)}
                 className="flex items-center gap-2 text-primary mb-8 hover:opacity-80 transition-opacity uppercase font-black tracking-widest text-xs"

@@ -400,6 +400,23 @@ export const AppShell: React.FC<AppShellProps> = ({
                   <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
                 </button>
 
+                {/* [NEW] MORE VIBES: SETTINGS & INFO */}
+                <button
+                  onClick={() => handleMenuNavigation('/more')}
+                  className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-all border-l-4 border-l-primary"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="bg-primary/20 p-2 rounded-lg">
+                      <MoreHorizontal className="w-5 h-5 text-primary" strokeWidth={3} />
+                    </div>
+                    <div className="text-left">
+                      <span className="block text-white font-black text-xs uppercase tracking-tight">MORE VIBES</span>
+                      <span className="block text-slate-500 text-[8px] font-bold uppercase tracking-widest">Settings & System Info</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
+                </button>
+
                 {/* 3. DISCOVERY LINKS */}
                 <div className="space-y-4">
                   <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1 mb-1">Discovery</h3>

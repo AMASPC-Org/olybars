@@ -38,7 +38,8 @@ export interface Venue {
     score: number;
     lastUpdated: number;
   };
-  leagueEvent?: 'karaoke' | 'trivia' | 'arcade' | 'events' | 'openmic' | 'bingo' | 'live_music' | null;
+  leagueEvent?: 'karaoke' | 'trivia' | 'arcade' | 'events' | 'openmic' | 'bingo' | 'live_music' | 'pool' | 'darts' | null;
+  triviaTime?: string;
   isHQ?: boolean;
   happyHour?: {
     startTime: string;
