@@ -644,7 +644,8 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'isPaidLeagueMember', // Admin/Owner toggle
         'leagueEvent', 'triviaTime', 'deal', 'dealEndsIn', 'checkIns',
         'isVisible', 'isActive', // [FIX] Access Control Fields
-        'location' // [NEW] Allow programmatic location updates
+        'location', // [NEW] Allow programmatic location updates
+        'vibeDefault', 'assets' // [NEW] Onboarding MVP fields
     ];
 
     const filteredUpdates: any = {};
@@ -679,7 +680,7 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
 /**
  * Sync a venue's details with Google Places API.
  */
-export const syncVenueWithGoogle = async (venueId: string) => {
+export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: string) => {
     const venueRef = db.collection('venues').doc(venueId);
     const venueDoc = await venueRef.get();
 
@@ -688,7 +689,7 @@ export const syncVenueWithGoogle = async (venueId: string) => {
 
     console.log(`[PLACES_SYNC] Starting sync for ${venueData.name} (${venueId})...`);
 
-    let placeId = venueData.googlePlaceId;
+    let placeId = manualPlaceId || venueData.googlePlaceId;
 
     // 1. If no placeId, search for it
     if (!placeId) {
@@ -715,6 +716,14 @@ export const syncVenueWithGoogle = async (venueId: string) => {
 
     if (details.formatted_phone_number) updates.phone = details.formatted_phone_number;
     if (details.website) updates.website = details.website;
+    if (details.formatted_address) updates.address = details.formatted_address; // [NEW] Sync address
+
+    // Construct Google Photo URL if available
+    if (details.photos && details.photos.length > 0) {
+        const photoRef = details.photos[0].photo_reference;
+        const apiKey = process.env.GOOGLE_BACKEND_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
+        (updates as any).googlePhotoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photoRef}&key=${apiKey}`;
+    }
 
     // Map geometry to location
     if (details.geometry?.location) {
@@ -739,6 +748,39 @@ export const syncVenueWithGoogle = async (venueId: string) => {
         message: `Synced ${venueData.name} with Google Places.`,
         updates
     };
+};
+
+/**
+ * Pulse Calculation Service (MVP)
+ * Calculates real-time pulse score based on recent check-ins.
+ * Weighting: (0-15m): 1.0, (15-30m): 0.8, (30-60m): 0.5
+ */
+export const getVenuePulse = async (venueId: string): Promise<number> => {
+    const now = Date.now();
+    const oneHourAgo = now - (60 * 60 * 1000);
+
+    const signalsSnapshot = await db.collection('signals')
+        .where('venueId', '==', venueId)
+        .where('type', '==', 'check_in')
+        .where('timestamp', '>', oneHourAgo)
+        .get();
+
+    let pulseScore = 0;
+
+    signalsSnapshot.forEach(doc => {
+        const data = doc.data() as Signal;
+        const ageMinutes = (now - data.timestamp) / (60 * 1000);
+
+        if (ageMinutes <= 15) {
+            pulseScore += 1.0;
+        } else if (ageMinutes <= 30) {
+            pulseScore += 0.8;
+        } else if (ageMinutes <= 60) {
+            pulseScore += 0.5;
+        }
+    });
+
+    return Math.round(pulseScore);
 };
 
 

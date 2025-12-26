@@ -6,6 +6,7 @@ import {
 import { Venue } from '../../../types';
 import { updateVenueDetails, syncVenueWithGoogle } from '../../../services/venueService';
 import { useToast } from '../../../components/ui/BrandedToast';
+import { PlaceAutocomplete } from '../../../components/ui/PlaceAutocomplete';
 
 interface ListingManagementTabProps {
     venue: Venue;
@@ -16,6 +17,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
     const { showToast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<Venue>>({
         description: venue.description || '',
         hours: typeof venue.hours === 'string' ? venue.hours : 'Standard Hours',
@@ -57,7 +59,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
     const handleGoogleSync = async () => {
         setIsSyncing(true);
         try {
-            const result = await syncVenueWithGoogle(venue.id);
+            const result = await syncVenueWithGoogle(venue.id, selectedPlaceId || undefined);
             if (result.success) {
                 // Update local form state with synced data
                 setFormData(prev => ({
@@ -66,6 +68,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                 }));
                 onUpdate(venue.id, result.updates);
                 showToast('SYNCED WITH GOOGLE PLACES', 'success');
+                setSelectedPlaceId(null); // Clear manual selection after successful sync
             }
         } catch (error: any) {
             showToast(error.message || 'GOOGLE SYNC FAILED', 'error');
@@ -289,8 +292,34 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                         ) : (
                             <Globe className="w-3 h-3" />
                         )}
-                        Sync with Google
+                        {selectedPlaceId ? 'Link & Sync Selected' : 'Auto-Sync Google'}
                     </button>
+                </div>
+
+                {/* Manual Link Helper */}
+                <div className="bg-blue-600/5 border border-blue-500/10 rounded-2xl p-4 space-y-4">
+                    <div className="flex items-start gap-3">
+                        <div className="p-2 bg-blue-600/20 rounded-lg">
+                            <Info className="w-4 h-4 text-blue-400" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-white uppercase tracking-wider mb-1">Manual Business Link</p>
+                            <p className="text-[10px] text-slate-400 font-medium">If auto-sync can't find your spot, search for it manually below before syncing.</p>
+                        </div>
+                    </div>
+
+                    <PlaceAutocomplete
+                        onPlaceSelect={(place) => setSelectedPlaceId(place.place_id || null)}
+                        placeholder="Search for your business on Google..."
+                        className="!bg-black/20"
+                    />
+
+                    {selectedPlaceId && (
+                        <div className="flex items-center gap-2 text-[10px] font-black text-green-400 uppercase tracking-widest animate-in fade-in slide-in-from-left duration-300">
+                            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                            Ready to sync selected place
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -130,6 +130,8 @@ export interface Venue {
   establishmentType?: 'Bar Only' | 'Bar & Restaurant' | 'Restaurant with Bar';
   subtypes?: string[];
   googlePlaceId?: string; // [NEW] For Google Places SDK Sync
+  vibeDefault?: 'CHILL' | 'LIVELY' | 'BUZZING'; // [NEW] Onboarding MVP
+  assets?: Record<string, boolean>; // [NEW] Grid Toggles (Pool, Darts, etc.)
   updatedAt?: number;
 }
 
@@ -184,7 +186,7 @@ export interface ActivityLogItem {
   metadata?: any;
 }
 
-export type UserRole = 'guest' | 'user' | 'manager' | 'owner' | 'admin' | 'super-admin';
+export type UserRole = 'guest' | 'user' | 'manager' | 'owner' | 'admin' | 'super-admin' | 'PLAYER';
 
 export interface UserProfile {
   uid: string;

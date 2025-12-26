@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { Venue } from '../../../types';
 import { useOutletContext, useNavigate } from 'react-router-dom';
-import { Loader2, Navigation, MapPin, ExternalLink } from 'lucide-react';
+import { Loader2, Navigation, MapPin, ExternalLink, Search } from 'lucide-react';
+import { PlaceAutocomplete } from '../../../components/ui/PlaceAutocomplete';
+import { useGoogleMapsScript } from '../../../hooks/useGoogleMapsScript';
 
 // Triple-slash directive for Google Maps types (if not installed)
 // <reference types="@types/google.maps" />
@@ -18,61 +20,31 @@ const MapScreen = () => {
   const { venues } = useOutletContext<ContextType>();
   const { coords, error: geoError, loading: geoLoading, requestLocation, isRequested } = useGeolocation({ shouldPrompt: false });
   const mapRef = useRef<HTMLDivElement>(null);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const status = useGoogleMapsScript();
   const [map, setMap] = useState<google.maps.Map | null>(null);
 
-  useEffect(() => {
+  const initMap = () => {
     if (!mapRef.current) return;
+    try {
+      const defaultCenter = { lat: 47.0425, lng: -122.9007 }; // Olympia, WA
+      const initialMap = new (window as any).google.maps.Map(mapRef.current!, {
+        center: coords ? { lat: coords.latitude, lng: coords.longitude } : defaultCenter,
+        zoom: 14,
+        styles: darkMapStyle,
+        disableDefaultUI: true,
+        zoomControl: true,
+      });
+      setMap(initialMap);
+    } catch (e) {
+      console.error('[MAP_ERROR] Failed to init map:', e);
+    }
+  };
 
-    const timeout = setTimeout(() => {
-      if (status === 'loading') setStatus('error');
-    }, 10000); // 10s timeout
-
-    const loadMaps = async () => {
-      if (!GOOGLE_MAPS_API_KEY) {
-        setStatus('error');
-        return;
-      }
-      if ((window as any).google?.maps) {
-        initMap();
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=visualization`;
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        clearTimeout(timeout);
-        initMap();
-      };
-      script.onerror = () => {
-        clearTimeout(timeout);
-        setStatus('error');
-      };
-      document.head.appendChild(script);
-    };
-
-    const initMap = () => {
-      try {
-        const defaultCenter = { lat: 47.0425, lng: -122.9007 }; // Olympia, WA
-        const initialMap = new (window as any).google.maps.Map(mapRef.current!, {
-          center: coords ? { lat: coords.latitude, lng: coords.longitude } : defaultCenter,
-          zoom: 14,
-          styles: darkMapStyle,
-          disableDefaultUI: true,
-          zoomControl: true,
-        });
-        setMap(initialMap);
-        setStatus('ready');
-      } catch (e) {
-        setStatus('error');
-      }
-    };
-
-    loadMaps();
-    return () => clearTimeout(timeout);
-  }, []);
+  useEffect(() => {
+    if (status === 'ready' && mapRef.current && !map) {
+      initMap();
+    }
+  }, [status, map]);
 
   useEffect(() => {
     if (!map || !venues || status !== 'ready') return;
@@ -172,12 +144,43 @@ const MapScreen = () => {
     }
   }, [map, venues, coords, status]);
 
-  const handleGetDirections = (venue: Venue) => {
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${venue.location.lat},${venue.location.lng}`, '_blank');
+  const handleDirections = (venue: Venue) => {
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${venue.location?.lat},${venue.location?.lng}`, '_blank');
+  };
+
+  const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
+    if (!map || !place.geometry?.location) return;
+
+    map.setCenter(place.geometry.location);
+    map.setZoom(16);
+
+    // Add a temporary marker for the searched place if it's not a venue
+    new (window as any).google.maps.Marker({
+      position: place.geometry.location,
+      map: map,
+      animation: (window as any).google.maps.Animation.DROP,
+      icon: {
+        path: (window as any).google.maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: "#fbbf24",
+        fillOpacity: 0.8,
+        strokeWeight: 2,
+        strokeColor: "#ffffff",
+      }
+    });
   };
 
   return (
-    <div className="h-full relative bg-slate-900">
+    <div className="h-full relative bg-slate-900 overflow-hidden">
+      {/* Search Header */}
+      <div className="absolute top-6 left-6 right-6 z-30 animate-in fade-in slide-in-from-top duration-700">
+        <PlaceAutocomplete
+          onPlaceSelect={handlePlaceSelect}
+          placeholder="Where we drinking tonight?"
+          className="max-w-md mx-auto"
+        />
+      </div>
+
       <div ref={mapRef} className={`w-full h-full ${status !== 'ready' ? 'hidden' : ''}`} />
 
       {status === 'loading' && (

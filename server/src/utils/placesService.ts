@@ -47,6 +47,12 @@ export interface PlaceDetails {
         weekday_text: string[];
         open_now: boolean;
     };
+    photos?: {
+        photo_reference: string;
+        height: number;
+        width: number;
+        html_attributions: string[];
+    }[];
 }
 
 /**
@@ -88,7 +94,7 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceDetails | n
     }
 
     try {
-        const fields = 'place_id,name,formatted_address,formatted_phone_number,website,opening_hours,geometry,url,rating,user_ratings_total';
+        const fields = 'place_id,name,formatted_address,formatted_phone_number,website,opening_hours,geometry,url,rating,user_ratings_total,photos';
         const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${GOOGLE_MAPS_API_KEY}`;
 
         const response = await fetch(url);

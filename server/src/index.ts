@@ -301,15 +301,32 @@ app.patch('/api/venues/:id', verifyToken, requireRole(['admin', 'super-admin', '
  */
 app.post('/api/venues/:id/sync-google', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
     const { id } = req.params;
+    const { googlePlaceId } = req.body;
     const requestingUserId = (req as any).user.uid;
 
     try {
         const { syncVenueWithGoogle } = await import('./venueService');
-        const result = await syncVenueWithGoogle(id);
+        const result = await syncVenueWithGoogle(id, googlePlaceId);
         res.json(result);
     } catch (error: any) {
         log('ERROR', 'Failed to sync venue with Google', { venueId: id, error: error.message });
         res.status(500).json({ error: error.message || 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route GET /api/venues/:id/pulse
+ * @desc Fetch real-time Pulse score for a venue
+ */
+app.get('/api/venues/:id/pulse', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { getVenuePulse } = await import('./venueService');
+        const pulse = await getVenuePulse(id);
+        res.json({ pulse });
+    } catch (error: any) {
+        log('ERROR', 'Failed to fetch venue pulse', { venueId: id, error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 

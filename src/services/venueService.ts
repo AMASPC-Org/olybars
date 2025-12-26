@@ -65,11 +65,12 @@ export const updateVenueDetails = async (venueId: string, updates: Partial<Venue
 /**
  * Trigger a backend sync with Google Places API
  */
-export const syncVenueWithGoogle = async (venueId: string): Promise<{ success: boolean, message: string, updates: any }> => {
+export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: string): Promise<{ success: boolean, message: string, updates: any }> => {
   try {
     const response = await fetch(`${API_BASE_URL}/venues/${venueId}/sync-google`, {
       method: 'POST',
       headers: await getAuthHeaders(),
+      body: JSON.stringify({ googlePlaceId: manualPlaceId }),
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -88,3 +89,20 @@ export const syncVenueWithGoogle = async (venueId: string): Promise<{ success: b
  */
 export const getPulsePoints = () => PULSE_CONFIG.POINTS;
 export const getPulseThresholds = () => PULSE_CONFIG.THRESHOLDS;
+
+/**
+ * Fetch real-time Pulse score for a venue
+ */
+export const fetchVenuePulse = async (venueId: string): Promise<number> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/venues/${venueId}/pulse`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch pulse: ${response.statusText}`);
+    }
+    const data = await response.json();
+    return data.pulse;
+  } catch (error) {
+    console.error('Error in fetchVenuePulse:', error);
+    return 0;
+  }
+};
