@@ -38,8 +38,11 @@ export const artieChatLogic = genkitAi.defineFlow({
     try {
         const service = getGemini();
 
-        // 1. Triage Intent
-        const rawTriage = await service.getTriage(question);
+        // 1. Triage Intent & Pulse Context (PARALLEL)
+        const [rawTriage, pulseContext] = await Promise.all([
+            service.getTriage(question),
+            ArtieContextService.getPulsePromptSnippet()
+        ]);
 
         if (rawTriage.includes('SAFETY')) {
             return "Whoa there, friend. Sounds like a rough night. If you need a safe ride, call Red Cab: (360) 555-0100. Let's keep it safe.";
@@ -61,9 +64,6 @@ export const artieChatLogic = genkitAi.defineFlow({
             return "Nice try. You have to be inside to win. Clock in when you see the bartender.";
         }
 
-        // Fetch Real-time Pulse
-        const pulseContext = await ArtieContextService.getPulsePromptSnippet();
-
         // 2. Sanitize and build history
         // IMPORTANT: Strip [ACTION] tags from history so the model doesn't get confused 
         // by its own previous JSON outputs when we want it to follow new instructions.
@@ -84,8 +84,7 @@ export const artieChatLogic = genkitAi.defineFlow({
                 parts: [{ text: `User Query: ${question}\n\nOlyBars Playbook Knowledge: ${JSON.stringify(kbResult)}` }]
             });
 
-            return await service.generateArtieResponse('gemini-2.0-flash', cleanContents, 0.4, systemBase)
-                || "I've got the playbook right here, but I'm blanking. Ask me about league rules again?";
+            return await service.generateArtieResponseStream('gemini-2.0-flash', cleanContents, 0.4, systemBase);
         }
 
         // 4. Search Intent
@@ -98,8 +97,7 @@ export const artieChatLogic = genkitAi.defineFlow({
                 parts: [{ text: `User Query: ${question}\n\nVenue Search Data: ${JSON.stringify(queryResult)}` }]
             });
 
-            return await service.generateArtieResponse('gemini-2.0-flash', cleanContents, 0.5, systemBase)
-                || "I found some spots, but my voice is a bit dry. Try asking again?";
+            return await service.generateArtieResponseStream('gemini-2.0-flash', cleanContents, 0.5, systemBase);
         }
 
         // 5. Venue Ops Intent
@@ -134,12 +132,15 @@ export const artieChatLogic = genkitAi.defineFlow({
 
             cleanContents.push({ role: 'user', parts: [{ text: question }] });
 
-            return await service.generateArtieResponse('gemini-2.0-flash', cleanContents, 0.1, venueOpsSystem);
+            return await service.generateArtieResponseStream('gemini-2.0-flash', cleanContents, 0.1, venueOpsSystem);
         }
 
         // 6. General Chat
         cleanContents.push({ role: 'user', parts: [{ text: question }] });
-        return await service.generateArtieResponse('gemini-2.0-flash', cleanContents, 0.7, systemBase) || "Cheers!";
+
+        // Return a stream object if possible, or handle it as a direct generator
+        // In this architecture, we'll let index.ts handle the stream conversion if we return the stream promise
+        return await service.generateArtieResponseStream('gemini-2.0-flash', cleanContents, 0.7, systemBase);
 
     } catch (e: any) {
         console.error("Artie Generative Error:", e);

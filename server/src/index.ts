@@ -483,8 +483,12 @@ app.post('/api/client-errors', (req, res) => {
  * @desc Get the restricted Google Maps API key for the frontend
  */
 app.get('/api/config/maps-key', (req, res) => {
-    const key = process.env.GOOGLE_BACKEND_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY;
+    let key = process.env.GOOGLE_BACKEND_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY;
     if (!key) return res.status(500).json({ error: 'Maps API Key not configured on backend' });
+
+    // [FIX] Sanitize key: usage of .env sometimes injects subsequent VAR=VAL pairs if on same line
+    key = key.trim().split(' ')[0];
+
     res.json({ key });
 });
 
@@ -656,7 +660,22 @@ app.post('/api/chat', artieRateLimiter, verifyHoneypot, blockAggressiveBots, asy
         const { artieChatLogic } = await import('../../functions/src/flows/artieChat');
         const result = await artieChatLogic({ history: history || [], question, userId, userRole: realRole });
 
-        res.json({ data: result });
+        // Check if result is a stream (it will be for successful generatations)
+        if (typeof result !== 'string' && (result as any).stream) {
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            res.setHeader('Transfer-Encoding', 'chunked');
+
+            for await (const chunk of (result as any).stream) {
+                const text = chunk.text();
+                if (text) {
+                    res.write(text);
+                }
+            }
+            res.end();
+        } else {
+            // Fallback for strings (triage rejections, safety, etc.)
+            res.json({ data: result });
+        }
     } catch (error: any) {
         log('ERROR', 'Artie Local Relay Failure', { error: error.message });
         res.status(500).json({ error: `Artie is having a moment: ${error.message}` });

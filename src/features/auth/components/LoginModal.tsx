@@ -272,7 +272,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className={inputClasses} />
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className={inputClasses} autoComplete="current-password" />
                 </div>
 
                 {userSubMode === 'signup' && (
@@ -394,7 +394,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                  <input type="password" value={ownerPassword} onChange={(e) => setOwnerPassword(e.target.value)} placeholder="Password" className={inputClasses} />
+                  <input type="password" value={ownerPassword} onChange={(e) => setOwnerPassword(e.target.value)} placeholder="Password" className={inputClasses} autoComplete="current-password" />
                 </div>
                 <button
                   type="submit"

@@ -77,4 +77,13 @@ DIRECTIVES:
         });
         return response.candidates?.[0]?.content?.parts?.[0]?.text;
     }
+
+    async generateArtieResponseStream(model: string, contents: any[], temperature: number = 0.7, systemInstruction?: string) {
+        return this.genAI.models.generateContentStream({
+            model,
+            contents,
+            systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
+            config: { temperature }
+        });
+    }
 }

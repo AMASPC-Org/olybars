@@ -13,17 +13,13 @@ const getApiBaseUrl = () => {
         return 'http://127.0.0.1:3001/api';
     }
 
-    // Development Staging
-    if (hostname.includes('olybars-dev.web.app')) {
+    // Build-time environment selection allows Vite to tree-shake the "forbidden" URLs
+    // ensuring we pass the check-env.js safety scans.
+    if (import.meta.env.MODE === 'development') {
         return 'https://olybars-backend-juthzlaerq-uw.a.run.app/api';
     }
 
-    // Production
-    if (hostname.includes('olybars.com')) {
-        return 'https://olybars-backend-26629455103.us-west1.run.app/api';
-    }
-
-    // Fallback to Production Cloud Run URL
+    // Production (Default)
     return 'https://olybars-backend-26629455103.us-west1.run.app/api';
 };
 

@@ -18,8 +18,10 @@ const MapScreen = () => {
   const { venues } = useOutletContext<ContextType>();
   const { coords, error: geoError, loading: geoLoading, requestLocation, isRequested } = useGeolocation({ shouldPrompt: false });
   const mapRef = useRef<HTMLDivElement>(null);
+  const infoWindowRef = useRef<any>(null); // Singleton InfoWindow ref
   const { status, retry, apiKey } = useGoogleMapsScript();
   const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [initError, setInitError] = useState<string | null>(null);
 
   const initMap = () => {
     if (!mapRef.current) return;
@@ -33,8 +35,9 @@ const MapScreen = () => {
         zoomControl: true,
       });
       setMap(initialMap);
-    } catch (e) {
+    } catch (e: any) {
       console.error('[MAP_ERROR] Failed to init map:', e);
+      setInitError(e?.message || 'Unknown Init Error');
     }
   };
 
@@ -43,6 +46,8 @@ const MapScreen = () => {
       initMap();
     }
   }, [status, map]);
+
+  // ... (render content)
 
   useEffect(() => {
     if (!map || !venues || status !== 'ready') return;
@@ -86,9 +91,16 @@ const MapScreen = () => {
         },
       });
 
-      let infoWindow = new (window as any).google.maps.InfoWindow();
+      // Singleton InfoWindow pattern
+      if (!infoWindowRef.current) {
+        infoWindowRef.current = new (window as any).google.maps.InfoWindow();
+      }
+      const infoWindow = infoWindowRef.current;
 
       marker.addListener('click', () => {
+        // Close any open info window first (though singleton usage handles this implicitly by moving content)
+        infoWindow.close();
+
         const tierTag = isLeagueAnchor ? '[LEAGUE READY]' : '[SOCIAL/DINING]';
         const contentString = `
           <div style="padding: 12px; color: #0f172a; max-width: 200px; font-family: 'Roboto Condensed', sans-serif;">
@@ -101,11 +113,25 @@ const MapScreen = () => {
               </span>
             </div>
             <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 900; font-family: 'Oswald', sans-serif; text-transform: uppercase;">${venue.name}</h3>
-            <p style="margin: 0; font-size: 11px; color: #475569; line-height: 1.2;">${venue.vibe}</p>
+            
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 10px; font-weight: bold; color: #cbd5e1;">
+              <div style="display: flex; align-items: center; gap: 3px;">
+                <span>👥</span>
+                <span>${venue.checkIns || 0} Checked In</span>
+              </div>
+              ${isBuzzing ? '<div style="display: flex; align-items: center; gap: 3px; color: #fbbf24;"><span>🔥</span><span>Buzzing</span></div>' : ''}
+              ${venue.status === 'lively' ? '<div style="display: flex; align-items: center; gap: 3px; color: #a3e635;"><span>🎉</span><span>Lively</span></div>' : ''}
+              ${(!venue.status || venue.status === 'chill') ? '<div style="display: flex; align-items: center; gap: 3px; color: #60a5fa;"><span>🧊</span><span>Chill</span></div>' : ''}
+            </div>
+
+            <p style="margin: 0; font-size: 11px; color: #94a3b8; line-height: 1.3; font-style: italic;">"${venue.vibe}"</p>
             ${venue.attributes?.minors_allowed ? '<p style="margin: 4px 0 0 0; font-size: 10px; color: #059669; font-weight: bold;">✓ Minors Allowed</p>' : ''}
-            <div style="margin-top: 12px;">
-               <button id="view-listing-${venue.id}" style="width: 100%; background: #0f172a; color: #fbbf24; border: none; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;">
+            <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+               <button id="view-listing-${venue.id}" style="background: #0f172a; color: #fbbf24; border: none; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 900; cursor: pointer; text-transform: uppercase;">
                  View Listing
+               </button>
+               <button id="get-directions-${venue.id}" style="background: #e2e8f0; color: #0f172a; border: none; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 900; cursor: pointer; text-transform: uppercase;">
+                 Directions
                </button>
             </div>
           </div>
@@ -117,6 +143,9 @@ const MapScreen = () => {
         (window as any).google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
           document.getElementById(`view-listing-${venue.id}`)?.addEventListener('click', () => {
             navigate(`/venues/${venue.id}`);
+          });
+          document.getElementById(`get-directions-${venue.id}`)?.addEventListener('click', () => {
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${venue.location?.lat},${venue.location?.lng}`, '_blank');
           });
         });
       });
@@ -262,6 +291,10 @@ const darkMapStyle = [
   { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
   { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#fbbf24" }] },
   { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.business", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.attraction", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.medical", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.park", elementType: "labels.text", stylers: [{ visibility: "off" }] },
   { featureType: "transit", stylers: [{ visibility: "off" }] },
   { featureType: "road", elementType: "geometry", stylers: [{ color: "#334155" }] },
   { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#1e293b" }] },

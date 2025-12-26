@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Loader } from '@googlemaps/js-api-loader';
 import { API_ENDPOINTS } from '../lib/api-config';
 
 // The frontend will now fetch the restricted key from the backend
@@ -39,25 +40,30 @@ export const useGoogleMapsScript = () => {
         }
     }, [retryCount]);
 
-    // 2. Load the script once we have the key
+    // 2. Load the script using the official Loader
     useEffect(() => {
-        if (!apiKey || (window as any).google?.maps) return;
+        // Only short-circuit if the Map constructor is explicitly available
+        if ((window as any).google?.maps?.Map) {
+            setStatus('ready');
+            return;
+        }
+        if (!apiKey) return;
 
-        // Cleanup any failed script attempts
-        const oldScript = document.getElementById('google-maps-script');
-        if (oldScript) oldScript.remove();
+        const loader = new Loader({
+            apiKey: apiKey,
+            version: "weekly",
+            libraries: ["places"], // Load places library
+        });
 
-        const script = document.createElement('script');
-        script.id = 'google-maps-script';
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        script.onload = () => setStatus('ready');
-        script.onerror = () => {
-            console.error('[MAPS_SCRIPT_LOAD_ERROR] Failed to load Google Maps JS API');
-            setStatus('error');
-        };
-        document.head.appendChild(script);
+        loader.load()
+            .then(() => {
+                setStatus('ready');
+            })
+            .catch((err) => {
+                console.error('[MAPS_LOADER_ERROR]', err);
+                setStatus('error');
+            });
+
     }, [apiKey, retryCount]);
 
     return { status, retry, apiKey };

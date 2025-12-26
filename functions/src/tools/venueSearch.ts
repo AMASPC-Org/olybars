@@ -9,6 +9,10 @@ if (getApps().length === 0) {
 }
 const db = getFirestore();
 
+// [FINOPS] TTL Cache for Venue Search
+let venueSearchCache: { data: any[], timestamp: number } | null = null;
+const VENUE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 const VenueSchema = z.object({
     name: z.string(),
     description: z.string().optional(),
@@ -53,31 +57,39 @@ export const venueSearch = ai.defineTool(
     },
     async ({ query }: z.infer<typeof VenueInputSchema>) => {
         try {
-            // Simple robust search: fetch all and filter in memory (dataset is small < 100)
-            // to support fuzzy "vibe" search without complex indexing for now.
-            const snapshot = await db.collection('venues').get();
-            const allVenues = snapshot.docs.map(doc => {
-                const data = doc.data();
-                return {
-                    name: data.name || 'Unknown',
-                    description: data.description || '',
-                    happyHour: data.happyHour || null,
-                    vibe: data.vibe || 'chill',
-                    status: data.status || 'unknown',
-                    // Maker Data
-                    makerType: data.makerType || undefined,
-                    isLocalMaker: data.isLocalMaker || false,
-                    originStory: data.originStory || '',
-                    insiderVibe: data.insiderVibe || '',
-                    address: data.address || '',
-                    leagueEvent: data.leagueEvent || null,
-                    triviaTime: data.triviaTime || '',
-                    deal: data.deal || '',
-                    category: data.category || '',
-                    tier_config: data.tier_config || undefined,
-                    attributes: data.attributes || undefined
-                };
-            });
+            const now = Date.now();
+            let allVenues: any[] = [];
+
+            if (venueSearchCache && (now - venueSearchCache.timestamp) < VENUE_CACHE_TTL) {
+                allVenues = venueSearchCache.data;
+            } else {
+                // Simple robust search: fetch all and filter in memory (dataset is small < 100)
+                // to support fuzzy "vibe" search without complex indexing for now.
+                const snapshot = await db.collection('venues').get();
+                allVenues = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        name: data.name || 'Unknown',
+                        description: data.description || '',
+                        happyHour: data.happyHour || null,
+                        vibe: data.vibe || 'chill',
+                        status: data.status || 'unknown',
+                        // Maker Data
+                        makerType: data.makerType || undefined,
+                        isLocalMaker: data.isLocalMaker || false,
+                        originStory: data.originStory || '',
+                        insiderVibe: data.insiderVibe || '',
+                        address: data.address || '',
+                        leagueEvent: data.leagueEvent || null,
+                        triviaTime: data.triviaTime || '',
+                        deal: data.deal || '',
+                        category: data.category || '',
+                        tier_config: data.tier_config || undefined,
+                        attributes: data.attributes || undefined
+                    };
+                });
+                venueSearchCache = { data: allVenues, timestamp: now };
+            }
 
             const normalizedQuery = query.toLowerCase().replace(/[’‘]/g, "'");
             const queryWords = normalizedQuery.split(/\s+/).filter(w => w.length > 2); // only significant words

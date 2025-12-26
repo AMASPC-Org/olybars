@@ -10,6 +10,10 @@ if (getApps().length === 0) {
 }
 const db = getFirestore();
 
+// [FINOPS] TTL Cache for Knowledge Base
+let kbCache: { data: any[], timestamp: number } | null = null;
+const KB_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 const FAQItemSchema = z.object({
     question: z.string(),
     answer: z.string(),
@@ -31,11 +35,19 @@ export const knowledgeSearch = ai.defineTool(
             const normalizedQuery = query.toLowerCase();
             const queryWords = normalizedQuery.split(/\s+/).filter(w => w.length > 2);
 
-            const snapshot = await db.collection('knowledge').get();
-            const liveKnowledge = snapshot.docs.map(doc => {
-                const data = doc.data();
-                return { question: data.question, answer: data.answer };
-            });
+            const now = Date.now();
+            let liveKnowledge: any[] = [];
+
+            if (kbCache && (now - kbCache.timestamp) < KB_CACHE_TTL) {
+                liveKnowledge = kbCache.data;
+            } else {
+                const snapshot = await db.collection('knowledge').get();
+                liveKnowledge = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return { question: data.question, answer: data.answer };
+                });
+                kbCache = { data: liveKnowledge, timestamp: now };
+            }
 
             const timeline = Object.entries(kb.history_timeline).map(([k, v]) => ({ question: `History: ${k}`, answer: v }));
             const market = Object.entries(kb.market_context).map(([k, v]) => ({ question: `Market Context: ${k}`, answer: v }));

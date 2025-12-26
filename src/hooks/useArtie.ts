@@ -48,11 +48,49 @@ export function useArtie() {
                 throw new Error(`Artie connection failed: ${response.statusText}`);
             }
 
-            const result = await response.json();
+            const contentType = response.headers.get('Content-Type');
 
-            // Add model response
-            const modelMessage: Message = { role: 'model', content: result.data };
-            setMessages(prev => [...prev, modelMessage]);
+            if (contentType?.includes('application/json')) {
+                // Handle fallback JSON response (e.g. triage/safety/banned)
+                const result = await response.json();
+                const modelMessage: Message = { role: 'model', content: result.data };
+                setMessages(prev => [...prev, modelMessage]);
+            } else {
+                // Handle streaming response
+                const reader = response.body?.getReader();
+                const decoder = new TextDecoder();
+                let accumulatedContent = '';
+
+                // Add empty model message to start streaming into
+                setMessages(prev => [...prev, { role: 'model', content: '' }]);
+
+                if (reader) {
+                    try {
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+
+                            const chunk = decoder.decode(value, { stream: true });
+                            accumulatedContent += chunk;
+
+                            setMessages(prev => {
+                                const newMessages = [...prev];
+                                const lastMsg = newMessages[newMessages.length - 1];
+                                if (lastMsg && lastMsg.role === 'model') {
+                                    lastMsg.content = accumulatedContent;
+                                }
+                                return newMessages;
+                            });
+                        }
+                    } catch (streamErr) {
+                        // [STREAM_RESILIENCE] Gracefully handle network/stream interruptions
+                        console.warn("Artie stream interrupted. Keeping partial response.", streamErr);
+                        // The loop breaks, we keep what we have in accumulatedContent
+                    } finally {
+                        reader.releaseLock();
+                    }
+                }
+            }
 
         } catch (err: any) {
             console.error("Artie hook failure:", err);
