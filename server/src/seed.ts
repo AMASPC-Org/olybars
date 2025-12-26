@@ -20,7 +20,7 @@ const venues = [
         physicalRoom: true,
         checkIns: 0,
         coordinates: { x: 55, y: 85 },
-        location: { lat: 47.0424, lng: -122.9009 },
+        location: { lat: 47.0469, lng: -122.8906 },
         address: '514 4th Ave E, Olympia, WA 98501',
         isActive: true,
         isVisible: true,
@@ -109,7 +109,7 @@ const venues = [
         isSoberFriendly: true,
         checkIns: 0,
         coordinates: { x: 52, y: 65 },
-        location: { lat: 47.0438, lng: -122.8994 },
+        location: { lat: 47.0431, lng: -122.8983 },
         address: '600 Franklin St SE, Suite 105, Olympia, WA 98501',
         isActive: true,
         isVisible: true
@@ -468,10 +468,9 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 40, y: 50 },
-        location: { lat: 47.04505, lng: -122.89467 },
-        physicalRoom: true,
         address: '418 4th Ave E, Olympia, WA 98501',
-        website: 'https://www.experienceolympia.com/directory/mccoys-tavern/'
+        website: 'https://www.experienceolympia.com/directory/mccoys-tavern/',
+        location: { lat: 47.0461, lng: -122.8931 }
     },
     {
         id: 'eastside-club-tavern',
@@ -487,10 +486,9 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 60, y: 60 },
-        location: { lat: 47.04505, lng: -122.89467 },
-        physicalRoom: true,
         address: '410 4th Ave E, Olympia, WA 98501',
-        website: 'http://www.theeastsideclub.com/'
+        website: 'http://www.theeastsideclub.com/',
+        location: { lat: 47.0461, lng: -122.8933 }
     },
     {
         id: 'shiny-prize',
@@ -506,7 +504,7 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 35, y: 45 },
-        location: { lat: 47.04586, lng: -122.89667 },
+        location: { lat: 47.0460, lng: -122.8943 },
         physicalRoom: true,
         website: 'https://www.shinyprize.com/'
     },
@@ -524,7 +522,7 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 42, y: 52 },
-        location: { lat: 47.04639, lng: -122.90124 },
+        location: { lat: 47.0435, lng: -122.8994 },
         physicalRoom: true,
         website: 'https://nicolesbar.com/'
     },
@@ -542,7 +540,7 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 38, y: 48 },
-        location: { lat: 47.04456, lng: -122.89448 },
+        location: { lat: 47.0460, lng: -122.8929 },
         physicalRoom: true,
         website: 'https://www.thecryptbar.com/'
     },
@@ -560,7 +558,7 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 41, y: 51 },
-        location: { lat: 47.04505, lng: -122.89467 },
+        location: { lat: 47.0462, lng: -122.8938 },
         physicalRoom: true,
         website: 'https://www.southsoundreport.com/p/jake-s-on-4th-returns-to-downtown-olympia'
     },
@@ -578,7 +576,7 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 44, y: 54 },
-        location: { lat: 47.04514, lng: -122.90013 },
+        location: { lat: 47.0445, lng: -122.8967 },
         physicalRoom: true,
         website: 'https://filibusterlounge.com/'
     },
@@ -596,7 +594,7 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 46, y: 56 },
-        location: { lat: 47.043, lng: -122.895 },
+        location: { lat: 47.0445, lng: -122.8966 },
         physicalRoom: true,
         website: 'https://www.cheekymartinilounge.com/'
     },
@@ -614,7 +612,7 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 30, y: 40 },
-        location: { lat: 47.04646, lng: -122.90226 },
+        location: { lat: 47.0460, lng: -122.9002 },
         physicalRoom: true,
         website: 'https://www.olytaproom.com/'
     },
@@ -647,7 +645,7 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 50, y: 60 },
-        location: { lat: 47.043, lng: -122.895 },
+        location: { lat: 47.0443, lng: -122.8964 },
         physicalRoom: true,
         website: 'https://www.rumorswinebar.com/'
     },
@@ -665,7 +663,7 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 52, y: 62 },
-        location: { lat: 47.0438, lng: -122.8994 },
+        location: { lat: 47.0460, lng: -122.9002 },
         physicalRoom: true,
         website: 'https://the-wine-loft-1.wheree.com/'
     },
@@ -683,7 +681,7 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 55, y: 55 },
-        location: { lat: 47.04803, lng: -122.89531 },
+        location: { lat: 47.0470, lng: -122.8953 },
         physicalRoom: true,
         website: 'https://www.legends-arcade.com/'
     },
@@ -701,7 +699,7 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 60, y: 50 },
-        location: { lat: 47.044, lng: -122.899 },
+        location: { lat: 47.0441, lng: -122.9004 },
         physicalRoom: true,
         website: 'https://www.coveolympia.com/'
     },
@@ -769,7 +767,7 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 48, y: 48 },
-        location: { lat: 47.044, lng: -122.892 },
+        location: { lat: 47.0467, lng: -122.8906 },
         physicalRoom: true,
         website: 'https://www.charlieson4th.com/'
     },
@@ -787,7 +785,7 @@ const venues = [
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 49, y: 49 },
-        location: { lat: 47.043, lng: -122.893 },
+        location: { lat: 47.0461, lng: -122.8927 },
         physicalRoom: true,
         website: 'https://wildchildolympia.com/'
     },

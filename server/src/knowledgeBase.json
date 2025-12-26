@@ -27,6 +27,10 @@
         {
             "question": "What is Artie?",
             "answer": "Artie is OlyBars' AI concierge, powered by the spirit of the Artesian Well and Well 80 Brewhouse. He's here 24/7 to help you find the best well drinks and vibes in town."
+        },
+        {
+            "question": "Does Artie give points?",
+            "answer": "Artie doesn't hand out points directly for chatting, but he's your ultimate League strategist. He knows exactly where the Double Point events and high-value targets are. Just ask him where the action is."
         }
     ],
     "persona": {

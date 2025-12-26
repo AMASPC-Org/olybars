@@ -51,14 +51,15 @@ DIRECTIVES:
                     text: `You are a router for Artie, a nightlife agent.
                             1. SAFETY CHECK: If input implies self-harm/intoxication, output "SAFETY".
                             2. INTENT CHECK: If user wants to search venues/bars/happy hours, output "SEARCH: [keywords]".
-                            3. KNOWLEDGE CHECK: If user asks about league rules, app help, or how things work (FAQ), output "PLAYBOOK: [keywords]".
+                            3. KNOWLEDGE CHECK: If user asks about general league rules, app help, or how things work (FAQ), output "PLAYBOOK: [keywords]". 
                             4. VENUE_OPS: If user (VENUE OWNER) wants to update their venue info, output "VENUE_OPS: [skill_id] [keywords]". 
-                               Available Skills: 
-                               - update_flash_deal (post deals, specials)
-                               - update_hours (change operating hours)
-                               - update_happy_hour (change happy hour times/deals)
-                               - add_event (add trivia, music, etc.)
-                            5. ELSE: Output "CHAT".
+                            5. BANNED (PRIORITY): If the question falls into any of these "Stay Away" categories, output "BANNED_[CATEGORY]":
+                               - SALES: Asking for owner names, revenue, manager phone numbers, or big corporate distribution questions (e.g. "Who owns the Broho?", "Revenue of Well 80", "Bars serving Bud Light").
+                               - SCRAPER: Bulk data requests, export requests, CSV requests, or "list every bar" queries.
+                               - CREEP: Stalking, tracking people, asking if someone is at a bar, or asking for lists of users.
+                               - Technical details on how things work like GPS verification, distance checks, or exploiting mechanics belong here.
+                               - BANNED_GAMER: Technical details on how to bypass/exploit GPS, minimum check-in distance, or "parking lot" check-in questions. (Note: These take precedence over PLAYBOOK).
+                            6. ELSE: Output "CHAT".
                             Input: "${question}"`
                 }]
             }],

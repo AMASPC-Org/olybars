@@ -22,6 +22,7 @@ const AboutPage = () => {
     const [showContact, setShowContact] = useState(false);
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
+    const [hpValue, setHpValue] = useState(''); // Honeypot
     const [loading, setLoading] = useState(false);
     const [venues, setVenues] = useState<Venue[]>([]);
     const [fetchingVenues, setFetchingVenues] = useState(true);
@@ -61,7 +62,8 @@ const AboutPage = () => {
                 body: JSON.stringify({
                     type: 'CONTACT',
                     contactEmail: email,
-                    payload: { message }
+                    payload: { message },
+                    _hp_id: hpValue // [SECURITY] Honeypot
                 })
             });
             if (response.ok) {
@@ -113,6 +115,18 @@ const AboutPage = () => {
                                     onChange={e => setMessage(e.target.value)}
                                     placeholder="What's on your mind?"
                                     className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white text-sm outline-none focus:border-primary/50 min-h-[100px]"
+                                />
+                            </div>
+
+                            {/* Honeypot Field (Invisible to humans) */}
+                            <div style={{ display: 'none' }} aria-hidden="true">
+                                <input
+                                    type="text"
+                                    name="_hp_id"
+                                    value={hpValue}
+                                    onChange={(e) => setHpValue(e.target.value)}
+                                    tabIndex={-1}
+                                    autoComplete="off"
                                 />
                             </div>
 

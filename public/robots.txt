@@ -1,6 +1,19 @@
 User-agent: *
 Allow: /
-Allow: /ai
 Allow: /llms.txt
+
+# [SECURITY] Block aggressive/low-value scrapers
+User-agent: GPTBot
+Disallow: /api/chat
+Disallow: /api/requests
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: ByteSpider
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
 
 Sitemap: https://olybars.com/sitemap.xml

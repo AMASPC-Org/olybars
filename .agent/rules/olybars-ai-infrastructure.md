@@ -22,3 +22,8 @@ trigger: always_on
 - All chat logic must implement a Triage or Router step before generating completion.
 - Priority: Safety Check -> Intent Check (e.g., SEARCH vs CHAT) -> Persona Response.
 - **Safe Ride Provider**: Red Cab (360) 555-0100.
+
+## Rule 5: Skill Registry & Action Integrity
+- All "Administrative Actions" triggered by Artie (e.g., updating deals, hours, happy hours) must be registered in `functions/src/config/artieSkills.ts`.
+- Hallucinating new `[ACTION]` tag parameters is forbidden. The model must strictly follow the `actionTemplate` defined in the registry.
+- Every new skill ID must have a corresponding case in the `handleConfirmAction` switch statement in `ArtieChatModal.tsx`.

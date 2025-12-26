@@ -12,7 +12,7 @@ export function useArtie() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const sendMessage = async (prompt: string, userId?: string, userRole?: string) => {
+    const sendMessage = async (prompt: string, userId?: string, userRole?: string, hpValue?: string) => {
         if (!prompt.trim()) return;
 
         setIsLoading(true);
@@ -39,7 +39,8 @@ export function useArtie() {
                     question: prompt,
                     history: historyForArtie,
                     userId,
-                    userRole
+                    userRole,
+                    _hp_id: hpValue // [SECURITY] Honeypot detection
                 })
             });
 

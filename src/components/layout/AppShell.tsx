@@ -615,7 +615,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         )
       }
 
-      {/* Santa Artie Festive FAB */}
+      {/* Artie Floating Action Button */}
       <ArtieHoverIcon onClick={() => setShowArtie?.(true)} />
 
       {/* Artie Chat Modal */}

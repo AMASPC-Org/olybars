@@ -2,6 +2,8 @@ import { PULSE_CONFIG } from '../../src/config/pulse';
 import { db } from './firebaseAdmin.js';
 import admin from 'firebase-admin';
 import { Venue, Signal, SignalType, Badge, UserBadgeProgress } from '../../src/types';
+import { geocodeAddress } from './utils/geocodingService';
+import { searchPlace, getPlaceDetails } from './utils/placesService';
 import { BADGES } from '../../src/config/badges';
 
 // In-memory cache for venues (TTL: 60 seconds)
@@ -132,14 +134,11 @@ const applyVirtualDecay = (venue: Venue): Venue => {
     };
 };
 
-export const fetchVenues = async (): Promise<Venue[]> => {
+/**
+ * Background Refresh for Venue Cache (SWR Pattern)
+ */
+const refreshVenueCache = async (): Promise<Venue[]> => {
     const now = Date.now();
-
-    // 1. Return Cache if valid
-    if (venueCache && (now - venueCache.lastFetched < CACHE_TTL)) {
-        return venueCache.data.map(applyVirtualDecay);
-    }
-
     try {
         const snapshot = await db.collection('venues').get();
 
@@ -147,9 +146,6 @@ export const fetchVenues = async (): Promise<Venue[]> => {
             .map(doc => {
                 const data = doc.data();
                 const venue = { id: doc.id, ...data } as Venue;
-
-                // Note: We no longer trigger background refreshes here. 
-                // Buzz is updated physically on signals, and virtually on GET.
 
                 // Injecting mock amenities for the "Play" feature demo
                 if (venue.id === 'well-80') {
@@ -173,21 +169,38 @@ export const fetchVenues = async (): Promise<Venue[]> => {
 
                 return venue;
             })
-            .filter(v => v.isActive !== false); // Filter out Ghost List / Legacy
+            .filter(v => v.isActive !== false);
 
         const sortedVenues = sortVenuesByBuzzClock(venues);
 
-        // 2. Update Cache
         venueCache = {
             data: sortedVenues,
             lastFetched: now
         };
 
-        return sortedVenues.map(applyVirtualDecay);
+        return sortedVenues;
     } catch (error) {
-        console.error('Error fetching venues from Firestore:', error);
+        console.error('Error refreshing venue cache:', error);
         throw error;
     }
+};
+
+export const fetchVenues = async (): Promise<Venue[]> => {
+    const now = Date.now();
+
+    // 1. SWR logic: Return cache immediately, refresh in background if stale
+    if (venueCache) {
+        const isStale = (now - venueCache.lastFetched) > CACHE_TTL;
+        if (isStale) {
+            // Background refresh
+            refreshVenueCache().catch(err => console.error('[Backend] Background cache update failed:', err));
+        }
+        return venueCache.data.map(applyVirtualDecay);
+    }
+
+    // 2. No cache: Initial load
+    const data = await refreshVenueCache();
+    return data.map(applyVirtualDecay);
 };
 
 
@@ -620,7 +633,7 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
     // Whitelist allowable fields for owner updates to prevent integrity issues
     const allowedFields: (keyof Venue)[] = [
         'name', 'nicknames', // [NEW] Allow name corrections & AI nicknames
-        'description', 'hours', 'phone', 'website',
+        'address', 'description', 'hours', 'phone', 'website',
         'email', 'instagram', 'facebook', 'twitter',
         'amenities', 'amenityDetails', 'vibe',
         // Maker Fields
@@ -630,7 +643,8 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'isLocalMaker', 'localScore',
         'isPaidLeagueMember', // Admin/Owner toggle
         'leagueEvent', 'triviaTime', 'deal', 'dealEndsIn', 'checkIns',
-        'isVisible', 'isActive' // [FIX] Access Control Fields
+        'isVisible', 'isActive', // [FIX] Access Control Fields
+        'location' // [NEW] Allow programmatic location updates
     ];
 
     const filteredUpdates: any = {};
@@ -644,10 +658,87 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         throw new Error('No valid update fields provided');
     }
 
+    // [AUTO-GEOCODE] If address changed, resolve coordinates
+    if (filteredUpdates.address && filteredUpdates.address !== venueData.address) {
+        console.log(`[GEOCODE] Address changed for ${venueId}. Re-resolving coordinates...`);
+        const geoResult = await geocodeAddress(filteredUpdates.address);
+        if (geoResult) {
+            filteredUpdates.location = { lat: geoResult.lat, lng: geoResult.lng };
+            console.log(`[GEOCODE] Successfully resolved ${filteredUpdates.address} to ${geoResult.lat}, ${geoResult.lng}`);
+        } else {
+            console.warn(`[GEOCODE] Failed to resolve address: ${filteredUpdates.address}`);
+        }
+    }
+
     filteredUpdates.updatedAt = Date.now();
     await venueRef.update(filteredUpdates);
 
     return { success: true, updates: filteredUpdates };
+};
+
+/**
+ * Sync a venue's details with Google Places API.
+ */
+export const syncVenueWithGoogle = async (venueId: string) => {
+    const venueRef = db.collection('venues').doc(venueId);
+    const venueDoc = await venueRef.get();
+
+    if (!venueDoc.exists) throw new Error('Venue not found');
+    const venueData = venueDoc.data() as Venue;
+
+    console.log(`[PLACES_SYNC] Starting sync for ${venueData.name} (${venueId})...`);
+
+    let placeId = venueData.googlePlaceId;
+
+    // 1. If no placeId, search for it
+    if (!placeId) {
+        const searchResult = await searchPlace(venueData.name, venueData.address);
+        if (searchResult) {
+            placeId = searchResult.place_id;
+            console.log(`[PLACES_SYNC] Found placeId: ${placeId} for ${venueData.name}`);
+        } else {
+            throw new Error(`Could not find a matching place on Google for "${venueData.name}".`);
+        }
+    }
+
+    // 2. Fetch place details
+    const details = await getPlaceDetails(placeId);
+    if (!details) {
+        throw new Error(`Failed to fetch details for Google Place ID: ${placeId}`);
+    }
+
+    // 3. Prepare updates
+    const updates: Partial<Venue> = {
+        googlePlaceId: placeId,
+        updatedAt: Date.now()
+    };
+
+    if (details.formatted_phone_number) updates.phone = details.formatted_phone_number;
+    if (details.website) updates.website = details.website;
+
+    // Map geometry to location
+    if (details.geometry?.location) {
+        updates.location = {
+            lat: details.geometry.location.lat,
+            lng: details.geometry.location.lng
+        };
+    }
+
+    // Map opening hours (simplified as a string for now, as used in ListingManagementTab)
+    if (details.opening_hours?.weekday_text) {
+        updates.hours = details.opening_hours.weekday_text.join('\n');
+    }
+
+    // 4. Update Database
+    await venueRef.update(updates);
+
+    console.log(`[PLACES_SYNC] Successfully synced ${venueData.name} with Google.`);
+
+    return {
+        success: true,
+        message: `Synced ${venueData.name} with Google Places.`,
+        updates
+    };
 };
 
 

@@ -4,7 +4,7 @@ import {
     Save, Clock, MapPin, Mail, ChevronRight, Beer
 } from 'lucide-react';
 import { Venue } from '../../../types';
-import { updateVenueDetails } from '../../../services/venueService';
+import { updateVenueDetails, syncVenueWithGoogle } from '../../../services/venueService';
 import { useToast } from '../../../components/ui/BrandedToast';
 
 interface ListingManagementTabProps {
@@ -15,6 +15,7 @@ interface ListingManagementTabProps {
 export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venue, onUpdate }) => {
     const { showToast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
     const [formData, setFormData] = useState<Partial<Venue>>({
         description: venue.description || '',
         hours: typeof venue.hours === 'string' ? venue.hours : 'Standard Hours',
@@ -50,6 +51,26 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
             showToast('FAILED TO UPDATE LISTING', 'error');
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleGoogleSync = async () => {
+        setIsSyncing(true);
+        try {
+            const result = await syncVenueWithGoogle(venue.id);
+            if (result.success) {
+                // Update local form state with synced data
+                setFormData(prev => ({
+                    ...prev,
+                    ...result.updates
+                }));
+                onUpdate(venue.id, result.updates);
+                showToast('SYNCED WITH GOOGLE PLACES', 'success');
+            }
+        } catch (error: any) {
+            showToast(error.message || 'GOOGLE SYNC FAILED', 'error');
+        } finally {
+            setIsSyncing(false);
         }
     };
 
@@ -252,9 +273,24 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
 
             {/* Contact & Hours Section */}
             <section className="space-y-6">
-                <div>
-                    <h3 className="text-xl font-black text-white uppercase font-league leading-none">BUSINESS INFO</h3>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest italic">How and when members can visit</p>
+                <div className="flex justify-between items-end">
+                    <div>
+                        <h3 className="text-xl font-black text-white uppercase font-league leading-none">BUSINESS INFO</h3>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest italic">How and when members can visit</p>
+                    </div>
+
+                    <button
+                        onClick={handleGoogleSync}
+                        disabled={isSyncing}
+                        className="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 rounded-lg text-[10px] font-black text-blue-400 uppercase tracking-widest transition-all flex items-center gap-2 disabled:opacity-50"
+                    >
+                        {isSyncing ? (
+                            <div className="w-3 h-3 border-2 border-blue-400/20 border-t-blue-400 rounded-full animate-spin" />
+                        ) : (
+                            <Globe className="w-3 h-3" />
+                        )}
+                        Sync with Google
+                    </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -300,8 +336,8 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                             <button
                                 onClick={() => setFormData(prev => ({ ...prev, isVisible: true }))}
                                 className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${(formData as any).isVisible !== false
-                                        ? 'bg-primary text-black shadow-lg'
-                                        : 'text-slate-500 hover:text-white'
+                                    ? 'bg-primary text-black shadow-lg'
+                                    : 'text-slate-500 hover:text-white'
                                     }`}
                             >
                                 Public
@@ -309,8 +345,8 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                             <button
                                 onClick={() => setFormData(prev => ({ ...prev, isVisible: false }))}
                                 className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${(formData as any).isVisible === false
-                                        ? 'bg-red-500 text-white shadow-lg'
-                                        : 'text-slate-500 hover:text-white'
+                                    ? 'bg-red-500 text-white shadow-lg'
+                                    : 'text-slate-500 hover:text-white'
                                     }`}
                             >
                                 Ghost Mode

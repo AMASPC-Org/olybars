@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import santaArtie from '../../../assets/Santa Artie.png';
+import tapArtie from '/artie-tap-icon.png';
 
 interface ArtieHoverIconProps {
     onClick?: () => void;
@@ -35,9 +35,9 @@ export const ArtieHoverIcon: React.FC<ArtieHoverIconProps> = ({ onClick }) => {
                 {/* Icon Circle */}
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-r-2 border-oly-gold/30 bg-black flex-shrink-0">
                     <img
-                        src={santaArtie}
+                        src={tapArtie}
                         alt="Artie"
-                        className="w-full h-full object-cover scale-110"
+                        className="w-full h-full object-contain p-1"
                     />
                 </div>
 

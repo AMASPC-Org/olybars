@@ -25,7 +25,12 @@ const AI_BOT_PATTERNS = [
     'mj12bot',
     'perplexitybot',
     'imagesiftbot',
-    'cohere-ai'
+    'cohere-ai',
+    'bytespider',
+    'petalbot',
+    'diffbot',
+    'anthropic-ai',
+    'facebot'
 ];
 
 export const isAiBot = (userAgent: string): boolean => {

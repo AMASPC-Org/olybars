@@ -4,8 +4,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
 import { fetchVenues, checkIn } from './venueService';
 import { isAiBot, getBotName } from './utils/botDetector';
+import { verifyToken, requireRole } from './middleware/authMiddleware';
 
 dotenv.config();
 
@@ -18,8 +21,39 @@ if (fs.existsSync(functionsEnvPath)) {
 const app = express();
 const port = process.env.PORT || 3001;
 
+app.use(helmet()); // [SECURITY] Standard headers
 app.use(cors());
 app.use(express.json());
+
+/**
+ * Honeypot Middleware
+ * Rejects requests with non-empty honeypot field.
+ */
+const verifyHoneypot = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (req.body._hp_id) {
+        log('WARNING', '[HONEYPOT_TRIGGERED] Potential bot submission blocked.', { ip: req.ip });
+        return res.status(403).json({ error: 'Beep boop. Request denied.' });
+    }
+    next();
+};
+
+/**
+ * Aggressive Bot Blocker Middleware
+ * Identifies and blocks high-aggression/low-value bots on sensitive routes.
+ */
+const blockAggressiveBots = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const userAgent = req.get('user-agent') || '';
+    if (isAiBot(userAgent)) {
+        const botName = getBotName(userAgent);
+        const AGGRESSIVE_BOTS = ['GPTBOT', 'CCBOT', 'BYTESPIDER', 'PETALBOT', 'DIFFBOT'];
+
+        if (AGGRESSIVE_BOTS.includes(botName)) {
+            log('WARNING', `[ABUSE_PREVENTED] Blocked aggressive bot: ${botName}`, { url: req.url });
+            return res.status(403).json({ error: 'This resource is reserved for humans. Cheers!' });
+        }
+    }
+    next();
+};
 
 /**
  * Structured Logging Helper for Google Cloud
@@ -120,8 +154,9 @@ app.get('/api/venues', async (req, res) => {
  * @route POST /api/check-in
  * @desc Verify location and log a check-in signal
  */
-app.post('/api/check-in', async (req, res) => {
-    const { venueId, userId, lat, lng, verificationMethod } = req.body;
+app.post('/api/check-in', verifyToken, async (req, res) => {
+    const { venueId, lat, lng, verificationMethod } = req.body;
+    const userId = (req as any).user.uid;
 
     if (!venueId || !userId || lat === undefined || lng === undefined) {
         return res.status(400).json({ error: 'Missing required check-in data' });
@@ -140,8 +175,9 @@ app.post('/api/check-in', async (req, res) => {
  * @route POST /api/play/check-in
  * @desc Log an amenity-specific "Play" check-in
  */
-app.post('/api/play/check-in', async (req, res) => {
-    const { venueId, userId, amenityId } = req.body;
+app.post('/api/play/check-in', verifyToken, async (req, res) => {
+    const { venueId, amenityId } = req.body;
+    const userId = (req as any).user.uid;
 
     if (!venueId || !userId || !amenityId) {
         return res.status(400).json({ error: 'Missing required play data' });
@@ -164,7 +200,7 @@ app.post('/api/play/check-in', async (req, res) => {
  * @desc Handle Admin Requests (Contact, League, Maker)
  * @params type, payload, contactEmail
  */
-app.post('/api/requests', async (req: express.Request, res: express.Response) => {
+app.post('/api/requests', verifyHoneypot, blockAggressiveBots, async (req: express.Request, res: express.Response) => {
     const { type, payload, contactEmail } = req.body;
 
     if (!type || !payload) {
@@ -201,8 +237,9 @@ app.post('/api/requests', async (req: express.Request, res: express.Response) =>
  * @route POST /api/activity
  * @desc Log user activity and award points
  */
-app.post('/api/activity', async (req, res) => {
-    const { userId, type, venueId, points, hasConsent, metadata } = req.body;
+app.post('/api/activity', verifyToken, async (req, res) => {
+    const userId = (req as any).user.uid;
+    const { type, venueId, points, hasConsent, metadata } = req.body;
 
     if (!userId || !type || points === undefined) {
         return res.status(400).json({ error: 'Missing required activity data' });
@@ -243,10 +280,10 @@ app.get('/api/activity', async (req, res) => {
  * @route PATCH /api/venues/:id
  * @desc Update general venue information (Listing management)
  */
-app.patch('/api/venues/:id', async (req, res) => {
+app.patch('/api/venues/:id', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
     const { id } = req.params;
     const { updates } = req.body;
-    const requestingUserId = req.header('x-user-id') || req.body.userId;
+    const requestingUserId = (req as any).user.uid;
 
     try {
         const { updateVenue } = await import('./venueService');
@@ -259,10 +296,28 @@ app.patch('/api/venues/:id', async (req, res) => {
 });
 
 /**
+ * @route POST /api/venues/:id/sync-google
+ * @desc Sync venue details with Google Places API
+ */
+app.post('/api/venues/:id/sync-google', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
+    const { id } = req.params;
+    const requestingUserId = (req as any).user.uid;
+
+    try {
+        const { syncVenueWithGoogle } = await import('./venueService');
+        const result = await syncVenueWithGoogle(id);
+        res.json(result);
+    } catch (error: any) {
+        log('ERROR', 'Failed to sync venue with Google', { venueId: id, error: error.message });
+        res.status(500).json({ error: error.message || 'Internal Server Error' });
+    }
+});
+
+/**
  * @route PATCH /api/venues/:id/photos/:photoId
  * @desc Update photo approval status
  */
-app.patch('/api/venues/:id/photos/:photoId', async (req, res) => {
+app.patch('/api/venues/:id/photos/:photoId', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
     const { id: venueId, photoId } = req.params;
     const { isApprovedForFeed, isApprovedForSocial } = req.body;
 
@@ -293,8 +348,15 @@ app.post('/api/client-errors', (req, res) => {
  * @route PATCH /api/users/:uid
  * @desc Update user profile data with business logic (e.g. handle cooldown)
  */
-app.patch('/api/users/:uid', async (req, res) => {
+app.patch('/api/users/:uid', verifyToken, async (req, res) => {
     const { uid } = req.params;
+    const requestingUser = (req as any).user;
+
+    // Check if user is updating their own profile or is an admin
+    if (requestingUser.uid !== uid && requestingUser.role !== 'super-admin' && requestingUser.role !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden: You can only update your own profile.' });
+    }
+
     const { handle, email, phone, favoriteDrink, homeBase, leaguePreferences, hasCompletedMakerSurvey, role } = req.body;
 
     try {
@@ -414,10 +476,24 @@ app.get('/api/activity/recent', async (req, res) => {
 
 // --- ARTIE AI CHAT GATEWAY ---
 /**
+ * Rate Limiter for Artie Chat
+ * 10 messages per minute to prevent scrapers while allowing human speed.
+ */
+const artieRateLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 10,             // Limit each IP to 10 requests per windowMs
+    message: {
+        error: "Slow down there, partner! Artie needs a minute to catch his breath. Try again in a bit."
+    },
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false,  // Disable the `X-RateLimit-*` headers
+});
+
+/**
  * @route POST /api/chat
  * @desc Artie AI Chat Relay (Direct Backend Path)
  */
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat', artieRateLimiter, verifyHoneypot, blockAggressiveBots, async (req, res) => {
     try {
         const { history, question, userId, userRole } = req.body;
 
@@ -447,7 +523,7 @@ app.post('/api/chat', async (req, res) => {
  * @route GET /api/ai/access-logs
  * @desc Fetch recent AI bot activity
  */
-app.get('/api/ai/access-logs', async (req, res) => {
+app.get('/api/ai/access-logs', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
     try {
         const { db } = await import('./firebaseAdmin');
         const snapshot = await db.collection('ai_access_logs')

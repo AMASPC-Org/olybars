@@ -1,6 +1,14 @@
 import { z } from 'zod';
 import { ai } from '../genkit';
+import { initializeApp, getApps } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import kb from '../knowledgeBase.json';
+
+// Initialize Admin SDK if not already initialized
+if (getApps().length === 0) {
+    initializeApp();
+}
+const db = getFirestore();
 
 const FAQItemSchema = z.object({
     question: z.string(),

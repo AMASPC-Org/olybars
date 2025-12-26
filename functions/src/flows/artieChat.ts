@@ -45,6 +45,22 @@ export const artieChatLogic = genkitAi.defineFlow({
             return "Whoa there, friend. Sounds like a rough night. If you need a safe ride, call Red Cab: (360) 555-0100. Let's keep it safe.";
         }
 
+        if (rawTriage.includes('BANNED_SALES')) {
+            return "I track the vibe, not the books. If you want to talk business, go buy a drink and ask the bartender.";
+        }
+
+        if (rawTriage.includes('BANNED_SCRAPER')) {
+            return "Whoa, slow down. I can tell you where to go right now, but I’m not writing a book report. Ask me about a specific spot or vibe.";
+        }
+
+        if (rawTriage.includes('BANNED_CREEP')) {
+            return "I don't track people, I track parties. If you want to find your friends, text them.";
+        }
+
+        if (rawTriage.includes('BANNED_GAMER')) {
+            return "Nice try. You have to be inside to win. Clock in when you see the bartender.";
+        }
+
         // Fetch Real-time Pulse
         const pulseContext = await ArtieContextService.getPulsePromptSnippet();
 

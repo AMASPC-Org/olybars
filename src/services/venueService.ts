@@ -1,5 +1,6 @@
 import { Venue } from '../types';
 import { PULSE_CONFIG } from '../config/pulse';
+import { getAuthHeaders } from './apiUtils';
 
 // Forcing production URL for now since user is running frontend-only locally
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
@@ -48,7 +49,7 @@ export const updateVenueDetails = async (venueId: string, updates: Partial<Venue
   try {
     const response = await fetch(`${API_BASE_URL}/venues/${venueId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getAuthHeaders(),
       body: JSON.stringify({ updates, userId }),
     });
     if (!response.ok) {
@@ -57,6 +58,26 @@ export const updateVenueDetails = async (venueId: string, updates: Partial<Venue
     return await response.json();
   } catch (error) {
     console.error('Error in updateVenueDetails:', error);
+    throw error;
+  }
+};
+
+/**
+ * Trigger a backend sync with Google Places API
+ */
+export const syncVenueWithGoogle = async (venueId: string): Promise<{ success: boolean, message: string, updates: any }> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/venues/${venueId}/sync-google`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to sync with Google');
+    }
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error in syncVenueWithGoogle:', error);
     throw error;
   }
 };

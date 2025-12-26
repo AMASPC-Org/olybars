@@ -3,6 +3,7 @@ import { X, Send, Sparkles, Bot, CheckCircle2 } from 'lucide-react';
 import { useArtie } from '../../../hooks/useArtie';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { UserProfile } from '../../../types';
+import artieLogo from '../../../assets/Artie-Only-Logo.png';
 
 interface ArtieChatModalProps {
     isOpen: boolean;
@@ -16,6 +17,69 @@ interface ArtieAction {
     venueId?: string;
 }
 
+interface ArtieGreeting {
+    message: string;
+    status: string;
+}
+
+const getArtieGreeting = (profile?: UserProfile): ArtieGreeting => {
+    // Coach Mode for Logged In Users
+    if (profile && profile.handle) {
+        const pointsToTop = 50; // Mocked for now
+        return {
+            message: `Welcome back, ${profile.handle}. You're ${pointsToTop} points behind the Leaderboard Top 10. Want a high-value target?`,
+            status: "COACH MODE ACTIVE"
+        };
+    }
+
+    const hour = new Date().getHours();
+
+    // Helper to pick a random item from an array
+    const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+
+    // Workday (2 PM - 5 PM)
+    if (hour >= 14 && hour < 17) {
+        return {
+            message: pick([
+                "Clock’s ticking. I know 3 spots with open tables and cheap pints. Thirsty?",
+                "Ready to ditch the desk? The first round of happy hours is just getting started.",
+                "Workday is winding down. I've got the intel on where the quietest booths are."
+            ]),
+            status: pick(["DECOMPRESSING", "POURING EARLY", "TAPPING FRESH"])
+        };
+    }
+
+    // Prime Time (5 PM - 9 PM)
+    if (hour >= 17 && hour < 21) {
+        return {
+            message: pick([
+                "Kitchens are open and the vibes are climbing. Need a dinner spot or a pre-game?",
+                "The city is hitting its stride. Want to know where the shortest lines are right now?",
+                "Hungry? Hannah's and Well 80 are cooking. Where are we heading?"
+            ]),
+            status: pick(["VIBES CLIMBING", "KITCHENS ACTIVE", "PRIME TIME"])
+        };
+    }
+
+    // Late Night (9 PM - 2 AM)
+    if (hour >= 21 || hour < 2) {
+        return {
+            message: pick([
+                "Altitude 15 is buzzing, but The Brotherhood is chill. What’s your speed tonight?",
+                "Night is young for some, ending for others. Need a nightcap or a dance floor?",
+                "I've got the latest vibe reports. Where's the party at?"
+            ]),
+            status: pick(["IN THE MIX", "LAST CALL INTEL", "NIGHTSHIFT ACTIVE"])
+        };
+    }
+
+    // Default/Morning Fallback
+    return {
+        message: "Cheers! I'm Artie, your local guide. Ask me anything about Oly's bars, deals, or events!",
+        status: "ONLINE & POURING"
+    };
+};
+
 export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, userProfile }) => {
     const { messages, sendMessage, isLoading, error } = useArtie();
     const { showToast } = useToast();
@@ -23,7 +87,16 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
     const [pendingAction, setPendingAction] = useState<ArtieAction | null>(null);
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [actionStatus, setActionStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [greeting, setGreeting] = useState<ArtieGreeting | null>(null);
+    const [hpValue, setHpValue] = useState(''); // Honeypot value
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Set greeting once on open
+    useEffect(() => {
+        if (isOpen && !greeting) {
+            setGreeting(getArtieGreeting(userProfile));
+        }
+    }, [isOpen, userProfile]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -68,7 +141,9 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
         setPendingAction(null);
         setSuggestions([]);
         setActionStatus('idle');
-        await sendMessage(userText, userProfile?.uid, userProfile?.role);
+
+        // Include honeypot value in request (should be empty for humans)
+        await sendMessage(userText, userProfile?.uid, userProfile?.role, hpValue);
     };
 
     const handleSuggestionClick = (suggestion: string) => {
@@ -170,14 +245,14 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                 {/* Header */}
                 <div className="bg-primary/10 border-b border-primary/20 p-4 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20">
-                            <Bot className="w-6 h-6 text-black" />
+                        <div className="bg-primary p-0.5 rounded-xl shadow-lg shadow-primary/20 overflow-hidden w-14 h-14 flex items-center justify-center">
+                            <img src={artieLogo} className="w-full h-full object-cover scale-110" alt="Artie Wells" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-black text-white uppercase tracking-tight font-league">Artie Concierge</h3>
+                            <h3 className="text-xl font-black text-white uppercase tracking-tight font-league">Artie Wells</h3>
                             <div className="flex items-center gap-1.5">
                                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                                <span className="text-[9px] text-primary font-bold uppercase tracking-widest">Online & Pouring</span>
+                                <span className="text-[9px] text-primary font-bold uppercase tracking-widest">{greeting?.status || "Online & Pouring"}</span>
                             </div>
                         </div>
                     </div>
@@ -188,11 +263,11 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/50">
-                    {/* Static Greeting */}
-                    {messages.length === 0 && (
+                    {/* Dynamic Greeting */}
+                    {messages.length === 0 && greeting && (
                         <div className="flex justify-start">
                             <div className="max-w-[85%] p-3 rounded-2xl text-sm font-medium leading-relaxed bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none">
-                                Cheers! I&apos;m Artie, your local guide powered by Well 80 Artesian Water. Ask me anything about Oly&apos;s bars, deals, or events!
+                                {greeting.message}
                             </div>
                         </div>
                     )}
@@ -217,7 +292,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                     <span className="text-[10px] font-black text-primary uppercase tracking-widest">Action Required</span>
                                 </div>
                                 <h4 className="text-white font-bold text-sm mb-1">Update Flash Deal</h4>
-                                <p className="text-slate-400 text-xs mb-4 italic">&ldquo;{pendingAction.summary}&rdquo;</p>
+                                <p className="text-slate-400 text-xs mb-4 italic">&ldquo;{pendingAction.params.summary}&rdquo;</p>
 
                                 {actionStatus === 'success' ? (
                                     <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-xl flex items-center gap-2">
@@ -297,8 +372,19 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                             placeholder="Ask Artie..."
                             className="flex-1 bg-transparent px-3 text-sm text-white outline-none placeholder:text-slate-600 font-medium"
                         />
+                        {/* Honeypot Field (Invisible to humans) */}
+                        <div style={{ display: 'none' }} aria-hidden="true">
+                            <input
+                                type="text"
+                                name="_hp_id"
+                                value={hpValue}
+                                onChange={(e) => setHpValue(e.target.value)}
+                                tabIndex={-1}
+                                autoComplete="off"
+                            />
+                        </div>
                         <button
-                            onClick={handleSend}
+                            onClick={() => handleSend()}
                             disabled={!input.trim() || isLoading}
                             className="bg-primary hover:bg-yellow-400 text-black p-2.5 rounded-xl disabled:opacity-50 disabled:hover:bg-primary transition-all"
                         >

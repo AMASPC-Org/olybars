@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 
 // Your web app's Firebase configuration
@@ -19,6 +19,7 @@ const app = initializeApp(firebaseConfig);
 // Export the services so the rest of the app can use them
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 export const functions = getFunctions(app, 'us-west1');
 
 // DISABLED: Forcing emulator connect on localhost was blocking Artie when emulators aren't running.

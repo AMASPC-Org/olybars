@@ -129,6 +129,8 @@ export interface Venue {
   }[];
   establishmentType?: 'Bar Only' | 'Bar & Restaurant' | 'Restaurant with Bar';
   subtypes?: string[];
+  googlePlaceId?: string; // [NEW] For Google Places SDK Sync
+  updatedAt?: number;
 }
 
 export interface Message {
@@ -190,6 +192,7 @@ export interface UserProfile {
   displayName?: string;
   email?: string;
   phone?: string;
+  photoURL?: string;
   favoriteDrink?: string; // Legacy
   favoriteDrinks?: string[];
   homeBase?: string;
@@ -209,6 +212,7 @@ export interface UserProfile {
   weeklyBuzz?: boolean;
   showMemberSince?: boolean;
   createdAt?: number;
+  updatedAt?: number;
   badges?: Record<string, UserBadgeProgress>; // Map of badgeId -> Progress
 
   // RBAC Fields (Optional for backward compat until migration)

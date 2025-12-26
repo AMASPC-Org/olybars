@@ -1,6 +1,7 @@
 import { doc, setDoc, collection, query, where, getDocs, getCountFromServer, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { UserAlertPreferences, CheckInRecord, UserProfile } from '../types';
+import { getAuthHeaders } from './apiUtils';
 
 // Forcing production URL for now since user is running frontend-only locally
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
@@ -42,7 +43,7 @@ export const logUserActivity = async (userId: string, activity: {
   try {
     const response = await fetch(`${API_BASE_URL}/activity`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getAuthHeaders(),
       body: JSON.stringify({ userId, ...activity })
     });
     if (!response.ok) throw new Error('Failed to log activity');
@@ -74,7 +75,7 @@ export const updatePhotoApproval = async (venueId: string, photoId: string, upda
   try {
     const response = await fetch(`${API_BASE_URL}/venues/${venueId}/photos/${photoId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getAuthHeaders(),
       body: JSON.stringify(updates)
     });
     if (!response.ok) throw new Error('Failed to update photo approval');
@@ -92,7 +93,7 @@ export const performCheckIn = async (venueId: string, userId: string, lat: numbe
   try {
     const response = await fetch(`${API_BASE_URL}/check-in`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getAuthHeaders(),
       body: JSON.stringify({ venueId, userId, lat, lng, verificationMethod })
     });
 
@@ -115,7 +116,7 @@ export const performPlayCheckIn = async (venueId: string, userId: string, amenit
   try {
     const response = await fetch(`${API_BASE_URL}/play/check-in`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getAuthHeaders(),
       body: JSON.stringify({ venueId, userId, amenityId })
     });
 
@@ -161,7 +162,7 @@ export const updateUserProfile = async (uid: string, updates: Partial<UserProfil
   try {
     const response = await fetch(`${API_BASE_URL}/users/${uid}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getAuthHeaders(),
       body: JSON.stringify(updates)
     });
     if (!response.ok) {
