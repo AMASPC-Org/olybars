@@ -13,14 +13,12 @@ interface ContextType {
   venues: Venue[];
 }
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
 const MapScreen = () => {
   const navigate = useNavigate();
   const { venues } = useOutletContext<ContextType>();
   const { coords, error: geoError, loading: geoLoading, requestLocation, isRequested } = useGeolocation({ shouldPrompt: false });
   const mapRef = useRef<HTMLDivElement>(null);
-  const status = useGoogleMapsScript();
+  const { status, retry, apiKey } = useGoogleMapsScript();
   const [map, setMap] = useState<google.maps.Map | null>(null);
 
   const initMap = () => {
@@ -209,7 +207,7 @@ const MapScreen = () => {
 
       {status === 'error' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 p-6 text-center z-20">
-          {GOOGLE_MAPS_API_KEY ? (
+          {apiKey ? (
             <>
               <div className="w-full h-64 bg-slate-800 rounded-2xl mb-6 overflow-hidden border border-white/5 relative">
                 <iframe
@@ -218,15 +216,15 @@ const MapScreen = () => {
                   height="100%"
                   frameBorder="0"
                   style={{ border: 0 }}
-                  src={`https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_API_KEY}&q=Olympia,WA`}
+                  src={`https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=Olympia,WA`}
                   allowFullScreen
                 />
                 <div className="absolute inset-0 bg-slate-900/40 pointer-events-none flex items-center justify-center">
                   <p className="text-primary font-league uppercase tracking-widest text-lg bg-black/60 px-4 py-2 rounded-lg text-center">Interactive Map Restricted</p>
                 </div>
               </div>
-              <h3 className="text-2xl font-black text-white font-league uppercase mb-2">Maps Key restricted</h3>
-              <p className="text-slate-400 mb-6 max-w-xs mx-auto">The interactive vibe map requires a dedicated Google Maps API key with JS API enabled.</p>
+              <h3 className="text-2xl font-black text-white font-league uppercase mb-2">Maps Service Degraded</h3>
+              <p className="text-slate-400 mb-6 max-w-xs mx-auto">The interactive JS API failed to initialize. Displaying static fallback.</p>
             </>
           ) : (
             <>
@@ -235,15 +233,15 @@ const MapScreen = () => {
               </div>
               <h3 className="text-2xl font-black text-white font-league uppercase mb-2">Configuration Required</h3>
               <p className="text-slate-400 mb-6 max-w-xs mx-auto">
-                Google Maps API key is missing. Please set <code className="text-primary">VITE_GOOGLE_MAPS_API_KEY</code> in your environment.
+                Could not retrieve Maps API key from backend. The system may be offline or restricted.
               </p>
             </>
           )}
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => retry()}
             className="bg-primary text-black font-black px-8 py-3 rounded-xl uppercase font-league tracking-widest hover:scale-105 transition-transform"
           >
-            Retry Connection
+            Attempt Reconnect
           </button>
         </div>
       )}

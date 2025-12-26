@@ -7,9 +7,10 @@ import {
 import { PlaceAutocomplete } from '../../components/ui/PlaceAutocomplete';
 import { AssetToggleGrid } from '../../components/partners/AssetToggleGrid';
 import { Venue } from '../../types';
-import { syncVenueWithGoogle, updateVenueDetails } from '../../services/venueService';
+import { syncVenueWithGoogle, updateVenueDetails, checkVenueClaim, onboardVenue } from '../../services/venueService';
 import { useToast } from '../../components/ui/BrandedToast';
 import { SEO } from '../../components/common/SEO';
+import { auth } from '../../lib/firebase';
 
 type OnboardingStep = 'SEARCH' | 'VERIFY' | 'CONFIG' | 'INVITE' | 'SUCCESS';
 
@@ -24,38 +25,92 @@ export default function ClaimVenuePage() {
     const [managerEmail, setManagerEmail] = useState('');
 
     const handlePlaceSelect = async (place: google.maps.places.PlaceResult) => {
+        if (!place.place_id) return;
+
         setSelectedPlace(place);
         setIsProcessing(true);
         try {
-            // In a real scenario, we'd check if claimed and then sync.
-            // For MVP, we'll simulate the sync and show the card.
+            // 1. Check if already claimed
+            const claimStatus = await checkVenueClaim(place.place_id);
+
+            if (claimStatus.isClaimed) {
+                showToast(`${place.name} has already been claimed!`, 'error');
+                setVenueData(null);
+                return;
+            }
+
+            // 2. Prepare Preview
             const demoVenue: Partial<Venue> = {
+                id: claimStatus.venueId || 'TEMP',
                 name: place.name || '',
                 address: place.formatted_address || '',
                 phone: place.formatted_phone_number || '',
                 website: place.website || '',
                 googlePlaceId: place.place_id || '',
+                // In a real flow, we'd also get photos here
+                photos: (place as any).photos?.map((p: any, i: number) => ({
+                    id: `p-${i}`,
+                    url: p.getUrl?.() || '',
+                    allowMarketingUse: false,
+                    timestamp: Date.now(),
+                    userId: 'google'
+                }))
             };
             setVenueData(demoVenue);
         } catch (error) {
             showToast('COULD NOT RESOLVE VENUE DATA', 'error');
+            console.error(error);
         } finally {
             setIsProcessing(false);
         }
     };
 
-    const handleClaimClick = () => {
-        // Here we would normally trigger Login/Signup modal
-        // For MVP flow, we'll proceed to Verification
-        setStep('VERIFY');
+    const handleClaimClick = async () => {
+        const user = auth.currentUser;
+        if (!user) {
+            showToast('Please Sign In to lock this claim!', 'info');
+            // normally would trigger login modal
+            setStep('VERIFY');
+            return;
+        }
+
+        if (!selectedPlace?.place_id) return;
+
+        setIsProcessing(true);
+        try {
+            const result = await onboardVenue(selectedPlace.place_id);
+            setVenueData(prev => ({ ...prev, id: result.venueId }));
+            showToast('VENUE CLAIMED & SYNCED', 'success');
+            setStep('VERIFY');
+        } catch (error: any) {
+            showToast(error.message || 'CLAIM FAILED', 'error');
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const handleVerificationConfirm = () => {
         setStep('CONFIG');
     };
 
-    const handleConfigConfirm = () => {
-        setStep('INVITE');
+    const handleConfigConfirm = async () => {
+        if (!venueData?.id) return;
+
+        setIsProcessing(true);
+        try {
+            // Persist Vibe and Assets
+            await updateVenueDetails(venueData.id, {
+                vibeDefault: vibe,
+                assets: assets
+            }, auth.currentUser?.uid || undefined);
+
+            showToast('VIBE INITIALIZED', 'success');
+            setStep('INVITE');
+        } catch (error) {
+            showToast('SYNC FAILED', 'error');
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const handleInviteConfirm = () => {
@@ -72,7 +127,7 @@ export default function ClaimVenuePage() {
                     <React.Fragment key={s}>
                         <div className={`flex flex-col items-center gap-2 ${i <= currentIndex ? 'text-primary' : 'text-slate-600'}`}>
                             <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${i < currentIndex ? 'bg-primary border-primary text-black' :
-                                    i === currentIndex ? 'border-primary ring-4 ring-primary/20 bg-slate-900' : 'border-slate-800 bg-slate-900'
+                                i === currentIndex ? 'border-primary ring-4 ring-primary/20 bg-slate-900' : 'border-slate-800 bg-slate-900'
                                 }`}>
                                 {i < currentIndex ? <Check className="w-6 h-6" /> : <span className="font-black">{i + 1}</span>}
                             </div>
@@ -256,7 +311,7 @@ export default function ClaimVenuePage() {
                                             <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">Help users find the right mood</p>
                                         </div>
                                         <span className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-lg ${vibe === 'CHILL' ? 'text-blue-400 bg-blue-400/10' :
-                                                vibe === 'LIVELY' ? 'text-primary bg-primary/10' : 'text-red-400 bg-red-400/10'
+                                            vibe === 'LIVELY' ? 'text-primary bg-primary/10' : 'text-red-400 bg-red-400/10'
                                             }`}>
                                             {vibe}
                                         </span>

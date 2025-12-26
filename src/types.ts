@@ -133,6 +133,8 @@ export interface Venue {
   vibeDefault?: 'CHILL' | 'LIVELY' | 'BUZZING'; // [NEW] Onboarding MVP
   assets?: Record<string, boolean>; // [NEW] Grid Toggles (Pool, Darts, etc.)
   updatedAt?: number;
+  managersCanAddUsers?: boolean; // [NEW] Multi-User Support
+  lastGoogleSync?: number; // [FINOPS] For internal sync throttling
 }
 
 export interface Message {

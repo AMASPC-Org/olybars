@@ -5,7 +5,7 @@ import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAfEWY4NF8WDeh612ctG2VNLjSiIcMCRqk",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyAfEWY4NF8WDeh612ctG2VNLjSiIcMCRqk",
   authDomain: "ama-ecosystem-prod.firebaseapp.com",
   projectId: "ama-ecosystem-prod",
   storageBucket: "ama-ecosystem-prod.firebasestorage.app",

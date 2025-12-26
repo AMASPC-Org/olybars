@@ -13,6 +13,7 @@ export const toggleFavorite = async (userId: string, venueId: string, favorites:
       ? favorites.filter(id => id !== venueId)
       : [...favorites, venueId];
 
+    if (userId === 'guest') return { success: false, error: 'Auth required' };
     await setDoc(doc(db, 'users', userId), { favorites: newFavorites }, { merge: true });
     return { success: true, favorites: newFavorites };
   } catch (e) {
@@ -22,6 +23,7 @@ export const toggleFavorite = async (userId: string, venueId: string, favorites:
 };
 
 export const saveAlertPreferences = async (userId: string, prefs: UserAlertPreferences) => {
+  if (userId === 'guest') return;
   try {
     await setDoc(doc(db, 'users', userId), { preferences: prefs }, { merge: true });
   } catch (e) {
@@ -134,6 +136,7 @@ export const performPlayCheckIn = async (venueId: string, userId: string, amenit
 
 
 export const syncCheckIns = async (userId: string, history: CheckInRecord[]) => {
+  if (userId === 'guest') return;
   try {
     await setDoc(doc(db, 'users', userId), { checkInHistory: history }, { merge: true });
   } catch (e) {

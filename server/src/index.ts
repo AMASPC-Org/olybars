@@ -21,8 +21,32 @@ if (fs.existsSync(functionsEnvPath)) {
 const app = express();
 const port = process.env.PORT || 3001;
 
-app.use(helmet()); // [SECURITY] Standard headers
-app.use(cors());
+// [SECURITY] Standard headers
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'https://olybars-dev.web.app',
+    'https://olybars.com',
+    'https://www.olybars.com'
+];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+}));
+
 app.use(express.json());
 
 /**
@@ -331,6 +355,42 @@ app.get('/api/venues/:id/pulse', async (req, res) => {
 });
 
 /**
+ * @route GET /api/venues/check-claim
+ * @desc Check if a venue is already claimed by Google Place ID
+ */
+app.get('/api/venues/check-claim', async (req, res) => {
+    const { googlePlaceId } = req.query;
+    if (!googlePlaceId) return res.status(400).json({ error: 'Missing googlePlaceId' });
+
+    try {
+        const { checkVenueClaimStatus } = await import('./venueService');
+        const status = await checkVenueClaimStatus(googlePlaceId as string);
+        res.json(status);
+    } catch (error: any) {
+        log('ERROR', 'Failed to check venue claim status', { googlePlaceId, error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route POST /api/partners/onboard
+ * @desc Claim a venue and sync with Google
+ */
+app.post('/api/partners/onboard', verifyToken, async (req: any, res) => {
+    const { googlePlaceId } = req.body;
+    if (!googlePlaceId) return res.status(400).json({ error: 'Missing googlePlaceId' });
+
+    try {
+        const { onboardVenue } = await import('./venueService');
+        const result = await onboardVenue(googlePlaceId, req.user.uid);
+        res.json(result);
+    } catch (error: any) {
+        log('ERROR', 'Failed to onboard partner venue', { googlePlaceId, userId: req.user.uid, error: error.message });
+        res.status(400).json({ error: error.message || 'Internal Server Error' });
+    }
+});
+
+/**
  * @route PATCH /api/venues/:id/photos/:photoId
  * @desc Update photo approval status
  */
@@ -349,6 +409,63 @@ app.patch('/api/venues/:id/photos/:photoId', verifyToken, requireRole(['admin', 
 });
 
 /**
+ * @route GET /api/venues/:id/members
+ * @desc Fetch all members of a venue
+ */
+app.get('/api/venues/:id/members', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { getVenueMembers } = await import('./venueService');
+        const members = await getVenueMembers(id);
+        res.json(members);
+    } catch (error: any) {
+        log('ERROR', 'Failed to fetch venue members', { venueId: id, error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route POST /api/venues/:id/members
+ * @desc Add a new member to a venue
+ */
+app.post('/api/venues/:id/members', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+    const { id } = req.params;
+    const { email, role } = req.body;
+    const requestingUserId = (req as any).user.uid;
+
+    if (!email || !role) {
+        return res.status(400).json({ error: 'Missing email or role' });
+    }
+
+    try {
+        const { addVenueMember } = await import('./venueService');
+        const result = await addVenueMember(id, email, role, requestingUserId);
+        res.json(result);
+    } catch (error: any) {
+        log('ERROR', 'Failed to add venue member', { venueId: id, email, error: error.message });
+        res.status(400).json({ error: error.message });
+    }
+});
+
+/**
+ * @route DELETE /api/venues/:id/members/:memberId
+ * @desc Remove a member from a venue
+ */
+app.delete('/api/venues/:id/members/:memberId', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+    const { id: venueId, memberId } = req.params;
+    const requestingUserId = (req as any).user.uid;
+
+    try {
+        const { removeVenueMember } = await import('./venueService');
+        const result = await removeVenueMember(venueId, memberId, requestingUserId);
+        res.json(result);
+    } catch (error: any) {
+        log('ERROR', 'Failed to remove venue member', { venueId, memberId, error: error.message });
+        res.status(400).json({ error: error.message });
+    }
+});
+
+/**
  * @route POST /api/client-errors
  * @desc Receive and log client-side errors
  */
@@ -359,6 +476,16 @@ app.post('/api/client-errors', (req, res) => {
         source: 'client-collector'
     });
     res.status(204).send();
+});
+
+/**
+ * @route GET /api/config/maps-key
+ * @desc Get the restricted Google Maps API key for the frontend
+ */
+app.get('/api/config/maps-key', (req, res) => {
+    const key = process.env.GOOGLE_BACKEND_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY;
+    if (!key) return res.status(500).json({ error: 'Maps API Key not configured on backend' });
+    res.json({ key });
 });
 
 /**

@@ -3,7 +3,7 @@
  * Google-native Observability (No Sentry)
  */
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
+import { API_BASE_URL } from '../lib/api-config';
 const RELEASE_VERSION = '1.0.0'; // Should be synced with package.json
 
 interface ClientErrorPayload {

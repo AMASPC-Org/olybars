@@ -9,14 +9,15 @@ import { useToast } from '../../../components/ui/BrandedToast';
 import { ListingManagementTab } from '../components/ListingManagementTab';
 import { LocalMakerManagementTab } from '../components/LocalMakerManagementTab'; // New Component
 import { LeagueHostManagementTab } from '../components/LeagueHostManagementTab'; // New Component
-import { isVenueOwner } from '../../../types/auth_schema';
+import { isVenueOwner, isVenueManager } from '../../../types/auth_schema';
 import { Layout } from 'lucide-react';
+import { UserManagementTab } from '../components/UserManagementTab';
 
 interface OwnerDashboardProps {
     isOpen: boolean;
     onClose: () => void;
     venues: Venue[];
-    updateVenue: (venueId: string, updates: Partial<Venue>) => void;
+    updateVenue: (venueId: string, updates: Partial<Venue>) => Promise<void>;
     userProfile: UserProfile;
     initialVenueId?: string | null;
     initialView?: 'main' | 'marketing' | 'listing';
@@ -48,6 +49,11 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 }) => {
     const accessibleVenues = venues.filter(v => {
         if (userProfile.role === 'admin' || userProfile.role === 'super-admin' || userProfile.email === 'ryan@amaspc.com') return true;
+        // Check venuePermissions specifically
+        const venueRole = userProfile.venuePermissions?.[v.id];
+        if (venueRole === 'owner' || venueRole === 'manager') return true;
+
+        // Fallback to legacy fields
         if (userProfile.role === 'owner' && v.ownerId === userProfile.uid) return true;
         if (userProfile.role === 'manager' && v.managerIds?.includes(userProfile.uid)) return true;
         return false;
@@ -70,7 +76,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const [dealText, setDealText] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
     const [showArtieCommands, setShowArtieCommands] = useState(false);
-    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'maker' | 'host' | 'qr'>(initialView as any); // Added 'host', 'qr'
+    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'maker' | 'host' | 'qr' | 'people'>(initialView as any); // Added 'host', 'qr', 'people'
     const [statsPeriod, setStatsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
     const [activityStats, setActivityStats] = useState({ earned: 0, redeemed: 0, activeUsers: 0 });
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -249,6 +255,14 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         >
                             QR Assets
                         </button>
+                        {(isVenueOwner(userProfile, myVenue.id) || myVenue.managersCanAddUsers) && (
+                            <button
+                                onClick={() => setDashboardView('people')}
+                                className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'people' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                            >
+                                People
+                            </button>
+                        )}
                     </>
                 )}
             </div>
@@ -471,6 +485,10 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             </div>
                         </div>
                     </div>
+                )}
+
+                {myVenue && dashboardView === 'people' && (
+                    <UserManagementTab venue={myVenue} onUpdate={(updates) => updateVenue(myVenue.id, updates)} currentUser={userProfile} />
                 )}
             </div>
 

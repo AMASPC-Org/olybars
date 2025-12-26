@@ -2,25 +2,27 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 
+/**
+ * Robust Environment Loading for Google Maps Service
+ * Ensures keys are available in local, development, and production containers.
+ */
 dotenv.config();
 
-// Load .env.local, .env.development, or functions/.env as fallback
-const rootEnvLocal = path.resolve(process.cwd(), '.env.local');
-if (fs.existsSync(rootEnvLocal)) {
-    dotenv.config({ path: rootEnvLocal, override: true });
-}
+const loadEnvFile = (filename: string) => {
+    const envPath = path.resolve(process.cwd(), filename);
+    if (fs.existsSync(envPath)) {
+        dotenv.config({ path: envPath, override: true });
+    }
+};
 
-const rootEnvDev = path.resolve(process.cwd(), '.env.development');
-if (fs.existsSync(rootEnvDev)) {
-    dotenv.config({ path: rootEnvDev, override: true });
-}
+loadEnvFile('.env.local');
+loadEnvFile('.env.development');
+loadEnvFile('functions/.env');
 
-const functionsEnvPath = path.resolve(process.cwd(), 'functions/.env');
-if (fs.existsSync(functionsEnvPath)) {
-    dotenv.config({ path: functionsEnvPath, override: true });
-}
-
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_BACKEND_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY;
+// Prioritize restricted backend-only key
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_BACKEND_KEY ||
+    process.env.VITE_GOOGLE_MAPS_API_KEY ||
+    process.env.GOOGLE_MAPS_API_KEY;
 
 export interface PlaceSearchResult {
     place_id: string;
@@ -35,8 +37,6 @@ export interface PlaceDetails {
     formatted_phone_number?: string;
     website?: string;
     url?: string;
-    rating?: number;
-    user_ratings_total?: number;
     geometry: {
         location: {
             lat: number;
@@ -94,7 +94,7 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceDetails | n
     }
 
     try {
-        const fields = 'place_id,name,formatted_address,formatted_phone_number,website,opening_hours,geometry,url,rating,user_ratings_total,photos';
+        const fields = 'place_id,name,formatted_address,formatted_phone_number,website,opening_hours,geometry,url,photos';
         const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${GOOGLE_MAPS_API_KEY}`;
 
         const response = await fetch(url);

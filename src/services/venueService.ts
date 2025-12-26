@@ -1,9 +1,7 @@
 import { Venue } from '../types';
 import { PULSE_CONFIG } from '../config/pulse';
 import { getAuthHeaders } from './apiUtils';
-
-// Forcing production URL for now since user is running frontend-only locally
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
+import { API_ENDPOINTS } from '../lib/api-config';
 
 /**
  * Pulse System Integration (Doc 05 Rulebook)
@@ -16,7 +14,7 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') +
  */
 export const fetchVenues = async (): Promise<Venue[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/venues`);
+    const response = await fetch(API_ENDPOINTS.VENUES.LIST);
     if (!response.ok) {
       throw new Error(`Failed to fetch venues: ${response.statusText}`);
     }
@@ -47,7 +45,7 @@ export const fetchVenues = async (): Promise<Venue[]> => {
  */
 export const updateVenueDetails = async (venueId: string, updates: Partial<Venue>, userId?: string): Promise<{ success: boolean, updates: any }> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/venues/${venueId}`, {
+    const response = await fetch(`${API_ENDPOINTS.VENUES.LIST}/${venueId}`, {
       method: 'PATCH',
       headers: await getAuthHeaders(),
       body: JSON.stringify({ updates, userId }),
@@ -67,7 +65,7 @@ export const updateVenueDetails = async (venueId: string, updates: Partial<Venue
  */
 export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: string): Promise<{ success: boolean, message: string, updates: any }> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/venues/${venueId}/sync-google`, {
+    const response = await fetch(API_ENDPOINTS.VENUES.SYNC(venueId), {
       method: 'POST',
       headers: await getAuthHeaders(),
       body: JSON.stringify({ googlePlaceId: manualPlaceId }),
@@ -95,7 +93,7 @@ export const getPulseThresholds = () => PULSE_CONFIG.THRESHOLDS;
  */
 export const fetchVenuePulse = async (venueId: string): Promise<number> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/venues/${venueId}/pulse`);
+    const response = await fetch(API_ENDPOINTS.VENUES.PULSE(venueId));
     if (!response.ok) {
       throw new Error(`Failed to fetch pulse: ${response.statusText}`);
     }
@@ -104,5 +102,101 @@ export const fetchVenuePulse = async (venueId: string): Promise<number> => {
   } catch (error) {
     console.error('Error in fetchVenuePulse:', error);
     return 0;
+  }
+};
+
+/**
+ * Check if a venue is already claimed by Google Place ID
+ */
+export const checkVenueClaim = async (googlePlaceId: string): Promise<{ isClaimed: boolean; exists: boolean; venueId?: string; name?: string }> => {
+  try {
+    const response = await fetch(`${API_ENDPOINTS.VENUES.CHECK_CLAIM}?googlePlaceId=${googlePlaceId}`);
+    if (!response.ok) {
+      throw new Error(`Failed to check claim status: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error in checkVenueClaim:', error);
+    return { isClaimed: false, exists: false };
+  }
+};
+
+/**
+ * Claim a venue and sync with Google
+ */
+export const onboardVenue = async (googlePlaceId: string): Promise<{ venueId: string; syncResult: any }> => {
+  const headers = await getAuthHeaders();
+  try {
+    const response = await fetch(API_ENDPOINTS.PARTNERS.ONBOARD, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ googlePlaceId }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || `Failed to onboard venue: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error in onboardVenue:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetch all members of a venue
+ */
+export const fetchVenueMembers = async (venueId: string): Promise<any[]> => {
+  try {
+    const response = await fetch(`${API_ENDPOINTS.VENUES.LIST}/${venueId}/members`, {
+      headers: await getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch members: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error in fetchVenueMembers:', error);
+    return [];
+  }
+};
+
+/**
+ * Add a new member to a venue
+ */
+export const addVenueMember = async (venueId: string, email: string, role: string): Promise<{ success: boolean }> => {
+  try {
+    const response = await fetch(`${API_ENDPOINTS.VENUES.LIST}/${venueId}/members`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ email, role }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to add member');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error in addVenueMember:', error);
+    throw error;
+  }
+};
+
+/**
+ * Remove a member from a venue
+ */
+export const removeVenueMember = async (venueId: string, memberId: string): Promise<{ success: boolean }> => {
+  try {
+    const response = await fetch(`${API_ENDPOINTS.VENUES.LIST}/${venueId}/members/${memberId}`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to remove member: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error in removeVenueMember:', error);
+    throw error;
   }
 };

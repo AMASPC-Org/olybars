@@ -1,4 +1,4 @@
-# Full-Stack Integrity Guardrails
+﻿# Full-Stack Integrity Guardrails
 
 ## Overview
 This rule ensures that every change to the OlyBars platform maintains absolute integrity across routing, user interface, and legal compliance.
@@ -24,6 +24,12 @@ Every interactive element added must have:
 - **A Valid Path**: No "dead links" or `#` placeholders.
 - **A Unique ID**: For automated browser testing compatibility.
 - **A Consistency Check**: Ensure the icon and label match the system-wide design tokens (see `olybars-tech-constitution.md`).
+
+### 4. The Environment Configuration Audit
+To prevent "Environment Drift" and "Broken Hooks", the agent MUST:
+- **Use Dynamic Config**: All backend calls must use `API_BASE_URL` or endpoints derived from `src/lib/api-config.ts`.
+- **Verify Key Provenance**: Any hook using external API keys (Google Maps, etc.) must fetch them dynamically from the backend and NEVER hardcode literals.
+- **Fail Gracefully**: Services must handle "Key Unavailable" or "Backend Down" states with proper UI fallbacks (see `olybars-maps-integrity.md`).
 
 ## Enforcement
 This rule is part of the "Agent Decides" validation loop. Failure to verify a route or perform a legal scan will be considered a breach of deployment guardrails.

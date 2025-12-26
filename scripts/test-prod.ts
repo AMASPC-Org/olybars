@@ -5,7 +5,7 @@ import 'dotenv/config';
 
 // 1. PASTE YOUR FIREBASE WEB CONFIG HERE
 const firebaseConfig = {
-    apiKey: "AIzaSyAfEWY4NF8WDeh612ctG2VNLjSiIcMCRqk",
+    apiKey: process.env.VITE_FIREBASE_API_KEY,
     authDomain: "ama-ecosystem-prod.firebaseapp.com",
     projectId: "ama-ecosystem-prod",
     storageBucket: "ama-ecosystem-prod.firebasestorage.app",

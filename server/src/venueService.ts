@@ -645,7 +645,8 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'leagueEvent', 'triviaTime', 'deal', 'dealEndsIn', 'checkIns',
         'isVisible', 'isActive', // [FIX] Access Control Fields
         'location', // [NEW] Allow programmatic location updates
-        'vibeDefault', 'assets' // [NEW] Onboarding MVP fields
+        'vibeDefault', 'assets', // [NEW] Onboarding MVP fields
+        'managersCanAddUsers' // [NEW] Multi-User Support
     ];
 
     const filteredUpdates: any = {};
@@ -687,6 +688,20 @@ export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: strin
     if (!venueDoc.exists) throw new Error('Venue not found');
     const venueData = venueDoc.data() as Venue;
 
+    // [FINOPS] Safeguard: Prevent excessive syncs (max once per 24 hours per venue)
+    const SYNC_COOLDOWN = 24 * 60 * 60 * 1000;
+    const lastSynced = venueData.lastGoogleSync || 0;
+    const now = Date.now();
+
+    if (now - lastSynced < SYNC_COOLDOWN && !manualPlaceId) {
+        const hoursRemaining = Math.ceil((SYNC_COOLDOWN - (now - lastSynced)) / (60 * 60 * 1000));
+        console.warn(`[PLACES_SYNC] Throttled for ${venueData.name}. Last sync was recent. Try again in ${hoursRemaining}h.`);
+        return {
+            success: false,
+            message: `Sync throttled. This venue was synced recently. Try again in ${hoursRemaining} hours.`
+        };
+    }
+
     console.log(`[PLACES_SYNC] Starting sync for ${venueData.name} (${venueId})...`);
 
     let placeId = manualPlaceId || venueData.googlePlaceId;
@@ -711,7 +726,8 @@ export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: strin
     // 3. Prepare updates
     const updates: Partial<Venue> = {
         googlePlaceId: placeId,
-        updatedAt: Date.now()
+        lastGoogleSync: now,
+        updatedAt: now
     };
 
     if (details.formatted_phone_number) updates.phone = details.formatted_phone_number;
@@ -781,6 +797,180 @@ export const getVenuePulse = async (venueId: string): Promise<number> => {
     });
 
     return Math.round(pulseScore);
+};
+
+/**
+ * Checks if a venue with the given Google Place ID is already claimed.
+ */
+export const checkVenueClaimStatus = async (googlePlaceId: string) => {
+    const snapshot = await db.collection('venues')
+        .where('googlePlaceId', '==', googlePlaceId)
+        .limit(1)
+        .get();
+
+    if (snapshot.empty) {
+        return { isClaimed: false, exists: false };
+    }
+
+    const doc = snapshot.docs[0];
+    const data = doc.data() as Venue;
+
+    return {
+        isClaimed: !!data.ownerId,
+        exists: true,
+        venueId: doc.id,
+        name: data.name
+    };
+};
+
+/**
+ * Onboards a new venue partner by creating or updating a venue and sync with Google.
+ */
+export const onboardVenue = async (googlePlaceId: string, ownerId: string) => {
+    // 1. Check if venue exists with this placeId
+    const status = await checkVenueClaimStatus(googlePlaceId);
+
+    if (status.isClaimed) {
+        throw new Error('Venue is already claimed by another partner.');
+    }
+
+    let venueId = status.venueId;
+
+    if (!status.exists) {
+        // Create skeleton venue
+        const docRef = await db.collection('venues').add({
+            name: 'Pending Sync...',
+            googlePlaceId,
+            ownerId,
+            status: 'OPEN',
+            type: 'bar',
+            checkIns: 0,
+            vibe: 'CHILL',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            isVisible: true,
+            isActive: true
+        });
+        venueId = docRef.id;
+    } else {
+        // Update existing venue with ownerId
+        await db.collection('venues').doc(venueId!).update({
+            ownerId,
+            updatedAt: Date.now()
+        });
+    }
+
+    // 2. Trigger Google Sync
+    const syncResult = await syncVenueWithGoogle(venueId!);
+
+    return {
+        venueId,
+        syncResult
+    };
+};
+
+/**
+ * Add a member to a venue (Manager or Staff)
+ */
+export const addVenueMember = async (venueId: string, email: string, role: string, requestingUserId: string) => {
+    const venueRef = db.collection('venues').doc(venueId);
+    const venueDoc = await venueRef.get();
+    if (!venueDoc.exists) throw new Error('Venue not found');
+    const venueData = venueDoc.data() as Venue;
+
+    // Verify permissions
+    const isOwner = venueData.ownerId === requestingUserId;
+    const isManager = venueData.managerIds?.includes(requestingUserId);
+    const canAdd = isOwner || (isManager && venueData.managersCanAddUsers);
+
+    if (!canAdd) {
+        throw new Error('Unauthorized: You do not have permission to add members to this venue.');
+    }
+
+    // 1. Find user by email
+    const usersRef = db.collection('users');
+    const userSnapshot = await usersRef.where('email', '==', email).limit(1).get();
+
+    if (userSnapshot.empty) {
+        throw new Error(`User with email ${email} not found. They must sign in to OlyBars once before being added to a team.`);
+    }
+
+    const userDoc = userSnapshot.docs[0];
+    const userData = userDoc.data();
+    const userId = userDoc.id;
+
+    // 2. Update user's venuePermissions
+    const venuePermissions = userData.venuePermissions || {};
+    venuePermissions[venueId] = role;
+
+    await userDoc.ref.update({ venuePermissions });
+
+    // 3. If role is manager, add to venue's managerIds
+    if (role === 'manager' || role === 'owner') {
+        const managerIds = venueData.managerIds || [];
+        if (!managerIds.includes(userId)) {
+            managerIds.push(userId);
+            await venueRef.update({ managerIds });
+        }
+    }
+
+    return { success: true, userId, email, role };
+};
+
+/**
+ * Remove a member from a venue
+ */
+export const removeVenueMember = async (venueId: string, memberId: string, requestingUserId: string) => {
+    const venueRef = db.collection('venues').doc(venueId);
+    const venueDoc = await venueRef.get();
+    if (!venueDoc.exists) throw new Error('Venue not found');
+    const venueData = venueDoc.data() as Venue;
+
+    // Verify permissions
+    const isOwner = venueData.ownerId === requestingUserId;
+    const isManager = venueData.managerIds?.includes(requestingUserId);
+    const canRemove = isOwner || (isManager && venueData.managersCanAddUsers);
+
+    if (!canRemove) {
+        throw new Error('Unauthorized: You do not have permission to remove members from this venue.');
+    }
+
+    // 1. Update user's venuePermissions
+    const userRef = db.collection('users').doc(memberId);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) throw new Error('User not found');
+    const userData = userDoc.data();
+
+    const venuePermissions = userData.venuePermissions || {};
+    delete venuePermissions[venueId];
+
+    await userRef.update({ venuePermissions });
+
+    // 2. Remove from venue's managerIds if present
+    const managerIds = (venueData.managerIds || []).filter(id => id !== memberId);
+    await venueRef.update({ managerIds });
+
+    return { success: true };
+};
+
+/**
+ * Fetch all members associated with a venue
+ */
+export const getVenueMembers = async (venueId: string) => {
+    const usersRef = db.collection('users');
+    // We query for users who have ANY role for this venue
+    const snapshot = await usersRef.where(`venuePermissions.${venueId}`, 'in', ['owner', 'manager', 'staff']).get();
+
+    return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            uid: doc.id,
+            email: data.email,
+            displayName: data.displayName,
+            role: data.venuePermissions[venueId],
+            photoURL: data.photoURL
+        };
+    });
 };
 
 

@@ -13,7 +13,7 @@ export type SystemRole = 'guest' | 'admin';
  * - 'owner': Full access to specific venue (Edit profile, manage staff, toggle Local Maker).
  * - 'staff': Operational access (Update Vibe, toggle specials).
  */
-export type VenueRole = 'owner' | 'staff';
+export type VenueRole = 'owner' | 'manager' | 'staff';
 
 export interface UserAuthProfile {
     uid: string;
@@ -49,4 +49,15 @@ export const isVenueOwner = (user: { systemRole?: SystemRole; venuePermissions?:
     if (!user) return false;
     if (user.systemRole === 'admin') return true;
     return user.venuePermissions?.[venueId] === 'owner';
+};
+
+/**
+ * Helper to check if user has management permissions (Owner or Manager)
+ * Used to gate access to team management and settings.
+ */
+export const isVenueManager = (user: { systemRole?: SystemRole; venuePermissions?: Record<string, VenueRole> } | null, venueId: string): boolean => {
+    if (!user) return false;
+    if (user.systemRole === 'admin') return true;
+    const role = user.venuePermissions?.[venueId];
+    return role === 'owner' || role === 'manager';
 };

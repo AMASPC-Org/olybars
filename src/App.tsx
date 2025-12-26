@@ -67,6 +67,7 @@ import { PulsePlaybookScreen } from './features/marketing/screens/PulsePlaybookS
 import AIGatewayScreen from './features/marketing/screens/AIGatewayScreen';
 import AIFeedGuideScreen from './features/marketing/screens/AIFeedGuideScreen';
 import AIConductScreen from './features/marketing/screens/AIConductScreen';
+import ClaimVenuePage from './pages/partners/ClaimVenuePage';
 
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
@@ -378,7 +379,7 @@ export default function OlyBarsApp() {
   useEffect(() => { localStorage.setItem('oly_points', userPoints.toString()); }, [userPoints]);
   useEffect(() => { localStorage.setItem('oly_checkins', JSON.stringify(checkInHistory)); }, [checkInHistory]);
   useEffect(() => { localStorage.setItem('oly_profile', JSON.stringify(userProfile)); }, [userProfile]);
-  useEffect(() => { localStorage.setItem('oly_prefs', JSON.stringify(alertPrefs)); saveAlertPreferences(userId, alertPrefs); }, [alertPrefs]);
+  useEffect(() => { localStorage.setItem('oly_prefs', JSON.stringify(alertPrefs)); if (userId !== 'guest') saveAlertPreferences(userId, alertPrefs); }, [alertPrefs]);
 
   const handleLogout = () => {
     localStorage.removeItem('oly_profile');
@@ -508,6 +509,7 @@ export default function OlyBarsApp() {
               <Route path="bars" element={<><SEO title="Dives & Drafts" description="The definitive directory of every bar and taproom in Olympia." /><TheSpotsScreen venues={venues} userProfile={userProfile} handleToggleFavorite={handleToggleFavorite} mode="bars" /></>} />
               <Route path="makers" element={<><SEO title="The Maker List" description="Celebrating the brewers, distillers, and winemakers of the PNW." /><TheSpotsScreen venues={venues} userProfile={userProfile} handleToggleFavorite={handleToggleFavorite} mode="makers" /></>} />
               <Route path="map" element={<MapScreen />} />
+              <Route path="partners/claim" element={<ClaimVenuePage />} />
               <Route path="merch" element={<MerchStandScreen venues={venues} />} />
               <Route path="merch/:itemId" element={<MerchDetailScreen venues={venues} userProfile={userProfile} setUserProfile={setUserProfile} />} />
               <Route path="vouchers" element={<VoucherRedemptionScreen userProfile={userProfile} venues={venues} />} />
