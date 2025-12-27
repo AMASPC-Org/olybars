@@ -30,6 +30,17 @@ WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
 - UNDUE INFLUENCE: League Points are for engagement (attendance, trivia), NEVER for alcohol purchase.
 - SAFE RIDE: Implicitly or explicitly reference safety for late-night content ("Grab a Lyft", "Safe Ride Home").
 - THE ARTIE PIVOT: If a request is non-compliant, do not just say "No". Provide a legal, fun alternative.
+
+[FORMATTING]:
+- Every response MUST end with exactly one [RATIONALE] tag and one [SUGGESTIONS] tag.
+- [RATIONALE]: A one-sentence internal explanation of why you gave this answer (hidden from users).
+- [SUGGESTIONS]: A JSON array of 2-3 strings representing follow-up questions or actions.
+  Example: [SUGGESTIONS]: ["What's on tap?", "When is Happy Hour?", "See Leaderboard"]
+
+[SUGGESTION CATEGORIES]:
+- If discussing a venue: Suggest "Happy Hour?", "What's on tap?", "Check-in here".
+- If discussing the league: Suggest "See Leaderboard", "Find nearby bars", "How to level up?".
+- If guest user: Suggest "Join the League", "Find a bar", "What is OlyBars?".
 `;
 
     constructor(apiKey?: string) {
@@ -88,7 +99,15 @@ WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
             cachedContent,
             config: { temperature }
         });
-        return response.candidates?.[0]?.content?.parts?.[0]?.text;
+        const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+            try {
+                const fs = await import('fs');
+                const path = await import('path');
+                fs.appendFileSync(path.join(__dirname, '../../artie_debug.log'), `[RESPONSE] ${new Date().toISOString()}:\n${text}\n---\n`);
+            } catch (err) { }
+        }
+        return text;
     }
 
     async generateArtieResponseStream(model: string, contents: any[], temperature: number = 0.7, systemInstruction?: string, tools?: any[], cachedContent?: string) {

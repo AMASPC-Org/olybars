@@ -736,7 +736,9 @@ v1Router.post('/chat', identifyUser, artieRateLimiter, verifyHoneypot, blockAggr
 
         // Import the logic dynamically to keep dependencies clean
         const { artieChatLogic } = await import('../../functions/src/flows/artieChat');
+        console.log(`[RELAY] Calling artieChatLogic for request: ${question}`);
         const result = await artieChatLogic({ history: history || [], question, userId, userRole: realRole });
+        console.log(`[RELAY] Result type: ${typeof result}`);
 
         // Check if result is a stream (it will be for successful generatations)
         if (typeof result !== 'string' && (result as any).stream) {

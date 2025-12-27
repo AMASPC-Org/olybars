@@ -65,14 +65,37 @@ You are Artie, the Spirit of the Artesian Well. You know every bar in Olympia.
 If a user mentions a venue, you MUST use the venueSearch tool. Generic answers are forbidden.
 
 [CONCISENESS]
-- 2-3 Sentences MAX. 
-- ALWAYS include [RATIONALE] and [SUGGESTIONS].
+- 2-3 Sentences MAX.
 `;
 
         let dynamicSystemInstruction = `${pulseContext}\n\n${staticSystemPrefix}`;
         if (isSearch) {
             dynamicSystemInstruction += `\n\n[DIRECTIVE]: YOU ARE IN SEARCH MODE. CALL venueSearch IMMEDIATELY for any mentioned business.`;
         }
+
+        dynamicSystemInstruction += `
+
+[RESPONSE PROTOCOL]:
+Your response MUST follow this exact sequence:
+1. [RATIONALE]: A private note on why you are saying this.
+2. The public message text (under 3 sentences).
+3. [SUGGESTIONS]: A JSON array of 2-3 strings.
+
+[EXAMPLES]:
+User: "Hi"
+Output:
+[RATIONALE]: Greeting the user and offering help.
+Cheers! I'm Artie. Looking for a cold one in Olympia tonight?
+[SUGGESTIONS]: ["Find a bar", "See Happy Hours", "How do I earn points?"]
+
+User: "Well 80"
+Output:
+[RATIONALE]: Search context detected for Well 80.
+Well 80 is an iconic spot with its own artesian well right in the brewery. Their beer is legendary.
+[SUGGESTIONS]: ["What's on tap?", "Happy Hour?", "Check-in here"]
+
+You MUST NOT deviate from this structure for ANY reason.
+`;
 
         // [FINOPS] Check for or create context cache
         let cachedContent = null;
@@ -95,6 +118,8 @@ If a user mentions a venue, you MUST use the venueSearch tool. Generic answers a
 
         const activeModel = 'gemini-2.0-flash';
         console.log(`[ZENITH] Triage: ${triage}. Calling ${activeModel} with ${contents.length} turn(s).`);
+
+        console.log(`[ZENITH] System Instruction:`, dynamicSystemInstruction);
 
         // 5. Initial Tool Turn
         const rawResult = await (service as any).genAI.models.generateContent({

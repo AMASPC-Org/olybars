@@ -114,28 +114,32 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
         // Check for pending actions or suggestions in the last message
         const lastMessage = messages[messages.length - 1];
         if (lastMessage?.role === 'model') {
-            // Actions
-            if (lastMessage.content.includes('[ACTION]:')) {
-                try {
-                    const actionJson = lastMessage.content.split('[ACTION]:')[1].trim();
-                    const action = JSON.parse(actionJson) as ArtieAction;
-                    setPendingAction(action);
-                } catch (e) {
-                    console.error("Failed to parse Artie action:", e);
+            // Wait for stream to finish before parsing JSON blocks to avoid partial parse errors
+            if (!isLoading) {
+                // Actions
+                if (lastMessage.content.includes('[ACTION]:')) {
+                    try {
+                        const actionJson = lastMessage.content.split('[ACTION]:')[1].trim();
+                        const action = JSON.parse(actionJson) as ArtieAction;
+                        setPendingAction(action);
+                    } catch (e) {
+                        console.error("Failed to parse Artie action:", e);
+                    }
                 }
-            }
 
-            // Suggestions
-            if (lastMessage.content.includes('[SUGGESTIONS]:')) {
-                try {
-                    const suggJson = lastMessage.content.split('[SUGGESTIONS]:')[1].trim();
-                    const suggs = JSON.parse(suggJson) as string[];
-                    setSuggestions(suggs);
-                } catch (e) {
-                    console.error("Failed to parse Artie suggestions:", e);
+                // Suggestions
+                if (lastMessage.content.includes('[SUGGESTIONS]:')) {
+                    try {
+                        const suggJson = lastMessage.content.split('[SUGGESTIONS]:')[1].trim();
+                        const suggs = JSON.parse(suggJson) as string[];
+                        setSuggestions(suggs);
+                    } catch (e) {
+                        console.error("Failed to parse Artie suggestions:", e);
+                    }
+                } else if (!lastMessage.content.includes('[ACTION]:')) {
+                    // Only clear suggestions if there isn't a pending action occupying the user's attention
+                    setSuggestions([]);
                 }
-            } else {
-                setSuggestions([]);
             }
         }
     }, [messages, isLoading]);
@@ -317,16 +321,46 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                         </div>
                     )}
 
-                    {messages.map((m, i) => (
-                        <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[85%] p-3 rounded-2xl text-sm font-medium leading-relaxed ${m.role === 'user'
-                                ? 'bg-primary text-black rounded-tr-none'
-                                : 'bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none'
-                                }`}>
-                                {m.content.split('[ACTION]:')[0].split('[SUGGESTIONS]:')[0].trim()}
+                    {messages.map((m, i) => {
+                        // Clean message content: strip [RATIONALE], [ACTION], and [SUGGESTIONS]
+                        let displayContent = m.content;
+                        if (m.role === 'model') {
+                            console.log(`[ARTIE_DEBUG] Raw model content:`, m.content);
+
+                            // 1. Strip Rationale (Everything from [RATIONALE]: to the first newline OR the start of the message)
+                            if (displayContent.includes('[RATIONALE]:')) {
+                                const parts = displayContent.split('[RATIONALE]:');
+                                // If rationale is at the start, take everything after the first rationale block
+                                if (displayContent.trim().startsWith('[RATIONALE]:')) {
+                                    // Find where the next line or content starts
+                                    const contentAfterRationale = parts[1].split('\n').slice(1).join('\n').trim();
+                                    displayContent = contentAfterRationale || parts[1].replace(/.*?\n/, '').trim();
+                                } else {
+                                    // If rationale is elsewhere (shouldn't be), just remove the tag and its immediate text
+                                    displayContent = parts[0] + (parts[1].includes('\n') ? parts[1].substring(parts[1].indexOf('\n')) : '');
+                                }
+                            }
+
+                            // 2. Strip Actions and Suggestions
+                            displayContent = displayContent
+                                .split('[ACTION]:')[0]
+                                .split('[SUGGESTIONS]:')[0]
+                                .trim();
+
+                            console.log(`[ARTIE_DEBUG] Cleaned content:`, displayContent);
+                        }
+
+                        return (
+                            <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+                                <div className={`max-w-[85%] p-3 rounded-2xl text-sm font-medium leading-relaxed ${m.role === 'user'
+                                    ? 'bg-primary text-black rounded-tr-none'
+                                    : 'bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none'
+                                    }`}>
+                                    {displayContent}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
 
                     {/* Pending Action Card */}
                     {pendingAction && (
