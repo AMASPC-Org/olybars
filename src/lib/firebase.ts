@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,6 +16,39 @@ const firebaseConfig = {
 
 // Initialize the Shared Network Backend
 const app = initializeApp(firebaseConfig);
+
+// Initialize App Check
+if (typeof window !== 'undefined') {
+  const isDebug = import.meta.env.VITE_APP_CHECK_DEBUG === 'true' ||
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+
+  if (isDebug) {
+    // @ts-ignore
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+    console.log('🛡️ [AppCheck] Debug mode enabled');
+  }
+  const siteKey = import.meta.env.VITE_APP_CHECK_KEY;
+
+  if (siteKey && !siteKey.includes('PLACEHOLDER') && siteKey.length > 20) {
+    console.log('🛡️ [AppCheck] Initializing with Site Key');
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(siteKey),
+      isTokenAutoRefreshEnabled: true
+    });
+  } else if (isDebug) {
+    console.log('🛡️ [AppCheck] Initializing in Debug mode');
+    // For debug mode, we can use a dummy key or just the debug token property
+    // But initializeAppCheck still needs a provider instance.
+    const dummyKey = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'; // Standard ReCAPTCHA test key
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(dummyKey),
+      isTokenAutoRefreshEnabled: true
+    });
+  } else {
+    console.warn('⚠️ [AppCheck] Skipping initialization: Missing or invalid Site Key.');
+  }
+}
 
 // Export the services so the rest of the app can use them
 export const db = getFirestore(app);

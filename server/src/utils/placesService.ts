@@ -1,28 +1,7 @@
-import dotenv from 'dotenv';
-import path from 'path';
-import fs from 'fs';
-
-/**
- * Robust Environment Loading for Google Maps Service
- * Ensures keys are available in local, development, and production containers.
- */
-dotenv.config();
-
-const loadEnvFile = (filename: string) => {
-    const envPath = path.resolve(process.cwd(), filename);
-    if (fs.existsSync(envPath)) {
-        dotenv.config({ path: envPath, override: true });
-    }
-};
-
-loadEnvFile('.env.local');
-loadEnvFile('.env.development');
-loadEnvFile('functions/.env');
+import { config } from '../config';
 
 // Prioritize restricted backend-only key
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_BACKEND_KEY ||
-    process.env.VITE_GOOGLE_MAPS_API_KEY ||
-    process.env.GOOGLE_MAPS_API_KEY;
+const GOOGLE_MAPS_API_KEY = config.GOOGLE_BACKEND_KEY;
 
 export interface PlaceSearchResult {
     place_id: string;

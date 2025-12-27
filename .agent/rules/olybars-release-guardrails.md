@@ -1,4 +1,4 @@
----
+﻿---
 trigger: always_on
 ---
 
@@ -55,3 +55,9 @@ Self-healing customization rule:
   2) Propose the exact patch content (markdown) and the exact file path(s) under `.agent/` to add/update.
   3) Ask for explicit approval before applying any changes.
   4) After approval, provide the exact copy/paste commands to apply the patch.
+
+## Dependency Propagation
+- **Mandatory**: Every backend API change must be cross-checked against:
+  1. Frontend Interfaces (src/types/)
+  2. Data Seed Scripts (server/src/seed.ts)
+  3. Documentation (olybars_technical_spec.md)

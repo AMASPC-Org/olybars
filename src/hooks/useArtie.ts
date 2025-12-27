@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../lib/firebase';
 
+import { API_BASE_URL } from '../lib/api-config';
+
 export interface Message {
     role: 'user' | 'model';
     content: string;
@@ -24,7 +26,6 @@ export function useArtie() {
         setMessages(newHistory);
 
         try {
-            const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
 
             // Convert internal message format to the simple role/content pairs Artie expects
             const historyForArtie = messages.map(m => ({
@@ -53,7 +54,12 @@ export function useArtie() {
             if (contentType?.includes('application/json')) {
                 // Handle fallback JSON response (e.g. triage/safety/banned)
                 const result = await response.json();
-                const modelMessage: Message = { role: 'model', content: result.data };
+                // [FIX] Ensure content is always a string to prevent client crashes (TypeError: split is not a function)
+                let contentStr = result.data;
+                if (typeof contentStr !== 'string') {
+                    contentStr = JSON.stringify(contentStr);
+                }
+                const modelMessage: Message = { role: 'model', content: contentStr };
                 setMessages(prev => [...prev, modelMessage]);
             } else {
                 // Handle streaming response

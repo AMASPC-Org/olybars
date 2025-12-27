@@ -25,21 +25,23 @@ DIRECTIVES:
 3. Be concise.
 `;
 
-    constructor() {
-        const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
-
+    constructor(apiKey?: string) {
+        // If an apiKey is provided explicitly (e.g., from validated config), use it.
+        // Otherwise, the SDK will attempt to use ADC if vertexai is true.
         if (!apiKey) {
-            console.warn("⚠️ GeminiService: No API key found. Checked GOOGLE_GENAI_API_KEY, GOOGLE_API_KEY, and GEMINI_API_KEY.");
+            console.log("📡 GeminiService: No explicit API key provided. Falling back to Application Default Credentials (ADC).");
+            this.genAI = new GoogleGenAI({
+                vertexai: true,
+                project: process.env.GOOGLE_CLOUD_PROJECT || 'ama-ecosystem-prod',
+                location: 'us-west1',
+            });
         } else {
-            const source = process.env.GOOGLE_GENAI_API_KEY ? "GOOGLE_GENAI_API_KEY" :
-                (process.env.GOOGLE_API_KEY ? "GOOGLE_API_KEY" : "GEMINI_API_KEY");
-            console.log(`📡 GeminiService: Initialized using secret from ${source}`);
+            console.log(`📡 GeminiService: Initialized using provided API Key.`);
+            this.genAI = new GoogleGenAI({
+                apiKey,
+                vertexai: false,
+            });
         }
-
-        this.genAI = new GoogleGenAI({
-            apiKey,
-            vertexai: false,
-        });
     }
 
     async getTriage(question: string) {
@@ -68,21 +70,25 @@ DIRECTIVES:
         return triageResponse.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase() || 'CHAT';
     }
 
-    async generateArtieResponse(model: string, contents: any[], temperature: number = 0.7, systemInstruction?: string) {
+    async generateArtieResponse(model: string, contents: any[], temperature: number = 0.7, systemInstruction?: string, tools?: any[], cachedContent?: string) {
         const response = await this.genAI.models.generateContent({
             model,
             contents,
             systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
+            tools: tools ? [{ function_declarations: tools }] : undefined,
+            cachedContent,
             config: { temperature }
         });
         return response.candidates?.[0]?.content?.parts?.[0]?.text;
     }
 
-    async generateArtieResponseStream(model: string, contents: any[], temperature: number = 0.7, systemInstruction?: string) {
+    async generateArtieResponseStream(model: string, contents: any[], temperature: number = 0.7, systemInstruction?: string, tools?: any[], cachedContent?: string) {
         return this.genAI.models.generateContentStream({
             model,
             contents,
             systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
+            tools: tools ? [{ function_declarations: tools }] : undefined,
+            cachedContent,
             config: { temperature }
         });
     }

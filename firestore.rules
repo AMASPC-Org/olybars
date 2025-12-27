@@ -21,7 +21,7 @@ service cloud.firestore {
       return isAuthenticated() && (
         getUserData().role == 'admin' || 
         getUserData().role == 'super-admin' || 
-        getUserData().email == 'ryan@amaspc.com'
+        getUserData().isAdmin == true
       );
     }
     
@@ -35,10 +35,13 @@ service cloud.firestore {
 
     // --- RULES ---
 
-    // Users: Users can read/write their own profile. Admins can do everything.
+    // Users: Users can read their own profile. Admins can do everything.
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-      allow write: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == userId && 
+                    !request.resource.data.keys().hasAny(['role', 'isAdmin', 'systemRole']);
+      allow update: if isAuthenticated() && (isAdmin() || (request.auth.uid == userId && 
+                    !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdmin', 'systemRole'])));
     }
 
     // Venues: Publicly readable. Writes restricted to Admins, Owners, and Managers.

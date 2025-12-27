@@ -6,21 +6,24 @@
 const getApiBaseUrl = () => {
     if (typeof window === 'undefined') return '';
 
+    // If VITE_API_URL is provided at build time (standard for our Cloud Run deploys), use it.
+    // Ensure we don't end up with /api/api by trimming trailing slashes/api
+    const builtInUrl = import.meta.env.VITE_API_URL;
+    if (builtInUrl) {
+        return builtInUrl.replace(/\/api\/?$/, '') + '/api';
+    }
+
     const hostname = window.location.hostname;
 
-    // Local Development (Frontend only or Local Backend)
+    // Local Development
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return 'http://127.0.0.1:3001/api';
+        return 'http://localhost:3001/api';
     }
 
-    // Build-time environment selection allows Vite to tree-shake the "forbidden" URLs
-    // ensuring we pass the check-env.js safety scans.
-    if (import.meta.env.MODE === 'development') {
-        return 'https://olybars-backend-juthzlaerq-uw.a.run.app/api';
-    }
-
-    // Production (Default)
-    return 'https://olybars-backend-26629455103.us-west1.run.app/api';
+    // Fallback for DEV/PROD if env var is missing (legacy support)
+    return hostname.includes('dev')
+        ? 'https://olybars-backend-juthzlaerq-uw.a.run.app/api'
+        : 'https://olybars-backend-juthzlaerq-uw.a.run.app/api'; // Unified to the valid backend
 };
 
 export const API_BASE_URL = getApiBaseUrl();

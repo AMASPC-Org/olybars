@@ -8,6 +8,7 @@ metadata:
 spec:
   template:
     spec:
+      serviceAccountName: 26629455103-compute@developer.gserviceaccount.com
       containers:
       - image: us-west1-docker.pkg.dev/ama-ecosystem-prod/olybars/backend:latest
         ports:
@@ -25,3 +26,17 @@ spec:
           value: us-west1
         - name: FRONTEND_URL
           value: https://olybars.com
+        - name: GOOGLE_GENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: GOOGLE_GENAI_API_KEY
+              key: latest
+        - name: GOOGLE_BACKEND_KEY
+          valueFrom:
+            secretKeyRef:
+              name: google-maps-api-key
+              key: latest
+        - name: VITE_GOOGLE_BROWSER_KEY
+          value: "AIzaSyBocyAp714K4UdV6_e0vp211dIhppQ_yGw"
+        - name: INTERNAL_HEALTH_TOKEN
+          value: "hardened-diagnostic-2025"

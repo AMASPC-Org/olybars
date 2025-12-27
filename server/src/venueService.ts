@@ -737,7 +737,7 @@ export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: strin
     // Construct Google Photo URL if available
     if (details.photos && details.photos.length > 0) {
         const photoRef = details.photos[0].photo_reference;
-        const apiKey = process.env.GOOGLE_BACKEND_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
+        const apiKey = process.env.GOOGLE_BACKEND_KEY;
         (updates as any).googlePhotoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photoRef}&key=${apiKey}`;
     }
 

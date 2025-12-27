@@ -29,7 +29,15 @@ export const useGoogleMapsScript = () => {
                 setApiKey(data.key);
             } catch (err) {
                 console.error('[MAPS_KEY_FETCH_ERROR]', err);
-                setStatus('error');
+
+                // Fallback to build-time environment variable if backend fetch fails
+                const fallback = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.VITE_GOOGLE_BROWSER_KEY;
+                if (fallback && fallback.length > 20) {
+                    console.log('📡 [MAPS] Falling back to build-time restricted key');
+                    setApiKey(fallback);
+                } else {
+                    setStatus('error');
+                }
             }
         };
 

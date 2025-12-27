@@ -10,6 +10,6 @@ export default configureGenkit({
     googleAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY }),
     firebase(),
   ],
-  logLevel: 'debug',
-  enableTracingAndMetrics: true,
+  logLevel: 'info',
+  enableTracingAndMetrics: process.env.NODE_ENV === 'development' && !process.env.VITE_API_URL,
 });

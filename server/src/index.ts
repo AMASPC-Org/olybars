@@ -1,30 +1,68 @@
-console.log("Starting OlyBars Server..."); // Trigger restart
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import path from 'path';
-import fs from 'fs';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
+import { config } from './config';
 import { fetchVenues, checkIn } from './venueService';
 import { isAiBot, getBotName } from './utils/botDetector';
-import { verifyToken, requireRole } from './middleware/authMiddleware';
-
-dotenv.config();
-
-// Load functions/.env as fallback for AI keys
-const functionsEnvPath = path.resolve(process.cwd(), 'functions/.env');
-if (fs.existsSync(functionsEnvPath)) {
-    dotenv.config({ path: functionsEnvPath });
-}
+import { verifyToken, requireRole, verifyAppCheck, identifyUser } from './middleware/authMiddleware';
+import {
+    CheckInSchema,
+    PlayCheckInSchema,
+    AdminRequestSchema,
+    UserUpdateSchema,
+    ChatRequestSchema
+} from './utils/validation';
 
 const app = express();
-const port = process.env.PORT || 3001;
+app.set('trust proxy', 1); // Trust first proxy (Cloud Run load balancer)
+const port = config.PORT;
 
 // [SECURITY] Standard headers
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
+
+/**
+ * Global Rate Limiter
+ * 100 requests per 15 minutes per IP.
+ */
+const globalRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false },
+});
+
+/**
+ * Artie Chat Rate Limiter
+ * Limits based on user role.
+ */
+const artieRateLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    limit: (req: any) => {
+        const role = req.user?.role;
+        if (role === 'super-admin' || role === 'admin') return 1000;
+        if (role === 'owner' || role === 'manager') return 500;
+        if (role === 'user') return 50; // Authenticated league player
+        return 5; // Guest Limit
+    },
+    keyGenerator: (req: any) => req.user?.uid || req.ip,
+    message: { error: 'Artie is taking a short break. Come back in an hour!' },
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false, default: false },
+});
+
+const v1Router = express.Router();
+const v2Router = express.Router();
+
+/**
+ * Versioned Rate Limiters
+ */
+v1Router.use(globalRateLimiter);
+v2Router.use(globalRateLimiter);
 
 const allowedOrigins = [
     'http://localhost:3000',
@@ -153,14 +191,48 @@ app.get('/', (req, res) => {
  * @desc API Health check
  */
 app.get('/health', (req, res) => {
-    res.json({ status: 'popping', timestamp: Date.now() });
+    res.json({
+        status: 'popping',
+        timestamp: Date.now(),
+        env: config.NODE_ENV,
+        version: '1.0.0-hardened'
+    });
+});
+
+/**
+ * @route GET /api/health/artie
+ * @desc Artie Health Check (Authenticated)
+ */
+v1Router.get('/health/artie', async (req, res) => {
+    const internalToken = req.header('X-Internal-Token');
+    const expectedToken = config.INTERNAL_HEALTH_TOKEN;
+
+    if (!internalToken || internalToken !== expectedToken) {
+        return res.status(403).json({ error: 'Artie says: Access Denied. Proper credentials required.' });
+    }
+
+    try {
+        const { GeminiService } = await import('../../functions/src/services/geminiService');
+        const gemini = new GeminiService();
+        // Minimal ping call (triage is cheap)
+        const triage = await gemini.getTriage('Health Check Ping');
+        res.json({
+            status: 'healthy',
+            artieBrain: 'connected',
+            triageResult: triage,
+            timestamp: Date.now()
+        });
+    } catch (error: any) {
+        log('ERROR', 'Artie Health Check Failed', { error: error.message });
+        res.status(500).json({ status: 'unhealthy', error: error.message });
+    }
 });
 
 /**
  * @route GET /api/venues
  * @desc Fetch sorted venues from Firestore
  */
-app.get('/api/venues', async (req, res) => {
+v1Router.get('/venues', async (req, res) => {
     try {
         const venues = await fetchVenues();
         res.setHeader('Cache-Control', 'public, max-age=30'); // Cache for 30s
@@ -178,13 +250,13 @@ app.get('/api/venues', async (req, res) => {
  * @route POST /api/check-in
  * @desc Verify location and log a check-in signal
  */
-app.post('/api/check-in', verifyToken, async (req, res) => {
-    const { venueId, lat, lng, verificationMethod } = req.body;
-    const userId = (req as any).user.uid;
-
-    if (!venueId || !userId || lat === undefined || lng === undefined) {
-        return res.status(400).json({ error: 'Missing required check-in data' });
+v1Router.post('/check-in', verifyAppCheck, verifyToken, async (req, res) => {
+    const validation = CheckInSchema.safeParse(req.body);
+    if (!validation.success) {
+        return res.status(400).json({ error: 'Invalid check-in data', details: validation.error.format() });
     }
+    const { venueId, lat, lng, verificationMethod } = validation.data;
+    const userId = (req as any).user.uid;
 
     try {
         const result = await checkIn(venueId, userId, lat, lng, verificationMethod);
@@ -195,17 +267,13 @@ app.post('/api/check-in', verifyToken, async (req, res) => {
     }
 });
 
-/**
- * @route POST /api/play/check-in
- * @desc Log an amenity-specific "Play" check-in
- */
-app.post('/api/play/check-in', verifyToken, async (req, res) => {
-    const { venueId, amenityId } = req.body;
-    const userId = (req as any).user.uid;
-
-    if (!venueId || !userId || !amenityId) {
-        return res.status(400).json({ error: 'Missing required play data' });
+v1Router.post('/play/check-in', verifyToken, async (req, res) => {
+    const validation = PlayCheckInSchema.safeParse(req.body);
+    if (!validation.success) {
+        return res.status(400).json({ error: 'Invalid play data', details: validation.error.format() });
     }
+    const { venueId, amenityId } = validation.data;
+    const userId = (req as any).user.uid;
 
     try {
         const { checkInAmenity } = await import('./venueService');
@@ -224,12 +292,12 @@ app.post('/api/play/check-in', verifyToken, async (req, res) => {
  * @desc Handle Admin Requests (Contact, League, Maker)
  * @params type, payload, contactEmail
  */
-app.post('/api/requests', verifyHoneypot, blockAggressiveBots, async (req: express.Request, res: express.Response) => {
-    const { type, payload, contactEmail } = req.body;
-
-    if (!type || !payload) {
-        return res.status(400).json({ error: 'Missing type or payload' });
+v1Router.post('/requests', verifyAppCheck, verifyHoneypot, blockAggressiveBots, async (req: express.Request, res: express.Response) => {
+    const validation = AdminRequestSchema.safeParse(req.body);
+    if (!validation.success) {
+        return res.status(400).json({ error: 'Invalid request data', details: validation.error.format() });
     }
+    const { type, payload, contactEmail } = validation.data;
 
     try {
         const requestData = {
@@ -261,7 +329,7 @@ app.post('/api/requests', verifyHoneypot, blockAggressiveBots, async (req: expre
  * @route POST /api/activity
  * @desc Log user activity and award points
  */
-app.post('/api/activity', verifyToken, async (req, res) => {
+v1Router.post('/activity', verifyToken, async (req, res) => {
     const userId = (req as any).user.uid;
     const { type, venueId, points, hasConsent, metadata } = req.body;
 
@@ -283,7 +351,7 @@ app.post('/api/activity', verifyToken, async (req, res) => {
  * @route GET /api/activity
  * @desc Fetch aggregated activity stats for a venue
  */
-app.get('/api/activity', async (req, res) => {
+v1Router.get('/activity', async (req, res) => {
     const { venueId, period } = req.query;
 
     if (!venueId) {
@@ -304,7 +372,7 @@ app.get('/api/activity', async (req, res) => {
  * @route PATCH /api/venues/:id
  * @desc Update general venue information (Listing management)
  */
-app.patch('/api/venues/:id', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+v1Router.patch('/venues/:id', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
     const { id } = req.params;
     const { updates } = req.body;
     const requestingUserId = (req as any).user.uid;
@@ -323,7 +391,7 @@ app.patch('/api/venues/:id', verifyToken, requireRole(['admin', 'super-admin', '
  * @route POST /api/venues/:id/sync-google
  * @desc Sync venue details with Google Places API
  */
-app.post('/api/venues/:id/sync-google', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
+v1Router.post('/venues/:id/sync-google', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
     const { id } = req.params;
     const { googlePlaceId } = req.body;
     const requestingUserId = (req as any).user.uid;
@@ -342,7 +410,7 @@ app.post('/api/venues/:id/sync-google', verifyToken, requireRole(['admin', 'supe
  * @route GET /api/venues/:id/pulse
  * @desc Fetch real-time Pulse score for a venue
  */
-app.get('/api/venues/:id/pulse', async (req, res) => {
+v1Router.get('/venues/:id/pulse', async (req, res) => {
     const { id } = req.params;
     try {
         const { getVenuePulse } = await import('./venueService');
@@ -358,7 +426,7 @@ app.get('/api/venues/:id/pulse', async (req, res) => {
  * @route GET /api/venues/check-claim
  * @desc Check if a venue is already claimed by Google Place ID
  */
-app.get('/api/venues/check-claim', async (req, res) => {
+v1Router.get('/venues/check-claim', async (req, res) => {
     const { googlePlaceId } = req.query;
     if (!googlePlaceId) return res.status(400).json({ error: 'Missing googlePlaceId' });
 
@@ -376,7 +444,7 @@ app.get('/api/venues/check-claim', async (req, res) => {
  * @route POST /api/partners/onboard
  * @desc Claim a venue and sync with Google
  */
-app.post('/api/partners/onboard', verifyToken, async (req: any, res) => {
+v1Router.post('/partners/onboard', verifyToken, async (req: any, res) => {
     const { googlePlaceId } = req.body;
     if (!googlePlaceId) return res.status(400).json({ error: 'Missing googlePlaceId' });
 
@@ -394,7 +462,7 @@ app.post('/api/partners/onboard', verifyToken, async (req: any, res) => {
  * @route PATCH /api/venues/:id/photos/:photoId
  * @desc Update photo approval status
  */
-app.patch('/api/venues/:id/photos/:photoId', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
+v1Router.patch('/venues/:id/photos/:photoId', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
     const { id: venueId, photoId } = req.params;
     const { isApprovedForFeed, isApprovedForSocial } = req.body;
 
@@ -412,7 +480,7 @@ app.patch('/api/venues/:id/photos/:photoId', verifyToken, requireRole(['admin', 
  * @route GET /api/venues/:id/members
  * @desc Fetch all members of a venue
  */
-app.get('/api/venues/:id/members', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+v1Router.get('/venues/:id/members', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
     const { id } = req.params;
     try {
         const { getVenueMembers } = await import('./venueService');
@@ -428,7 +496,7 @@ app.get('/api/venues/:id/members', verifyToken, requireRole(['admin', 'super-adm
  * @route POST /api/venues/:id/members
  * @desc Add a new member to a venue
  */
-app.post('/api/venues/:id/members', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+v1Router.post('/venues/:id/members', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
     const { id } = req.params;
     const { email, role } = req.body;
     const requestingUserId = (req as any).user.uid;
@@ -451,7 +519,7 @@ app.post('/api/venues/:id/members', verifyToken, requireRole(['admin', 'super-ad
  * @route DELETE /api/venues/:id/members/:memberId
  * @desc Remove a member from a venue
  */
-app.delete('/api/venues/:id/members/:memberId', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+v1Router.delete('/venues/:id/members/:memberId', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
     const { id: venueId, memberId } = req.params;
     const requestingUserId = (req as any).user.uid;
 
@@ -469,7 +537,7 @@ app.delete('/api/venues/:id/members/:memberId', verifyToken, requireRole(['admin
  * @route POST /api/client-errors
  * @desc Receive and log client-side errors
  */
-app.post('/api/client-errors', (req, res) => {
+v1Router.post('/client-errors', (req, res) => {
     const payload = req.body;
     log('ERROR', `CLIENT ERROR: ${payload.message}`, {
         ...payload,
@@ -480,14 +548,12 @@ app.post('/api/client-errors', (req, res) => {
 
 /**
  * @route GET /api/config/maps-key
- * @desc Get the restricted Google Maps API key for the frontend
+ * @desc Get the restricted Google Maps BROWSER key for the frontend
  */
-app.get('/api/config/maps-key', (req, res) => {
-    let key = process.env.GOOGLE_BACKEND_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY;
-    if (!key) return res.status(500).json({ error: 'Maps API Key not configured on backend' });
-
-    // [FIX] Sanitize key: usage of .env sometimes injects subsequent VAR=VAL pairs if on same line
-    key = key.trim().split(' ')[0];
+v1Router.get('/config/maps-key', (req, res) => {
+    // Only return the browser key (public/restricted)
+    const key = config.VITE_GOOGLE_BROWSER_KEY;
+    if (!key) return res.status(500).json({ error: 'Maps Browser Key not configured' });
 
     res.json({ key });
 });
@@ -496,7 +562,7 @@ app.get('/api/config/maps-key', (req, res) => {
  * @route PATCH /api/users/:uid
  * @desc Update user profile data with business logic (e.g. handle cooldown)
  */
-app.patch('/api/users/:uid', verifyToken, async (req, res) => {
+v1Router.patch('/users/:uid', verifyToken, async (req, res) => {
     const { uid } = req.params;
     const requestingUser = (req as any).user;
 
@@ -505,7 +571,12 @@ app.patch('/api/users/:uid', verifyToken, async (req, res) => {
         return res.status(403).json({ error: 'Forbidden: You can only update your own profile.' });
     }
 
-    const { handle, email, phone, favoriteDrink, homeBase, leaguePreferences, hasCompletedMakerSurvey, role } = req.body;
+    const validation = UserUpdateSchema.safeParse(req.body);
+    if (!validation.success) {
+        return res.status(400).json({ error: 'Invalid update data', details: validation.error.format() });
+    }
+
+    const { handle, email, phone, favoriteDrink, homeBase, leaguePreferences, hasCompletedMakerSurvey, role } = validation.data;
 
     try {
         const { db } = await import('./firebaseAdmin');
@@ -527,7 +598,14 @@ app.patch('/api/users/:uid', verifyToken, async (req, res) => {
         if (leaguePreferences !== undefined) updates.leaguePreferences = leaguePreferences;
         if (email !== undefined) updates.email = email;
         if (hasCompletedMakerSurvey !== undefined) updates.hasCompletedMakerSurvey = hasCompletedMakerSurvey;
-        if (role !== undefined) updates.role = role; // [SECURITY REMEDIATION L-01]
+
+        // [SECURITY REMEDIATION L-01] Role change lockdown
+        if (role !== undefined) {
+            if (requestingUser.role !== 'super-admin' && requestingUser.role !== 'admin') {
+                return res.status(403).json({ error: 'Forbidden: You cannot change your own role.' });
+            }
+            updates.role = role;
+        }
 
         // Handle cooldown logic
         if (handle !== undefined && handle !== userData?.handle) {
@@ -565,11 +643,12 @@ app.patch('/api/users/:uid', verifyToken, async (req, res) => {
  * @route POST /api/admin/setup-super
  * @desc Promote a user to Super-Admin role (Secure established)
  */
-app.post('/api/admin/setup-super', async (req, res) => {
+v1Router.post('/admin/setup-super', async (req, res) => {
     const { email, secretKey, password } = req.body;
-    const MASTER_KEY = process.env.MASTER_SETUP_KEY || 'OLY_MASTER_2025';
+    const MASTER_KEY = process.env.MASTER_SETUP_KEY;
 
-    if (secretKey !== MASTER_KEY) {
+    if (!MASTER_KEY || secretKey !== MASTER_KEY) {
+        log('WARNING', '[SECURITY] Invalid master setup attempt', { email, ip: req.ip });
         return res.status(403).json({ error: 'Invalid master setup key' });
     }
 
@@ -606,7 +685,7 @@ app.post('/api/admin/setup-super', async (req, res) => {
     }
 });
 
-app.get('/api/activity/recent', async (req, res) => {
+v1Router.get('/activity/recent', async (req, res) => {
     try {
         const { db } = await import('./firebaseAdmin'); // Import db here
         const limit = parseInt(req.query.limit as string) || 20;
@@ -623,31 +702,18 @@ app.get('/api/activity/recent', async (req, res) => {
 });
 
 // --- ARTIE AI CHAT GATEWAY ---
-/**
- * Rate Limiter for Artie Chat
- * 10 messages per minute to prevent scrapers while allowing human speed.
- */
-const artieRateLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 10,             // Limit each IP to 10 requests per windowMs
-    message: {
-        error: "Slow down there, partner! Artie needs a minute to catch his breath. Try again in a bit."
-    },
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false,  // Disable the `X-RateLimit-*` headers
-});
 
 /**
- * @route POST /api/chat
+ * @route POST /v1/chat
  * @desc Artie AI Chat Relay (Direct Backend Path)
  */
-app.post('/api/chat', artieRateLimiter, verifyHoneypot, blockAggressiveBots, async (req, res) => {
+v1Router.post('/chat', identifyUser, artieRateLimiter, verifyHoneypot, blockAggressiveBots, async (req, res) => {
     try {
-        const { history, question, userId, userRole } = req.body;
-
-        if (!question) {
-            return res.status(400).json({ error: 'Question is required' });
+        const validation = ChatRequestSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: 'Invalid chat data', details: validation.error.format() });
         }
+        const { history, question, userId } = validation.data;
 
         // [SECURITY REMEDIATION A-02]
         // Fetch real role from DB instead of trusting request body
@@ -665,10 +731,39 @@ app.post('/api/chat', artieRateLimiter, verifyHoneypot, blockAggressiveBots, asy
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
             res.setHeader('Transfer-Encoding', 'chunked');
 
+            let fullResponse = '';
+            let rationaleFound = false;
+
             for await (const chunk of (result as any).stream) {
                 const text = chunk.text();
                 if (text) {
-                    res.write(text);
+                    fullResponse += text;
+
+                    // [RATIONALE LOGGING]
+                    // If we haven't found the rationale yet, and we see the [RATIONALE] tag, 
+                    // we log it but don't write it to the response yet if we want to hide it.
+                    // However, to keep streaming fast, we'll just write everything but strip the tag in the frontend
+                    // OR we buffer only the rationale part.
+
+                    // Cleaner approach: If text starts with [RATIONALE]:, buffer until first newline, then log, then continue streaming normally.
+                    if (!rationaleFound && fullResponse.includes('[RATIONALE]:')) {
+                        const parts = fullResponse.split('\n');
+                        for (const part of parts) {
+                            if (part.startsWith('[RATIONALE]:')) {
+                                log('INFO', '[ARTIE_RATIONALE]', { rationale: part.replace('[RATIONALE]:', '').trim(), question });
+                                rationaleFound = true;
+                                // We don't res.write the rationale line
+                            } else if (rationaleFound) {
+                                res.write(part + (parts.indexOf(part) < parts.length - 1 ? '\n' : ''));
+                            }
+                        }
+                    } else if (rationaleFound) {
+                        res.write(text);
+                    } else if (!fullResponse.includes('[RATIONALE]') && fullResponse.length > 50) {
+                        // Safety fallback: if no rationale found after 50 chars, just start streaming
+                        rationaleFound = true;
+                        res.write(fullResponse);
+                    }
                 }
             }
             res.end();
@@ -686,7 +781,7 @@ app.post('/api/chat', artieRateLimiter, verifyHoneypot, blockAggressiveBots, asy
  * @route GET /api/ai/access-logs
  * @desc Fetch recent AI bot activity
  */
-app.get('/api/ai/access-logs', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
+v1Router.get('/ai/access-logs', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
     try {
         const { db } = await import('./firebaseAdmin');
         const snapshot = await db.collection('ai_access_logs')
@@ -706,7 +801,7 @@ app.get('/api/ai/access-logs', verifyToken, requireRole(['admin', 'super-admin']
  * @route GET /api/venues/:id/semantic
  * @desc Get Gemini-enriched semantic metadata for a venue
  */
-app.get('/api/venues/:id/semantic', async (req, res) => {
+v1Router.get('/venues/:id/semantic', async (req, res) => {
     const { id } = req.params;
     try {
         const { db } = await import('./firebaseAdmin');
@@ -745,6 +840,11 @@ app.get('/api/venues/:id/semantic', async (req, res) => {
         res.status(500).json({ error: 'Failed to enrich venue context.' });
     }
 });
+
+// --- MOUNT ROUTERS ---
+app.use('/api/v1', v1Router);
+app.use('/api/v2', v2Router);
+app.use('/api', v1Router); // Fallback for legacy frontend
 
 app.listen(port, () => {
     log('INFO', `OlyBars Backend running on http://localhost:${port}`);

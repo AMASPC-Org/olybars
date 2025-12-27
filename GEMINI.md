@@ -20,6 +20,7 @@ Governance and operational rules are strictly defined in the `.agent/rules/` dir
 - See [.agent/rules/full-stack-integrity.md](.agent/rules/full-stack-integrity.md) for systemic autonomy guardrails.
 - See [.agent/rules/state-aware-discovery.md](.agent/rules/state-aware-discovery.md) for feature cataloging and dependency auditing.
 - See [.agent/rules/contextual-ux-logic.md](.agent/rules/contextual-ux-logic.md) for state-aware UI variation logic.
+- See [.agent/rules/tech-stack-grounding.md](.agent/rules/tech-stack-grounding.md) for verified baseline and hallucination prevention.
 
 ## Admin Hierarchy
 - **Super-Admin**: `ryan@amaspc.com` has global access to system health, user management, and secret management.
@@ -28,6 +29,7 @@ Governance and operational rules are strictly defined in the `.agent/rules/` dir
 
 ## Mandatory Pre-Commit Procedures
 To maintain legal compliance and project stability, the following checks must be performed by the agent before proposing any code changes:
+- **Change with Proof**: Execute [.agent/workflows/change-with-proof.md](file:///.agent/workflows/change-with-proof.md) for all changes affecting `src/features/` or `server/`.
 - **Guardian Check**: Execute [.agent/workflows/guardian-check.md](file:///.agent/workflows/guardian-check.md) for all changes affecting `src/features/` or `server/`.
 - **Compliance Audit**: Execute [.agent/workflows/verify-lcb-compliance.md](file:///.agent/workflows/verify-lcb-compliance.md) for all changes affecting `src/features/venues/` or `server/`.
 - **Release Guardrails**: Execute [.agent/workflows/olybars-release-guardrails.md](file:///.agent/workflows/olybars-release-guardrails.md) for all changes affecting `src/features/` or `server/`.
@@ -35,3 +37,4 @@ To maintain legal compliance and project stability, the following checks must be
 - **Performance Audit**: Execute [.agent/workflows/olybars-performance-audit.md](file:///.agent/workflows/olybars-performance-audit.md) for all changes affecting `src/features/` or `server/`.
 - **Accessibility Audit**: Execute [.agent/workflows/olybars-accessibility-audit.md](file:///.agent/workflows/olybars-accessibility-audit.md) for all changes affecting `src/features/` or `server/`.
 - **Usability Audit**: Execute [.agent/workflows/olybars-usability-audit.md](file:///.agent/workflows/olybars-usability-audit.md) for all changes affecting `src/features/` or `server/`.
+- **Tech Audit**: Execute [.agent/workflows/tech-audit.md](file:///.agent/workflows/tech-audit.md) for all changes to verify implementation remains grounded in the verified tech stack.

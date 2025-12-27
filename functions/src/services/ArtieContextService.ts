@@ -13,14 +13,16 @@ export class ArtieContextService {
      */
     static async getPulse() {
         try {
-            // 1. Get Top 3 Buzzing Venues
+            // 1. Get Top 3 Buzzing Venues (In-memory filter to avoid composite index)
             const venuesSnapshot = await db.collection('venues')
                 .where('isActive', '==', true)
-                .where('status', '==', 'lively')
-                .limit(3)
                 .get();
 
-            const buzzing = venuesSnapshot.docs.map(doc => doc.data().name);
+            const buzzing = venuesSnapshot.docs
+                .map(doc => doc.data())
+                .filter(v => v.status === 'lively' || v.status === 'buzzing')
+                .slice(0, 3)
+                .map(v => v.name);
 
             // 2. Get Global Platform Settings/Messages
             const settingsDoc = await db.collection('settings').doc('platform').get();
@@ -29,21 +31,18 @@ export class ArtieContextService {
             // 3. Get Active Flash Deals (Details)
             const dealsSnapshot = await db.collection('flashDeals')
                 .where('active', '==', true)
-                .where('endTime', '>', Date.now())
                 .get();
 
-            const deals = dealsSnapshot.docs.map(doc => {
-                const data = doc.data();
-                return `${data.title} at ${data.venueId}`; // In a real app, join with venue name
-            });
+            const deals = dealsSnapshot.docs
+                .map(doc => doc.data())
+                .filter(d => d.endTime > Date.now())
+                .map(data => {
+                    return `${data.title} at ${data.venueId}`; // In a real app, join with venue name
+                });
 
             // 4. Get Upcoming Events (Next 24h)
-            // Note: Since we store events on the venue, we fetch venues with leagueEvent
-            const eventsSnapshot = await db.collection('venues')
-                .where('isActive', '==', true)
-                .get();
-
-            const events = eventsSnapshot.docs
+            // Note: Since we store events on the venue, we reuse venuesSnapshot
+            const events = venuesSnapshot.docs
                 .map(doc => doc.data())
                 .filter(v => v.leagueEvent && v.leagueEvent !== 'none')
                 .map(v => `${v.leagueEvent.toUpperCase()} at ${v.name} (${v.triviaTime || 'See wire'})`);
