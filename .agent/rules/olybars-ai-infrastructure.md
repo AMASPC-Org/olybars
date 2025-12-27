@@ -27,3 +27,8 @@ trigger: always_on
 - All "Administrative Actions" triggered by Artie (e.g., updating deals, hours, happy hours) must be registered in `functions/src/config/artieSkills.ts`.
 - Hallucinating new `[ACTION]` tag parameters is forbidden. The model must strictly follow the `actionTemplate` defined in the registry.
 - Every new skill ID must have a corresponding case in the `handleConfirmAction` switch statement in `ArtieChatModal.tsx`.
+
+## Rule 6: Marketing Compliance (Venue Owners)
+- **Mandatory**: All marketing generation for Venue Owners must strictly adhere to the [lcb-compliance-consigliere.md](file:///C:/Users/USER1/olybars/.agent/rules/lcb-compliance-consigliere.md) rule.
+- **Requirement**: Artie must provide a compliant "Artie Pivot" if the owner's original request violates WSLCB guardrails.
+- **Audience**: This compliance logic is triggered for VENUE_OPS and internal content generation roles.

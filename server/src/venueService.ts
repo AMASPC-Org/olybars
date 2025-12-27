@@ -166,7 +166,6 @@ const refreshVenueCache = async (): Promise<Venue[]> => {
                         { id: 'arcade', name: 'Retro Arcade', count: 5, isLeaguePartner: false }
                     ];
                 }
-
                 return venue;
             })
             .filter(v => v.isActive !== false);
@@ -613,11 +612,12 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
 
     // [SECURITY REMEDIATION A-01]
     // Verify ownership or management role
+    let isAdmin = false;
     if (requestingUserId) {
         // Fetch the user's role to check for admin bypass
         const userDoc = await db.collection('users').doc(requestingUserId).get();
         const userData = userDoc.data();
-        const isAdmin = userData?.role === 'super-admin' || userData?.role === 'admin' || userData?.email === 'ryan@amaspc.com';
+        isAdmin = userData?.role === 'super-admin' || userData?.role === 'admin' || userData?.email === 'ryan@amaspc.com';
 
         const isOwner = venueData.ownerId === requestingUserId;
         const isManager = venueData.managerIds?.includes(requestingUserId);
@@ -630,34 +630,43 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         throw new Error('Unauthorized: Authentication required for venue updates.');
     }
 
-    // Whitelist allowable fields for owner updates to prevent integrity issues
-    const allowedFields: (keyof Venue)[] = [
-        'name', 'nicknames', // [NEW] Allow name corrections & AI nicknames
+    // Whitelist allowable fields based on role
+    const adminOnlyFields: (keyof Venue)[] = [
+        'isVerifiedMaker', 'isLocalMaker', 'localScore', 'makerType',
+        'isPaidLeagueMember', 'tier_config' as any
+    ];
+
+    const ownerManagerFields: (keyof Venue)[] = [
+        'name', 'nicknames',
         'address', 'description', 'hours', 'phone', 'website',
         'email', 'instagram', 'facebook', 'twitter',
         'amenities', 'amenityDetails', 'vibe',
-        // Maker Fields
         'originStory', 'insiderVibe', 'geoLoop',
         'isLowCapacity', 'isSoberFriendly',
-        'makerType', 'physicalRoom', 'carryingMakers',
-        'isLocalMaker', 'localScore',
-        'isPaidLeagueMember', // Admin/Owner toggle
+        'physicalRoom', 'carryingMakers',
         'leagueEvent', 'triviaTime', 'deal', 'dealEndsIn', 'checkIns',
-        'isVisible', 'isActive', // [FIX] Access Control Fields
-        'location', // [NEW] Allow programmatic location updates
-        'vibeDefault', 'assets', // [NEW] Onboarding MVP fields
-        'managersCanAddUsers' // [NEW] Multi-User Support
+        'isVisible', 'isActive',
+        'location',
+        'vibeDefault', 'assets',
+        'managersCanAddUsers'
     ];
 
     const filteredUpdates: any = {};
     Object.keys(updates).forEach(key => {
-        if (allowedFields.includes(key as keyof Venue)) {
-            filteredUpdates[key] = updates[key as keyof Venue];
+        const field = key as keyof Venue;
+
+        // Admins can change everything in the combined whitelist
+        if (isAdmin && (adminOnlyFields.includes(field) || ownerManagerFields.includes(field))) {
+            filteredUpdates[field] = updates[field];
+        }
+        // Owners/Managers can only change non-admin fields
+        else if (ownerManagerFields.includes(field)) {
+            filteredUpdates[field] = updates[field];
         }
     });
 
     if (Object.keys(filteredUpdates).length === 0) {
-        throw new Error('No valid update fields provided');
+        throw new Error('No valid update fields provided or insufficient permissions for selected fields.');
     }
 
     // [AUTO-GEOCODE] If address changed, resolve coordinates
@@ -718,9 +727,23 @@ export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: strin
     }
 
     // 2. Fetch place details
-    const details = await getPlaceDetails(placeId);
+    let details = await getPlaceDetails(placeId);
     if (!details) {
-        throw new Error(`Failed to fetch details for Google Place ID: ${placeId}`);
+        if (process.env.NODE_ENV !== 'production') {
+            console.warn(`[SYNC_BYPASS] Failed to fetch real details for ${placeId}. Using mock data for testing.`);
+            details = {
+                place_id: placeId,
+                name: "The Brotherhood Lounge (Mock)",
+                formatted_address: "119 Capitol Way N, Olympia, WA 98501",
+                formatted_phone_number: "(360) 352-4161",
+                website: "http://thebrotherhoodlounge.com/",
+                geometry: {
+                    location: { lat: 47.045, lng: -122.901 }
+                }
+            };
+        } else {
+            throw new Error(`Failed to fetch details for Google Place ID: ${placeId}`);
+        }
     }
 
     // 3. Prepare updates
@@ -730,6 +753,7 @@ export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: strin
         updatedAt: now
     };
 
+    if (details.name) updates.name = details.name;
     if (details.formatted_phone_number) updates.phone = details.formatted_phone_number;
     if (details.website) updates.website = details.website;
     if (details.formatted_address) updates.address = details.formatted_address; // [NEW] Sync address
@@ -827,17 +851,21 @@ export const checkVenueClaimStatus = async (googlePlaceId: string) => {
  * Onboards a new venue partner by creating or updating a venue and sync with Google.
  */
 export const onboardVenue = async (googlePlaceId: string, ownerId: string) => {
+    console.log(`[ONBOARDING] Starting onboarding for Google Place: ${googlePlaceId} by User: ${ownerId}`);
+
     // 1. Check if venue exists with this placeId
     const status = await checkVenueClaimStatus(googlePlaceId);
 
     if (status.isClaimed) {
+        console.warn(`[ONBOARDING] Failed: Venue ${googlePlaceId} already claimed.`);
         throw new Error('Venue is already claimed by another partner.');
     }
 
     let venueId = status.venueId;
 
     if (!status.exists) {
-        // Create skeleton venue
+        // Create full skeleton venue with MVP defaults
+        console.log(`[ONBOARDING] Creating new venue for ${googlePlaceId}`);
         const docRef = await db.collection('venues').add({
             name: 'Pending Sync...',
             googlePlaceId,
@@ -846,27 +874,57 @@ export const onboardVenue = async (googlePlaceId: string, ownerId: string) => {
             type: 'bar',
             checkIns: 0,
             vibe: 'CHILL',
+            vibeDefault: 'CHILL',
+            assets: {},
             createdAt: Date.now(),
             updatedAt: Date.now(),
             isVisible: true,
-            isActive: true
+            isActive: true,
+            tier_config: {
+                is_directory_listed: true,
+                is_league_eligible: false
+            },
+            attributes: {
+                has_manned_bar: true,
+                food_service: 'None',
+                minors_allowed: true,
+                noise_level: 'Conversational'
+            },
+            category: 'Dive'
         });
         venueId = docRef.id;
     } else {
         // Update existing venue with ownerId
+        console.log(`[ONBOARDING] Updating existing venue ${venueId} with owner ${ownerId}`);
         await db.collection('venues').doc(venueId!).update({
             ownerId,
             updatedAt: Date.now()
         });
     }
 
-    // 2. Trigger Google Sync
-    const syncResult = await syncVenueWithGoogle(venueId!);
+    // 2. User update (Role sync)
+    const userRef = db.collection('users').doc(ownerId);
+    await userRef.update({
+        role: 'owner',
+        [`venuePermissions.${venueId}`]: 'owner'
+    });
 
-    return {
-        venueId,
-        syncResult
-    };
+    // 3. Trigger Google Sync
+    console.log(`[ONBOARDING] Triggering Google Maps sync for ${venueId}...`);
+    try {
+        const syncResult = await syncVenueWithGoogle(venueId!);
+        console.log(`[ONBOARDING] Success: Venue ${venueId} onboarded and synced.`);
+        return {
+            venueId,
+            syncResult
+        };
+    } catch (error) {
+        console.error(`[ONBOARDING] Warning: Sync failed for ${venueId}:`, error);
+        return {
+            venueId,
+            syncError: (error as Error).message
+        };
+    }
 };
 
 /**

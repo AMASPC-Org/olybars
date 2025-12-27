@@ -95,6 +95,13 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
     useEffect(() => {
         if (isOpen && !greeting) {
             setGreeting(getArtieGreeting(userProfile));
+            // Default suggestions for new users
+            setSuggestions([
+                "Who's winning?",
+                "Happy Hour now?",
+                "Trivia tonight?",
+                "Local Makers"
+            ]);
         }
     }, [isOpen, userProfile]);
 
@@ -173,6 +180,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                         title: pendingAction.params.summary,
                         description: pendingAction.params.details,
                         price: pendingAction.params.price,
+                        duration: pendingAction.params.duration,
                         isActive: true
                     });
                     successMessage = `FLASH DEAL: ${pendingAction.params.summary} is now LIVE!`;
@@ -195,6 +203,31 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                         description: pendingAction.params.description
                     });
                     successMessage = `NEW EVENT: ${pendingAction.params.type} added for ${pendingAction.params.time}!`;
+                    break;
+                case 'update_profile':
+                    await VenueOpsService.updateProfile(venueId, {
+                        website: pendingAction.params.website,
+                        instagram: pendingAction.params.instagram,
+                        facebook: pendingAction.params.facebook,
+                        description: pendingAction.params.description
+                    });
+                    successMessage = "VENUE PROFILE: Successfully matched and updated.";
+                    break;
+                case 'draft_social_post':
+                    await VenueOpsService.saveDraft(venueId, {
+                        topic: pendingAction.params.topic,
+                        copy: pendingAction.params.copy,
+                        type: 'social'
+                    });
+                    successMessage = "DRAFT SAVED: Your social post is ready for the specialty agent.";
+                    break;
+                case 'ideate_event':
+                    await VenueOpsService.saveDraft(venueId, {
+                        topic: 'Event Ideation',
+                        copy: pendingAction.params.concepts,
+                        type: 'ideation'
+                    });
+                    successMessage = "CONCEPTS SAVED: Review these ideas in your Owner Dashboard.";
                     break;
                 default:
                     throw new Error(`Unknown skill: ${pendingAction.skill}`);
@@ -265,9 +298,21 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/50">
                     {/* Dynamic Greeting */}
                     {messages.length === 0 && greeting && (
-                        <div className="flex justify-start">
-                            <div className="max-w-[85%] p-3 rounded-2xl text-sm font-medium leading-relaxed bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none">
-                                {greeting.message}
+                        <div className="space-y-4">
+                            <div className="flex justify-start animate-in fade-in slide-in-from-left-4 duration-500">
+                                <div className="max-w-[85%] p-3 rounded-2xl text-sm font-medium leading-relaxed bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none">
+                                    {greeting.message}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Current Mode Badge */}
+                    {userProfile && (userProfile.role === 'owner' || userProfile.role === 'manager' || userProfile.role === 'admin' || userProfile.role === 'super-admin') && (
+                        <div className="flex justify-center -mt-2 mb-2">
+                            <div className="bg-primary/20 border border-primary/30 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse">
+                                <Bot className="w-3 h-3 text-primary" />
+                                <span className="text-[10px] font-black text-primary uppercase tracking-widest">Operator Mode Active</span>
                             </div>
                         </div>
                     )}
@@ -289,15 +334,23 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                             <div className="bg-gradient-to-br from-slate-800 to-black border-2 border-primary/50 p-4 rounded-2xl shadow-xl w-full max-w-[90%]">
                                 <div className="flex items-center gap-2 mb-3">
                                     <Sparkles className="w-4 h-4 text-primary" />
-                                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">Action Required</span>
+                                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                                        {pendingAction.skill.includes('draft') || pendingAction.skill.includes('ideate') ? 'Creative Draft' : 'Action Required'}
+                                    </span>
                                 </div>
-                                <h4 className="text-white font-bold text-sm mb-1">Update Flash Deal</h4>
-                                <p className="text-slate-400 text-xs mb-4 italic">&ldquo;{pendingAction.params.summary}&rdquo;</p>
+                                <h4 className="text-white font-bold text-sm mb-1 uppercase tracking-tight">
+                                    {pendingAction.skill.split('_').join(' ')}
+                                </h4>
+                                <div className="bg-black/30 p-2 rounded-lg border border-white/5 mb-4">
+                                    <p className="text-slate-300 text-[11px] font-medium leading-relaxed italic">
+                                        &ldquo;{pendingAction.params.summary || pendingAction.params.topic || pendingAction.params.hours || pendingAction.params.type || 'Updating details...'}&rdquo;
+                                    </p>
+                                </div>
 
                                 {actionStatus === 'success' ? (
                                     <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-xl flex items-center gap-2">
                                         <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                        <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Update Deployed!</span>
+                                        <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Success Deployed!</span>
                                     </div>
                                 ) : (
                                     <div className="flex gap-2">
@@ -306,7 +359,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                             disabled={actionStatus === 'loading'}
                                             className="flex-1 bg-primary hover:bg-yellow-400 text-black font-black text-[10px] py-2 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50"
                                         >
-                                            {actionStatus === 'loading' ? 'Deploying...' : 'Deploy Now'}
+                                            {actionStatus === 'loading' ? 'Processing...' : (pendingAction.skill.includes('draft') || pendingAction.skill.includes('ideate') ? 'Save Draft' : 'Deploy Now')}
                                         </button>
                                         <button
                                             onClick={handleEditAction}
@@ -314,13 +367,6 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                             className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-black text-[10px] py-2 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50"
                                         >
                                             Edit
-                                        </button>
-                                        <button
-                                            onClick={() => setPendingAction(null)}
-                                            disabled={actionStatus === 'loading'}
-                                            className="px-4 bg-slate-800 hover:bg-slate-700 text-slate-400 font-black text-[10px] py-2 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50"
-                                        >
-                                            Cancel
                                         </button>
                                     </div>
                                 )}

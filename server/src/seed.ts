@@ -41,6 +41,8 @@ const venues = [
         activeFlashDealId: 'fd-w80-01',
         deal: "$2 Pretzels & Cheese",
         dealEndsIn: 45, // Flash Deal (Minutes remaining)
+        vibeDefault: 'LIVELY', // [NEW] Onboarding MVP
+        assets: { "Full Kitchen": true, "TVs": true, "Artesian Well": true }, // [NEW] Onboarding MVP
         ownerId: "KU9KvRYzzrZfVU7BV4gaPYAFlKS2", // Ryan (Admin/Owner)
         managerIds: ["KU9KvRYzzrZfVU7BV4gaPYAFlKS2"]
     },
@@ -65,7 +67,9 @@ const venues = [
         location: { lat: 47.0435, lng: -122.9040 },
         address: '515 Jefferson St SE, Olympia, WA 98501',
         isActive: true,
-        isVisible: true
+        isVisible: true,
+        vibeDefault: 'CHILL',
+        assets: { "Full Kitchen": true, "Outdoor Seating": true }
     },
     {
         id: 'headless-mumby',
@@ -88,7 +92,9 @@ const venues = [
         location: { lat: 47.0480, lng: -122.9250 },
         address: '232 Division St NW, Olympia, WA 98502',
         isActive: true,
-        isVisible: true
+        isVisible: true,
+        vibeDefault: 'CHILL',
+        assets: { "Union Built": true, "Outdoor Seating": true }
     },
     {
         id: 'three-magnets',
@@ -112,7 +118,9 @@ const venues = [
         location: { lat: 47.0431, lng: -122.8983 },
         address: '600 Franklin St SE, Suite 105, Olympia, WA 98501',
         isActive: true,
-        isVisible: true
+        isVisible: true,
+        vibeDefault: 'LIVELY',
+        assets: { "Full Kitchen": true, "NA Options": true }
     },
     {
         id: 'whitewood-cider',

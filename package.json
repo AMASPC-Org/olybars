@@ -12,7 +12,7 @@
     "server": "nodemon --exec tsx server/src/index.ts",
     "build:dev": "vite build --mode development",
     "build:prod": "node scripts/clean-dist.js && vite build --mode production --emptyOutDir",
-    "smoke:dev": "curl.exe -fI https://olybars-dev.web.app/ && curl.exe -f https://olybars-backend-juthzlaerq-uw.a.run.app/health && curl.exe -f https://olybars-backend-juthzlaerq-uw.a.run.app/api/venues",
+    "smoke:dev": "curl.exe -fI https://olybars-dev.web.app/ && curl.exe -f https://olybars-backend-26629455103.us-west1.run.app/health && curl.exe -f https://olybars-backend-26629455103.us-west1.run.app/api/venues",
     "smoke:prod": "curl.exe -fI https://olybars.com/ && curl.exe -f https://olybars-backend-26629455103.us-west1.run.app/health && curl.exe -f https://olybars-backend-26629455103.us-west1.run.app/api/venues",
     "artie:sync": "node --import tsx functions/src/scripts/sync-artie-kb.ts",
     "artie:check": "node --import tsx scripts/verify-artie-health.ts",

@@ -34,6 +34,34 @@ export const ARTIE_TOOLS = [
         }
     },
     {
+        name: 'leagueLeaderboard',
+        description: 'Get the current OlyBars League standings and leaderboards.',
+        parameters: {
+            type: 'object',
+            properties: {}
+        }
+    },
+    {
+        name: 'eventDiscovery',
+        description: 'Find sanctioned OlyBars League events like Trivia, Karaoke, and Pool.',
+        parameters: {
+            type: 'object',
+            properties: {
+                type: { type: 'string', description: 'Type of event to find.' }
+            }
+        }
+    },
+    {
+        name: 'makerSpotlight',
+        description: 'Spotlight OlyBars Local Makers - the breweries, wineries, and distilleries.',
+        parameters: {
+            type: 'object',
+            properties: {
+                type: { type: 'string', description: 'Type of maker to spotlight.' }
+            }
+        }
+    },
+    {
         name: 'operatorAction',
         description: 'Trigger a venue operator action or skill (owner/manager only). Use this for updating deals, hours, or venue info.',
         parameters: {

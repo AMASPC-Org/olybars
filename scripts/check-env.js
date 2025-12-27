@@ -16,12 +16,12 @@ const DIST_DIR = path.join(__dirname, '..', 'dist');
 // Define backend URLs as strings to search for
 const ENV_CONFIGS = {
     production: {
-        expected: 'olybars-backend-juthzlaerq-uw.a.run.app', // Update to current valid backend
-        forbidden: 'olybars-backend-26629455103.us-west1.run.app'
+        expected: 'olybars-backend-26629455103.us-west1.run.app',
+        forbidden: 'localhost:3001' // Ensure we don't leak local config in prod
     },
     development: {
-        expected: 'olybars-backend-juthzlaerq-uw.a.run.app',
-        forbidden: 'olybars-backend-26629455103.us-west1.run.app'
+        expected: 'olybars-backend-26629455103.us-west1.run.app',
+        forbidden: 'localhost:3001'
     }
 };
 

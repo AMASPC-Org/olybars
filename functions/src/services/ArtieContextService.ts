@@ -28,24 +28,40 @@ export class ArtieContextService {
             const settingsDoc = await db.collection('settings').doc('platform').get();
             const settings = settingsDoc.exists ? settingsDoc.data() : {};
 
-            // 3. Get Active Flash Deals (Details)
-            const dealsSnapshot = await db.collection('flashDeals')
-                .where('active', '==', true)
+            // 3. FLASH DEALS: Fetch active deals directly from venues
+            const now = Date.now();
+            const dealsSnapshot = await db.collection('venues')
+                .where('activeFlashDeal.isActive', '==', true)
+                .where('activeFlashDeal.endTime', '>', now)
                 .get();
 
-            const deals = dealsSnapshot.docs
-                .map(doc => doc.data())
-                .filter(d => d.endTime > Date.now())
-                .map(data => {
-                    return `${data.title} at ${data.venueId}`; // In a real app, join with venue name
-                });
+            const activeDeals = dealsSnapshot.docs.map(doc => ({
+                venueId: doc.id,
+                venueName: doc.data().name,
+                ...doc.data().activeFlashDeal
+            }));
+
+            const deals = activeDeals.map(data => {
+                return `${data.title} at ${data.venueName}`;
+            });
 
             // 4. Get Upcoming Events (Next 24h)
-            // Note: Since we store events on the venue, we reuse venuesSnapshot
             const events = venuesSnapshot.docs
                 .map(doc => doc.data())
                 .filter(v => v.leagueEvent && v.leagueEvent !== 'none')
-                .map(v => `${v.leagueEvent.toUpperCase()} at ${v.name} (${v.triviaTime || 'See wire'})`);
+                .map(v => {
+                    const eventType = v.leagueEvent.toUpperCase();
+                    const time = v.triviaTime || 'See App';
+                    const desc = v.eventDescription ? ` - ${v.eventDescription}` : '';
+                    return `${eventType} at ${v.name} (${time})${desc}`;
+                });
+
+            // 5. Get Happy Hour Context (New)
+            const happyHourSpots = venuesSnapshot.docs
+                .map(doc => doc.data())
+                .filter(v => v.happyHourSimple)
+                .slice(0, 5)
+                .map(v => `${v.name}: ${v.happyHourSimple}${v.happyHourSpecials ? ` (${v.happyHourSpecials})` : ''}`);
 
             return {
                 timestamp: new Date().toISOString(),
@@ -54,6 +70,7 @@ export class ArtieContextService {
                 activeDealsCount: dealsSnapshot.size,
                 activeDeals: deals,
                 upcomingEvents: events,
+                happyHours: happyHourSpots,
                 leagueStatus: settings?.leagueStatus || "Open"
             };
         } catch (error) {
@@ -74,6 +91,7 @@ export class ArtieContextService {
 Timestamp: ${pulse.timestamp}
 Buzzing Venues: ${pulse.buzzingVenues.length > 0 ? pulse.buzzingVenues.join(', ') : 'All quiet on the waterfront.'}
 Flash Deals Active: ${pulse.activeDealsCount} ${pulse.activeDeals.length > 0 ? `(${pulse.activeDeals.join('; ')})` : ''}
+Happy Hour Specials: ${pulse.happyHours.length > 0 ? pulse.happyHours.join(' | ') : 'No specific HH intel right now.'}
 Upcoming Events: ${pulse.upcomingEvents.length > 0 ? pulse.upcomingEvents.join(', ') : 'No sanctioned events on the wire.'}
 Status: ${pulse.platformMessage}
 League Standing: ${pulse.leagueStatus}

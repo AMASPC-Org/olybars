@@ -11,7 +11,9 @@ import {
     PlayCheckInSchema,
     AdminRequestSchema,
     UserUpdateSchema,
-    ChatRequestSchema
+    ChatRequestSchema,
+    VenueUpdateSchema,
+    VenueOnboardSchema
 } from './utils/validation';
 
 const app = express();
@@ -374,7 +376,11 @@ v1Router.get('/activity', async (req, res) => {
  */
 v1Router.patch('/venues/:id', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
     const { id } = req.params;
-    const { updates } = req.body;
+    const validation = VenueUpdateSchema.safeParse(req.body.updates);
+    if (!validation.success) {
+        return res.status(400).json({ error: 'Invalid updates data', details: validation.error.format() });
+    }
+    const updates = validation.data;
     const requestingUserId = (req as any).user.uid;
 
     try {
@@ -445,8 +451,11 @@ v1Router.get('/venues/check-claim', async (req, res) => {
  * @desc Claim a venue and sync with Google
  */
 v1Router.post('/partners/onboard', verifyToken, async (req: any, res) => {
-    const { googlePlaceId } = req.body;
-    if (!googlePlaceId) return res.status(400).json({ error: 'Missing googlePlaceId' });
+    const validation = VenueOnboardSchema.safeParse(req.body);
+    if (!validation.success) {
+        return res.status(400).json({ error: 'Invalid onboarding data', details: validation.error.format() });
+    }
+    const { googlePlaceId } = validation.data;
 
     try {
         const { onboardVenue } = await import('./venueService');
@@ -717,10 +726,13 @@ v1Router.post('/chat', identifyUser, artieRateLimiter, verifyHoneypot, blockAggr
 
         // [SECURITY REMEDIATION A-02]
         // Fetch real role from DB instead of trusting request body
-        const { db } = await import('./firebaseAdmin');
-        const userDoc = await db.collection('users').doc(userId).get();
-        const userData = userDoc.data();
-        const realRole = userData?.role || 'user';
+        let realRole = 'user';
+        if (userId) {
+            const { db } = await import('./firebaseAdmin');
+            const userDoc = await db.collection('users').doc(userId).get();
+            const userData = userDoc.data();
+            realRole = userData?.role || 'user';
+        }
 
         // Import the logic dynamically to keep dependencies clean
         const { artieChatLogic } = await import('../../functions/src/flows/artieChat');

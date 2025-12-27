@@ -73,8 +73,9 @@ export const BuzzScreen: React.FC<{
       if (statusFilter === 'all') return true;
       return v.status === statusFilter;
     }
+    const hasDeal = !!v.deal || !!(v.activeFlashDeal?.isActive && (v.activeFlashDeal.endTime || 0) > Date.now());
     if (filterKind === 'deals') {
-      return !!v.deal;
+      return hasDeal;
     }
     if (filterKind === 'league') {
       return !!v.leagueEvent || !!v.isHQ;
@@ -82,6 +83,8 @@ export const BuzzScreen: React.FC<{
     if (filterKind === 'tonight') {
       return !!v.leagueEvent;
     }
+
+    // ... rest same
 
     // Global Visibility Check
     if (v.isVisible === false || v.isActive === false) return false;
@@ -146,7 +149,13 @@ export const BuzzScreen: React.FC<{
 
   // 1. Check Active Happy Hours
   let buzzClockVenues = venues.filter(v => {
-    if (!v.happyHour) return false;
+    // Check new unified field first
+    if (v.happyHourSimple) {
+      // For simple field, we don't have start/end times in a standard format easily parsable for "currently active"
+      // unless we assume it's "all day" or "currently valid if present". 
+      // But let's stick to the structured happyHour if it exists, otherwise use happyHourSimple as a fallback display.
+    }
+    if (!v.happyHour) return v.happyHourSimple ? true : false;
     if (v.happyHour.days && !v.happyHour.days.includes(currentDay)) return false;
     const startVal = getHHTime(v.happyHour.startTime);
     const endVal = getHHTime(v.happyHour.endTime);
@@ -158,6 +167,7 @@ export const BuzzScreen: React.FC<{
   // 2. Fallback to Upcoming Happy Hours (Today)
   if (buzzClockVenues.length === 0) {
     buzzClockVenues = venues.filter(v => {
+      if (v.happyHourSimple) return false; // Simple ones show as "Live"
       if (!v.happyHour) return false;
       if (v.happyHour.days && !v.happyHour.days.includes(currentDay)) return false;
       const startVal = getHHTime(v.happyHour.startTime);
@@ -168,11 +178,11 @@ export const BuzzScreen: React.FC<{
     if (buzzClockVenues.length > 0) isUpcomingBuzz = true;
   }
 
-  const flashDealVenues = venues.filter(v =>
-    !!v.deal && // Has a deal text
-    (v.dealEndsIn || 0) > 0 && // Has time remaining
-    (v.dealEndsIn || 999) < PULSE_CONFIG.THRESHOLDS.FLASH_DEAL // Less than 3 hours (Flash!)
-  );
+  const flashDealVenues = venues.filter(v => {
+    const hasFlatDeal = !!v.deal && (v.dealEndsIn || 0) > 0;
+    const hasStructuredDeal = v.activeFlashDeal?.isActive && (v.activeFlashDeal.endTime || 0) > Date.now();
+    return hasFlatDeal || hasStructuredDeal;
+  });
 
   const isFallbackActive = filteredVenues.length === 0 && venuesWithDistance.length > 0;
 
@@ -340,12 +350,14 @@ export const BuzzScreen: React.FC<{
               {buzzClockVenues.map(hh => (
                 <div key={hh.id} className="min-w-[200px] shrink-0">
                   <span className="text-white font-bold text-xs">{hh.name}</span>
-                  <p className="text-slate-400 text-[10px] uppercase truncate">{hh.happyHour?.description}</p>
+                  <p className="text-slate-400 text-[10px] uppercase truncate">
+                    {hh.happyHourSimple || hh.happyHour?.description}
+                  </p>
                   <p className={`${isUpcomingBuzz ? 'text-blue-400' : 'text-amber-500'} text-[9px] font-bold`}>
-                    {isUpcomingBuzz
+                    {hh.happyHourSpecials ? hh.happyHourSpecials : (isUpcomingBuzz
                       ? `Starts ${parseInt(hh.happyHour?.startTime.split(':')[0] || '0') > 12 ? parseInt(hh.happyHour?.startTime.split(':')[0] || '0') - 12 : hh.happyHour?.startTime.split(':')[0]}:${hh.happyHour?.startTime.split(':')[1]} ${parseInt(hh.happyHour?.startTime.split(':')[0] || '0') >= 12 ? 'PM' : 'AM'}`
                       : `Ends ${parseInt(hh.happyHour?.endTime.split(':')[0] || '0') > 12 ? parseInt(hh.happyHour?.endTime.split(':')[0] || '0') - 12 : hh.happyHour?.endTime.split(':')[0]}:${hh.happyHour?.endTime.split(':')[1]} PM`
-                    }
+                    )}
                   </p>
                 </div>
               ))}
@@ -367,10 +379,12 @@ export const BuzzScreen: React.FC<{
                 <div key={fd.id} onClick={() => navigate(`/venues/${fd.id}`)} className="min-w-[220px] bg-gradient-to-br from-red-900/40 to-black border border-red-500/30 rounded-xl p-3 relative overflow-hidden group">
                   {/* Timer Badge */}
                   <div className="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-bl-lg z-10">
-                    {fd.dealEndsIn}m LEFT
+                    {fd.activeFlashDeal ? Math.ceil(((fd.activeFlashDeal.endTime || 0) - Date.now()) / 60000) : fd.dealEndsIn}m LEFT
                   </div>
                   <h5 className="font-bold text-white text-sm truncate pr-16">{fd.name}</h5>
-                  <p className="text-red-400 font-black text-xs uppercase leading-tight mt-1 mb-2">{fd.deal}</p>
+                  <p className="text-red-400 font-black text-xs uppercase leading-tight mt-1 mb-2">
+                    {fd.activeFlashDeal?.title || fd.deal}
+                  </p>
                   <div className="flex items-center gap-1 text-[9px] text-slate-400 font-bold uppercase">
                     <Users className="w-3 h-3 text-slate-500" /> {fd.checkIns > 0 ? `${fd.checkIns} Checked In` : 'Just Started'}
                   </div>
@@ -422,7 +436,7 @@ export const BuzzScreen: React.FC<{
                     <PulseMeter status={spotlight.status} />
                   </div>
                   <p className="text-xs text-slate-300 font-medium mb-4 line-clamp-1 italic">
-                    {spotlight.deal || spotlight.description || "The heart of Oly's bar scene."}
+                    {spotlight.activeFlashDeal?.title || spotlight.deal || spotlight.description || "The heart of Oly's bar scene."}
                   </p>
                   <div className="flex gap-2">
                     <button
@@ -506,7 +520,9 @@ export const BuzzScreen: React.FC<{
                         <div className="bg-primary/20 p-1.5 rounded-md text-primary"><Trophy className="w-4 h-4" /></div>
                         <div>
                           <p className="text-xs text-primary font-bold uppercase tracking-wide">League Night</p>
-                          <p className="text-sm font-bold text-white capitalize">{venue.leagueEvent}</p>
+                          <p className="text-sm font-bold text-white capitalize">
+                            {venue.leagueEvent} {venue.eventDescription ? `- ${venue.eventDescription}` : ''}
+                          </p>
                         </div>
                       </div>
                       <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />

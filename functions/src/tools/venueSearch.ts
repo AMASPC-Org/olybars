@@ -92,15 +92,20 @@ export const venueSearch = ai.defineTool(
             }
 
             const normalizedQuery = query.toLowerCase().replace(/[’‘]/g, "'");
-            const queryWords = normalizedQuery.split(/\s+/).filter(w => w.length > 2); // only significant words
+            const queryWords = normalizedQuery.split(/\s+/).filter(w => w.length > 2);
+
+            const hhKeywords = ['happy hour', 'hh', 'specials', 'cheap', 'drinks'];
+            const isHHSearch = hhKeywords.some(k => normalizedQuery.includes(k));
 
             return allVenues.filter(v => {
-                const venueText = `${v.name} ${(v as any).nicknames?.join(' ') || ''} ${v.description} ${v.vibe} ${v.leagueEvent || ''} ${v.deal || ''} ${v.triviaTime || ''}`.toLowerCase().replace(/[’‘]/g, "'");
-                // Match if the full normalized query is in the text
+                const venueText = `${v.name} ${(v as any).nicknames?.join(' ') || ''} ${v.description} ${v.vibe} ${v.leagueEvent || ''} ${v.deal || ''} ${v.triviaTime || ''} ${v.happyHour?.description || ''} ${v.happyHourSimple || ''}`.toLowerCase().replace(/[’‘]/g, "'");
+
+                // If it's a Happy Hour search, prioritize venues with HH data
+                if (isHHSearch && (v.happyHour || v.happyHourSimple)) return true;
+
                 if (venueText.includes(normalizedQuery)) return true;
-                // Or if any significant word matches
                 return queryWords.some(word => venueText.includes(word));
-            }).slice(0, 10); // Limit to top 10 matches for more event visibility
+            }).slice(0, 10);
         } catch (error) {
             console.error("Venue search failed:", error);
             return [];

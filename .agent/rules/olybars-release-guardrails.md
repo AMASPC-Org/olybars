@@ -1,4 +1,4 @@
-﻿---
+---
 trigger: always_on
 ---
 
@@ -26,7 +26,7 @@ Never change custom domain mappings (e.g., olybars.com) unless the user explicit
 
 PROD gating requirements (must be completed and reported before any prod deploy):
 
-curl https://olybars-backend-juthzlaerq-uw.a.run.app/api/venues returns HTTP 200
+curl https://olybars-backend-26629455103.us-west1.run.app/api/venues returns HTTP 200
 
 olybars-dev.web.app loads home screen without console errors
 

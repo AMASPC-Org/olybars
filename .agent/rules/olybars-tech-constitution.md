@@ -1,4 +1,4 @@
-﻿---
+---
 trigger: always_on
 ---
 
@@ -21,6 +21,8 @@ Forbidden: NEVER use @google/generative-ai.
 Rule 3: Compliance & Logic
 
 Check-in Limit: Strictly enforce a maximum of 2 check-ins per 12-hour window per user to maintain WA State LCB alignment. * Buzz Clock Priority: Sort Happy Hour deals by TimeRemaining, pushing deals lasting >4 hours to the bottom.
+
+Marketing & Ad Copy: All content generation for Venue Owners must strictly adhere to the [lcb-compliance-consigliere.md](file:///C:/Users/USER1/olybars/.agent/rules/lcb-compliance-consigliere.md) rule (Anti-Volume, Undue Influence, Safe Ride).
 
 Artie Persona: Artie is a warm, witty concierge "Powered by Well 80".
 

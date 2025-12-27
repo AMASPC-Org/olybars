@@ -12,6 +12,7 @@ import { LeagueHostManagementTab } from '../components/LeagueHostManagementTab';
 import { isVenueOwner, isVenueManager } from '../../../types/auth_schema';
 import { Layout } from 'lucide-react';
 import { UserManagementTab } from '../components/UserManagementTab';
+import { VenueOpsService } from '../../../services/VenueOpsService';
 
 interface OwnerDashboardProps {
     isOpen: boolean;
@@ -74,6 +75,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const [showWelcome, setShowWelcome] = useState(true);
 
     const [dealText, setDealText] = useState('');
+    const [dealDescription, setDealDescription] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
     const [showArtieCommands, setShowArtieCommands] = useState(false);
     const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'maker' | 'host' | 'qr' | 'people'>(initialView as any); // Added 'host', 'qr', 'people'
@@ -129,17 +131,32 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
         );
     }
 
-    const handlePublishDeal = () => {
+    const handlePublishDeal = async () => {
         if (!dealText || !myVenue) return;
-        updateVenue(myVenue.id, { deal: dealText, dealEndsIn: dealDuration });
-        setDealText('');
-        showToast('FLASH DEAL BROADCASTED TO NETWORK', 'success');
+        try {
+            await VenueOpsService.updateFlashDeal(myVenue.id, {
+                title: dealText,
+                description: dealDescription,
+                duration: dealDuration,
+                isActive: true
+            });
+            setDealText('');
+            setDealDescription('');
+            showToast('FLASH DEAL BROADCASTED TO NETWORK', 'success');
+        } catch (e) {
+            showToast('FAILED TO PUBLISH DEAL', 'error');
+        }
     };
 
-    const clearDeal = () => {
+    const clearDeal = async () => {
         if (!myVenue) return;
-        updateVenue(myVenue.id, { deal: undefined, dealEndsIn: 0 });
-    }
+        try {
+            await VenueOpsService.updateFlashDeal(myVenue.id, { isActive: false });
+            showToast('FLASH DEAL TERMINATED', 'success');
+        } catch (e) {
+            showToast('FAILED TO CLEAR DEAL', 'error');
+        }
+    };
 
     const adjustCheckIns = (delta: number) => {
         if (!myVenue) return;
@@ -307,24 +324,74 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             {myVenue.deal ? (
                                 <div className="text-center py-4">
                                     <h4 className="text-2xl font-black text-white mb-1 font-league uppercase">{myVenue.deal}</h4>
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase mb-4 italic">
+                                        {myVenue.activeFlashDeal?.description || 'No additional details.'}
+                                    </p>
                                     <p className="text-primary font-black mb-6 font-league">{myVenue.dealEndsIn}M REMAINING</p>
-                                    <button onClick={clearDeal} className="w-full bg-red-600 text-white py-3 rounded-lg font-black uppercase tracking-widest">Terminate</button>
+                                    <button onClick={clearDeal} className="w-full bg-red-600/20 hover:bg-red-600 border border-red-500/30 text-white py-3 rounded-lg font-black uppercase tracking-widest transition-all">Terminate Deal</button>
                                 </div>
                             ) : (
                                 <div className="space-y-4 pt-4">
-                                    <input
-                                        type="text"
-                                        value={dealText}
-                                        onChange={(e) => setDealText(e.target.value)}
-                                        placeholder="EX: $5 DRAFTS..."
-                                        className="w-full bg-black border border-white/10 rounded-lg p-4 text-primary font-black placeholder:text-slate-800 outline-none font-league"
-                                    />
-                                    <div className="flex gap-2 overflow-x-auto pb-2">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Deal Title</label>
+                                        <input
+                                            type="text"
+                                            value={dealText}
+                                            onChange={(e) => setDealText(e.target.value)}
+                                            placeholder="EX: $5 DRAFTS..."
+                                            className="w-full bg-black border border-white/10 rounded-lg p-4 text-primary font-black placeholder:text-slate-900 outline-none font-league"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Additional Details (Optional)</label>
+                                        <textarea
+                                            value={dealDescription}
+                                            onChange={(e) => setDealDescription(e.target.value)}
+                                            placeholder="Ex: Limit 2 per member..."
+                                            rows={2}
+                                            className="w-full bg-black border border-white/10 rounded-lg p-4 text-slate-200 text-xs placeholder:text-slate-900 outline-none resize-none"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Duration</label>
+                                            <span className="text-[10px] font-black text-primary uppercase tracking-widest font-league">{dealDuration} Minutes</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="15"
+                                            max="180"
+                                            step="15"
+                                            value={dealDuration}
+                                            onChange={(e) => setDealDuration(parseInt(e.target.value))}
+                                            className="w-full accent-primary h-1.5 bg-black rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <div className="flex justify-between px-1">
+                                            <span className="text-[8px] text-slate-700 font-bold">15M</span>
+                                            <span className="text-[8px] text-slate-700 font-bold">3H</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 no-scrollbar">
                                         {DEAL_PRESETS.map(preset => (
-                                            <button key={preset} onClick={() => setDealText(preset)} className="px-4 py-1.5 bg-black border border-white/10 rounded-full text-[10px] font-black text-slate-500 uppercase font-league whitespace-nowrap">{preset}</button>
+                                            <button
+                                                key={preset}
+                                                onClick={() => setDealText(preset)}
+                                                className={`px-4 py-1.5 border rounded-full text-[10px] font-black uppercase font-league whitespace-nowrap transition-all ${dealText === preset ? 'bg-primary border-primary text-black' : 'bg-black border-white/5 text-slate-600 hover:text-white'}`}
+                                            >
+                                                {preset}
+                                            </button>
                                         ))}
                                     </div>
-                                    <button onClick={handlePublishDeal} className="w-full bg-primary text-black font-black py-4 rounded-lg uppercase tracking-widest text-lg font-league">Publish Deal</button>
+                                    <button
+                                        onClick={handlePublishDeal}
+                                        disabled={!dealText}
+                                        className="w-full bg-primary text-black font-black py-4 rounded-lg uppercase tracking-widest text-lg font-league shadow-lg shadow-primary/10 disabled:opacity-30 active:scale-[0.98] transition-all"
+                                    >
+                                        Publish Deal
+                                    </button>
                                 </div>
                             )}
                         </div>

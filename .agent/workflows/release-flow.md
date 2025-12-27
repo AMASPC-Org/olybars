@@ -7,7 +7,7 @@ description: Mandatory steps for deploying changes to OlyBars environments.
 ## Target Map (source of truth = package.json)
 - DEV Hosting: target `dev` → site `olybars-dev` → https://olybars-dev.web.app
 - PROD Hosting: target `prod` → site `olybars` → https://olybars.com
-- DEV Backend: https://olybars-backend-juthzlaerq-uw.a.run.app
+- DEV Backend: https://olybars-backend-26629455103.us-west1.run.app
 - PROD Backend: https://olybars-backend-26629455103.us-west1.run.app
 
 ## 0) Pre-flight

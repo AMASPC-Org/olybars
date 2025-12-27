@@ -3,15 +3,16 @@ import { SystemRole, VenueRole } from './types/auth_schema';
 export type VenueStatus = 'chill' | 'lively' | 'buzzing';
 
 export interface FlashDeal {
-  id: string;
-  venueId: string;
+  id?: string;
+  venueId?: string;
   title: string;
-  description?: string;
+  description: string;
+  price?: string;
   startTime: number;
   endTime: number;
-  isApproved: boolean; // Admin approval required
-  termsAccepted: boolean;
-  active: boolean;
+  isActive: boolean;
+  isApproved?: boolean; // Admin approval required
+  termsAccepted?: boolean;
 }
 
 export interface Venue {
@@ -30,6 +31,7 @@ export interface Venue {
   // Robust Deal Data
   flashDeals?: FlashDeal[];
   activeFlashDealId?: string;
+  activeFlashDeal?: FlashDeal;
 
   // ... (rest) ...
   vibe: string;
@@ -41,6 +43,9 @@ export interface Venue {
   };
   leagueEvent?: 'karaoke' | 'trivia' | 'arcade' | 'events' | 'openmic' | 'bingo' | 'live_music' | 'pool' | 'darts' | null;
   triviaTime?: string;
+  eventDescription?: string; // [NEW] Unified for Artie
+  happyHourSimple?: string;  // [NEW] Unified for Artie
+  happyHourSpecials?: string; // [NEW] Unified for Artie
   isHQ?: boolean;
   happyHour?: {
     startTime: string;

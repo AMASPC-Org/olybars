@@ -34,8 +34,62 @@ export const ChatRequestSchema = z.object({
     question: z.string().min(1).max(1000),
     history: z.array(z.object({
         role: z.enum(['user', 'model']),
-        parts: z.array(z.object({ text: z.string() }))
+        content: z.string()
     })).optional(),
-    userId: z.string().min(1),
+    userId: z.string().optional(),
     _hp_id: z.string().optional(), // Honeypot
+});
+
+export const VenueUpdateSchema = z.object({
+    name: z.string().optional(),
+    nicknames: z.array(z.string()).optional(),
+    address: z.string().optional(),
+    description: z.string().optional(),
+    hours: z.string().optional(),
+    phone: z.string().optional(),
+    website: z.string().url().optional().or(z.literal('')),
+    email: z.string().email().optional().or(z.literal('')),
+    instagram: z.string().optional(),
+    facebook: z.string().optional(),
+    twitter: z.string().optional(),
+    amenities: z.array(z.string()).optional(),
+    amenityDetails: z.array(z.object({
+        id: z.string(),
+        name: z.string(),
+        count: z.number(),
+        available: z.number().optional(),
+        isLeaguePartner: z.boolean().optional(),
+        artieLore: z.string().optional(),
+    })).optional(),
+    vibe: z.string().optional(),
+    vibeDefault: z.enum(['CHILL', 'LIVELY', 'BUZZING']).optional(),
+    assets: z.record(z.string(), z.boolean()).optional(),
+    originStory: z.string().optional(),
+    insiderVibe: z.string().optional(),
+    geoLoop: z.enum(['Downtown_Walkable', 'Warehouse_Tumwater', 'Destination_Quest']).optional(),
+    isLowCapacity: z.boolean().optional(),
+    isSoberFriendly: z.boolean().optional(),
+    makerType: z.enum(['Brewery', 'Distillery', 'Cidery', 'Winery']).optional(),
+    physicalRoom: z.boolean().optional(),
+    carryingMakers: z.array(z.string()).optional(),
+    isLocalMaker: z.boolean().optional(),
+    isVerifiedMaker: z.boolean().optional(),
+    localScore: z.number().min(0).max(100).optional(),
+    isPaidLeagueMember: z.boolean().optional(),
+    leagueEvent: z.enum(['karaoke', 'trivia', 'arcade', 'events', 'openmic', 'bingo', 'live_music', 'pool', 'darts']).nullable().optional(),
+    triviaTime: z.string().optional(),
+    deal: z.string().optional(),
+    dealEndsIn: z.number().optional(),
+    checkIns: z.number().optional(),
+    isVisible: z.boolean().optional(),
+    isActive: z.boolean().optional(),
+    location: z.object({
+        lat: z.number(),
+        lng: z.number()
+    }).optional(),
+    managersCanAddUsers: z.boolean().optional(),
+});
+
+export const VenueOnboardSchema = z.object({
+    googlePlaceId: z.string().min(1),
 });

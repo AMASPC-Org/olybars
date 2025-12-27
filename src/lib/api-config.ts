@@ -22,8 +22,8 @@ const getApiBaseUrl = () => {
 
     // Fallback for DEV/PROD if env var is missing (legacy support)
     return hostname.includes('dev')
-        ? 'https://olybars-backend-juthzlaerq-uw.a.run.app/api'
-        : 'https://olybars-backend-juthzlaerq-uw.a.run.app/api'; // Unified to the valid backend
+        ? 'https://olybars-backend-26629455103.us-west1.run.app/api'
+        : 'https://olybars-backend-26629455103.us-west1.run.app/api';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

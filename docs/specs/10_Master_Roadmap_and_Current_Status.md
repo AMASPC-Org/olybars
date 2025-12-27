@@ -6,7 +6,7 @@
 * **Live URLs:**
     * **Production:** [olybars.com](https://olybars.com) (SSL Provisioning)
     * **Staging:** [olybars-dev.web.app](https://olybars-dev.web.app)
-    * **API Backend:** [olybars-backend-juthzlaerq-uw.a.run.app](https://olybars-backend-juthzlaerq-uw.a.run.app)
+    * **API Backend:** [olybars-backend-26629455103.us-west1.run.app](https://olybars-backend-26629455103.us-west1.run.app)
 * **Immediate Bottleneck:** DNS Propagation (waiting for user to update Squarespace records).
 
 ---

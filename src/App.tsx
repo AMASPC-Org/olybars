@@ -34,6 +34,7 @@ import { LoginModal } from './features/auth/components/LoginModal';
 import { OwnerDashboardScreen } from './features/owner/screens/OwnerDashboardScreen';
 import { ClockInModal } from './features/venues/components/ClockInModal';
 import { OnboardingModal } from './components/ui/OnboardingModal';
+import { AgeGate } from './components/ui/AgeGate';
 import { VibeCheckModal } from './features/venues/components/VibeCheckModal';
 import { MakerSurveyModal } from './features/marketing/components/MakerSurveyModal'; // New Import
 import { useToast } from './components/ui/BrandedToast';
@@ -115,6 +116,7 @@ export default function OlyBarsApp() {
   const [showOwnerDashboard, setShowOwnerDashboard] = useState(false);
   const [ownerDashboardInitialVenueId, setOwnerDashboardInitialVenueId] = useState<string | null>(null);
   const [ownerDashboardInitialView, setOwnerDashboardInitialView] = useState<'main' | 'marketing' | 'listing'>('main');
+  const [hasAcceptedAgeGate, setHasAcceptedAgeGate] = useState(() => cookieService.get('oly_age_gate') === 'true');
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(() => cookieService.get('oly_terms') === 'true');
   const [infoContent, setInfoContent] = useState<{ title: string, text: string } | null>(null);
   const [showClockInModal, setShowClockInModal] = useState(false);
@@ -370,6 +372,11 @@ export default function OlyBarsApp() {
     }
   };
 
+  const handleAcceptAgeGate = () => {
+    cookieService.set('oly_age_gate', 'true');
+    setHasAcceptedAgeGate(true);
+  };
+
   const handleAcceptTerms = () => {
     cookieService.set('oly_terms', 'true');
     // We don't set oly_cookies here automatically so the banner shows up separately
@@ -398,6 +405,10 @@ export default function OlyBarsApp() {
       setUserPoints(userProfile.stats.seasonPoints);
     }
   }, [userProfile.uid, userProfile.stats?.seasonPoints]);
+
+  if (!hasAcceptedAgeGate) {
+    return <AgeGate onAccept={handleAcceptAgeGate} />;
+  }
 
   if (!hasAcceptedTerms) {
     return <OnboardingModal isOpen={true} onClose={handleAcceptTerms} userRole="guest" />;
