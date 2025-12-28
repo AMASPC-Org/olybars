@@ -26,6 +26,7 @@ DIRECTIVES:
 4. No filler. No "tell me more" unless necessary.
 5. [CRITICAL] NEITHER ask for location NOR ask for city/state. You KNOW you are in Olympia, WA and only serve the Olympia community.
 6. [CRITICAL] For venues like "Hannah's", assume they are the Olympia version and use tools to verify.
+7. TRUTH IN TTLs: Arcade games expire in 15m; Pool/Billiards in 30m; Vibe Checks in 45m; Check-in Headcount resets in 60m.
 
 WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
 - ANTI-VOLUME: Never imply the goal is to consume alcohol rapidly or in large quantities. No "Bottomless", "Chug", "Wasted".
@@ -184,6 +185,62 @@ WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
                 suggestions: [],
                 summary: "Artie is confused. Try again."
             };
+        }
+    }
+
+    async getTriage(question: string): Promise<string> {
+        return "I'm ready to serve, boss.";
+    }
+
+    async generateManagerSuggestion(stats: any, venue: any): Promise<any> {
+        const prompt = `You are Artie Pro, the data-driven Business Manager for ${venue.name} in Olympia, WA.
+        Your goal is "Labor Replacement & Yield Management". You analyze slow days and suggest "Point Bank" spending to fill the house.
+
+        CONTEXT:
+        Venue Vibe: ${venue.insiderVibe || venue.description}
+        Amenities: ${venue.amenityDetails?.map((a: any) => a.name).join(', ')}
+        Last 14 Days Activity: ${JSON.stringify(stats)}
+        Point Bank Balance: ${venue.pointBank || 5000}
+
+        STRATEGY:
+        1. Identify the consistently slow time/day.
+        2. Suggest a "Flash Deal" or "Vibe Boost".
+        3. Allocate a Point Bank spend (usually 500-1000 points).
+        4. Pitch it as "I'm working for you while you sleep".
+
+        COMPLIANCE:
+        - Must follow WA LCB rules (Safe ride mention, no chugging, points for engagement only).
+
+        OUTPUT JSON ONLY:
+        {
+           "type": "YIELD_BOOST",
+           "message": "Artie-style pitch (e.g. 'Hey Chris, last Wednesday was slow...')",
+           "actionLabel": "Approve Flash Deal",
+           "actionSkill": "update_flash_deal",
+           "actionParams": {
+              "summary": "Title of deal",
+              "details": "Details including safe ride info",
+              "duration": "Duration in minutes"
+           },
+           "pointCost": number,
+           "potentialImpact": "HIGH" | "MEDIUM" | "LOW"
+        }`;
+
+        const response = await this.genAI.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            config: { response_mime_type: "application/json" }
+        });
+
+        let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!text) throw new Error("Artie failed to generate suggestion.");
+        text = text.replace(/```json\n?|```/g, '').trim();
+
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error("JSON Parse Error on Artie Suggestion:", text);
+            return null;
         }
     }
 }

@@ -1,11 +1,11 @@
 export const GAME_TTLS: Record<string, number> = {
-    'pool': 25,
-    'billiards': 25,
+    'pool': 30,
+    'billiards': 30,
     'darts': 15,
     'shuffleboard': 20,
     'cornhole': 20,
     'axethrowing': 30,
-    'arcade': 10,
+    'arcade': 15,
     'default': 20
 };
 

@@ -1,11 +1,12 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ASSETS } from '../../../components/partners/AssetToggleGrid';
 import {
     MapPin, Clock, Beer, Trophy, Music, Users,
     ChevronLeft, Navigation, Star, Shield, Info,
     Flame, Calendar, Share2, ChevronRight, Zap,
     Settings, Instagram, Facebook, Twitter, Mail, Phone,
-    Scroll, Sparkles, Feather, Gamepad2
+    Scroll, Sparkles, Feather, Gamepad2, LayoutGrid, CheckCircle2
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../../types';
 import { SEO } from '../../../components/common/SEO';
@@ -392,27 +393,15 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                             <MapPin className="w-4 h-4" />
                             {clockedInVenue === venue.id ? 'Checked In' : 'Clock In (+10)'}
                         </button>
-                        {venue.hasGameVibeCheckEnabled && (
-                            <button
-                                onClick={() => handleVibeCheck(venue)}
-                                className="flex-1 py-4 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex flex-col items-center justify-center text-slate-100 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all active:scale-95 shadow-xl"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Gamepad2 className="w-4 h-4 text-purple-400" />
-                                    <span>Game Check</span>
-                                </div>
-                                <span className="text-[7px] text-purple-400/60 mt-1">UPDATE STATUS</span>
-                            </button>
-                        )}
                         <button
-                            onClick={() => showToast('Find the Vibe Spot QR code inside ' + venue.name + ' to report a vibe!', 'info')}
+                            onClick={() => handleVibeCheck(venue)}
                             className="flex-1 py-4 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex flex-col items-center justify-center text-slate-100 hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 shadow-xl"
                         >
                             <div className="flex items-center gap-2">
                                 <Zap className="w-4 h-4 text-primary" />
-                                <span>Scan QR for Vibe</span>
+                                <span>Vibe Check (+5)</span>
                             </div>
-                            <span className="text-[7px] text-primary/60 mt-1">FIND THE VIBE SPOT STICKER</span>
+                            <span className="text-[7px] text-primary/60 mt-1">REPORT FROM THE FIELD</span>
                         </button>
                     </div>
                 ) : (
@@ -454,6 +443,56 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">League Integration</p>
                                 <p className="text-sm font-black text-white uppercase font-league tracking-wide">{venue.leagueEvent} Tonight</p>
                                 <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">Starts at 7:00 PM • Double Points</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Amenities & Assets Grid */}
+                    {((venue.assets && Object.values(venue.assets).some(v => v)) || (venue.amenityDetails && venue.amenityDetails.length > 0)) && (
+                        <div className="space-y-3">
+                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <LayoutGrid className="w-3 h-3" />
+                                On-Site Amenities
+                            </h4>
+                            <div className="grid grid-cols-2 gap-2">
+                                {venue.amenityDetails && venue.amenityDetails.length > 0 ? (
+                                    venue.amenityDetails.map(amenity => {
+                                        const asset = ASSETS.find(a => amenity.id.includes(a.id)) || { icon: LayoutGrid, label: amenity.name };
+                                        return (
+                                            <div key={amenity.id} className="bg-slate-900/40 border border-white/5 rounded-xl p-3 flex items-center gap-3">
+                                                <div className="p-2 bg-black/40 rounded-lg text-primary">
+                                                    <asset.icon className="w-4 h-4" />
+                                                </div>
+                                                <div className="flex-1 overflow-hidden">
+                                                    <p className="text-[10px] font-black text-white uppercase truncate">
+                                                        {amenity.count > 1 ? `${amenity.count} ` : ''}{amenity.name}
+                                                    </p>
+                                                    <div className="flex items-center gap-1">
+                                                        <CheckCircle2 className="w-2.5 h-2.5 text-primary" />
+                                                        <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none">
+                                                            {amenity.isLeaguePartner ? 'League Partner' : 'Verified'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                ) : (
+                                    ASSETS.filter(a => !!venue.assets?.[a.id]).map(asset => (
+                                        <div key={asset.id} className="bg-slate-900/40 border border-white/5 rounded-xl p-3 flex items-center gap-3">
+                                            <div className="p-2 bg-black/40 rounded-lg text-primary">
+                                                <asset.icon className="w-4 h-4" />
+                                            </div>
+                                            <div className="flex-1 overflow-hidden">
+                                                <p className="text-[10px] font-black text-white uppercase truncate">{asset.label}</p>
+                                                <div className="flex items-center gap-1">
+                                                    <CheckCircle2 className="w-2.5 h-2.5 text-primary" />
+                                                    <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none">Verified</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
                     )}

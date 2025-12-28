@@ -11,7 +11,7 @@ export interface VibeReceiptData {
     metadata?: Record<string, any>;
 }
 
-export const generateArtieHook = (type: VibeReceiptData['type'], vibeStatus: string): string => {
+export const generateArtieHook = (type: VibeReceiptData['type'], vibeStatus: string, metadata?: Record<string, any>): string => {
     const hooks: Record<string, string[]> = {
         trivia: [
             "The well of knowledge runs deep tonight.",
@@ -23,7 +23,11 @@ export const generateArtieHook = (type: VibeReceiptData['type'], vibeStatus: str
             "A clean break and a cold one. Perfection.",
             "Dominating the local arena, one game at a time."
         ],
-        vibe: [
+        vibe: metadata?.gameBonus ? [
+            "Checked the games, validated the pulse. Ultimate scout.",
+            "The felt looks fast tonight. Good intel.",
+            "Intel gathered. The League thanks you for the field report."
+        ] : [
             "Caught the rhythm of the downtown pulse.",
             "Bottle the lightning, drink the vibe.",
             "Downtown Olympia: Where every seat has a story."
@@ -34,29 +38,44 @@ export const generateArtieHook = (type: VibeReceiptData['type'], vibeStatus: str
     return options[Math.floor(Math.random() * options.length)];
 };
 
-export const shareVibeReceipt = async (data: VibeReceiptData, logUserActivity?: any) => {
-    // In a real mobile app, this would use the Web Share API with a generated blob/file
+export const getFacebookShareUrl = (url: string, quote: string) => {
+    return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(quote)}`;
+};
+
+export const getTwitterShareUrl = (url: string, text: string) => {
+    return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+};
+
+export const shareVibeReceipt = async (data: VibeReceiptData, logUserActivity?: any, platform?: 'facebook' | 'twitter' | 'copy') => {
+    const shareUrl = window.location.origin; // Dynamically use current origin
     const shareText = `Tapped into the 98501 via OlyBars.com! Just earned ${data.pointsEarned} points at ${data.venueName}. #OlyBars #SpiritOfTheWell`;
 
     let shared = false;
-    if (navigator.share) {
+
+    if (platform === 'facebook') {
+        window.open(getFacebookShareUrl(shareUrl, shareText), '_blank', 'width=600,height=400');
+        shared = true;
+    } else if (platform === 'twitter') {
+        window.open(getTwitterShareUrl(shareUrl, shareText), '_blank', 'width=600,height=400');
+        shared = true;
+    } else if (platform === 'copy') {
+        try {
+            await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+            shared = true;
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
+    } else if (navigator.share) {
+        // Generic Mobile Share
         try {
             await navigator.share({
                 title: 'OlyBars Vibe Receipt',
                 text: shareText,
-                url: 'https://olybars.com',
+                url: shareUrl,
             });
             shared = true;
         } catch (err) {
             console.error('Error sharing:', err);
-        }
-    } else {
-        // Fallback: Copy to clipboard
-        try {
-            await navigator.clipboard.writeText(shareText);
-            shared = true;
-        } catch (err) {
-            console.error('Failed to copy:', err);
         }
     }
 
@@ -68,10 +87,11 @@ export const shareVibeReceipt = async (data: VibeReceiptData, logUserActivity?: 
             points: 5,
             metadata: {
                 receiptType: data.type,
+                platform: platform || 'generic',
                 bounty: 'Social Bounty v1'
             }
         });
     }
 
-    return shared ? (navigator.share ? 'Shared!' : 'Link copied to clipboard!') : null;
+    return shared;
 };

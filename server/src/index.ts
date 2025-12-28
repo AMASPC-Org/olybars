@@ -375,7 +375,7 @@ v1Router.get('/activity', async (req, res) => {
  * @route PATCH /api/venues/:id
  * @desc Update general venue information (Listing management)
  */
-v1Router.patch('/venues/:id', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+v1Router.patch('/venues/:id', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager', 'user', 'PLAYER']), async (req, res) => {
     const { id } = req.params;
     const validation = VenueUpdateSchema.safeParse(req.body.updates);
     if (!validation.success) {
@@ -425,6 +425,22 @@ v1Router.get('/venues/:id/pulse', async (req, res) => {
         res.json({ pulse });
     } catch (error: any) {
         log('ERROR', 'Failed to fetch venue pulse', { venueId: id, error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route GET /api/venues/:id/insights
+ * @desc Fetch proactive AI insights for a venue
+ */
+v1Router.get('/venues/:id/insights', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { generateVenueInsights } = await import('./venueService');
+        const insights = await generateVenueInsights(id);
+        res.json(insights);
+    } catch (error: any) {
+        log('ERROR', 'Failed to fetch venue insights', { venueId: id, error: error.message });
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

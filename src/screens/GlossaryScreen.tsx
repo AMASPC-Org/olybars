@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, BookOpen, Search, Zap } from 'lucide-react';
 import { SEO } from '../components/common/SEO';
+import { barGames } from '../data/barGames';
 
 const glossaryTerms = [
     {
@@ -9,6 +10,7 @@ const glossaryTerms = [
         terms: [
             { term: 'Bar League', def: 'The overarching season-based competition where users compete for points by visiting venues.' },
             { term: 'Buzz', def: 'The real-time energy level of a venue (Chill, Lively, or Buzzing).' },
+            { term: 'The Weekly Buzz', def: 'The official League email dispatched weekly. It highlights legendary bartenders, explores local bar history, and contains exclusive "Trivia Cheat Codes" for upcoming league events.' },
             { term: 'Check-In', def: 'The primary scoring action. Users verify their location at an Anchor Venue. Limited to 2 per 12-hour window.' },
             { term: 'Vibe Check', def: 'A user-submitted report confirming or updating a venue\'s current Buzz. Pays a small point bonus.' },
             { term: 'Streak', def: 'Consecutive days/weeks of active participation.' },
@@ -99,6 +101,49 @@ const GlossaryScreen = () => {
                             </div>
                         </div>
                     ))}
+
+                    {/* Games & Activities Section */}
+                    <div className="pt-8 border-t border-white/10">
+                        <div className="bg-gradient-to-r from-amber-500/10 to-transparent p-4 rounded-lg mb-8 border-l-4 border-amber-500">
+                            <h2 className="text-2xl font-black uppercase tracking-tighter text-white mb-1 font-league">
+                                Games & <span className="text-primary">Activities</span>
+                            </h2>
+                            <p className="text-sm text-slate-400">
+                                The official OlyBars reference for competitive socializing.
+                            </p>
+                        </div>
+
+                        <div className="space-y-10">
+                            {barGames.map((section) => (
+                                <div key={section.category}>
+                                    <h2 className="text-lg font-black uppercase tracking-widest text-slate-500 mb-4 border-b border-slate-800 pb-2">
+                                        {section.category}
+                                    </h2>
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        {section.games.map((game) => (
+                                            <div key={game.name} className="bg-surface border border-white/5 p-4 rounded-xl hover:border-primary/30 transition-colors group">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <h3 className="text-base font-black uppercase tracking-tight font-league text-primary group-hover:text-amber-400 transition-colors">
+                                                        {game.name}
+                                                    </h3>
+                                                </div>
+                                                <p className="text-sm text-slate-400 font-medium leading-normal mb-3">
+                                                    {game.description}
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {game.tags.map(tag => (
+                                                        <span key={tag} className="text-[10px] items-center px-1.5 py-0.5 rounded border border-white/10 text-slate-500 bg-black/20 uppercase tracking-wider font-bold">
+                                                            {tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Footer */}

@@ -92,15 +92,27 @@ export const updateVenueBuzz = async (venueId: string) => {
         }
     });
 
-    let status: 'chill' | 'lively' | 'buzzing' = 'chill';
+    const venueDoc = await db.collection('venues').doc(venueId).get();
+    const venueData = venueDoc.data();
+
+    let status: string = 'chill';
     if (score > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
     else if (score > PULSE_CONFIG.THRESHOLDS.LIVELY) status = 'lively';
+
+    // Manual Overrides (Owner/Admin Control)
+    const finalStatus = (venueData?.manualStatus && venueData?.manualStatusExpiresAt > now)
+        ? venueData.manualStatus
+        : status;
+
+    const finalCheckIns = (venueData?.manualCheckIns !== undefined && venueData?.manualCheckInsExpiresAt > now)
+        ? venueData.manualCheckIns
+        : activeUserIds.size;
 
     await db.collection('venues').doc(venueId).update({
         'currentBuzz.score': score,
         'currentBuzz.lastUpdated': now,
-        'status': status,
-        'checkIns': activeUserIds.size // Live Rolling Count
+        'status': finalStatus,
+        'checkIns': finalCheckIns
     });
 };
 
@@ -109,28 +121,40 @@ export const updateVenueBuzz = async (venueId: string) => {
  * Calculates real-time decayed score without DB writes.
  */
 const applyVirtualDecay = (venue: Venue): Venue => {
-    if (!venue.currentBuzz?.score) return venue;
-
     const now = Date.now();
-    const ageInMs = now - (venue.currentBuzz.lastUpdated || now);
-    const ageInHours = ageInMs / (60 * 60 * 1000);
 
-    // Decay Formula: Score * 0.5^(Age/HalfLife)
-    const decayHours = PULSE_CONFIG.WINDOWS.DECAY_HALFLIFE / (60 * 60 * 1000);
-    const decayedScore = venue.currentBuzz.score * Math.pow(0.5, ageInHours / decayHours);
+    // 1. Calculate Virtual Buzz (Decay)
+    let decayedScore = venue.currentBuzz?.score || 0;
+    if (venue.currentBuzz?.score && venue.currentBuzz.lastUpdated) {
+        const ageInMs = now - venue.currentBuzz.lastUpdated;
+        const decayHours = PULSE_CONFIG.WINDOWS.DECAY_HALFLIFE / (60 * 60 * 1000);
+        const ageInHours = ageInMs / (60 * 60 * 1000);
+        decayedScore = venue.currentBuzz.score * Math.pow(0.5, ageInHours / decayHours);
+    }
 
-    // Update status based on virtual score
-    let status: 'chill' | 'lively' | 'buzzing' = 'chill';
-    if (decayedScore > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
-    else if (decayedScore > PULSE_CONFIG.THRESHOLDS.LIVELY) status = 'lively';
+    // 2. Determine Status (Respect Manual Override)
+    let status = venue.status;
+    if (!(venue.manualStatus && venue.manualStatusExpiresAt && venue.manualStatusExpiresAt > now)) {
+        status = 'chill';
+        if (decayedScore > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
+        else if (decayedScore > PULSE_CONFIG.THRESHOLDS.LIVELY) status = 'lively';
+    }
+
+    // 3. Determine Check-ins (Respect Manual Override)
+    let checkIns = venue.checkIns || 0;
+    if (venue.manualCheckIns !== undefined && venue.manualCheckInsExpiresAt && venue.manualCheckInsExpiresAt > now) {
+        checkIns = venue.manualCheckIns;
+    }
 
     return {
         ...venue,
         currentBuzz: {
             ...venue.currentBuzz,
-            score: decayedScore
+            score: decayedScore,
+            lastUpdated: venue.currentBuzz?.lastUpdated || now
         },
-        status
+        status: status as any,
+        checkIns
     };
 };
 
@@ -147,25 +171,6 @@ const refreshVenueCache = async (): Promise<Venue[]> => {
                 const data = doc.data();
                 const venue = { id: doc.id, ...data } as Venue;
 
-                // Injecting mock amenities for the "Play" feature demo
-                if (venue.id === 'well-80') {
-                    venue.amenityDetails = [
-                        { id: 'cornhole', name: 'Cornhole', count: 2, isLeaguePartner: true },
-                        { id: 'arcade', name: 'Arcade Cabinets', count: 12, isLeaguePartner: true },
-                        { id: 'trivia', name: 'Pub Trivia', count: 1, isLeaguePartner: true }
-                    ];
-                } else if (venue.id === 'hannahs') {
-                    venue.amenityDetails = [
-                        { id: 'pool', name: 'Pool Tables', count: 4, isLeaguePartner: true },
-                        { id: 'darts', name: 'Electronic Darts', count: 6, isLeaguePartner: true },
-                        { id: 'karaoke', name: 'Stage Karaoke', count: 1, isLeaguePartner: true }
-                    ];
-                } else if (venue.id === 'brotherhood-lounge' || venue.id === 'brotherhood') {
-                    venue.amenityDetails = [
-                        { id: 'pool', name: 'Pool Tables', count: 4, isLeaguePartner: true },
-                        { id: 'arcade', name: 'Retro Arcade', count: 5, isLeaguePartner: false }
-                    ];
-                }
                 return venue;
             })
             .filter(v => v.isActive !== false);
@@ -613,18 +618,17 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
     // [SECURITY REMEDIATION A-01]
     // Verify ownership or management role
     let isAdmin = false;
+    let isOwner = false;
+    let isManager = false;
+
     if (requestingUserId) {
         // Fetch the user's role to check for admin bypass
         const userDoc = await db.collection('users').doc(requestingUserId).get();
         const userData = userDoc.data();
         isAdmin = userData?.role === 'super-admin' || userData?.role === 'admin' || userData?.email === 'ryan@amaspc.com';
 
-        const isOwner = venueData.ownerId === requestingUserId;
-        const isManager = venueData.managerIds?.includes(requestingUserId);
-
-        if (!isOwner && !isManager && !isAdmin) {
-            throw new Error('Unauthorized: You do not have permission to update this venue listing.');
-        }
+        isOwner = venueData.ownerId === requestingUserId;
+        isManager = venueData.managerIds?.includes(requestingUserId);
     } else {
         // If no user ID is provided, we strictly deny unless it's a known internal call (none yet)
         throw new Error('Unauthorized: Authentication required for venue updates.');
@@ -641,17 +645,20 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'name', 'nicknames',
         'address', 'description', 'hours', 'phone', 'website',
         'email', 'instagram', 'facebook', 'twitter',
-        'amenities', 'amenityDetails', 'vibe',
+        'amenities', 'amenityDetails', 'vibe', 'status',
         'originStory', 'insiderVibe', 'geoLoop',
         'isLowCapacity', 'isSoberFriendly',
         'physicalRoom', 'carryingMakers',
         'leagueEvent', 'triviaTime', 'deal', 'dealEndsIn', 'checkIns',
         'isVisible', 'isActive',
-        'location',
-        'vibeDefault', 'assets',
+        'googlePlaceId', 'assets',
         'managersCanAddUsers',
-        'liveGameStatus'
+        'liveGameStatus', 'photos',
+        'manualStatus', 'manualStatusExpiresAt',
+        'manualCheckIns', 'manualCheckInsExpiresAt'
     ];
+
+    const playerFields: (keyof Venue)[] = ['status', 'liveGameStatus', 'photos'];
 
     const filteredUpdates: any = {};
     Object.keys(updates).forEach(key => {
@@ -661,11 +668,32 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         if (isAdmin && (adminOnlyFields.includes(field) || ownerManagerFields.includes(field))) {
             filteredUpdates[field] = updates[field];
         }
-        // Owners/Managers can only change non-admin fields
-        else if (ownerManagerFields.includes(field)) {
+        // Owners/Managers can change non-admin fields
+        else if (isOwner || isManager) {
+            if (ownerManagerFields.includes(field)) {
+                filteredUpdates[field] = updates[field];
+            }
+        }
+        // Players/Users can only change status, liveGameStatus, and photos
+        else if (playerFields.includes(field)) {
             filteredUpdates[field] = updates[field];
         }
     });
+
+    // Special: If a status or game status update comes from a player, we should also trigger signal-based buzz updates
+    if (filteredUpdates.status || filteredUpdates.liveGameStatus) {
+        // We trigger buzz update in the background if possible
+        // But for now we just rely on the direct update
+    }
+
+    // Authorization Check
+    if (!isAdmin && !isOwner && !isManager) {
+        // Regular players can only update playerFields
+        const nonPlayerFields = Object.keys(filteredUpdates).filter(k => !playerFields.includes(k as any));
+        if (nonPlayerFields.length > 0) {
+            throw new Error('Unauthorized: You only have permission to update vibe and game status.');
+        }
+    }
 
     if (Object.keys(filteredUpdates).length === 0) {
         throw new Error('No valid update fields provided or insufficient permissions for selected fields.');

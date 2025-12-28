@@ -41,7 +41,7 @@ export interface Venue {
     score: number;
     lastUpdated: number;
   };
-  leagueEvent?: 'karaoke' | 'trivia' | 'arcade' | 'events' | 'openmic' | 'bingo' | 'live_music' | 'pool' | 'darts' | null;
+  leagueEvent?: 'karaoke' | 'trivia' | 'arcade' | 'events' | 'openmic' | 'bingo' | 'live_music' | 'pool' | 'darts' | 'shuffleboard' | 'pinball' | null;
   triviaTime?: string;
   eventDescription?: string; // [NEW] Unified for Artie
   happyHourSimple?: string;  // [NEW] Unified for Artie
@@ -140,6 +140,16 @@ export interface Venue {
   // Game Vibe Check (Premium Feature)
   hasGameVibeCheckEnabled?: boolean;
   liveGameStatus?: Record<string, GameStatus>;
+
+  // Owner Manual Overrides
+  manualStatus?: VenueStatus;
+  manualStatusExpiresAt?: number;
+  manualCheckIns?: number;
+  manualCheckInsExpiresAt?: number;
+
+  // Point Bank & Yield Management (Proactive Artie)
+  pointBank?: number;
+  pointBankLastReset?: number;
 
   updatedAt?: number;
   managersCanAddUsers?: boolean; // [NEW] Multi-User Support
@@ -327,4 +337,14 @@ export interface EventAnalysis {
   lcbWarning: boolean;
   suggestions: string[];
   summary: string;
+}
+
+export interface VenueInsight {
+  type: 'YIELD_BOOST' | 'TREND_ALERT' | 'COMPLIANCE_CHECK';
+  message: string;
+  actionLabel: string;
+  actionSkill: string;
+  actionParams: any;
+  pointCost?: number;
+  potentialImpact: 'HIGH' | 'MEDIUM' | 'LOW';
 }

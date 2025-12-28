@@ -464,7 +464,8 @@ const venues = [
         hasGameVibeCheckEnabled: true,
         amenityDetails: [
             { id: 'pool_1', name: 'Pool Table', count: 1 },
-            { id: 'shuffleboard', name: 'Shuffleboard', count: 1 }
+            { id: 'shuffleboard_1', name: 'Shuffleboard Table', count: 1 },
+            { id: 'arcade_1', name: 'Retro Arcade Game', count: 1 }
         ],
         liveGameStatus: {}
     },
@@ -484,7 +485,8 @@ const venues = [
         coordinates: { x: 40, y: 50 },
         address: '418 4th Ave E, Olympia, WA 98501',
         website: 'https://www.experienceolympia.com/directory/mccoys-tavern/',
-        location: { lat: 47.0461, lng: -122.8931 }
+        location: { lat: 47.0461, lng: -122.8931 },
+        assets: { "Pool": true, "Darts": true }
     },
     {
         id: 'eastside-club-tavern',
@@ -697,7 +699,8 @@ const venues = [
         coordinates: { x: 55, y: 55 },
         location: { lat: 47.0470, lng: -122.8953 },
         physicalRoom: true,
-        website: 'https://www.legends-arcade.com/'
+        website: 'https://www.legends-arcade.com/',
+        assets: { "Arcade": true, "Pinball": true, "Skee-ball": true }
     },
     {
         id: 'the-cove',
@@ -769,7 +772,10 @@ const venues = [
         hasGameVibeCheckEnabled: true,
         amenityDetails: [
             { id: 'pool_1', name: 'Front Pool Table', count: 1 },
-            { id: 'pool_2', name: 'Back Pool Table', count: 1 }
+            { id: 'pool_2', name: 'Back Pool Table', count: 1 },
+            { id: 'pacman', name: 'Pacman', count: 1 },
+            { id: 'mspacman', name: 'Ms. Pacman', count: 1 },
+            { id: 'pinball', name: 'Pinball Machine', count: 1 }
         ],
         liveGameStatus: {}
     },
@@ -945,7 +951,8 @@ const venues = [
         coordinates: { x: 31, y: 31 },
         location: { lat: 47.04586, lng: -122.89667 },
         physicalRoom: true,
-        website: 'https://www.acmebarandcompany.com/'
+        website: 'https://www.acmebarandcompany.com/',
+        assets: { "Pool": true, "Pinball": true }
     },
     {
         id: '4th-ave-tavern',

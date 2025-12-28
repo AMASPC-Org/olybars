@@ -59,7 +59,15 @@ export const knowledgeSearch = ai.defineTool(
                 })
             );
 
-            const allKnowledge = [...kb.faq, ...timeline, ...market, ...strategy, ...liveKnowledge];
+            // Index Bar Games
+            const games = (kb.bar_games || []).flatMap((cat: any) =>
+                cat.games.map((g: any) => ({
+                    question: `Game / Activity: ${g.name} (${cat.category})`,
+                    answer: `${g.description} Tags: ${g.tags.join(', ')}`
+                }))
+            );
+
+            const allKnowledge = [...kb.faq, ...timeline, ...market, ...strategy, ...games, ...liveKnowledge];
 
             return allKnowledge.filter(item => {
                 const combinedText = `${item.question} ${item.answer}`.toLowerCase();

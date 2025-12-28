@@ -172,9 +172,9 @@ const AboutPage = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
 
                     <div className="absolute bottom-6 left-6 right-6">
-                        <div className="inline-block bg-primary text-black px-3 py-1 rounded-sm text-[10px] font-black uppercase tracking-[0.2em] mb-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2">
+                        <button onClick={() => navigate('/glossary')} className="inline-block bg-primary text-black px-3 py-1 rounded-sm text-[10px] font-black uppercase tracking-[0.2em] mb-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all">
                             <Trophy size={12} /> PLAYER'S HANDBOOK
-                        </div>
+                        </button>
                         <h1 className="text-5xl font-black uppercase tracking-tighter font-league leading-[0.9]">
                             NIGHTLIFE IS A <span className="text-white block">TEAM SPORT.</span>
                         </h1>

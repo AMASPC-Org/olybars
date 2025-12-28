@@ -3,13 +3,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   Flame, Beer, Star, Users, MapPin,
   Trophy, ChevronRight, Crown, Search, Filter,
-  Bot, Clock, Zap, Gamepad2
+  Bot, Clock, Zap, Gamepad2, ShieldCheck
 } from 'lucide-react';
 import { Venue, VenueStatus, UserProfile } from '../../../types';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
 import { isVenueOpen, getVenueStatus } from '../../../utils/venueUtils';
 import { PULSE_CONFIG } from '../../../config/pulse';
+import { barGames } from '../../../data/barGames';
 
 const SkeletonCard = () => (
   <div className="bg-surface rounded-xl border border-slate-800 p-4 shadow-lg animate-pulse">
@@ -68,7 +69,7 @@ const PulseMeter = ({ status }: { status: VenueStatus }) => {
   );
 };
 
-type FilterKind = 'status' | 'deals' | 'league' | 'tonight' | 'near' | 'all';
+type FilterKind = 'status' | 'deals' | 'league' | 'tonight' | 'near' | 'games' | 'all';
 
 const STATUS_ORDER: Record<VenueStatus, number> = {
   packed: 0,
@@ -94,6 +95,8 @@ export const BuzzScreen: React.FC<{
   const navigate = useNavigate();
   const [filterKind, setFilterKind] = useState<FilterKind>('all');
   const [statusFilter, setStatusFilter] = useState<VenueStatus | 'all'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const { coords } = useGeolocation();
 
@@ -105,6 +108,20 @@ export const BuzzScreen: React.FC<{
   }, [venues.length]);
 
   const applyFilter = (v: Venue): boolean => {
+    // Search Filter (Applies globally)
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const nameMatch = v.name.toLowerCase().includes(q);
+      const typeMatch = v.type.toLowerCase().includes(q);
+      const vibeMatch = v.vibe?.toLowerCase().includes(q);
+      const addressMatch = v.address?.toLowerCase().includes(q);
+      const dealMatch = v.deal?.toLowerCase().includes(q) || v.activeFlashDeal?.title?.toLowerCase().includes(q);
+
+      if (!(nameMatch || typeMatch || vibeMatch || addressMatch || dealMatch)) {
+        return false;
+      }
+    }
+
     if (filterKind === 'status') {
       if (statusFilter === 'all') return true;
       return v.status === statusFilter;
@@ -120,7 +137,14 @@ export const BuzzScreen: React.FC<{
       return !!v.leagueEvent;
     }
 
-    // ... rest same
+    if (filterKind === 'games' && selectedGame) {
+      const g = selectedGame.toLowerCase();
+      const hasAmenity = v.amenityDetails?.some(a => a.name.toLowerCase().includes(g) || a.id.toLowerCase().includes(g));
+      const hasAsset = v.assets && Object.keys(v.assets).some(key => key.toLowerCase().includes(g) && v.assets![key]);
+      const hasSimpleAmenity = v.amenities?.some(a => a.toLowerCase().includes(g));
+      const hasEvent = v.leagueEvent?.toLowerCase().includes(g) || v.type.toLowerCase().includes(g);
+      return !!(hasAmenity || hasAsset || hasSimpleAmenity || hasEvent);
+    }
 
     // Global Visibility Check
     if (v.isVisible === false || v.isActive === false) return false;
@@ -373,7 +397,35 @@ export const BuzzScreen: React.FC<{
             >
               🌙 Tonight
             </button>
+            <button
+              onClick={() => {
+                setShowStatusMenu(false);
+                setFilterKind((prev) => (prev === 'games' ? 'all' : 'games'));
+                const firstGame = barGames[0]?.games[0]?.name;
+                if (filterKind !== 'games' && firstGame) setSelectedGame(firstGame);
+              }}
+              className={`${baseChipClasses} ${filterKind === 'games' ? 'bg-primary text-black border-primary' : 'bg-surface text-slate-300 border-slate-700 hover:border-slate-500'}`}
+            >
+              🎯 Games
+            </button>
           </div>
+
+          {filterKind === 'games' && (
+            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide -mx-4 px-4 mt-4">
+              {barGames.flatMap(cat => cat.games).map(game => (
+                <button
+                  key={game.name}
+                  onClick={() => setSelectedGame(game.name)}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${selectedGame === game.name
+                    ? 'bg-primary border-primary text-black shadow-[0_0_15px_rgba(251,191,36,0.3)]'
+                    : 'bg-slate-900 border-white/5 text-slate-400 hover:border-white/20'
+                    }`}
+                >
+                  {game.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* BUZZ CLOCK (Happy Hours) */}
@@ -429,6 +481,26 @@ export const BuzzScreen: React.FC<{
             </div>
           </div>
         )}
+
+        {/* SEARCH BAR */}
+        <div className="relative group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-primary transition-colors" />
+          <input
+            type="text"
+            placeholder="Search bars, vibes, or deals..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-surface border border-slate-700 rounded-xl py-3 pl-11 pr-4 text-white text-sm font-medium placeholder:text-slate-600 focus:border-primary outline-none transition-all shadow-lg font-body"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-tighter"
+            >
+              Clear
+            </button>
+          )}
+        </div>
 
         <div className="relative group/list">
           {/* JOIN THE LEAGUE CONVERSION BANNER (FOR GUESTS) */}
@@ -554,9 +626,22 @@ export const BuzzScreen: React.FC<{
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <PulseMeter status={venue.status} />
+                      <div className="flex items-center gap-1.5">
+                        {venue.manualStatusExpiresAt && venue.manualStatusExpiresAt > Date.now() && (
+                          <div className="flex items-center gap-1 bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">
+                            <ShieldCheck className="w-2.5 h-2.5" />
+                            Verified
+                          </div>
+                        )}
+                        <PulseMeter status={venue.status} />
+                      </div>
                       {venue.hourStatus === 'last_call' && <span className="text-[10px] text-white font-black bg-red-600 px-2 py-0.5 rounded transform -skew-x-12 animate-pulse mt-1">LAST CALL 🕒</span>}
-                      <span className="text-[10px] text-slate-500 font-bold mt-1">{venue.checkIns} Checked In</span>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {venue.manualCheckInsExpiresAt && venue.manualCheckInsExpiresAt > Date.now() && (
+                          <ShieldCheck className="w-2.5 h-2.5 text-blue-400" />
+                        )}
+                        <span className="text-[10px] text-slate-500 font-bold">{venue.checkIns} Checked In</span>
+                      </div>
                     </div>
                   </div>
 
@@ -576,15 +661,7 @@ export const BuzzScreen: React.FC<{
                   )}
 
                   <div className="flex gap-2">
-                    {venue.hasGameVibeCheckEnabled && (
-                      <button
-                        onClick={() => handleVibeCheck && handleVibeCheck(venue)}
-                        className="py-3 px-4 rounded-lg bg-surface border-2 border-purple-500/50 text-purple-400 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-purple-500/10 hover:border-purple-500 transition-all shadow-sm"
-                        title="Update Live Game Status"
-                      >
-                        <Gamepad2 size={16} />
-                      </button>
-                    )}
+
                     <button
                       onClick={() => handleVibeCheck && handleVibeCheck(venue)}
                       className={`flex-1 py-3 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all border-2 shadow-sm ${(() => {

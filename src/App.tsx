@@ -7,7 +7,7 @@ import { X } from 'lucide-react';
 // --- CONFIG & TYPES ---
 import { queryClient } from './lib/queryClient';
 import {
-  Venue, PointsReason, UserProfile, CheckInRecord, UserAlertPreferences, VenueStatus, ActivityLog
+  Venue, PointsReason, UserProfile, CheckInRecord, UserAlertPreferences, VenueStatus, ActivityLog, GameStatus
 } from './types';
 
 // --- REAL SERVICES ---
@@ -71,6 +71,7 @@ import AIFeedGuideScreen from './features/marketing/screens/AIFeedGuideScreen';
 import AIConductScreen from './features/marketing/screens/AIConductScreen';
 import ClaimVenuePage from './pages/partners/ClaimVenuePage';
 import GlossaryScreen from './screens/GlossaryScreen';
+import PointsGuideScreen from './features/league/screens/PointsGuideScreen';
 
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
@@ -183,13 +184,15 @@ export default function OlyBarsApp() {
 
   const openInfo = (title: string, text: string) => { setInfoContent({ title, text }); };
 
-  const awardPoints = (reason: PointsReason, venueId?: string, hasConsent?: boolean, verificationMethod?: 'gps' | 'qr') => {
+  const awardPoints = (reason: PointsReason, venueId?: string, hasConsent?: boolean, verificationMethod?: 'gps' | 'qr', bonusPoints: number = 0) => {
     let delta = 0;
     if (reason === 'checkin' || reason === 'photo') delta = 10;
     else if (reason === 'share' || reason === 'social_share') delta = 5;
     else if (reason === 'vibe') delta = hasConsent ? 20 : 5;
 
     if (hasConsent && (reason as string) !== 'vibe') delta += 15; // Generic bonus for consent if not vibe
+
+    delta += bonusPoints;
 
     setUserPoints(prev => prev + delta);
 
@@ -295,7 +298,7 @@ export default function OlyBarsApp() {
     setShowVibeCheckModal(true);
   };
 
-  const confirmVibeCheck = async (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod: 'gps' | 'qr' = 'gps') => {
+  const confirmVibeCheck = async (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod: 'gps' | 'qr' = 'gps', gameStatus?: Record<string, GameStatus>) => {
     const now = Date.now();
 
     // 1. If not already clocked in, perform a background check-in to unify signals
@@ -306,9 +309,18 @@ export default function OlyBarsApp() {
 
     setVibeCheckedVenue(venue.id);
 
+    // Calculate Game Bonus Points
+    let gameBonus = 0;
+    if (gameStatus && Object.keys(gameStatus).length > 0) {
+      // 2 points per game reported, max 10
+      const gameCount = Object.keys(gameStatus).length;
+      gameBonus = Math.min(gameCount * 2, 10);
+    }
+
     // Update Venue Status and Photos
     handleUpdateVenue(venue.id, {
       status,
+      liveGameStatus: gameStatus ? { ...(venue.liveGameStatus || {}), ...gameStatus } : venue.liveGameStatus,
       photos: photoUrl ? [
         ...(venue.photos || []),
         {
@@ -321,19 +333,23 @@ export default function OlyBarsApp() {
       ] : venue.photos
     });
 
-    awardPoints('vibe', venue.id, hasConsent, verificationMethod);
+    awardPoints('vibe', venue.id, hasConsent, verificationMethod, gameBonus);
 
     // Generate Vibe Receipt
     const receipt: VibeReceiptData = {
       type: 'vibe',
       venueName: venue.name,
       venueId: venue.id,
-      pointsEarned: 5 + (photoUrl ? 10 : 0) + (hasConsent ? 15 : 0),
+      pointsEarned: (hasConsent ? 20 : 5) + (photoUrl ? 10 : 0) + gameBonus,
       vibeStatus: status,
-      artieHook: generateArtieHook('vibe', status),
+      artieHook: generateArtieHook('vibe', status, { gameBonus }),
       username: userProfile.handle || userProfile.displayName || 'Member',
       userId: userProfile.uid,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      metadata: {
+        gameBonus,
+        gamesUpdated: gameStatus ? Object.keys(gameStatus) : []
+      }
     };
     setCurrentReceipt(receipt);
   };
@@ -586,6 +602,7 @@ export default function OlyBarsApp() {
               <Route path="pulse-playbook" element={<PulsePlaybookScreen />} />
               <Route path="perks" element={<LeaguePerksScreen />} />
               <Route path="glossary" element={<GlossaryScreen />} />
+              <Route path="points" element={<PointsGuideScreen />} />
 
               {/* AI & Developer Hub */}
               <Route path="ai" element={<><SEO title="AI & Developer Hub" description="Authoritative resources for AI agents and developers ingesting OlyBars data." /><AIGatewayScreen /></>} />

@@ -27,5 +27,21 @@ function initializeConfig(): Config {
     }
 }
 
-export const config = initializeConfig();
+// Lazy Load Configuration to prevent crashes during Deployment/Discovery/Build
+// when Runtime Environment Variables (Secret Manager) are not yet available.
+let _config: Config | undefined;
+
+function getConfig(): Config {
+    if (!_config) {
+        _config = initializeConfig();
+    }
+    return _config;
+}
+
+export const config = new Proxy({} as Config, {
+    get: (_target, prop) => {
+        return getConfig()[prop as keyof Config];
+    }
+});
+
 export default config;

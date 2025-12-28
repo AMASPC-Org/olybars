@@ -15,6 +15,8 @@ import { getGameTTL } from '../../../config/gameConfig';
 import { UserManagementTab } from '../components/UserManagementTab';
 import { EventsManagementTab } from '../components/EventsManagementTab';
 import { VenueOpsService } from '../../../services/VenueOpsService';
+import { ArtieManagerBriefing } from '../components/ArtieManagerBriefing';
+import { VenueInsight } from '../../../types';
 
 interface OwnerDashboardProps {
     isOpen: boolean;
@@ -162,8 +164,50 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
     const adjustCheckIns = (delta: number) => {
         if (!myVenue) return;
-        const newCount = Math.max(0, myVenue.checkIns + delta);
-        updateVenue(myVenue.id, { checkIns: newCount });
+        const newCount = Math.max(0, (myVenue.checkIns || 0) + delta);
+        updateVenue(myVenue.id, {
+            checkIns: newCount,
+            manualCheckIns: newCount,
+            manualCheckInsExpiresAt: Date.now() + (60 * 60 * 1000) // 60m TTL
+        });
+    };
+
+    const setManualVibe = (status: any) => {
+        if (!myVenue) return;
+        updateVenue(myVenue.id, {
+            status,
+            manualStatus: status,
+            manualStatusExpiresAt: Date.now() + (45 * 60 * 1000) // 45m TTL
+        });
+    };
+
+    const handleArtieActionApproved = async (insight: VenueInsight) => {
+        if (!myVenue) return;
+        try {
+            // 1. Execute the skill
+            if (insight.actionSkill === 'update_flash_deal') {
+                await VenueOpsService.updateFlashDeal(myVenue.id, {
+                    title: insight.actionParams.summary,
+                    description: insight.actionParams.details,
+                    duration: parseInt(insight.actionParams.duration) || 60,
+                    isActive: true
+                });
+            }
+
+            // 2. Deduct points from Bank
+            const currentBank = myVenue.pointBank || 5000;
+            const deduction = insight.pointCost || 500;
+            const newBank = Math.max(0, currentBank - deduction);
+
+            await updateVenue(myVenue.id, {
+                pointBank: newBank
+            });
+
+            showToast(`${insight.actionLabel.toUpperCase()} - BANK UPDATED`, 'success');
+        } catch (e) {
+            console.error('Failed to execute Artie action:', e);
+            showToast('ACTION FAILED', 'error');
+        }
     };
 
     return (
@@ -301,10 +345,25 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 <p className="text-4xl font-black text-white font-league">{myVenue.checkIns || 0}</p>
                             </div>
                             <div className="bg-surface p-4 border border-white/10 rounded-lg shadow-xl">
-                                <p className="text-[10px] uppercase font-black text-slate-500 mb-1 font-league">Live Vibe</p>
-                                <p className={`text-2xl font-black uppercase font-league leading-none mt-1 ${myVenue.status === 'buzzing' ? 'text-red-500' : 'text-primary'}`}>
-                                    {myVenue.status.toUpperCase()}
-                                </p>
+                                <div className="flex justify-between items-center mb-2">
+                                    <p className="text-[10px] uppercase font-black text-slate-500 font-league">Manual Vibe Override</p>
+                                    {myVenue.manualStatusExpiresAt && Date.now() < myVenue.manualStatusExpiresAt && (
+                                        <span className="text-[8px] font-black text-primary uppercase animate-pulse">
+                                            Expires in {Math.ceil((myVenue.manualStatusExpiresAt - Date.now()) / 60000)}m
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-5 gap-1">
+                                    {['dead', 'chill', 'lively', 'buzzing', 'packed'].map((s) => (
+                                        <button
+                                            key={s}
+                                            onClick={() => setManualVibe(s)}
+                                            className={`py-2 text-[8px] font-black uppercase rounded border transition-all ${myVenue.status === s ? 'bg-primary border-primary text-black' : 'bg-black border-white/5 text-slate-500'}`}
+                                        >
+                                            {s}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
@@ -316,7 +375,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                     <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-league">Live Game Status</h3>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {myVenue.amenityDetails?.filter(a => ['pool', 'darts', 'shuffleboard'].includes(a.id)).map(amenity => {
+                                    {myVenue.amenityDetails?.map(amenity => {
                                         const statusData = myVenue.liveGameStatus?.[amenity.id];
                                         const isTaken = statusData?.status === 'taken' && (!statusData?.expiresAt || Date.now() < statusData.expiresAt);
 
@@ -364,7 +423,14 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
                         {/* Manual Override Console */}
                         <div className="bg-surface p-6 border border-white/10 rounded-lg shadow-2xl">
-                            <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest font-league mb-4">Manual Headcount Adjust</h3>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest font-league">Manual Headcount Adjust</h3>
+                                {myVenue.manualCheckInsExpiresAt && Date.now() < myVenue.manualCheckInsExpiresAt && (
+                                    <span className="text-[8px] font-black text-primary uppercase animate-pulse">
+                                        Override Active ({Math.ceil((myVenue.manualCheckInsExpiresAt - Date.now()) / 60000)}m)
+                                    </span>
+                                )}
+                            </div>
                             <div className="flex items-center justify-between">
                                 <button onClick={() => adjustCheckIns(-1)} className="w-14 h-14 flex items-center justify-center bg-black border border-white/10 text-white rounded-lg active:scale-95">
                                     <Minus className="w-8 h-8" />
@@ -462,6 +528,9 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
                 {myVenue && dashboardView === 'marketing' && (
                     <div className="space-y-10">
+                        {/* Artie Pro Briefing (New Hero Section) */}
+                        <ArtieManagerBriefing venue={myVenue} onActionApproved={handleArtieActionApproved} />
+
                         {/* Points Reporting Section */}
                         <section className="space-y-6">
                             <div className="flex justify-between items-end">
@@ -494,6 +563,13 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 <div className="bg-surface p-4 border border-white/10 rounded-xl">
                                     <p className="text-[9px] font-black text-slate-500 uppercase font-league mb-1">Active</p>
                                     <p className="text-2xl font-black text-white font-league">{activityStats.activeUsers}</p>
+                                </div>
+                                <div className="bg-primary/5 p-4 border border-primary/20 rounded-xl relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-1 opacity-20">
+                                        <Zap className="w-12 h-12 text-primary" />
+                                    </div>
+                                    <p className="text-[9px] font-black text-primary uppercase font-league mb-1">Point Bank</p>
+                                    <p className="text-2xl font-black text-primary font-league">{(myVenue.pointBank || 5000).toLocaleString()}</p>
                                 </div>
                             </div>
                         </section>

@@ -7,7 +7,11 @@ import {
     Crown,
     Zap,
     MapPin,
-    Activity
+    Activity,
+    Facebook,
+    Twitter,
+    Copy,
+    CheckCircle2
 } from 'lucide-react';
 import { VibeReceiptData, shareVibeReceipt } from '../services/VibeReceiptService';
 import { logUserActivity } from '../../../services/userService';
@@ -20,8 +24,20 @@ interface VibeReceiptModalProps {
 export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClose }) => {
     const isTrivia = data.type === 'trivia';
 
-    const handleShare = async () => {
-        await shareVibeReceipt(data, logUserActivity);
+    const [shareStatus, setShareStatus] = React.useState<string | null>(null);
+    const [isCopied, setIsCopied] = React.useState(false);
+
+    const handleShare = async (platform?: 'facebook' | 'twitter' | 'copy') => {
+        const success = await shareVibeReceipt(data, logUserActivity, platform);
+        if (success) {
+            if (platform === 'copy') {
+                setIsCopied(true);
+                setTimeout(() => setIsCopied(false), 2000);
+            } else {
+                setShareStatus('Shared!');
+                setTimeout(() => setShareStatus(null), 2000);
+            }
+        }
     };
 
     return (
@@ -96,16 +112,48 @@ export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClos
                     </div>
 
                     {/* Share Footer */}
-                    <div className="p-6 bg-primary/5 border-t border-white/5">
+                    <div className="p-6 bg-primary/5 border-t border-white/5 space-y-4">
+                        <div className="grid grid-cols-3 gap-3">
+                            <button
+                                onClick={() => handleShare('facebook')}
+                                className="flex flex-col items-center justify-center p-3 rounded-2xl bg-[#1877F2]/10 border border-[#1877F2]/20 hover:bg-[#1877F2]/20 transition-all group"
+                                title="Share to Facebook"
+                            >
+                                <Facebook className="w-6 h-6 text-[#1877F2] group-hover:scale-110 transition-transform" />
+                                <span className="text-[8px] font-black text-[#1877F2] mt-2 uppercase">Facebook</span>
+                            </button>
+                            <button
+                                onClick={() => handleShare('twitter')}
+                                className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
+                                title="Share to X (Twitter)"
+                            >
+                                <Twitter className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
+                                <span className="text-[8px] font-black text-white mt-2 uppercase">X / Twitter</span>
+                            </button>
+                            <button
+                                onClick={() => handleShare('copy')}
+                                className="flex flex-col items-center justify-center p-3 rounded-2xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all group"
+                                title="Copy Message & Link"
+                            >
+                                {isCopied ? (
+                                    <CheckCircle2 className="w-6 h-6 text-green-400" />
+                                ) : (
+                                    <Copy className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+                                )}
+                                <span className="text-[8px] font-black text-primary mt-2 uppercase">{isCopied ? 'Copied!' : 'Copy'}</span>
+                            </button>
+                        </div>
+
                         <button
-                            onClick={handleShare}
+                            onClick={() => handleShare()}
                             className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-lg"
                         >
-                            <Share2 className="w-5 h-5" />
-                            SHARE VIBE RECEIPT
+                            {shareStatus ? <CheckCircle2 className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+                            {shareStatus || 'SMART SHARE'}
                         </button>
-                        <p className="text-center text-[9px] text-slate-500 font-bold uppercase mt-4 tracking-tight">
-                            Tapped into the 98501 via OlyBars.com
+
+                        <p className="text-center text-[9px] text-slate-500 font-bold uppercase tracking-tight">
+                            {isCopied ? 'Message & Link ready to paste!' : 'Tapped into the 98501 via OlyBars.com'}
                         </p>
                     </div>
                 </div>

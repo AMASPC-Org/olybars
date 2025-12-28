@@ -277,6 +277,18 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
                 <p className="font-bold text-slate-400 text-sm leading-relaxed">Any attempt to spoof GPS or automate check-ins results in a permanent ban. Play fair, drink responsibly.</p>
               </div>
 
+              {/* [NEW] Points Guide Link */}
+              <div
+                className="bg-primary/10 border border-primary/30 p-5 rounded-2xl flex justify-between items-center group cursor-pointer hover:bg-primary/20 transition-all"
+                onClick={() => navigate('/points')}
+              >
+                <div>
+                  <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-1">XP Protocol: Points Guide</h3>
+                  <p className="font-bold text-slate-400 text-[10px] uppercase tracking-widest leading-none">Learn how to score and earn exclusive gear</p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
+              </div>
+
               {/* [NEW] Have Questions? Ask Artie CTA */}
               <div className="mt-8 pt-8 border-t border-slate-800 text-center">
                 <h3 className="text-xl font-black uppercase tracking-tight font-league mb-2">Have Questions?</h3>

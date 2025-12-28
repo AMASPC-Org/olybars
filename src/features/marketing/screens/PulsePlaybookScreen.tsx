@@ -24,7 +24,9 @@ export const PulsePlaybookScreen: React.FC = () => {
                     </div>
                     <div>
                         <h1 className="text-4xl font-black uppercase tracking-tighter font-league text-white leading-none">THE PULSE <span className="text-primary block">PLAYBOOK</span></h1>
-                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">The math behind the vibe</p>
+                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">
+                            The math behind the vibe • <button onClick={() => navigate('/glossary')} className="text-primary hover:underline">Definitions</button>
+                        </p>
                     </div>
                 </header>
 

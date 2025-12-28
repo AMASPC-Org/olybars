@@ -14,7 +14,8 @@ export const PULSE_CONFIG = {
 
     // Time Windows (in milliseconds)
     WINDOWS: {
-        LIVE_HEADCOUNT: 90 * 60 * 1000, // 90 Minutes (Rolling Window for Count)
+        LIVE_HEADCOUNT: 60 * 60 * 1000, // 60 Minutes (Rolling Window for Count)
+        VIBE_REPORT: 45 * 60 * 1000, // 45 Minutes (Duration of manual vibe/status)
         BUZZ_HISTORY: 12 * 60 * 60 * 1000, // 12 Hours (Lookback for Score)
         STALE_THRESHOLD: 10 * 60 * 1000, // 10 Minutes (Trigger background refresh)
         DECAY_HALFLIFE: 60 * 60 * 1000, // 60 Minutes (Score drops by 50%)

@@ -47,7 +47,8 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
         ? calculateDistance(coords.latitude, coords.longitude, venue.location.lat, venue.location.lng)
         : null;
 
-    const isAtVenue = currentDistance !== null && currentDistance <= 100;
+    const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    const isAtVenue = (currentDistance !== null && currentDistance <= 100) || isLocalhost;
 
     const startCamera = async () => {
         setCameraError(false);
@@ -90,11 +91,6 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     const handleConfirm = async () => {
         if (!isAtVenue) {
             setErrorMessage("Coordinate Verification Failed. You must be at the venue to submit a vibe.");
-            return;
-        }
-
-        if (verificationMethod !== 'qr') {
-            setErrorMessage("QR Verification Required. You must scan the physical Vibe Spot QR code to submit a vibe.");
             return;
         }
 
@@ -181,7 +177,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                 <div className="p-4 space-y-4">
                     <div className="text-center">
                         <p className={`text-[10px] font-black uppercase tracking-widest ${isAtVenue ? 'text-primary' : (currentDistance !== null ? 'text-red-400' : 'text-slate-500')}`}>
-                            {geoLoading ? 'Finding you...' : (isAtVenue ? '📍 Verified At Venue' : (currentDistance !== null ? `${Math.round(currentDistance)}m FROM VENUE (TOO FAR)` : '🚶 Location Check Required'))}
+                            {geoLoading ? 'Finding you...' : (isLocalhost ? '💻 DEV MODE: GPS BYPASS' : (isAtVenue ? '📍 Verified At Venue' : (currentDistance !== null ? `${Math.round(currentDistance)}m FROM VENUE` : '🚶 Location Check Required')))}
                         </p>
                         {!isAtVenue && !geoLoading && (
                             <button

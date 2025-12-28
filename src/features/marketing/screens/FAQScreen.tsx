@@ -46,7 +46,9 @@ const FAQScreen: React.FC = () => {
                     </div>
                     <div>
                         <h1 className="text-4xl font-black uppercase tracking-tighter font-league text-white leading-none">THE BAR LEAGUE <span className="text-primary block">PLAYBOOK</span></h1>
-                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">Artie's Guide to the PNW Nightlife OS</p>
+                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">
+                            Artie's Guide to the PNW Nightlife OS • <button onClick={() => navigate('/glossary')} className="text-primary hover:underline">Glossary</button> • <button onClick={() => navigate('/points')} className="text-primary hover:underline">Points Guide</button>
+                        </p>
                     </div>
                 </header>
 

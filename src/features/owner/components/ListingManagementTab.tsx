@@ -7,6 +7,9 @@ import { Venue } from '../../../types';
 import { updateVenueDetails, syncVenueWithGoogle } from '../../../services/venueService';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { PlaceAutocomplete } from '../../../components/ui/PlaceAutocomplete';
+import { AssetToggleGrid } from '../../../components/partners/AssetToggleGrid';
+import { AmenityManager } from './AmenityManager';
+import { Gamepad2 } from 'lucide-react';
 
 interface ListingManagementTabProps {
     venue: Venue;
@@ -33,7 +36,10 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         isSoberFriendly: venue.isSoberFriendly || false,
         establishmentType: venue.establishmentType || 'Bar Only',
         subtypes: venue.subtypes || [],
-        isVisible: venue.isVisible !== false
+        isVisible: venue.isVisible !== false,
+        assets: venue.assets || {},
+        hasGameVibeCheckEnabled: venue.hasGameVibeCheckEnabled || false,
+        amenityDetails: venue.amenityDetails || []
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -382,6 +388,58 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                             </button>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            {/* Amenities & Games Section */}
+            <section className="space-y-6">
+                <div>
+                    <h3 className="text-xl font-black text-white uppercase font-league leading-none">AMENITIES & ACTIVITIES</h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest italic">Toggle what your venue offers to the league</p>
+                </div>
+
+                <div className="bg-slate-900/50 border border-white/5 rounded-3xl p-8 space-y-8">
+                    <AssetToggleGrid
+                        selectedAssets={formData.assets || {}}
+                        onChange={(id, val) => setFormData(prev => ({
+                            ...prev,
+                            assets: { ...prev.assets, [id]: val }
+                        }))}
+                    />
+
+                    <div className="pt-8 border-t border-white/10">
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Gamepad2 className="w-5 h-5 text-purple-400" />
+                                    <h4 className="text-sm font-black text-white uppercase">Game Vibe Check (Premium)</h4>
+                                </div>
+                                <p className="text-xs text-slate-400 leading-relaxed">
+                                    Enable real-time status reporting for games like Pool and Darts.
+                                    Users can see if tables are open or taken before they arrive.
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, hasGameVibeCheckEnabled: !prev.hasGameVibeCheckEnabled }))}
+                                className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${formData.hasGameVibeCheckEnabled
+                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20'
+                                    : 'bg-slate-800 text-slate-500 hover:text-white'
+                                    }`}
+                            >
+                                {formData.hasGameVibeCheckEnabled ? 'ACTIVE' : 'INACTIVE'}
+                            </button>
+                        </div>
+                    </div>
+                    {formData.hasGameVibeCheckEnabled && (
+                        <div className="pt-8 border-t border-white/10">
+                            <AmenityManager
+                                venue={venue}
+                                onChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))}
+                            />
+                        </div>
+                    )}
                 </div>
             </section>
 
