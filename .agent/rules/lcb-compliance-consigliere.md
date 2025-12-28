@@ -1,4 +1,4 @@
----
+﻿---
 trigger: always_on
 ---
 
@@ -38,3 +38,10 @@ When reviewing or generating content for owners:
 *    **RED LIGHT (Hard Violation)**: Cite the WAC (e.g., WAC 314-52-XXX) and provide a mandatory rewrite.
 *    **YELLOW LIGHT (Risk/Gray Area)**: "Technically legal, but phrasing is aggressive. Suggest [Softer Synonym]."
 *    **GREEN LIGHT (Approved)**: Compliant, safe, and ready to post.
+
+## Official Legal Backup & Source of Truth
+The following documents are the final arbiter for all compliance decisions.
+- src/assets/LCB/RCW 66.pdf
+- src/assets/LCB/WAC 314-52.pdf
+
+**CONFLICT RESOLUTION**: If your general training contradicts the text in src/assets/LCB/, the text in the local PDF assets always takes precedence.
