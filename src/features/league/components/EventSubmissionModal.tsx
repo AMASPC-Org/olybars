@@ -13,6 +13,7 @@ interface EventSubmissionModalProps {
 export const EventSubmissionModal: React.FC<EventSubmissionModalProps> = ({ isOpen, onClose, venues }) => {
     const { showToast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedVenueId, setSelectedVenueId] = useState('');
     const [formData, setFormData] = useState({
@@ -61,6 +62,29 @@ export const EventSubmissionModal: React.FC<EventSubmissionModalProps> = ({ isOp
             showToast(error.message || 'Failed to submit event.', 'error');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleGenerateDescription = async () => {
+        if (!selectedVenueId || !formData.title || !formData.date || !formData.time) {
+            showToast('Please fill in Venue, Title, Date, and Time first.', 'error');
+            return;
+        }
+
+        setIsGenerating(true);
+        try {
+            const description = await EventService.generateDescription({
+                venueId: selectedVenueId,
+                type: formData.type,
+                date: formData.date,
+                time: formData.time
+            });
+            setFormData({ ...formData, description });
+            showToast('Artie has refined your description!', 'success');
+        } catch (error: any) {
+            showToast(error.message || 'Failed to generate description.', 'error');
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -204,13 +228,29 @@ export const EventSubmissionModal: React.FC<EventSubmissionModalProps> = ({ isOp
 
                     {/* Description */}
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-primary uppercase tracking-widest">Description (Optional)</label>
+                        <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-black text-primary uppercase tracking-widest">Description (Optional)</label>
+                            <button
+                                type="button"
+                                onClick={handleGenerateDescription}
+                                disabled={isGenerating || !selectedVenueId || !formData.title}
+                                className="text-[9px] font-black text-primary bg-primary/10 hover:bg-primary hover:text-black px-2 py-1 rounded-md border border-primary/20 transition-all flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed group"
+                            >
+                                {isGenerating ? (
+                                    <Loader2 size={10} className="animate-spin" />
+                                ) : (
+                                    <Sparkles size={10} className="group-hover:scale-125 transition-transform" />
+                                )}
+                                Generate with Artie
+                            </button>
+                        </div>
                         <textarea
                             rows={3}
                             placeholder="Add lore, themes, or specific details..."
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:border-primary outline-none transition-all font-body text-sm resize-none"
+                            className={`w-full bg-black/40 border rounded-xl px-4 py-3 text-slate-200 focus:border-primary outline-none transition-all font-body text-sm resize-none ${isGenerating ? 'border-primary/50 animate-pulse' : 'border-white/10'
+                                }`}
                         ></textarea>
                     </div>
 

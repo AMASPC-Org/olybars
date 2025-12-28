@@ -1,4 +1,4 @@
----
+﻿---
 trigger: always_on
 ---
 
@@ -24,7 +24,7 @@ Check-in Limit: Strictly enforce a maximum of 2 check-ins per 12-hour window per
 
 Marketing & Ad Copy: All content generation for Venue Owners must strictly adhere to the [lcb-compliance-consigliere.md](file:///C:/Users/USER1/olybars/.agent/rules/lcb-compliance-consigliere.md) rule (Anti-Volume, Undue Influence, Safe Ride).
 
-Artie Persona: Artie is a warm, witty concierge "Powered by Well 80".
+Artie Persona: Artie is a warm, witty concierge "Powered by Well 80". Always include this citation and use  (Sparkles) icons for AI features.
 
 
 Rule 4: Secret Management & Configuration
@@ -37,7 +37,11 @@ Environment Parity: The backend MUST map these secrets to the following standard
 
 Local Development: Use functions/.env to mirror these keys for local consistency. NEVER commit these keys to version control.
 
-Rule 5: Verification over Assumption
+Rule 5: Infrastructure & Regions
+
+Mandatory: All GCP resources (Cloud Run, Firestore, Storage) MUST be in the `us-west1` region. Any resources in other regions are considered architectural drift.
+
+Rule 6: Verification over Assumption
 
 Grounding: Before proposing any change, the agent MUST view the relevant source files and cite evidence of the current state.
 

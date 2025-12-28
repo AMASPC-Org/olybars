@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Plus, Trash2, CheckCircle, XCircle, Loader2, Sparkles, MessageSquare, Info, Trophy } from 'lucide-react';
+import { Calendar, Clock, Plus, Trash2, CheckCircle, XCircle, Loader2, Sparkles, MessageSquare, Info, Trophy, BrainCircuit, ShieldAlert, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Venue, AppEvent } from '../../../types';
 import { EventService } from '../../../services/eventService';
 import { useToast } from '../../../components/ui/BrandedToast';
@@ -13,6 +13,9 @@ export const EventsManagementTab: React.FC<EventsManagementTabProps> = ({ venue 
     const [events, setEvents] = useState<AppEvent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isActionLoading, setIsActionLoading] = useState<string | null>(null);
+    const [isGenerating, setIsGenerating] = useState<string | null>(null);
+    const [analyzingId, setAnalyzingId] = useState<string | null>(null);
+    const [expandedAnalysisId, setExpandedAnalysisId] = useState<string | null>(null);
 
     const loadEvents = async () => {
         setIsLoading(true);
@@ -52,6 +55,57 @@ export const EventsManagementTab: React.FC<EventsManagementTabProps> = ({ venue 
         } finally {
             setIsActionLoading(null);
         }
+    };
+
+    const handleRefineDescription = async (event: AppEvent) => {
+        setIsGenerating(event.id);
+        try {
+            const refinedDescription = await EventService.generateDescription({
+                venueId: venue.id,
+                type: event.type,
+                date: event.date,
+                time: event.time
+            });
+            await EventService.updateEvent(event.id, { description: refinedDescription });
+            showToast('Artie has polished the description!', 'success');
+            await loadEvents();
+        } catch (error: any) {
+            showToast(error.message || 'Failed to polish description.', 'error');
+        } finally {
+            setIsGenerating(null);
+        }
+    };
+
+    const handleAnalyze = async (event: AppEvent) => {
+        setAnalyzingId(event.id);
+        try {
+            const analysis = await EventService.analyzeEvent({
+                title: event.title,
+                type: event.type,
+                date: event.date,
+                time: event.time,
+                description: event.description
+            });
+
+            // Save analysis to event
+            await EventService.updateEvent(event.id, { analysis });
+            showToast(`Artie Score: ${analysis.confidenceScore}/100`, 'success');
+            setExpandedAnalysisId(event.id); // Auto-expand results
+            await loadEvents();
+        } catch (error: any) {
+            showToast(error.message || 'Analysis failed.', 'error');
+        } finally {
+            setAnalyzingId(null);
+        }
+    };
+
+    const handleApprove = (event: AppEvent) => {
+        if (event.analysis?.lcbWarning) {
+            if (!window.confirm("CRITICAL WARNING: Artie detected a potential LCB compliance issue. Are you sure you want to publish this event?")) return;
+        } else if (event.analysis && event.analysis.confidenceScore < 50) {
+            if (!window.confirm(`Artie Score is low (${event.analysis.confidenceScore}). Are you sure you want to approve?`)) return;
+        }
+        handleUpdateStatus(event.id, { status: 'approved' });
     };
 
     return (
@@ -114,30 +168,112 @@ export const EventsManagementTab: React.FC<EventsManagementTabProps> = ({ venue 
                                         </p>
                                     )}
                                 </div>
+                                </div>
+
+                                {/* Artie Analysis Report Card */}
+                                {event.analysis && expandedAnalysisId === event.id && (
+                                    <div className="mt-4 bg-black/40 rounded-xl p-4 border border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`text-lg font-black font-league ${
+                                                    event.analysis.confidenceScore > 80 ? 'text-green-500' : 
+                                                    event.analysis.confidenceScore > 50 ? 'text-yellow-500' : 'text-red-500'
+                                                }`}>
+                                                    {event.analysis.confidenceScore}/100
+                                                </div>
+                                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Confidence Score</span>
+                                            </div>
+                                            {event.analysis.lcbWarning && (
+                                                <div className="flex items-center gap-1 text-red-500 bg-red-500/10 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border border-red-500/20">
+                                                    <ShieldAlert size={12} /> LCB Warning
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                            <p className="text-xs text-slate-300 italic">"{event.analysis.summary}"</p>
+                                            
+                                            {event.analysis.issues.length > 0 && (
+                                                <div className="space-y-1">
+                                                    <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                                                        <AlertTriangle size={10} /> Issues Detected:
+                                                    </p>
+                                                    <ul className="list-disc list-inside text-[10px] text-slate-400 pl-1">
+                                                        {event.analysis.issues.map((issue, idx) => (
+                                                            <li key={idx}>{issue}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            {event.analysis.suggestions.length > 0 && (
+                                                <div className="space-y-1">
+                                                     <p className="text-[10px] text-primary font-bold uppercase tracking-wider flex items-center gap-1">
+                                                        <Sparkles size={10} /> Suggestions:
+                                                    </p>
+                                                    <ul className="list-disc list-inside text-[10px] text-slate-400 pl-1">
+                                                        {event.analysis.suggestions.map((sugg, idx) => (
+                                                            <li key={idx}>{sugg}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-3">
-                                {event.status === 'approved' && (
                                     <button
                                         onClick={() => handleUpdateStatus(event.id, { isLeagueEvent: !event.isLeagueEvent })}
                                         disabled={!!isActionLoading}
                                         className={`h-10 px-4 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all border ${event.isLeagueEvent
-                                                ? 'bg-primary text-black border-primary shadow-[0_0_15px_-3px_rgba(251,191,36,0.3)]'
-                                                : 'bg-white/5 text-slate-400 border-white/10 hover:border-primary/50'
+                                            ? 'bg-primary text-black border-primary shadow-[0_0_15px_-3px_rgba(251,191,36,0.3)]'
+                                            : 'bg-white/5 text-slate-400 border-white/10 hover:border-primary/50'
                                             }`}
                                     >
                                         <Trophy size={14} className={event.isLeagueEvent ? "fill-current" : ""} /> League
                                     </button>
                                 )}
+                                
+                                {/* Analyze Button */}
+                                <button
+                                    onClick={() => event.analysis ? setExpandedAnalysisId(expandedAnalysisId === event.id ? null : event.id) : handleAnalyze(event)}
+                                    disabled={!!analyzingId && analyzingId !== event.id}
+                                    className={`h-10 px-4 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all border ${
+                                        event.analysis 
+                                        ? (event.analysis.lcbWarning ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-blue-500/10 text-blue-400 border-blue-500/30')
+                                        : 'bg-white/5 text-slate-400 border-white/10 hover:border-blue-500/50 hover:text-blue-400'
+                                    }`}
+                                >
+                                    {analyzingId === event.id ? (
+                                        <Loader2 size={14} className="animate-spin" />
+                                    ) : (
+                                        <BrainCircuit size={14} /> 
+                                    )}
+                                    {event.analysis ? (expandedAnalysisId === event.id ? 'Hide Report' : 'View Report') : 'Analyze'}
+                                </button>
                                 {event.status === 'pending' && (
                                     <button
-                                        onClick={() => handleUpdateStatus(event.id, { status: 'approved' })}
+                                        onClick={() => handleApprove(event)}
                                         disabled={!!isActionLoading}
                                         className="h-10 px-4 bg-green-600 hover:bg-green-500 text-white rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all"
                                     >
                                         <CheckCircle size={14} /> Approve
                                     </button>
                                 )}
+                                <button
+                                    onClick={() => handleRefineDescription(event)}
+                                    disabled={!!isActionLoading || !!isGenerating}
+                                    className="h-10 px-4 bg-primary/10 hover:bg-primary hover:text-black text-primary rounded-xl border border-primary/20 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all group"
+                                >
+                                    {isGenerating === event.id ? (
+                                        <Loader2 size={14} className="animate-spin" />
+                                    ) : (
+                                        <Sparkles size={14} className="group-hover:scale-125 transition-transform" />
+                                    )}
+                                    Refine
+                                </button>
                                 <button
                                     onClick={() => handleDelete(event.id)}
                                     disabled={!!isActionLoading}
@@ -147,26 +283,27 @@ export const EventsManagementTab: React.FC<EventsManagementTabProps> = ({ venue 
                                 </button>
                             </div>
                         </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="bg-slate-900/40 border border-dashed border-white/5 p-12 rounded-3xl text-center space-y-4">
-                    <Calendar className="w-12 h-12 text-slate-700 mx-auto" />
-                    <p className="text-slate-500 font-black uppercase tracking-widest text-xs">No events scheduled yet.</p>
-                </div>
-            )}
-
-            <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10">
-                <div className="flex gap-4">
-                    <Info className="text-primary shrink-0" size={24} />
-                    <div className="space-y-1">
-                        <h4 className="text-xs font-black text-primary uppercase tracking-wider font-league">Venue Hosting Rules</h4>
-                        <p className="text-[10px] text-slate-400 leading-relaxed font-medium">
-                            Events submitted by the community will appear here for your review. Once approved, they go live on the <span className="text-primary">Event Wire</span> and are visible to all League members. Make sure to reject any spam or non-compliant content to maintain your venue's standing.
-                        </p>
-                    </div>
-                </div>
-            </div>
+            ))}
         </div>
+    ) : (
+        <div className="bg-slate-900/40 border border-dashed border-white/5 p-12 rounded-3xl text-center space-y-4">
+            <Calendar className="w-12 h-12 text-slate-700 mx-auto" />
+            <p className="text-slate-500 font-black uppercase tracking-widest text-xs">No events scheduled yet.</p>
+        </div>
+    )
+}
+
+<div className="bg-primary/5 rounded-2xl p-6 border border-primary/10">
+    <div className="flex gap-4">
+        <Info className="text-primary shrink-0" size={24} />
+        <div className="space-y-1">
+            <h4 className="text-xs font-black text-primary uppercase tracking-wider font-league">Venue Hosting Rules</h4>
+            <p className="text-[10px] text-slate-400 leading-relaxed font-medium">
+                Events submitted by the community will appear here for your review. Once approved, they go live on the <span className="text-primary">Event Wire</span> and are visible to all League members. Make sure to reject any spam or non-compliant content to maintain your venue's standing.
+            </p>
+        </div>
+    </div>
+</div>
+        </div >
     );
 };

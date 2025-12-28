@@ -27,7 +27,10 @@ This rule applying strictly to **Venue Owners**, **Admins**, and **Internal Syst
 
 ### 3. The "Safe Ride" Safety Net
 *   **The Red Line**: Never glamorize loss of control or irresponsible driving.
-*   **The Constraint**: For any promotion involving late nights or high energy, implicitly or explicitly reference safety.
+*   **The Constraint**: For any promotion involving late afternoon or high energy (Trigger: 5:30 PM+), implicitly or explicitly reference safety.
+*   **Standard Links**:
+    - **Local**: Red Cab (360) 555-0100.
+    - **Ride-share**: Uber Deep Link (uber://), Lyft Web Link.
 *   **Examples**: "Grab a Lyft", "Safe Ride Home", "Bring your crew and book your ride home early."
 
 ## Output Format (The Traffic Light System)

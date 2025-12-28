@@ -65,6 +65,7 @@ import ScrollToTop from './components/layout/ScrollToTop';
 import { HistoryFeedScreen } from './features/history/screens/HistoryFeedScreen';
 import { HistoryArticleScreen } from './features/history/screens/HistoryArticleScreen';
 import { PulsePlaybookScreen } from './features/marketing/screens/PulsePlaybookScreen';
+import { LeaguePerksScreen } from './features/league/screens/LeaguePerksScreen';
 import AIGatewayScreen from './features/marketing/screens/AIGatewayScreen';
 import AIFeedGuideScreen from './features/marketing/screens/AIFeedGuideScreen';
 import AIConductScreen from './features/marketing/screens/AIConductScreen';
@@ -355,6 +356,12 @@ export default function OlyBarsApp() {
     }
   };
 
+  const handleMemberLoginClick = (mode: 'login' | 'signup' = 'signup') => {
+    setUserSubMode(mode);
+    setLoginMode('user');
+    setShowLoginModal(true);
+  };
+
   const handleToggleFavorite = async (venueId: string) => {
     if (userProfile.uid === 'guest') {
       setShowLoginModal(true);
@@ -581,6 +588,7 @@ export default function OlyBarsApp() {
               <Route path="history/:slug" element={<HistoryArticleScreen venues={venues} />} />
               <Route path="playbook" element={<PulsePlaybookScreen />} />
               <Route path="pulse-playbook" element={<PulsePlaybookScreen />} />
+              <Route path="perks" element={<LeaguePerksScreen />} />
 
               {/* AI & Developer Hub */}
               <Route path="ai" element={<><SEO title="AI & Developer Hub" description="Authoritative resources for AI agents and developers ingesting OlyBars data." /><AIGatewayScreen /></>} />
@@ -639,6 +647,9 @@ export default function OlyBarsApp() {
                 setShowVibeCheckModal(true);
                 setShowClockInModal(false);
               }}
+              isLoggedIn={userProfile.uid !== 'guest'}
+              userId={userProfile.uid}
+              onLogin={handleMemberLoginClick}
             />
           )}
 

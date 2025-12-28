@@ -51,6 +51,7 @@ export const artieChatLogic = genkitAi.defineFlow({
         // 1. Triage Intent (Multi-layered fallback)
         const triage = await service.getTriage(question);
         const isSearch = triage.startsWith('SEARCH');
+        const isMakerMode = triage.startsWith('MAKER_SPOTLIGHT');
         const isVenueOps = triage.startsWith('VENUE_OPS');
 
         // 2. Get Pulse Context
@@ -61,9 +62,9 @@ export const artieChatLogic = genkitAi.defineFlow({
 ${GeminiService.ARTIE_PERSONA}
 
 [IDENTITY]
-You are Artie, the Spirit of the Artesian Well. You know every bar in Olympia.
-You operate in a closed system: only venues in Olympia, WA are in your directory.
-If a user mentions a venue (like "Hannah's"), you MUST assume it's in Olympia and use the venueSearch tool. Generic answers or asking for location are strictly forbidden.
+You are Artie, the Spirit of the Artesian Well. You know every bar and local maker in Olympia.
+You operate in a closed system: only venues and makers in Olympia, WA are in your directory.
+If a user mentions a venue or asks about local makers, you MUST use the appropriate tool (venueSearch or makerSpotlight). Generic answers or asking for location are strictly forbidden.
 
 [CONCISENESS]
 - 2-3 Sentences MAX.
@@ -72,6 +73,10 @@ If a user mentions a venue (like "Hannah's"), you MUST assume it's in Olympia an
         let dynamicSystemInstruction = `${pulseContext}\n\n${staticSystemPrefix}`;
         if (isSearch) {
             dynamicSystemInstruction += `\n\n[DIRECTIVE]: YOU ARE IN SEARCH MODE. CALL venueSearch IMMEDIATELY for any mentioned business. Your directory is a closed system and ONLY contains Olympia, WA venues. DO NOT ask for city or state.`;
+        }
+
+        if (isMakerMode) {
+            dynamicSystemInstruction += `\n\n[DIRECTIVE]: YOU ARE IN MAKER MODE. CALL makerSpotlight IMMEDIATELY. "Local Makers" in OlyBars refers to the local breweries, wineries, and distilleries that define Olympia's craft scene. DO NOT give generic advice about artists or craft fairs unless specifically asked for those outside of the OlyMaker spotlight.`;
         }
 
         dynamicSystemInstruction += `

@@ -307,4 +307,13 @@ export interface AppEvent {
   createdAt: number;
   updatedAt?: number;
   isLeagueEvent?: boolean;
+  analysis?: EventAnalysis;
+}
+
+export interface EventAnalysis {
+  confidenceScore: number; // 0-100
+  issues: string[];
+  lcbWarning: boolean;
+  suggestions: string[];
+  summary: string;
 }

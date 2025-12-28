@@ -994,6 +994,81 @@ v1Router.get('/venues/:id/semantic', async (req, res) => {
     }
 });
 
+/**
+ * @route POST /api/ai/generate-description
+ * @desc Generate an AI event description based on context
+ */
+v1Router.post('/ai/generate-description', async (req, res) => {
+    const { venueId, type, date, time } = req.body;
+
+    if (!venueId || !type || !date || !time) {
+        return res.status(400).json({ error: 'Missing required context fields (venueId, type, date, time).' });
+    }
+
+    try {
+        const { db } = await import('./firebaseAdmin');
+        const { KnowledgeService } = await import('./services/knowledgeService');
+        const { GeminiService } = await import('../../functions/src/services/geminiService');
+
+        // 1. Fetch Venue Data
+        const venueDoc = await db.collection('venues').doc(venueId).get();
+        if (!venueDoc.exists) {
+            return res.status(404).json({ error: 'Venue not found' });
+        }
+        const venue = venueDoc.data();
+
+        // 2. Fetch Relevant Deals (Happy Hour/Flash Deals)
+        // For simplicity, we'll just check if the venue has registered deals
+        // In a real scenario, we might filter by time, but for now we provide the list to Artie.
+        const deals = venue?.deals || [];
+
+        // 3. Get Knowledge Context (Holidays/Weather)
+        const context = KnowledgeService.getEventContext(date);
+        const foodAlignment = KnowledgeService.getFoodOrHolidayAlignment(venue.type || '', date);
+
+        // 4. Generate with Artie
+        const gemini = new GeminiService();
+        const description = await gemini.generateEventDescription({
+            venueName: venue.name,
+            venueType: venue.type,
+            eventType: type,
+            date,
+            time,
+            weather: context.weatherOutlook,
+            holiday: context.holiday ? `${context.holiday}${foodAlignment ? ` (${foodAlignment})` : ''}` : foodAlignment || undefined,
+            deals
+        });
+
+        res.json({ description });
+    } catch (error: any) {
+        log('ERROR', 'AI Description Generation Failed', { error: error.message });
+        res.status(500).json({ error: 'Failed to generate description.' });
+    }
+});
+
+/**
+ * @route POST /api/ai/analyze-event
+ * @desc Analyze an event for quality and compliance
+ */
+v1Router.post('/ai/analyze-event', verifyToken, async (req, res) => {
+    const event = req.body;
+
+    if (!event || !event.title || !event.date) {
+        return res.status(400).json({ error: 'Missing required event fields for analysis.' });
+    }
+
+    try {
+        const { GeminiService } = await import('../../functions/src/services/geminiService');
+        const gemini = new GeminiService();
+
+        const analysis = await gemini.analyzeEvent(event);
+        res.json(analysis);
+    } catch (error: any) {
+        log('ERROR', 'Event Analysis Failed', { error: error.message });
+        res.status(500).json({ error: 'Failed to analyze event.' });
+    }
+});
+
 // --- MOUNT ROUTERS ---
 app.use('/api/v1', v1Router);
 app.use('/api/v2', v2Router);

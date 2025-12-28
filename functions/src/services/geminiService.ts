@@ -42,6 +42,7 @@ WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
 [SUGGESTION CATEGORIES]:
 - If discussing a venue: Suggest "Happy Hour?", "What's on tap?", "Check-in here".
 - If discussing the league: Suggest "See Leaderboard", "Find nearby bars", "How to level up?".
+- If discussing Local Makers: Suggest "See Breweries", "Find Cideries", "Local Distillery tours".
 - If guest user: Suggest "Join the League", "Find a bar", "What is OlyBars?".
 `;
 
@@ -76,7 +77,8 @@ WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
                             1. SAFETY CHECK: If input implies self-harm/suicide or illegal drug use, output "SAFETY".
                             2. LCB COMPLIANCE: If input (likely from a venue owner) asks for illegal marketing (e.g. "Chug contest", "Bottomless drinks", "Free shots", "Points for buying beer"), output "RISKY_MARKETING".
                             3. INTENT CHECK: If user wants to search venues/bars/happy hours, output "SEARCH: [keywords]".
-                            4. KNOWLEDGE CHECK: If user asks about general league rules, app help, or how things work (FAQ), output "PLAYBOOK: [keywords]". 
+                            4. MAKER CHECK: If user asks about Local Makers, breweries, wineries, cideries, or distilleries, output "MAKER_SPOTLIGHT: [type]".
+                            5. KNOWLEDGE CHECK: If user asks about general league rules, app help, or how things work (FAQ), output "PLAYBOOK: [keywords]". 
                             5. VENUE_OPS: If user (VENUE OWNER) wants to update their venue info, output "VENUE_OPS: [skill_id] [keywords]". 
                             6. BANNED (PRIORITY): If the question falls into any of these "Stay Away" categories, output "BANNED_[CATEGORY]":
                                - SALES: Asking for owner names, revenue, manager phone numbers, or big corporate distribution questions.
@@ -113,5 +115,93 @@ WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
             cachedContent,
             config: { temperature }
         });
+    }
+
+
+    async generateEventDescription(context: {
+        venueName: string;
+        venueType: string;
+        eventType: string;
+        date: string;
+        time: string;
+        weather?: string;
+        holiday?: string;
+        deals?: any[];
+    }) {
+        const prompt = `Generate a high-energy, contextually aware event description for OlyBars.
+        VENUE: ${context.venueName} (${context.venueType})
+        EVENT: ${context.eventType}
+        DATE: ${context.date} @ ${context.time}
+        WEATHER: ${context.weather || 'Standard Olympia Vibes'}
+        HOLIDAY: ${context.holiday || 'None'}
+        ACTIVE DEALS: ${context.deals?.map(d => `${d.title} (${d.time})`).join(', ') || 'None'}
+
+        CONSTRAINTS:
+        1. Max 2-3 sentences.
+        2. Stay in persona: Artie (Powered by Well 80). Warm, local, witty.
+        3. Compliance: NEVER mention volume/speed of drinking (no chugging, no "get wasted").
+        4. Compliance: ALWAYS suggest a safe ride if the event is late (Lyft/Red Cab).
+        5. Tone: OSWALD font energy (League vibes).
+
+        OUTPUT:
+        The generated description only.`;
+
+        const response = await this.genAI.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            config: { temperature: 0.8 }
+        });
+
+        return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+    }
+
+    async analyzeEvent(event: any): Promise<{ confidenceScore: number; issues: string[]; lcbWarning: boolean; suggestions: string[]; summary: string }> {
+        const prompt = `You are Artie, the Event Quality Guardian for OlyBars.
+        Analyze this event submission for completeness, excitement ("Vibe"), and LCB Compliance.
+
+        EVENT DATA:
+        Title: ${event.title}
+        Type: ${event.type}
+        Date: ${event.date}
+        Time: ${event.time}
+        Description: ${event.description || "MISSING"}
+
+        RULES:
+        1. COMPLETENESS: Does it have a good title, date, time, and descriptive text?
+        2. LCB COMPLIANCE:
+           - RED FLAG (Warning=true): "Bottomless", "All you can drink", "Free shots", "Chug challenge", "Drunk", "Wasted".
+           - GREEN FLAG: Focuses on music, trivia, food, or community.
+        3. VIBE CHECK: Is it boring? (e.g., just "Music") vs Exciting (e.g., "Live Jazz with The Cats").
+
+        OUTPUT JSON ONLY:
+        {
+           "confidenceScore": number (0-100),
+           "issues": string[] (List specific missing fields or weaknesses),
+           "lcbWarning": boolean (True if it violates anti-volume rules),
+           "suggestions": string[] (2-3 quick actions to improve it),
+           "summary": string (1 sentence critique in Artie Persona)
+        }`;
+
+        const response = await this.genAI.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            config: { response_mime_type: "application/json" }
+        });
+
+        const text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!text) throw new Error("Artie failed to analyze event.");
+
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error("JSON Parse Error on Artie Analysis:", text);
+            return {
+                confidenceScore: 0,
+                issues: ["Failed to parse AI response"],
+                lcbWarning: false,
+                suggestions: [],
+                summary: "Artie is confused. Try again."
+            };
+        }
     }
 }

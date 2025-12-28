@@ -15,6 +15,9 @@ interface ClockInModalProps {
     setClockedInVenue: React.Dispatch<React.SetStateAction<string | null>>;
     vibeChecked?: boolean;
     onVibeCheckPrompt?: () => void;
+    isLoggedIn: boolean;
+    userId: string;
+    onLogin: (mode: 'login' | 'signup') => void;
 }
 
 export const ClockInModal: React.FC<ClockInModalProps> = ({
@@ -26,6 +29,9 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     setClockedInVenue,
     vibeChecked,
     onVibeCheckPrompt,
+    isLoggedIn,
+    userId,
+    onLogin,
 }) => {
     const [showCamera, setShowCamera] = useState(false);
     const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
@@ -102,7 +108,6 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
         try {
             const { latitude, longitude } = coords;
-            const userId = "guest_user_123"; // Placeholder until Auth wired
 
             await performCheckIn(selectedVenue.id, userId, latitude, longitude);
 
@@ -118,7 +123,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
             setIsSuccess(true);
             if (vibeChecked) {
-                setTimeout(onClose, 2000);
+                setTimeout(onClose, 3000); // Slightly longer to show streak
             }
         } catch (err: any) {
             setErrorMessage(err.message);
@@ -135,7 +140,17 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                     </div>
                     <div>
                         <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league italic">Checked In!</h2>
-                        <p className="text-primary font-black uppercase tracking-widest text-xs mt-1">+10 LEAGUE POINTS AWARDED</p>
+                        <p className="text-primary font-black uppercase tracking-widest text-[10px] mt-1">+10 LEAGUE POINTS AWARDED</p>
+                    </div>
+
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Current Streak</p>
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="text-2xl font-black text-white font-mono">
+                                {setCheckInHistory ? '🔥 2-DAY STREAK' : '🔥 1-DAY STREAK'}
+                            </div>
+                        </div>
+                        <p className="text-[9px] text-primary font-bold uppercase mt-1 italic">Keep it up for a Bonus Badge!</p>
                     </div>
 
                     {!vibeChecked && onVibeCheckPrompt ? (
@@ -289,17 +304,80 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                         </div>
                     )}
 
-                    <button
-                        onClick={confirmClockIn}
-                        disabled={isCheckingIn || !isAtVenue}
-                        className="w-full bg-primary hover:bg-yellow-400 disabled:bg-slate-700 disabled:text-slate-400 text-black font-bold text-lg uppercase tracking-wider py-4 rounded-lg shadow-md active:scale-95 transition-transform flex items-center justify-center gap-2"
-                    >
-                        {isCheckingIn ? (
-                            <><Loader2 className="w-5 h-5 animate-spin" /> Verifying...</>
-                        ) : (
-                            <><MapPin className="w-5 h-5" /> CONFIRM I AM HERE</>
-                        )}
-                    </button>
+                    {!isLoggedIn ? (
+                        <div className="space-y-4">
+                            <button
+                                onClick={() => onLogin('signup')}
+                                className="w-full bg-primary text-black font-black py-4 rounded-2xl uppercase tracking-[0.2em] text-xs shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all outline-none"
+                            >
+                                Join the League to Clock In
+                            </button>
+                            <button
+                                onClick={() => window.location.href = '/perks'}
+                                className="w-full text-slate-500 font-bold uppercase tracking-widest text-[9px] hover:text-primary transition-colors flex items-center justify-center gap-2 outline-none"
+                            >
+                                <Info className="w-3.5 h-3.5" />
+                                Learn More About League Perks
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={confirmClockIn}
+                            disabled={isCheckingIn || !isAtVenue}
+                            className={`w-full py-4 rounded-lg text-lg font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 outline-none ${isAtVenue
+                                ? 'bg-primary text-black shadow-md hover:bg-yellow-400 active:scale-95'
+                                : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                                }`}
+                        >
+                            {isCheckingIn ? (
+                                <><Loader2 className="w-5 h-5 animate-spin" /> Verifying...</>
+                            ) : (
+                                <><MapPin className="w-5 h-5" /> CONFIRM I AM HERE</>
+                            )}
+                        </button>
+                    )}
+
+                    {/* LCB SAFE RIDE HOME - TRIGGER 5:30 PM */}
+                    {(() => {
+                        const now = new Date();
+                        const isLate = now.getHours() > 17 || (now.getHours() === 17 && now.getMinutes() >= 30);
+                        if (!isLate) return null;
+
+                        return (
+                            <div className="mt-4 pt-4 border-t border-slate-800 animate-in slide-in-from-bottom duration-500">
+                                <div className="flex items-center justify-between mb-3">
+                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Safe Ride Home</p>
+                                    <span className="flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        onClick={() => window.location.href = 'tel:3605550100'}
+                                        className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-primary/50 transition-all group"
+                                    >
+                                        <span className="text-[10px] font-black text-white group-hover:text-primary">RED CAB</span>
+                                        <span className="text-[8px] text-slate-500 font-bold">Local</span>
+                                    </button>
+                                    <button
+                                        onClick={() => window.open('https://m.uber.com/ul/?action=setPickup', '_blank')}
+                                        className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-primary/50 transition-all group"
+                                    >
+                                        <span className="text-[10px] font-black text-white group-hover:text-primary lowercase italic">uber</span>
+                                        <span className="text-[8px] text-slate-500 font-bold">App</span>
+                                    </button>
+                                    <button
+                                        onClick={() => window.open('https://lyft.com/ride?id=lyft', '_blank')}
+                                        className="flex flex-col items-center justify-center p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-primary/50 transition-all group"
+                                    >
+                                        <span className="text-[10px] font-black text-white group-hover:text-primary">LYFT</span>
+                                        <span className="text-[8px] text-slate-500 font-bold">Web</span>
+                                    </button>
+                                </div>
+                                <p className="text-[8px] text-slate-500 font-bold uppercase mt-3 text-center italic">
+                                    "Stay safe, stay in the League."
+                                </p>
+                            </div>
+                        );
+                    })()}
                 </div>
             </div>
         </div>

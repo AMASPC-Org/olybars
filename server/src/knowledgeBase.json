@@ -31,6 +31,10 @@
         {
             "question": "Does Artie give points?",
             "answer": "Artie doesn't hand out points directly for chatting, but he's your ultimate League strategist. He knows exactly where the Double Point events and high-value targets are. Just ask him where the action is."
+        },
+        {
+            "question": "What are Local Makers?",
+            "answer": "Local Makers are the heart of Olympia's craft scene—our home-grown breweries, wineries, cideries, and distilleries. From Well 80's artesian brews to local distilleries, these are the folks putting Oly on the map."
         }
     ],
     "persona": {
@@ -64,7 +68,9 @@
         "local_knowledge": {
             "The Broho": "The Brotherhood Lounge",
             "The Crypt": "The Cryptatropa Bar",
-            "Well 80": "The legendary brewhouse where the water is as crisp as the vibes."
+            "Well 80": "The legendary brewhouse where the water is as crisp as the vibes.",
+            "Matchless": "Craft brewing excellence located in Tumwater/Olympia.",
+            "Local Makers": "Our sanctioned network of craft alcohol producers using local ingredients and artesian water."
         }
     }
 }

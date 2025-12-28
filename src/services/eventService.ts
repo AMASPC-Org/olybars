@@ -87,4 +87,49 @@ export class EventService {
             throw error;
         }
     }
+
+    /**
+     * Generate an AI description for an event.
+     */
+    static async generateDescription(context: { venueId: string; type: string; date: string; time: string }): Promise<string> {
+        const { API_BASE_URL } = await import('../lib/api-config');
+        try {
+            const response = await fetch(`${API_BASE_URL}/ai/generate-description`, {
+                method: 'POST',
+                headers: await getAuthHeaders(),
+                body: JSON.stringify(context),
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to generate AI description');
+            }
+            const data = await response.json();
+            return data.description;
+        } catch (error) {
+            console.error('Error in generateDescription:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Analyze an event for quality and compliance (Artie).
+     */
+    static async analyzeEvent(event: Partial<AppEvent>): Promise<import('../types').EventAnalysis> {
+        const { API_BASE_URL } = await import('../lib/api-config');
+        try {
+            const response = await fetch(`${API_BASE_URL}/ai/analyze-event`, {
+                method: 'POST',
+                headers: await getAuthHeaders(),
+                body: JSON.stringify(event),
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to analyze event');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error in analyzeEvent:', error);
+            throw error;
+        }
+    }
 }

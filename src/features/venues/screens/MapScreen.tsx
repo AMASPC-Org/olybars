@@ -19,9 +19,11 @@ const MapScreen = () => {
   const { coords, error: geoError, loading: geoLoading, requestLocation, isRequested } = useGeolocation({ shouldPrompt: false });
   const mapRef = useRef<HTMLDivElement>(null);
   const infoWindowRef = useRef<any>(null); // Singleton InfoWindow ref
+  const markersRef = useRef<any[]>([]); // Track active markers
   const { status, retry, apiKey } = useGoogleMapsScript();
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
+  const pulseIntervalRef = useRef<any>(null);
 
   const initMap = () => {
     if (!mapRef.current) return;
@@ -52,10 +54,13 @@ const MapScreen = () => {
   useEffect(() => {
     if (!map || !venues || status !== 'ready') return;
 
-    // Clear existing markers (In a real app, track them in a ref)
+    // 1. Clear existing markers
+    markersRef.current.forEach(m => m.setMap(null));
+    markersRef.current = [];
+
     venues.forEach(venue => {
       if (!venue.location?.lat || !venue.location?.lng) return;
-      if (venue.isActive === false || venue.isVisible === false) return; // Ghost List filter
+      if (venue.isActive === false || venue.isVisible === false) return;
       if (venue.physicalRoom === false) return; // Production Only filter for Map
 
       const isLeagueAnchor = venue.tier_config?.is_league_eligible;
@@ -80,9 +85,9 @@ const MapScreen = () => {
         icon: {
           path: showBeerMug
             ? BEER_MUG_PATH
-            : (window as any).google.maps.SymbolPath.CIRCLE, // Simplified from arrow to circle
+            : (window as any).google.maps.SymbolPath.CIRCLE,
           scale: showBeerMug ? (isBuzzing ? 1.4 : 1.1) : 7,
-          fillColor: isLeagueAnchor ? "#fbbf24" : "#64748b", // Gold for anchors, slate for directory
+          fillColor: isLeagueAnchor ? "#fbbf24" : "#64748b",
           fillOpacity: 1,
           strokeWeight: isLeagueAnchor ? 2 : 1,
           strokeColor: isLeagueAnchor ? "#0f172a" : "#ffffff",
@@ -90,6 +95,60 @@ const MapScreen = () => {
           labelOrigin: showBeerMug ? new (window as any).google.maps.Point(12, 28) : new (window as any).google.maps.Point(0, 3)
         },
       });
+
+      markersRef.current.push(marker);
+
+      // LIVE PULSE: Add a background glow for active venues
+      const recentActivity = venue.checkIns && venue.checkIns > 0;
+      const recentVibeCheck = venue.currentBuzz?.lastUpdated && (Date.now() - venue.currentBuzz.lastUpdated) < 3600000; // Last 1 hour
+
+      if (recentActivity || recentVibeCheck) {
+        const pulseMarker = new (window as any).google.maps.Marker({
+          position: { lat: venue.location.lat, lng: venue.location.lng },
+          map: map,
+          zIndex: -1,
+          icon: {
+            path: (window as any).google.maps.SymbolPath.CIRCLE,
+            scale: 20,
+            fillColor: recentVibeCheck ? "#fbbf24" : "#60a5fa",
+            fillOpacity: 0.25,
+            strokeWeight: 0,
+            animation: (window as any).google.maps.Animation.DROP
+          }
+        });
+        markersRef.current.push(pulseMarker);
+
+        // BEACON ANIMATION (Radar Pulse)
+        let radius = 20;
+        let opacity = 0.25;
+        const beaconCircle = new (window as any).google.maps.Circle({
+          strokeWeight: 0,
+          fillColor: recentVibeCheck ? "#fbbf24" : "#60a5fa",
+          fillOpacity: opacity,
+          map: map,
+          center: { lat: venue.location.lat, lng: venue.location.lng },
+          radius: radius,
+          clickable: false,
+          zIndex: -2
+        });
+
+        markersRef.current.push(beaconCircle);
+
+        // Create animation loop for this specific beacon
+        const animateBeacon = () => {
+          radius += 1.5;
+          opacity -= 0.008;
+          if (radius > 150) {
+            radius = 20;
+            opacity = 0.25;
+          }
+          beaconCircle.setRadius(radius);
+          beaconCircle.setOptions({ fillOpacity: Math.max(0, opacity) });
+        };
+
+        const intervalIdx = setInterval(animateBeacon, 50);
+        markersRef.current.push({ setMap: () => clearInterval(intervalIdx) }); // Hack to clear interval on cleanup
+      }
 
       // Singleton InfoWindow pattern
       if (!infoWindowRef.current) {

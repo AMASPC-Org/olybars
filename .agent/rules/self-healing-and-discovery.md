@@ -7,18 +7,18 @@ trigger: always_on
 This rule governs how the agent responds to errors and how it discovers the system state before acting.
 
 ## 1. The Self-Healing Loop
-When a command fails (e.g., 
-pm run build errors) or a runtime bug is discovered:
+When a command fails (e.g., pm run build errors) or a runtime bug is discovered:
 - **Phase 1: Diagnostic**: Do not immediately retry or guess. Read the error log fully. Locate the exact line and file.
 - **Phase 2: Root Cause Analysis**: State the root cause out loud (e.g., "The backend added a field that the frontend interface doesn't expect").
 - **Phase 3: Deep Audit**: Scan for other instances where this logic exists. (e.g., If a types file changed, find all files importing it).
 - **Phase 4: Targeted Fix**: Apply the fix across ALL identified locations, not just the one that errored.
+- **Phase 5: Build Integrity**: ALWAYS run `npm run build` after any logic or type change in the frontend or backend. Success in a single file doesn't guarantee the project still builds.
 
 ## 2. Dependency Awareness (Cross-Stack Loop)
 For every change, the agent MUST verify the "Ripple Effect":
 - **Backend -> Frontend**: If an API response changes, update the frontend types and components.
 - **Code -> Seed**: If a data model changes, update server/src/seed.ts.
-- **Logic -> Rules**: If a new action is added, check irestore.rules.
+- **Logic -> Rules**: If a new action is added, check firestore.rules.
 - **Deployment -> Docs**: Update olybars_technical_spec.md or README if architecture changes.
 
 ## 3. The Discovery Mandate
@@ -33,6 +33,10 @@ Every data-layer change (Firestore fields, API responses) MUST:
 - **Update Types**: reflect the change in src/types/.
 - **Verify Emulator**: Run the seed script in the local emulator to verify no schema breakages before proposing a deploy.
 - **Document**: Update the "Data Model" section in olybars_technical_spec.md (or equivalent).
+
+## 5. Shell & Terminal Integrity
+- **Windows PowerShell**: Use `;` as the statement separator. NEVER use `&&`.
+- **Case Sensitivity**: Be mindful of paths; although Windows is case-insensitive, the CI/CD environment (Cloud Run) is Linux and WILL break if imports or paths don't match exactly.
 
 ---
 > [!IMPORTANT]

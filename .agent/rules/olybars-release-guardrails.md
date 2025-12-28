@@ -61,3 +61,9 @@ Self-healing customization rule:
   1. Frontend Interfaces (src/types/)
   2. Data Seed Scripts (server/src/seed.ts)
   3. Documentation (olybars_technical_spec.md)
+
+## Hidden Build Dependencies
+- **Warning**: irebase deploy (even for --only hosting) triggers the unctions build hook if specified in irebase.json. 
+- **Mandatory**: Always run 
+pm run build --prefix functions before attempting any Firebase deployment to ensure no hidden TypeScript errors terminate the process.
+- **Mandatory**: If the unctions build fails, the deployment MUST be aborted and the error resolved first.
