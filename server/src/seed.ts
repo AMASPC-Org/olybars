@@ -460,7 +460,13 @@ const venues = [
         isHistoricalAnchor: true,
         historySnippet: "Rumored entrance to the tunnels and Oly's oldest bar.",
         cheatCodeUrl: '/history/tunnels-of-olympia',
-        isPaidLeagueMember: true
+        isPaidLeagueMember: true,
+        hasGameVibeCheckEnabled: true,
+        amenityDetails: [
+            { id: 'pool_1', name: 'Pool Table', count: 1 },
+            { id: 'shuffleboard', name: 'Shuffleboard', count: 1 }
+        ],
+        liveGameStatus: {}
     },
     {
         id: 'mccoys-tavern',
@@ -759,7 +765,13 @@ const venues = [
         triviaTime: '19:00',
         isPaidLeagueMember: true,
         ownerId: "KU9KvRYzzrZfVU7BV4gaPYAFlKS2", // Test Owner
-        managerIds: ["KU9KvRYzzrZfVU7BV4gaPYAFlKS2"]
+        managerIds: ["KU9KvRYzzrZfVU7BV4gaPYAFlKS2"],
+        hasGameVibeCheckEnabled: true,
+        amenityDetails: [
+            { id: 'pool_1', name: 'Front Pool Table', count: 1 },
+            { id: 'pool_2', name: 'Back Pool Table', count: 1 }
+        ],
+        liveGameStatus: {}
     },
     {
         id: 'charlies-bar-grill',

@@ -1,5 +1,5 @@
 ﻿import React, { useState, useRef } from 'react';
-import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin, Gamepad2 } from 'lucide-react';
+import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin, Gamepad2, Clock, Zap } from 'lucide-react';
 import { Venue, VenueStatus, GameStatus } from '../../../types';
 import { getGameTTL } from '../../../config/gameConfig';
 import { useGeolocation } from '../../../hooks/useGeolocation';
@@ -116,9 +116,11 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     };
 
     const vibeOptions: { status: VenueStatus; label: string; icon: any; color: string; desc: string }[] = [
+        { status: 'dead', label: 'Dead', icon: Clock, color: 'text-slate-500', desc: 'Empty, almost no one here' },
         { status: 'chill', label: 'Chill', icon: Beer, color: 'text-blue-400', desc: 'Relaxed, plenty of space' },
         { status: 'lively', label: 'Lively', icon: Users, color: 'text-primary', desc: 'Good energy, moderate crowd' },
         { status: 'buzzing', label: 'Buzzing', icon: Flame, color: 'text-red-500', desc: 'Packed, high energy!' },
+        { status: 'packed', label: 'Packed', icon: Zap, color: 'text-pink-500', desc: 'Shoulder to shoulder, wild!' },
     ];
 
     if (isSuccess) {

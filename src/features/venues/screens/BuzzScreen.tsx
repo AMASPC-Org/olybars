@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   Flame, Beer, Star, Users, MapPin,
   Trophy, ChevronRight, Crown, Search, Filter,
-  Bot, Clock, Zap
+  Bot, Clock, Zap, Gamepad2
 } from 'lucide-react';
 import { Venue, VenueStatus, UserProfile } from '../../../types';
 import { useGeolocation } from '../../../hooks/useGeolocation';
@@ -11,7 +11,32 @@ import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
 import { isVenueOpen, getVenueStatus } from '../../../utils/venueUtils';
 import { PULSE_CONFIG } from '../../../config/pulse';
 
+const SkeletonCard = () => (
+  <div className="bg-surface rounded-xl border border-slate-800 p-4 shadow-lg animate-pulse">
+    <div className="flex justify-between items-start mb-3">
+      <div className="space-y-2">
+        <div className="h-6 w-48 bg-slate-800 rounded"></div>
+        <div className="h-3 w-32 bg-slate-800 rounded"></div>
+      </div>
+      <div className="h-6 w-20 bg-slate-800 rounded-full"></div>
+    </div>
+    <div className="h-10 w-full bg-slate-800 rounded mb-4"></div>
+    <div className="flex gap-2">
+      <div className="h-10 flex-1 bg-slate-800 rounded"></div>
+      <div className="h-10 flex-1 bg-slate-800 rounded"></div>
+    </div>
+  </div>
+);
+
 const PulseMeter = ({ status }: { status: VenueStatus }) => {
+  if (status === 'dead') {
+    return (
+      <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">
+        <Clock className="w-3 h-3" /> Dead
+      </span>
+    );
+  }
+
   if (status === 'chill') {
     return (
       <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-900/30 text-blue-200 text-xs font-bold border border-blue-800">
@@ -28,9 +53,17 @@ const PulseMeter = ({ status }: { status: VenueStatus }) => {
     );
   }
 
+  if (status === 'buzzing') {
+    return (
+      <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-900/30 text-red-200 text-xs font-bold border border-red-800 animate-pulse">
+        <Flame className="w-3 h-3" /> Buzzing
+      </span>
+    );
+  }
+
   return (
-    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-900/30 text-red-200 text-xs font-bold border border-red-800 animate-pulse">
-      <Flame className="w-3 h-3" /> Buzzing
+    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-900/30 text-pink-200 text-xs font-bold border border-pink-800 animate-pulse">
+      <Zap className="w-3 h-3" /> Packed
     </span>
   );
 };
@@ -38,9 +71,11 @@ const PulseMeter = ({ status }: { status: VenueStatus }) => {
 type FilterKind = 'status' | 'deals' | 'league' | 'tonight' | 'near' | 'all';
 
 const STATUS_ORDER: Record<VenueStatus, number> = {
-  buzzing: 0,
-  lively: 1,
-  chill: 2,
+  packed: 0,
+  buzzing: 1,
+  lively: 2,
+  chill: 3,
+  dead: 4,
 };
 
 // Main Screen
@@ -53,7 +88,8 @@ export const BuzzScreen: React.FC<{
   handleVibeCheck?: (v: Venue, hasConsent?: boolean, photoUrl?: string) => void;
   lastVibeChecks?: Record<string, number>;
   lastGlobalVibeCheck?: number;
-}> = ({ venues, userProfile, userPoints, handleClockIn, clockedInVenue, handleVibeCheck, lastVibeChecks, lastGlobalVibeCheck }) => {
+  isLoading?: boolean;
+}> = ({ venues, userProfile, userPoints, handleClockIn, clockedInVenue, handleVibeCheck, lastVibeChecks, lastGlobalVibeCheck, isLoading = false }) => {
   const isGuest = userProfile.role === 'guest';
   const navigate = useNavigate();
   const [filterKind, setFilterKind] = useState<FilterKind>('all');
@@ -396,7 +432,7 @@ export const BuzzScreen: React.FC<{
 
         <div className="relative group/list">
           {/* JOIN THE LEAGUE CONVERSION BANNER (FOR GUESTS) */}
-          {isGuest && (
+          {!isLoading && isGuest && (
             <div className="mb-6 px-1">
               <button
                 onClick={() => navigate('/league')}
@@ -414,8 +450,18 @@ export const BuzzScreen: React.FC<{
           )}
 
           <div className="space-y-4 max-h-[600px] overflow-y-auto no-scrollbar pb-12 transition-all">
+
+            {isLoading && (
+              <div className="space-y-4">
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+              </div>
+            )}
+
             {/* 1. Paid Position: League Spotlight (Featured) */}
-            {!isFallbackActive && venuesWithDistance.filter(v => v.isFeatured && v.isOpen).slice(0, 1).map(spotlight => (
+            {!isLoading && !isFallbackActive && venuesWithDistance.filter(v => v.isFeatured && v.isOpen).slice(0, 1).map(spotlight => (
               <div key={`spotlight-${spotlight.id}`} className="bg-gradient-to-br from-slate-900 to-black rounded-2xl border-2 border-primary/40 p-1 shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 px-3 py-1 bg-primary text-black text-[9px] font-black uppercase tracking-widest rounded-bl-xl z-10 shadow-lg">
                   Spotlight
@@ -457,7 +503,7 @@ export const BuzzScreen: React.FC<{
               </div>
             ))}
 
-            {isFallbackActive && (
+            {!isLoading && isFallbackActive && (
               <div className="flex flex-col items-center justify-center p-6 bg-primary/5 border border-primary/20 rounded-2xl mb-6 text-center">
                 <div className="flex items-center gap-2 mb-2">
                   <Trophy className="w-5 h-5 text-primary" />
@@ -490,7 +536,7 @@ export const BuzzScreen: React.FC<{
             )}
 
             {/* 2. Main Pulse List */}
-            {displayVenues
+            {!isLoading && displayVenues
               .filter(v => !(!isFallbackActive && v.isFeatured && v.isOpen)) // Don't repeat the spotlighted venue if it's already at top
               .map((venue) => (
                 <div key={venue.id} className={`bg-surface rounded-xl border p-4 shadow-lg transition-transform duration-100 ${isFallbackActive ? 'border-primary/10 bg-slate-900/40 opacity-80' : 'border-slate-800'}`}>
@@ -530,6 +576,15 @@ export const BuzzScreen: React.FC<{
                   )}
 
                   <div className="flex gap-2">
+                    {venue.hasGameVibeCheckEnabled && (
+                      <button
+                        onClick={() => handleVibeCheck && handleVibeCheck(venue)}
+                        className="py-3 px-4 rounded-lg bg-surface border-2 border-purple-500/50 text-purple-400 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-purple-500/10 hover:border-purple-500 transition-all shadow-sm"
+                        title="Update Live Game Status"
+                      >
+                        <Gamepad2 size={16} />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleVibeCheck && handleVibeCheck(venue)}
                       className={`flex-1 py-3 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all border-2 shadow-sm ${(() => {

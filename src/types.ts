@@ -1,6 +1,6 @@
 import { SystemRole, VenueRole } from './types/auth_schema';
 
-export type VenueStatus = 'chill' | 'lively' | 'buzzing';
+export type VenueStatus = 'dead' | 'chill' | 'lively' | 'buzzing' | 'packed';
 
 export interface FlashDeal {
   id?: string;

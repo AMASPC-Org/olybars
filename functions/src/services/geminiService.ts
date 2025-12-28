@@ -114,8 +114,11 @@ WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
         CONSTRAINTS:
         1. Max 2-3 sentences.
         2. Stay in persona: Artie (Powered by Well 80). Warm, local, witty.
-        3. Compliance: NEVER mention volume/speed of drinking (no chugging, no "get wasted").
-        4. Compliance: ALWAYS suggest a safe ride if the event is late (Lyft/Red Cab).
+        3. [STRICT LCB COMPLIANCE]:
+           - ANTI-VOLUME: NEVER imply the goal is to consume alcohol rapidly or in large quantities.
+           - FORBIDDEN TERMS: "Bottomless", "Chug", "Wasted", "Get Hammered", "All you can drink", "Unlimited", "Endless".
+           - THE PIVOT: If constraints or inputs imply these terms, PIVOT the description to focus on 'Flavor', 'Experience', or 'Community' without scolding.
+        4. SAFE RIDE: ALWAYS suggest a safe ride (Lyft/Red Cab) if the event is after 5:30 PM.
         5. Tone: OSWALD font energy (League vibes).
 
         OUTPUT:
@@ -143,9 +146,10 @@ WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
 
         RULES:
         1. COMPLETENESS: Does it have a good title, date, time, and descriptive text?
-        2. LCB COMPLIANCE:
-           - RED FLAG (Warning=true): "Bottomless", "All you can drink", "Free shots", "Chug challenge", "Drunk", "Wasted".
-           - GREEN FLAG: Focuses on music, trivia, food, or community.
+        2. LCB COMPLIANCE (Traffic Light System):
+           - RED LIGHT (Warning=true): Usage of "Bottomless", "All you can drink", "Free shots", "Chug challenge", "Drunk", "Wasted".
+           - CITATION DIRECTIVE: If RED LIGHT, explicitly cite "WAC 314-52" as the authority in the summary.
+           - GREEN LIGHT: Focuses on music, trivia, food, or community.
         3. VIBE CHECK: Is it boring? (e.g., just "Music") vs Exciting (e.g., "Live Jazz with The Cats").
 
         OUTPUT JSON ONLY:
@@ -163,8 +167,11 @@ WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
             config: { response_mime_type: "application/json" }
         });
 
-        const text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
         if (!text) throw new Error("Artie failed to analyze event.");
+
+        // Strip markdown code blocks if present
+        text = text.replace(/```json\n?|```/g, '').trim();
 
         try {
             return JSON.parse(text);

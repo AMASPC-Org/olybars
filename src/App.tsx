@@ -70,6 +70,7 @@ import AIGatewayScreen from './features/marketing/screens/AIGatewayScreen';
 import AIFeedGuideScreen from './features/marketing/screens/AIFeedGuideScreen';
 import AIConductScreen from './features/marketing/screens/AIConductScreen';
 import ClaimVenuePage from './pages/partners/ClaimVenuePage';
+import GlossaryScreen from './screens/GlossaryScreen';
 
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
@@ -478,28 +479,23 @@ export default function OlyBarsApp() {
               <Route
                 index
                 element={
-                  isLoading ? (
-                    <div className="p-10 text-center text-primary font-bold">
-                      Connecting to AMA Network...
-                    </div>
-                  ) : (
-                    <>
-                      <SEO
-                        title="Pulse & Buzz"
-                        description="Track the real-time vibe of downtown Olympia. See which bars are buzzing right now."
-                      />
-                      <BuzzScreen
-                        venues={venues}
-                        userProfile={userProfile}
-                        userPoints={userPoints}
-                        handleClockIn={handleClockIn}
-                        clockedInVenue={clockedInVenue}
-                        handleVibeCheck={handleVibeCheck}
-                        lastVibeChecks={userProfile.lastVibeChecks}
-                        lastGlobalVibeCheck={userProfile.lastGlobalVibeCheck}
-                      />
-                    </>
-                  )
+                  <>
+                    <SEO
+                      title="Pulse & Buzz"
+                      description="Track the real-time vibe of downtown Olympia. See which bars are buzzing right now."
+                    />
+                    <BuzzScreen
+                      venues={venues}
+                      userProfile={userProfile}
+                      userPoints={userPoints}
+                      handleClockIn={handleClockIn}
+                      clockedInVenue={clockedInVenue}
+                      handleVibeCheck={handleVibeCheck}
+                      lastVibeChecks={userProfile.lastVibeChecks}
+                      lastGlobalVibeCheck={userProfile.lastGlobalVibeCheck}
+                      isLoading={isLoading}
+                    />
+                  </>
                 }
               />
               <Route path="karaoke" element={<><SEO title="Karaoke Guide" description="Find the best karaoke spots in Olympia tonight." /><KaraokeScreen venues={venues} /></>} />
@@ -589,6 +585,7 @@ export default function OlyBarsApp() {
               <Route path="playbook" element={<PulsePlaybookScreen />} />
               <Route path="pulse-playbook" element={<PulsePlaybookScreen />} />
               <Route path="perks" element={<LeaguePerksScreen />} />
+              <Route path="glossary" element={<GlossaryScreen />} />
 
               {/* AI & Developer Hub */}
               <Route path="ai" element={<><SEO title="AI & Developer Hub" description="Authoritative resources for AI agents and developers ingesting OlyBars data." /><AIGatewayScreen /></>} />
