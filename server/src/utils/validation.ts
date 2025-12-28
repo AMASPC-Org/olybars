@@ -93,3 +93,15 @@ export const VenueUpdateSchema = z.object({
 export const VenueOnboardSchema = z.object({
     googlePlaceId: z.string().min(1),
 });
+export const AppEventSchema = z.object({
+    venueId: z.string().min(1),
+    venueName: z.string().min(1),
+    title: z.string().min(1).max(100),
+    type: z.enum(['karaoke', 'trivia', 'live_music', 'bingo', 'openmic', 'other']),
+    date: z.string().min(1),
+    time: z.string().min(1),
+    description: z.string().max(500).optional(),
+    points: z.number().optional(),
+    status: z.enum(['pending', 'approved', 'rejected']).optional(),
+    isLeagueEvent: z.boolean().optional(),
+});

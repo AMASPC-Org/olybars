@@ -13,7 +13,8 @@ import {
     UserUpdateSchema,
     ChatRequestSchema,
     VenueUpdateSchema,
-    VenueOnboardSchema
+    VenueOnboardSchema,
+    AppEventSchema
 } from './utils/validation';
 
 const app = express();
@@ -710,6 +711,146 @@ v1Router.get('/activity/recent', async (req, res) => {
     }
 });
 
+/**
+ * @route GET /api/events
+ * @desc Fetch events (approved or user's own)
+ */
+v1Router.get('/events', async (req, res) => {
+    const { venueId, status } = req.query;
+    try {
+        const { db } = await import('./firebaseAdmin');
+        let query: any = db.collection('events');
+
+        if (venueId) {
+            query = query.where('venueId', '==', venueId);
+        }
+        if (status) {
+            query = query.where('status', '==', status);
+        } else {
+            // Default: show only approved events publicly
+            query = query.where('status', '==', 'approved');
+        }
+
+        const snapshot = await query.orderBy('createdAt', 'desc').get();
+        const events = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+        res.json(events);
+    } catch (error: any) {
+        log('ERROR', 'Failed to fetch events', { error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route POST /api/events
+ * @desc Submit an event (Public or Authenticated)
+ */
+v1Router.post('/events', verifyHoneypot, async (req, res) => {
+    const validation = AppEventSchema.safeParse(req.body);
+    if (!validation.success) {
+        return res.status(400).json({ error: 'Invalid event data', details: validation.error.format() });
+    }
+
+    try {
+        const { db } = await import('./firebaseAdmin');
+        const eventData = {
+            ...validation.data,
+            status: 'pending', // Always start as pending
+            submittedBy: (req as any).user?.uid || 'guest',
+            createdAt: Date.now(),
+        };
+
+        const docRef = await db.collection('events').add(eventData);
+        log('INFO', `[EVENT_SUBMITTED] Event ${docRef.id} received.`);
+        res.json({ success: true, id: docRef.id });
+    } catch (error: any) {
+        log('ERROR', 'Failed to submit event', { error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route PATCH /api/events/:id
+ * @desc Manage event status or details
+ */
+v1Router.patch('/events/:id', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+    const { id } = req.params;
+    const { status, title, type, date, time, description } = req.body;
+
+    try {
+        const { db } = await import('./firebaseAdmin');
+        const eventRef = db.collection('events').doc(id);
+        const eventDoc = await eventRef.get();
+
+        if (!eventDoc.exists) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        const eventData = eventDoc.data();
+        const user = (req as any).user;
+
+        // AUTH CHECK: Must be admin or owner/manager of the venue
+        if (user.role !== 'admin' && user.role !== 'super-admin') {
+            const venueDoc = await db.collection('venues').doc(eventData?.venueId).get();
+            const venue = venueDoc.data();
+            if (venue?.ownerId !== user.uid && !venue?.managerIds?.includes(user.uid)) {
+                return res.status(403).json({ error: 'Forbidden: You do not have permission to manage this venue\'s events.' });
+            }
+        }
+
+        const updates: any = { updatedAt: Date.now() };
+        if (status) updates.status = status;
+        if (title) updates.title = title;
+        if (type) updates.type = type;
+        if (date) updates.date = date;
+        if (time) updates.time = time;
+        if (description) updates.description = description;
+
+        await eventRef.update(updates);
+        log('INFO', `[EVENT_UPDATED] Event ${id} updated status: ${status}`);
+        res.json({ success: true });
+    } catch (error: any) {
+        log('ERROR', 'Failed to update event', { eventId: id, error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route DELETE /api/events/:id
+ * @desc Remove an event
+ */
+v1Router.delete('/events/:id', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const { db } = await import('./firebaseAdmin');
+        const eventRef = db.collection('events').doc(id);
+        const eventDoc = await eventRef.get();
+
+        if (!eventDoc.exists) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        const eventData = eventDoc.data();
+        const user = (req as any).user;
+
+        // AUTH CHECK
+        if (user.role !== 'admin' && user.role !== 'super-admin') {
+            const venueDoc = await db.collection('venues').doc(eventData?.venueId).get();
+            const venue = venueDoc.data();
+            if (venue?.ownerId !== user.uid && !venue?.managerIds?.includes(user.uid)) {
+                return res.status(403).json({ error: 'Forbidden: You do not have permission to delete this venue\'s events.' });
+            }
+        }
+
+        await eventRef.delete();
+        log('INFO', `[EVENT_DELETED] Event ${id} removed.`);
+        res.json({ success: true });
+    } catch (error: any) {
+        log('ERROR', 'Failed to delete event', { eventId: id, error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 // --- ARTIE AI CHAT GATEWAY ---
 
 /**
@@ -736,9 +877,7 @@ v1Router.post('/chat', identifyUser, artieRateLimiter, verifyHoneypot, blockAggr
 
         // Import the logic dynamically to keep dependencies clean
         const { artieChatLogic } = await import('../../functions/src/flows/artieChat');
-        console.log(`[RELAY] Calling artieChatLogic for request: ${question}`);
         const result = await artieChatLogic({ history: history || [], question, userId, userRole: realRole });
-        console.log(`[RELAY] Result type: ${typeof result}`);
 
         // Check if result is a stream (it will be for successful generatations)
         if (typeof result !== 'string' && (result as any).stream) {

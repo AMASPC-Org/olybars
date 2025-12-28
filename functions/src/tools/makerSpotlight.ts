@@ -34,7 +34,7 @@ export const makerSpotlight = ai.defineTool(
 
             const snapshot = await query.get();
 
-            let makers = snapshot.docs.map(doc => {
+            let makers = snapshot.docs.map((doc: any) => {
                 const data = doc.data();
                 return {
                     name: data.name,
@@ -47,7 +47,7 @@ export const makerSpotlight = ai.defineTool(
             });
 
             if (type && type !== 'any') {
-                makers = makers.filter(m => m.makerType.toLowerCase() === type);
+                makers = makers.filter((m: any) => m.makerType.toLowerCase() === type);
             }
 
             return makers.slice(0, 3); // Top 3 spotlighted

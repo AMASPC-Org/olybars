@@ -292,3 +292,19 @@ export interface UserVoucher {
   redeemedAt?: number;
   qrToken: string;
 }
+export interface AppEvent {
+  id: string;
+  venueId: string;
+  venueName: string;
+  title: string;
+  type: 'karaoke' | 'trivia' | 'live_music' | 'bingo' | 'openmic' | 'other';
+  date: string;
+  time: string;
+  description?: string;
+  points?: number;
+  status: 'pending' | 'approved' | 'rejected';
+  submittedBy: string; // userId or 'guest'
+  createdAt: number;
+  updatedAt?: number;
+  isLeagueEvent?: boolean;
+}

@@ -43,5 +43,10 @@ export const API_ENDPOINTS = {
     },
     USER: {
         ACTIVITY: `${API_BASE_URL}/activity`,
+    },
+    EVENTS: {
+        LIST: `${API_BASE_URL}/events`,
+        SUBMIT: `${API_BASE_URL}/events`,
+        MANAGE: (id: string) => `${API_BASE_URL}/events/${id}`,
     }
 };

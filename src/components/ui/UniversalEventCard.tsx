@@ -1,22 +1,24 @@
 import React from 'react';
 import { MapPin, Share2, Plus, Hammer, Trophy, Music, Mic } from 'lucide-react';
-import { Venue } from '../../types';
+import { Venue, AppEvent } from '../../types';
 import { VibeSelector } from './VibeSelector';
 
 interface UniversalEventCardProps {
-    venue: Venue;
-    title: string;
-    time: string;
-    category: 'play' | 'live' | 'event' | 'karaoke';
-    onCheckIn: () => void;
-    onShare: () => void;
-    onVibeChange: (vibe: 'buzzing' | 'lively' | 'chill') => void;
+    venue?: Venue;
+    event?: AppEvent;
+    title?: string;
+    time?: string;
+    category?: 'play' | 'live' | 'event' | 'karaoke';
+    onCheckIn?: () => void;
+    onShare?: () => void;
+    onVibeChange?: (vibe: 'buzzing' | 'lively' | 'chill') => void;
     contextSlot?: React.ReactNode;
     points?: number;
 }
 
 export const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
     venue,
+    event,
     title,
     time,
     category,
@@ -26,10 +28,18 @@ export const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
     contextSlot,
     points = 10
 }) => {
+    // Resolve display data
+    const displayTitle = event?.title || title || "Event";
+    const displayTime = event ? `${event.date} @ ${event.time}` : (time || "Tonight");
+    const displayCategory = event?.type || category || 'event';
+    const displayVenueName = venue?.name || event?.venueName || "Unknown Venue";
+    const displayPoints = event?.points || points;
+
     const getIcon = () => {
-        switch (category) {
+        switch (displayCategory) {
             case 'play': return Trophy;
-            case 'live': return Music;
+            case 'live':
+            case 'live_music': return Music;
             case 'karaoke': return Mic;
             default: return Hammer;
         }
@@ -51,26 +61,36 @@ export const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
 
                 {/* Points Pill */}
                 <div className="absolute top-4 right-4 z-20 bg-primary text-black text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg border border-black/10 flex items-center gap-1">
-                    <Plus size={12} strokeWidth={4} /> {points} LEAGUE PTS
+                    <Plus size={12} strokeWidth={4} /> {displayPoints} LEAGUE PTS
                 </div>
 
                 {/* Category Label */}
                 <div className="absolute bottom-4 left-6 z-20 flex items-center gap-2">
                     <span className="bg-white/10 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-white/10">
-                        {category}
+                        {displayCategory}
                     </span>
+                    {event?.status === 'pending' && (
+                        <span className="bg-yellow-500/20 text-yellow-500 text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full border border-yellow-500/30">
+                            Pending
+                        </span>
+                    )}
+                    {event?.isLeagueEvent && (
+                        <span className="bg-primary text-black text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full border border-primary/30 flex items-center gap-1 shadow-lg shadow-primary/20">
+                            <Trophy size={8} className="fill-current" /> League
+                        </span>
+                    )}
                 </div>
             </div>
 
             <div className="p-6 pt-4 space-y-4">
                 {/* Core Info */}
                 <div className="space-y-1">
-                    <h3 className="text-2xl font-black text-white font-league uppercase tracking-tight leading-none group-hover:text-primary transition-colors">
-                        {title}
+                    <h3 className="text-2xl font-black text-white font-league uppercase tracking-tight leading-none group-hover:text-primary transition-colors line-clamp-1">
+                        {displayTitle}
                     </h3>
                     <div className="flex items-center gap-2 text-slate-400">
                         <MapPin size={12} className="text-primary" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">{venue.name} • {time}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest">{displayVenueName} • {displayTime}</span>
                     </div>
                 </div>
 
@@ -81,39 +101,51 @@ export const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
                     </div>
                 )}
 
-                {/* Vibe Pulse Section */}
-                <div className="space-y-2">
-                    <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest px-1">Update the Pulse</p>
-                    <VibeSelector onSelect={onVibeChange} currentVibe={venue.status} />
-                </div>
+                {/* Event Description (if provided by AppEvent) */}
+                {event?.description && (
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed line-clamp-2 italic px-1">
+                        "{event.description}"
+                    </p>
+                )}
 
-                {/* Participation Actions */}
-                <div className="flex gap-3 pt-2">
-                    <button
-                        onClick={onCheckIn}
-                        className="flex-[2] bg-primary hover:bg-yellow-400 text-black font-black py-4 rounded-2xl transition-all font-league uppercase text-sm border-2 border-black shadow-[4px_4px_0px_0px_#000] active:translate-y-1 active:shadow-none"
-                    >
-                        I'm Here
-                    </button>
-                    <button
-                        onClick={onShare}
-                        className="flex-1 bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center border border-white/10 active:scale-95 shadow-xl"
-                    >
-                        <Share2 size={20} strokeWidth={3} />
-                    </button>
-                </div>
+                {/* Pulse Actions - Only show if venue object is available for status update */}
+                {venue && (
+                    <div className="space-y-4">
+                        {/* Vibe Pulse Section */}
+                        <div className="space-y-2">
+                            <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest px-1">Update the Pulse</p>
+                            <VibeSelector onSelect={onVibeChange || (() => { })} currentVibe={venue.status} />
+                        </div>
 
-                {/* Maker Tag Footer */}
-                <div className="pt-4 border-t border-white/5 flex justify-between items-center">
+                        {/* Participation Actions */}
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={onCheckIn}
+                                className="flex-[2] bg-primary hover:bg-yellow-400 text-black font-black py-4 rounded-2xl transition-all font-league uppercase text-sm border-2 border-black shadow-[4px_4px_0px_0px_#000] active:translate-y-1 active:shadow-none"
+                            >
+                                I'm Here
+                            </button>
+                            <button
+                                onClick={onShare}
+                                className="flex-1 bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center border border-white/10 active:scale-95 shadow-xl"
+                            >
+                                <Share2 size={20} strokeWidth={3} />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Footer Tag */}
+                <div className="pt-4 border-t border-white/5 flex justify-between items-center text-[8px] text-slate-700 font-black uppercase">
                     <div className="flex items-center gap-2">
                         <div className="w-5 h-5 bg-primary/20 rounded flex items-center justify-center">
                             <Hammer size={12} className="text-primary" />
                         </div>
-                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
-                            {venue.isHQ ? 'Artesian Anchor' : (venue.isLocalMaker ? 'Local Maker' : 'League Destination')}
+                        <span className="text-slate-500 tracking-widest">
+                            {event ? 'Community Wire Submission' : (venue?.isHQ ? 'Artesian Anchor' : 'League Destination')}
                         </span>
                     </div>
-                    <span className="text-[8px] text-slate-700 font-black uppercase">Established by OlyBars</span>
+                    <span>Established by OlyBars</span>
                 </div>
             </div>
         </div>

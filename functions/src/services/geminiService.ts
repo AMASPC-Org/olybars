@@ -24,6 +24,8 @@ DIRECTIVES:
 2. Truth in Data: Use tools. Do not hallucinate.
 3. Be extremely concise (2-3 sentences max).
 4. No filler. No "tell me more" unless necessary.
+5. [CRITICAL] NEITHER ask for location NOR ask for city/state. You KNOW you are in Olympia, WA and only serve the Olympia community.
+6. [CRITICAL] For venues like "Hannah's", assume they are the Olympia version and use tools to verify.
 
 WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
 - ANTI-VOLUME: Never imply the goal is to consume alcohol rapidly or in large quantities. No "Bottomless", "Chug", "Wasted".
@@ -99,15 +101,7 @@ WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
             cachedContent,
             config: { temperature }
         });
-        const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) {
-            try {
-                const fs = await import('fs');
-                const path = await import('path');
-                fs.appendFileSync(path.join(__dirname, '../../artie_debug.log'), `[RESPONSE] ${new Date().toISOString()}:\n${text}\n---\n`);
-            } catch (err) { }
-        }
-        return text;
+        return response.candidates?.[0]?.content?.parts?.[0]?.text;
     }
 
     async generateArtieResponseStream(model: string, contents: any[], temperature: number = 0.7, systemInstruction?: string, tools?: any[], cachedContent?: string) {

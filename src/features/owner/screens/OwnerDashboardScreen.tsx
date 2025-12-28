@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info,
-    QrCode, Download, Printer
+    QrCode, Download, Printer, Calendar
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../../types';
 import { OwnerMarketingPromotions } from '../../../components/OwnerMarketingPromotions';
@@ -12,6 +12,7 @@ import { LeagueHostManagementTab } from '../components/LeagueHostManagementTab';
 import { isVenueOwner, isVenueManager } from '../../../types/auth_schema';
 import { Layout } from 'lucide-react';
 import { UserManagementTab } from '../components/UserManagementTab';
+import { EventsManagementTab } from '../components/EventsManagementTab';
 import { VenueOpsService } from '../../../services/VenueOpsService';
 
 interface OwnerDashboardProps {
@@ -78,7 +79,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const [dealDescription, setDealDescription] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
     const [showArtieCommands, setShowArtieCommands] = useState(false);
-    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'maker' | 'host' | 'qr' | 'people'>(initialView as any); // Added 'host', 'qr', 'people'
+    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'maker' | 'host' | 'qr' | 'people' | 'events'>(initialView as any); // Added 'host', 'qr', 'people', 'events'
     const [statsPeriod, setStatsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
     const [activityStats, setActivityStats] = useState({ earned: 0, redeemed: 0, activeUsers: 0 });
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -248,6 +249,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                     className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'listing' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
                 >
                     Listing
+                </button>
+                <button
+                    onClick={() => setDashboardView('events')}
+                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'events' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                >
+                    Events
                 </button>
                 {myVenue && isVenueOwner(userProfile, myVenue.id) && (
                     <>
@@ -495,6 +502,10 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
                 {myVenue && dashboardView === 'host' && isVenueOwner(userProfile, myVenue.id) && (
                     <LeagueHostManagementTab venue={myVenue} onUpdate={updateVenue} />
+                )}
+
+                {myVenue && dashboardView === 'events' && (
+                    <EventsManagementTab venue={myVenue} />
                 )}
 
                 {myVenue && dashboardView === 'qr' && (
