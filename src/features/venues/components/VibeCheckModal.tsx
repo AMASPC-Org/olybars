@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin } from 'lucide-react';
-import { Venue, VenueStatus } from '../../../types';
+﻿import React, { useState, useRef } from 'react';
+import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin, Gamepad2 } from 'lucide-react';
+import { Venue, VenueStatus, GameStatus } from '../../../types';
+import { getGameTTL } from '../../../config/gameConfig';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance } from '../../../utils/geoUtils';
 
@@ -8,7 +9,7 @@ interface VibeCheckModalProps {
     isOpen: boolean;
     onClose: () => void;
     venue: Venue;
-    onConfirm: (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod?: 'gps' | 'qr') => void;
+    onConfirm: (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod?: 'gps' | 'qr', gameStatus?: Record<string, GameStatus>) => void;
     clockedIn?: boolean;
     onClockInPrompt?: () => void;
     verificationMethod?: 'gps' | 'qr';
@@ -31,6 +32,9 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     const [allowMarketingUse, setAllowMarketingUse] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Initialize with existing status or empty
+    const [gameStatus, setGameStatus] = useState<Record<string, GameStatus>>(venue.liveGameStatus || {});
 
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -98,7 +102,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
         setErrorMessage(null);
 
         try {
-            await onConfirm(venue, selectedStatus, allowMarketingUse, capturedPhoto || undefined, verificationMethod);
+            await onConfirm(venue, selectedStatus, allowMarketingUse, capturedPhoto || undefined, verificationMethod, Object.keys(gameStatus).length > 0 ? gameStatus : undefined);
             setIsSuccess(true);
 
             if (clockedIn) {
@@ -209,71 +213,120 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                         ))}
                     </div>
 
-                    {/* Optional Photo */}
-                    <div onClick={capturedPhoto ? undefined : startCamera} className={`border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer group relative overflow-hidden ${capturedPhoto ? 'border-primary/50 bg-black' : 'border-slate-600 bg-surface hover:bg-slate-800 hover:border-primary'}`}>
-                        {capturedPhoto ? (
-                            <div>
-                                <img src={capturedPhoto} alt="Captured Vibe" className="w-full h-24 object-cover rounded-md mb-2" />
-                                <button onClick={() => setCapturedPhoto(null)} className="text-[9px] text-slate-400 font-bold uppercase hover:text-white">Retake Photo</button>
-                            </div>
-                        ) : (
-                            <>
-                                {cameraError ? (
-                                    <p className="text-red-500 text-[10px] font-bold">Camera access error. Photo optional.</p>
-                                ) : (
-                                    <div className="flex items-center justify-center gap-2">
-                                        <Camera className="w-4 h-4 text-slate-400 group-hover:text-primary" />
-                                        <p className="text-[10px] font-black text-slate-300 uppercase italic">Add Vibe Photo (+10 Pts)</p>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-
-                    {/* Marketing Consent */}
-                    <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Sparkles size={14} className={allowMarketingUse ? 'text-primary' : 'text-slate-600'} />
-                                <div>
-                                    <p className="text-[10px] font-black text-white uppercase tracking-wider font-league leading-none">Marketing Consent</p>
-                                    <p className="text-[8px] text-slate-500 font-bold uppercase italic mt-0.5">Earn +15 Bonus Points!</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setAllowMarketingUse(!allowMarketingUse)}
-                                className={`w-8 h-4 rounded-full p-0.5 transition-all ${allowMarketingUse ? 'bg-primary' : 'bg-slate-700'}`}
-                            >
-                                <div className={`w-3 h-3 rounded-full bg-white transition-all ${allowMarketingUse ? 'translate-x-4' : 'translate-x-0'}`} />
-                            </button>
-                        </div>
-                    </div>
-
-                    {errorMessage && (
-                        <div className="bg-red-900/20 border border-red-800 p-3 rounded-lg text-red-200 text-xs font-bold text-center">
-                            ⚠️ {errorMessage}
-                        </div>
-                    )}
-
-                    <div className="pt-2 border-t border-slate-800 flex justify-between items-center mb-2">
-                        <span className="text-[10px] font-black text-slate-500 uppercase font-league tracking-widest">League Reward</span>
-                        <span className="text-sm font-black text-primary uppercase font-league">
-                            +{5 + (capturedPhoto ? 10 : 0) + (allowMarketingUse ? 15 : 0)} POINTS
-                        </span>
-                    </div>
-
-                    <button
-                        onClick={handleConfirm}
-                        disabled={isSubmitting || (!isAtVenue && !geoLoading)}
-                        className="w-full bg-primary hover:bg-yellow-400 disabled:bg-slate-700 disabled:text-slate-400 text-black font-black text-lg uppercase tracking-widest py-4 rounded-lg shadow-xl active:scale-95 transition-all font-league italic flex items-center justify-center gap-2"
-                    >
-                        {isSubmitting ? (
-                            <><Loader2 className="w-5 h-5 animate-spin" /> Transmitting...</>
-                        ) : (
-                            <>Submit Vibe</>
-                        )}
-                    </button>
                 </div>
+
+                {/* Game Status Section (Premium) */}
+                {venue.hasGameVibeCheckEnabled && venue.amenityDetails && venue.amenityDetails.length > 0 && (
+                    <div className="bg-slate-900/50 border border-white/5 rounded-xl p-3 space-y-3">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Gamepad2 className="w-4 h-4 text-purple-400" />
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Game Status (Live)</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            {venue.amenityDetails.map((amenity) => {
+                                const current = gameStatus[amenity.id]?.status || 'open';
+                                return (
+                                    <div key={amenity.id} className="bg-black/40 rounded-lg p-2 border border-white/5 flex flex-col gap-2">
+                                        <span className="text-xs font-bold text-white truncate">{amenity.name}</span>
+                                        <div className="flex bg-slate-800 rounded-lg p-0.5">
+                                            <button
+                                                onClick={() => setGameStatus(prev => ({
+                                                    ...prev,
+                                                    [amenity.id]: { status: 'open', timestamp: Date.now(), reportedBy: 'user' }
+                                                }))}
+                                                className={`flex-1 py-1 text-[9px] font-black uppercase rounded-md transition-all ${current === 'open' ? 'bg-green-500 text-black shadow-sm' : 'text-slate-500 hover:text-white'}`}
+                                            >
+                                                Open
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    const ttl = getGameTTL(amenity.id);
+                                                    setGameStatus(prev => ({
+                                                        ...prev,
+                                                        [amenity.id]: {
+                                                            status: 'taken',
+                                                            timestamp: Date.now(),
+                                                            reportedBy: 'user',
+                                                            expiresAt: Date.now() + (ttl * 60 * 1000)
+                                                        }
+                                                    }));
+                                                }}
+                                                className={`flex-1 py-1 text-[9px] font-black uppercase rounded-md transition-all ${current === 'taken' ? 'bg-red-500 text-white shadow-sm' : 'text-slate-500 hover:text-white'}`}
+                                            >
+                                                Taken
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* Optional Photo */}
+                <div onClick={capturedPhoto ? undefined : startCamera} className={`border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer group relative overflow-hidden ${capturedPhoto ? 'border-primary/50 bg-black' : 'border-slate-600 bg-surface hover:bg-slate-800 hover:border-primary'}`}>
+                    {capturedPhoto ? (
+                        <div>
+                            <img src={capturedPhoto} alt="Captured Vibe" className="w-full h-24 object-cover rounded-md mb-2" />
+                            <button onClick={() => setCapturedPhoto(null)} className="text-[9px] text-slate-400 font-bold uppercase hover:text-white">Retake Photo</button>
+                        </div>
+                    ) : (
+                        <>
+                            {cameraError ? (
+                                <p className="text-red-500 text-[10px] font-bold">Camera access error. Photo optional.</p>
+                            ) : (
+                                <div className="flex items-center justify-center gap-2">
+                                    <Camera className="w-4 h-4 text-slate-400 group-hover:text-primary" />
+                                    <p className="text-[10px] font-black text-slate-300 uppercase italic">Add Vibe Photo (+10 Pts)</p>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+
+                {/* Marketing Consent */}
+                <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Sparkles size={14} className={allowMarketingUse ? 'text-primary' : 'text-slate-600'} />
+                            <div>
+                                <p className="text-[10px] font-black text-white uppercase tracking-wider font-league leading-none">Marketing Consent</p>
+                                <p className="text-[8px] text-slate-500 font-bold uppercase italic mt-0.5">Earn +15 Bonus Points!</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setAllowMarketingUse(!allowMarketingUse)}
+                            className={`w-8 h-4 rounded-full p-0.5 transition-all ${allowMarketingUse ? 'bg-primary' : 'bg-slate-700'}`}
+                        >
+                            <div className={`w-3 h-3 rounded-full bg-white transition-all ${allowMarketingUse ? 'translate-x-4' : 'translate-x-0'}`} />
+                        </button>
+                    </div>
+                </div>
+
+                {errorMessage && (
+                    <div className="bg-red-900/20 border border-red-800 p-3 rounded-lg text-red-200 text-xs font-bold text-center">
+                        ⚠️ {errorMessage}
+                    </div>
+                )}
+
+                <div className="pt-2 border-t border-slate-800 flex justify-between items-center mb-2">
+                    <span className="text-[10px] font-black text-slate-500 uppercase font-league tracking-widest">League Reward</span>
+                    <span className="text-sm font-black text-primary uppercase font-league">
+                        +{5 + (capturedPhoto ? 10 : 0) + (allowMarketingUse ? 15 : 0)} POINTS
+                    </span>
+                </div>
+
+                <button
+                    onClick={handleConfirm}
+                    disabled={isSubmitting || (!isAtVenue && !geoLoading)}
+                    className="w-full bg-primary hover:bg-yellow-400 disabled:bg-slate-700 disabled:text-slate-400 text-black font-black text-lg uppercase tracking-widest py-4 rounded-lg shadow-xl active:scale-95 transition-all font-league italic flex items-center justify-center gap-2"
+                >
+                    {isSubmitting ? (
+                        <><Loader2 className="w-5 h-5 animate-spin" /> Transmitting...</>
+                    ) : (
+                        <>Submit Vibe</>
+                    )}
+                </button>
             </div>
         </div>
     );

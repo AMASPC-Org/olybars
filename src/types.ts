@@ -137,9 +137,20 @@ export interface Venue {
   googlePlaceId?: string; // [NEW] For Google Places SDK Sync
   vibeDefault?: 'CHILL' | 'LIVELY' | 'BUZZING'; // [NEW] Onboarding MVP
   assets?: Record<string, boolean>; // [NEW] Grid Toggles (Pool, Darts, etc.)
+  // Game Vibe Check (Premium Feature)
+  hasGameVibeCheckEnabled?: boolean;
+  liveGameStatus?: Record<string, GameStatus>;
+
   updatedAt?: number;
   managersCanAddUsers?: boolean; // [NEW] Multi-User Support
   lastGoogleSync?: number; // [FINOPS] For internal sync throttling
+}
+
+export interface GameStatus {
+  status: 'open' | 'taken';
+  timestamp: number;
+  reportedBy?: string;
+  expiresAt?: number;
 }
 
 export interface Message {

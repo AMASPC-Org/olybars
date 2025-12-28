@@ -3,14 +3,15 @@ import {
     Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info,
     QrCode, Download, Printer, Calendar
 } from 'lucide-react';
-import { Venue, UserProfile } from '../../../types';
+import { Venue, UserProfile, GameStatus } from '../../../types';
 import { OwnerMarketingPromotions } from '../../../components/OwnerMarketingPromotions';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { ListingManagementTab } from '../components/ListingManagementTab';
 import { LocalMakerManagementTab } from '../components/LocalMakerManagementTab'; // New Component
 import { LeagueHostManagementTab } from '../components/LeagueHostManagementTab'; // New Component
 import { isVenueOwner, isVenueManager } from '../../../types/auth_schema';
-import { Layout } from 'lucide-react';
+import { Layout, Gamepad2 } from 'lucide-react';
+import { getGameTTL } from '../../../config/gameConfig';
 import { UserManagementTab } from '../components/UserManagementTab';
 import { EventsManagementTab } from '../components/EventsManagementTab';
 import { VenueOpsService } from '../../../services/VenueOpsService';
@@ -306,6 +307,60 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 </p>
                             </div>
                         </div>
+
+                        {/* Live Game Status Management */}
+                        {myVenue.hasGameVibeCheckEnabled && (
+                            <div className="bg-surface p-6 border border-white/10 rounded-lg shadow-2xl">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Gamepad2 className="w-5 h-5 text-purple-400" />
+                                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-league">Live Game Status</h3>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {myVenue.amenityDetails?.filter(a => ['pool', 'darts', 'shuffleboard'].includes(a.id)).map(amenity => {
+                                        const statusData = myVenue.liveGameStatus?.[amenity.id];
+                                        const isTaken = statusData?.status === 'taken' && (!statusData?.expiresAt || Date.now() < statusData.expiresAt);
+
+                                        return (
+                                            <div key={amenity.id} className="bg-black/40 p-3 rounded-lg flex items-center justify-between border border-white/5">
+                                                <span className="text-xs font-bold text-slate-300 uppercase">{amenity.name}</span>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => updateVenue(myVenue.id, {
+                                                            liveGameStatus: {
+                                                                ...myVenue.liveGameStatus,
+                                                                [amenity.id]: { status: 'open', timestamp: Date.now(), reportedBy: 'owner' }
+                                                            }
+                                                        })}
+                                                        className={`px-3 py-1.5 rounded text-[10px] font-black uppercase transition-all ${!isTaken ? 'bg-green-500 text-black' : 'bg-white/5 text-slate-500 hover:text-white'}`}
+                                                    >
+                                                        Open
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            const ttl = getGameTTL(amenity.id);
+                                                            updateVenue(myVenue.id, {
+                                                                liveGameStatus: {
+                                                                    ...myVenue.liveGameStatus,
+                                                                    [amenity.id]: {
+                                                                        status: 'taken',
+                                                                        timestamp: Date.now(),
+                                                                        reportedBy: 'owner',
+                                                                        expiresAt: Date.now() + (ttl * 60 * 1000)
+                                                                    }
+                                                                }
+                                                            });
+                                                        }}
+                                                        className={`px-3 py-1.5 rounded text-[10px] font-black uppercase transition-all ${isTaken ? 'bg-red-500 text-white' : 'bg-white/5 text-slate-500 hover:text-white'}`}
+                                                    >
+                                                        Taken
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Manual Override Console */}
                         <div className="bg-surface p-6 border border-white/10 rounded-lg shadow-2xl">

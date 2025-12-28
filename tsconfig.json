@@ -28,5 +28,20 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "include": [
+    "src",
+    "server",
+    "scripts",
+    "vite.config.ts",
+    "*.config.js",
+    "*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "functions",
+    ".agent",
+    ".firebase"
+  ]
 }

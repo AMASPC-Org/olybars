@@ -48,67 +48,69 @@ export const artieChatLogic = genkitAi.defineFlow({
             return "Whoa, partner. I'm simple: I talk beer, bars, and the league. Let's stick to the playbook.";
         }
 
-        // 1. Triage Intent (Multi-layered fallback)
-        const triage = await service.getTriage(question);
-        const isSearch = triage.startsWith('SEARCH');
-        const isMakerMode = triage.startsWith('MAKER_SPOTLIGHT');
-        const isVenueOps = triage.startsWith('VENUE_OPS');
+        // 1. Triage Intent (Merged into Main Flow for Latency Optimization)
+        // We no longer call service.getTriage(question) here.
+        // Instead, the main system prompt handles routing via Tools and Refusal.
 
         // 2. Get Pulse Context
         const pulseContext = await ArtieContextService.getPulsePromptSnippet();
 
         // 3. Prepare System Instructions
-        const staticSystemPrefix = `
+        // 3. Prepare Universal System Instructions
+        const universalSystemInstruction = `
 ${GeminiService.ARTIE_PERSONA}
 
-[IDENTITY]
-You are Artie, the Spirit of the Artesian Well. You know every bar and local maker in Olympia.
+[IDENTITY & CONTEXT]
+You are Artie, the Spirit of the Artesian Well. You know every bar and local maker in Olympia, WA.
 You operate in a closed system: only venues and makers in Olympia, WA are in your directory.
-If a user mentions a venue or asks about local makers, you MUST use the appropriate tool (venueSearch or makerSpotlight). Generic answers or asking for location are strictly forbidden.
+Current User Role: ${userRole || 'guest'} (ID: ${userId || 'anon'})
 
-[CONCISENESS]
-- 2-3 Sentences MAX.
-`;
+[TOOL USE DIRECTIVES - CRITICAL]
+1. VENUE SEARCH: If user mentions a venue or asks for bars/happy hours, YOU MUST CALL venueSearch.
+   - Directory is closed: Olympia, WA ONLY.
+   - Do NOT ask for city/state.
+2. MAKER SPOTLIGHT: If user asks about "Local Makers", breweries, wineries, cideries, or distilleries, YOU MUST CALL makerSpotlight.
+   - Refers to Oly's craft scene.
+3. LEAGUE: If user asks about points, leaderboard, or rules, CALL leagueLeaderboard or knowledgeSearch.
+4. EVENTS: If user asks about what's happening, CALL eventDiscovery.
+5. VENUE OPS (Owner/Manager ONLY): If user wants to update their venue (hours, deals, posts), AND has role 'owner'/'manager', use operatorAction.
+   - If user is NOT authorized, politely refuse and say you can only take orders from the boss.
 
-        let dynamicSystemInstruction = `${pulseContext}\n\n${staticSystemPrefix}`;
-        if (isSearch) {
-            dynamicSystemInstruction += `\n\n[DIRECTIVE]: YOU ARE IN SEARCH MODE. CALL venueSearch IMMEDIATELY for any mentioned business. Your directory is a closed system and ONLY contains Olympia, WA venues. DO NOT ask for city or state.`;
-        }
+[SAFETY & COMPLIANCE]
+1. SELF-HARM/ILLEGAL: Refuse to answer.
+2. LCB COMPLIANCE: Refuse "Bottomless", "All you can drink", "Free shots". Suggest "Tasting Flight" or "Toast" instead.
+3. DATA PRIVACY: Do not share owner names or private revenue data.
 
-        if (isMakerMode) {
-            dynamicSystemInstruction += `\n\n[DIRECTIVE]: YOU ARE IN MAKER MODE. CALL makerSpotlight IMMEDIATELY. "Local Makers" in OlyBars refers to the local breweries, wineries, and distilleries that define Olympia's craft scene. DO NOT give generic advice about artists or craft fairs unless specifically asked for those outside of the OlyMaker spotlight.`;
-        }
-
-        dynamicSystemInstruction += `
-
-[RESPONSE PROTOCOL]:
+[RESPONSE PROTOCOL]
 Your response MUST follow this exact sequence:
 1. [RATIONALE]: A private note on why you are saying this.
 2. The public message text (under 3 sentences).
 3. [SUGGESTIONS]: A JSON array of 2-3 strings.
 
-[EXAMPLES]:
+[EXAMPLES]
 User: "Hi"
 Output:
-[RATIONALE]: Greeting the user and offering help.
+[RATIONALE]: Greeting the user.
 Cheers! I'm Artie. Looking for a cold one in Olympia tonight?
 [SUGGESTIONS]: ["Find a bar", "See Happy Hours", "How do I earn points?"]
 
 User: "Well 80"
-Output:
+Output: (Calls venueSearch tool first)
 [RATIONALE]: Search context detected for Well 80.
-Well 80 is an iconic spot with its own artesian well right in the brewery. Their beer is legendary.
+Well 80 is an iconic spot with its own artesian well. Their beer is legendary.
 [SUGGESTIONS]: ["What's on tap?", "Happy Hour?", "Check-in here"]
 
-You MUST NOT deviate from this structure for ANY reason.
+You MUST NOT deviate from this structure.
 `;
+
+        const dynamicSystemInstruction = `${pulseContext}\n\n${universalSystemInstruction}`;
 
         // [FINOPS] Check for or create context cache
         let cachedContent = null;
-        if (staticSystemPrefix.length > 2000) {
+        if (universalSystemInstruction.length > 2000) {
             try {
                 const { ArtieCacheService } = await import('../services/ArtieCacheService');
-                cachedContent = await ArtieCacheService.getOrSetStaticCache(service, staticSystemPrefix);
+                cachedContent = await ArtieCacheService.getOrSetStaticCache(service, universalSystemInstruction);
             } catch (cacheErr: any) {
                 console.warn("[ZENITH] Cache initialization skipped:", cacheErr.message);
             }
@@ -123,7 +125,7 @@ You MUST NOT deviate from this structure for ANY reason.
         contents.push({ role: 'user', parts: [{ text: question }] });
 
         const activeModel = 'gemini-2.0-flash';
-        console.log(`[ZENITH] Triage: ${triage}. Calling ${activeModel} with ${contents.length} turn(s).`);
+        console.log(`[ZENITH] Calling ${activeModel} with ${contents.length} turn(s).`);
 
         console.log(`[ZENITH] System Instruction:`, dynamicSystemInstruction);
 
@@ -135,8 +137,8 @@ You MUST NOT deviate from this structure for ANY reason.
             tools: [{ function_declarations: ARTIE_TOOLS }],
             cachedContent: cachedContent || undefined,
             config: {
-                temperature: (isSearch || isVenueOps) ? 0.0 : 0.2,
-                top_p: (isSearch || isVenueOps) ? 0.9 : 0.95
+                temperature: 0.2, // Slightly higher for chat, but low enough for discipline
+                top_p: 0.95
             }
         });
 

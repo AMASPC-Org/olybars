@@ -5,7 +5,7 @@ import {
     ChevronLeft, Navigation, Star, Shield, Info,
     Flame, Calendar, Share2, ChevronRight, Zap,
     Settings, Instagram, Facebook, Twitter, Mail, Phone,
-    Scroll, Sparkles, Feather
+    Scroll, Sparkles, Feather, Gamepad2
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../../types';
 import { SEO } from '../../../components/common/SEO';
@@ -268,6 +268,43 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
             </div>
 
             <div className="p-6 space-y-8">
+                {/* LIVE GAME STATUS (PREMIUM) */}
+                {venue.hasGameVibeCheckEnabled && venue.liveGameStatus && Object.keys(venue.liveGameStatus).length > 0 && (
+                    <div className="bg-slate-900/50 border border-white/5 rounded-xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-500 shadow-lg">
+                        <div className="flex items-center gap-2 mb-3 border-b border-white/5 pb-2">
+                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            <h4 className="text-xs font-black text-slate-300 uppercase tracking-[0.15em]">Live Game Status</h4>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            {venue.amenityDetails?.filter(a => venue.liveGameStatus?.[a.id]).map(amenity => {
+                                const statusData = venue.liveGameStatus![amenity.id];
+                                const now = Date.now();
+
+                                // Check expiration
+                                const isExpired = statusData.expiresAt && now > statusData.expiresAt;
+                                const isTaken = statusData.status === 'taken' && !isExpired;
+
+                                const minsAgo = Math.floor((now - statusData.timestamp) / 60000);
+                                const minsLeft = statusData.expiresAt ? Math.ceil((statusData.expiresAt - now) / 60000) : 0;
+
+                                return (
+                                    <div key={amenity.id} className="flex justify-between items-center bg-black/40 p-2 rounded-lg border border-white/5">
+                                        <span className="text-xs font-bold text-slate-300 uppercase">{amenity.name}</span>
+                                        <div className="text-right">
+                                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${isTaken ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
+                                                {isTaken ? 'In Use' : 'Open'}
+                                            </span>
+                                            <p className="text-[8px] text-slate-600 font-mono mt-0.5">
+                                                {isTaken && minsLeft > 0 ? `Free in ~${minsLeft}m` : (minsAgo < 1 ? 'Just now' : `${minsAgo}m ago`)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-3 gap-3">
                     <div className="bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
@@ -355,6 +392,18 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                             <MapPin className="w-4 h-4" />
                             {clockedInVenue === venue.id ? 'Checked In' : 'Clock In (+10)'}
                         </button>
+                        {venue.hasGameVibeCheckEnabled && (
+                            <button
+                                onClick={() => handleVibeCheck(venue)}
+                                className="flex-1 py-4 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex flex-col items-center justify-center text-slate-100 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all active:scale-95 shadow-xl"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Gamepad2 className="w-4 h-4 text-purple-400" />
+                                    <span>Game Check</span>
+                                </div>
+                                <span className="text-[7px] text-purple-400/60 mt-1">UPDATE STATUS</span>
+                            </button>
+                        )}
                         <button
                             onClick={() => showToast('Find the Vibe Spot QR code inside ' + venue.name + ' to report a vibe!', 'info')}
                             className="flex-1 py-4 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex flex-col items-center justify-center text-slate-100 hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 shadow-xl"

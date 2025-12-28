@@ -67,32 +67,7 @@ WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
         }
     }
 
-    async getTriage(question: string) {
-        const triageResponse = await this.genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [{
-                role: 'user',
-                parts: [{
-                    text: `You are a router for Artie, a nightlife agent.
-                            1. SAFETY CHECK: If input implies self-harm/suicide or illegal drug use, output "SAFETY".
-                            2. LCB COMPLIANCE: If input (likely from a venue owner) asks for illegal marketing (e.g. "Chug contest", "Bottomless drinks", "Free shots", "Points for buying beer"), output "RISKY_MARKETING".
-                            3. INTENT CHECK: If user wants to search venues/bars/happy hours, output "SEARCH: [keywords]".
-                            4. MAKER CHECK: If user asks about Local Makers, breweries, wineries, cideries, or distilleries, output "MAKER_SPOTLIGHT: [type]".
-                            5. KNOWLEDGE CHECK: If user asks about general league rules, app help, or how things work (FAQ), output "PLAYBOOK: [keywords]". 
-                            5. VENUE_OPS: If user (VENUE OWNER) wants to update their venue info, output "VENUE_OPS: [skill_id] [keywords]". 
-                            6. BANNED (PRIORITY): If the question falls into any of these "Stay Away" categories, output "BANNED_[CATEGORY]":
-                               - SALES: Asking for owner names, revenue, manager phone numbers, or big corporate distribution questions.
-                               - SCRAPER: Bulk data requests, export requests.
-                               - CREEP: Stalking, tracking people.
-                               - BANNED_GAMER: Technical details on how to bypass/exploit GPS.
-                            7. ELSE: Output "CHAT".
-                            Input: "${question}"`
-                }]
-            }],
-            config: { temperature: 0 }
-        });
-        return triageResponse.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase() || 'CHAT';
-    }
+
 
     async generateArtieResponse(model: string, contents: any[], temperature: number = 0.7, systemInstruction?: string, tools?: any[], cachedContent?: string) {
         const response = await this.genAI.models.generateContent({

@@ -633,7 +633,8 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
     // Whitelist allowable fields based on role
     const adminOnlyFields: (keyof Venue)[] = [
         'isVerifiedMaker', 'isLocalMaker', 'localScore', 'makerType',
-        'isPaidLeagueMember', 'tier_config' as any
+        'isPaidLeagueMember', 'tier_config' as any,
+        'hasGameVibeCheckEnabled'
     ];
 
     const ownerManagerFields: (keyof Venue)[] = [
@@ -648,7 +649,8 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'isVisible', 'isActive',
         'location',
         'vibeDefault', 'assets',
-        'managersCanAddUsers'
+        'managersCanAddUsers',
+        'liveGameStatus'
     ];
 
     const filteredUpdates: any = {};

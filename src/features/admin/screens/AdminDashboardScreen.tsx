@@ -4,7 +4,7 @@ import {
     Shield, Users, BarChart3, Settings,
     Search, Filter, ExternalLink, Activity,
     Database, AlertTriangle, CheckCircle2, QrCode,
-    Eye, EyeOff, Power, Archive
+    Eye, EyeOff, Power, Archive, Gamepad2
 } from 'lucide-react';
 
 import { fetchAllUsers, fetchSystemStats, fetchRecentActivity } from '../../../services/userService';
@@ -101,6 +101,23 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
             queryClient.invalidateQueries({ queryKey: ['venues'] });
         }
     };
+
+    const onToggleGameVibe = async (venueId: string, currentStatus: boolean) => {
+        // Optimistic Update
+        queryClient.setQueryData(['venues'], (old: Venue[] | undefined) => {
+            return old?.map(v => v.id === venueId ? { ...v, hasGameVibeCheckEnabled: !currentStatus } : v);
+        });
+
+        try {
+            await updateVenueDetails(venueId, { hasGameVibeCheckEnabled: !currentStatus });
+            queryClient.invalidateQueries({ queryKey: ['venues'] });
+        } catch (error) {
+            console.error('Failed to toggle game vibe', error);
+            queryClient.invalidateQueries({ queryKey: ['venues'] });
+        }
+    };
+
+
 
     const stats = [
         { label: 'Total Users', value: systemStats.totalUsers.toLocaleString(), icon: Users, color: 'text-blue-400' },
@@ -237,6 +254,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                         <th className="p-3">Venue Name</th>
                                         <th className="p-3">ID</th>
                                         <th className="p-3 text-center">Paid Member</th>
+                                        <th className="p-3 text-center">Game Vibe</th>
                                         <th className="p-3 text-center">Ghost Mode</th>
                                         <th className="p-3 text-right">Status</th>
                                     </tr>
@@ -264,8 +282,8 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                                 <button
                                                     onClick={() => onToggleVisibility(venue.id, venue.isVisible !== false)}
                                                     className={`p-2 rounded-lg transition-all ${venue.isVisible !== false
-                                                            ? 'text-slate-600 hover:text-white'
-                                                            : 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
+                                                        ? 'text-slate-600 hover:text-white'
+                                                        : 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
                                                         }`}
                                                     title={venue.isVisible !== false ? "Visible Publicly" : "Ghost Mode (Hidden)"}
                                                 >
@@ -276,8 +294,8 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                                 <button
                                                     onClick={() => onToggleActivity(venue.id, venue.isActive !== false)}
                                                     className={`p-2 rounded-lg transition-all ${venue.isActive !== false
-                                                            ? 'text-green-500 hover:text-green-400'
-                                                            : 'text-slate-600 hover:text-white'
+                                                        ? 'text-green-500 hover:text-green-400'
+                                                        : 'text-slate-600 hover:text-white'
                                                         }`}
                                                     title={venue.isActive !== false ? "Active" : "Archived"}
                                                 >
