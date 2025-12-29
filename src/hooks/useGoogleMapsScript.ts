@@ -26,16 +26,23 @@ export const useGoogleMapsScript = () => {
                 const response = await fetch(`${API_ENDPOINTS.CONFIG.MAPS_KEY}?v=${retryCount}`);
                 if (!response.ok) throw new Error('Failed to fetch Maps key');
                 const data = await response.json();
-                setApiKey(data.key);
+
+                if (data.key && data.key.startsWith('AIza') && data.key.length > 20) {
+                    console.log('📡 [MAPS] Key successfully fetched from Artie backend');
+                    setApiKey(data.key);
+                } else {
+                    throw new Error('Backend returned invalid key format');
+                }
             } catch (err) {
-                console.error('[MAPS_KEY_FETCH_ERROR]', err);
+                console.error('[MAPS_KEY_FETCH_ERROR] Initial fetch failed, checking fallback:', err);
 
                 // Fallback to build-time environment variable if backend fetch fails
                 const fallback = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.VITE_GOOGLE_BROWSER_KEY;
-                if (fallback && fallback.length > 20) {
-                    console.log('📡 [MAPS] Falling back to build-time restricted key');
+                if (fallback && fallback.startsWith('AIza') && fallback.length > 20) {
+                    console.log('📡 [MAPS] Using build-time restricted key (Fallback)');
                     setApiKey(fallback);
                 } else {
+                    console.error('[MAPS_CRITICAL] No valid API key found in backend or build-time environment.');
                     setStatus('error');
                 }
             }
@@ -60,7 +67,7 @@ export const useGoogleMapsScript = () => {
         const loader = new Loader({
             apiKey: apiKey,
             version: "weekly",
-            libraries: ["places"], // Load places library
+            libraries: ["places", "marker"], // Load places and marker libraries
         });
 
         loader.load()

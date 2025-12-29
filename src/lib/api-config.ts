@@ -6,24 +6,31 @@
 const getApiBaseUrl = () => {
     if (typeof window === 'undefined') return '';
 
-    // If VITE_API_URL is provided at build time (standard for our Cloud Run deploys), use it.
-    // Ensure we don't end up with /api/api by trimming trailing slashes/api
+    const hostname = window.location.hostname;
+
+    /**
+     * UNIVERSAL ROUTING STRATEGY (Resilience-First):
+     * We use relative paths (/api) for all environments where the frontend 
+     * and backend share a same-origin infrastructure (Local Proxy or Firebase Hosting).
+     */
+    if (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname.includes('web.app') ||
+        hostname.includes('firebaseapp.com') ||
+        hostname.includes('olybars.com')
+    ) {
+        return '/api';
+    }
+
+    // 2. Build-time override (Secondary priority)
     const builtInUrl = import.meta.env.VITE_API_URL;
     if (builtInUrl) {
         return builtInUrl.replace(/\/api\/?$/, '') + '/api';
     }
 
-    const hostname = window.location.hostname;
-
-    // Local Development
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return 'http://localhost:3001/api';
-    }
-
-    // Fallback for DEV/PROD if env var is missing (legacy support)
-    return hostname.includes('dev')
-        ? 'https://olybars-backend-26629455103.us-west1.run.app/api'
-        : 'https://olybars-backend-26629455103.us-west1.run.app/api';
+    // 3. Absolute fallback (Legacy/Hard-coded)
+    return 'https://olybars-backend-26629455103.us-west1.run.app/api';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

@@ -32,9 +32,9 @@ const MapScreen = () => {
       const initialMap = new (window as any).google.maps.Map(mapRef.current!, {
         center: coords ? { lat: coords.latitude, lng: coords.longitude } : defaultCenter,
         zoom: 14,
-        styles: darkMapStyle,
         disableDefaultUI: true,
         zoomControl: true,
+        mapId: '6b4fa3a2419c825a', // Required for Advanced Markers
       });
       setMap(initialMap);
     } catch (e: any) {
@@ -60,8 +60,8 @@ const MapScreen = () => {
 
     venues.forEach(venue => {
       if (!venue.location?.lat || !venue.location?.lng) return;
-      if (venue.isActive === false || venue.isVisible === false) return;
-      if (venue.physicalRoom === false) return; // Production Only filter for Map
+      if (venue.isActive === false) return;
+      // if (venue.physicalRoom === false) return; // Cleaned up non-existent field
 
       const isLeagueAnchor = venue.tier_config?.is_league_eligible;
       const isBuzzing = venue.status === 'buzzing';
@@ -72,28 +72,25 @@ const MapScreen = () => {
         venue.establishmentType === 'Bar & Restaurant' ||
         (!venue.establishmentType && isLeagueAnchor);
 
-      const marker = new (window as any).google.maps.Marker({
+      // Use google.maps.marker.AdvancedMarkerElement to avoid deprecation and fix visibility
+      const marker = new (window as any).google.maps.marker.AdvancedMarkerElement({
         position: { lat: venue.location.lat, lng: venue.location.lng },
         map: map,
         title: venue.name,
-        label: {
-          text: venue.name,
-          color: "#ffffff",
-          fontSize: isLeagueAnchor ? "11px" : "9px",
-          fontWeight: isLeagueAnchor ? "900" : "500",
-        },
-        icon: {
-          path: showBeerMug
-            ? BEER_MUG_PATH
-            : (window as any).google.maps.SymbolPath.CIRCLE,
-          scale: showBeerMug ? (isBuzzing ? 1.4 : 1.1) : 7,
-          fillColor: isLeagueAnchor ? "#fbbf24" : "#64748b",
-          fillOpacity: 1,
-          strokeWeight: isLeagueAnchor ? 2 : 1,
-          strokeColor: isLeagueAnchor ? "#0f172a" : "#ffffff",
-          anchor: showBeerMug ? new (window as any).google.maps.Point(12, 12) : new (window as any).google.maps.Point(0, 0),
-          labelOrigin: showBeerMug ? new (window as any).google.maps.Point(12, 28) : new (window as any).google.maps.Point(0, 3)
-        },
+        content: (() => {
+          const div = document.createElement('div');
+          div.className = "custom-marker";
+          const iconColor = isLeagueAnchor ? "#fbbf24" : "#64748b";
+          div.innerHTML = showBeerMug
+            ? `<div style="color: ${iconColor}; filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));">
+                 <svg viewBox="0 0 24 24" width="${isBuzzing ? 32 : 24}" height="${isBuzzing ? 32 : 24}" fill="currentColor" stroke="#000" stroke-width="1.5">
+                   <path d="${BEER_MUG_PATH}"></path>
+                 </svg>
+                 <div style="background: rgba(15, 23, 42, 0.8); color: white; padding: 2px 6px; border-radius: 4px; font-size: ${isLeagueAnchor ? '11px' : '9px'}; font-weight: 900; white-space: nowrap; margin-top: -4px;">${venue.name}</div>
+               </div>`
+            : `<div style="width: 12px; height: 12px; background: ${iconColor}; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`;
+          return div;
+        })()
       });
 
       markersRef.current.push(marker);
@@ -103,18 +100,21 @@ const MapScreen = () => {
       const recentVibeCheck = venue.currentBuzz?.lastUpdated && (Date.now() - venue.currentBuzz.lastUpdated) < 3600000; // Last 1 hour
 
       if (recentActivity || recentVibeCheck) {
-        const pulseMarker = new (window as any).google.maps.Marker({
+        const pulseMarker = new (window as any).google.maps.marker.AdvancedMarkerElement({
           position: { lat: venue.location.lat, lng: venue.location.lng },
           map: map,
           zIndex: -1,
-          icon: {
-            path: (window as any).google.maps.SymbolPath.CIRCLE,
-            scale: 20,
-            fillColor: recentVibeCheck ? "#fbbf24" : "#60a5fa",
-            fillOpacity: 0.25,
-            strokeWeight: 0,
-            animation: (window as any).google.maps.Animation.DROP
-          }
+          content: (() => {
+            const div = document.createElement('div');
+            const color = recentVibeCheck ? "#fbbf24" : "#60a5fa";
+            div.style.width = '40px';
+            div.style.height = '40px';
+            div.style.borderRadius = '50%';
+            div.style.backgroundColor = color;
+            div.style.opacity = '0.25';
+            div.style.transform = 'translate(-50%, -50%)';
+            return div;
+          })()
         });
         markersRef.current.push(pulseMarker);
 
@@ -165,7 +165,7 @@ const MapScreen = () => {
           <div style="padding: 12px; color: #0f172a; max-width: 200px; font-family: 'Roboto Condensed', sans-serif;">
             <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
               <span style="background: ${isLeagueAnchor ? '#fbbf24' : '#e2e8f0'}; color: #000; font-size: 8px; font-weight: 900; padding: 2px 4px; border-radius: 4px;">
-                ${venue.category?.toUpperCase() || 'BAR'}
+                ${(venue as any).establishmentType?.toUpperCase() || 'BAR'}
               </span>
               <span style="color: ${isLeagueAnchor ? '#1e293b' : '#64748b'}; font-size: 8px; font-weight: bold;">
                 ${tierTag}
@@ -179,8 +179,7 @@ const MapScreen = () => {
                 <span>${venue.checkIns || 0} Checked In</span>
               </div>
               ${isBuzzing ? '<div style="display: flex; align-items: center; gap: 3px; color: #fbbf24;"><span>🔥</span><span>Buzzing</span></div>' : ''}
-              ${venue.status === 'lively' ? '<div style="display: flex; align-items: center; gap: 3px; color: #a3e635;"><span>🎉</span><span>Lively</span></div>' : ''}
-              ${(!venue.status || venue.status === 'chill') ? '<div style="display: flex; align-items: center; gap: 3px; color: #60a5fa;"><span>🧊</span><span>Chill</span></div>' : ''}
+              ${(venue.status === 'chill' || !venue.status) ? '<div style="display: flex; align-items: center; gap: 3px; color: #60a5fa;"><span>🧊</span><span>Chill</span></div>' : ''}
             </div>
 
             <p style="margin: 0; font-size: 11px; color: #94a3b8; line-height: 1.3; font-style: italic;">"${venue.vibe}"</p>
@@ -211,18 +210,15 @@ const MapScreen = () => {
     });
 
     if (coords) {
-      new (window as any).google.maps.Marker({
+      new (window as any).google.maps.marker.AdvancedMarkerElement({
         position: { lat: coords.latitude, lng: coords.longitude },
         map: map,
         title: "You Are Here",
-        icon: {
-          path: (window as any).google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 6,
-          fillColor: "#3b82f6",
-          fillOpacity: 1,
-          strokeWeight: 2,
-          strokeColor: "#ffffff",
-        },
+        content: (() => {
+          const div = document.createElement('div');
+          div.innerHTML = `<div style="width: 20px; height: 20px; background: #3b82f6; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(59,130,246,0.5);"></div>`;
+          return div;
+        })()
       });
 
       // Pan to user if markers just updated
@@ -241,18 +237,14 @@ const MapScreen = () => {
     map.setZoom(16);
 
     // Add a temporary marker for the searched place if it's not a venue
-    new (window as any).google.maps.Marker({
+    new (window as any).google.maps.marker.AdvancedMarkerElement({
       position: place.geometry.location,
       map: map,
-      animation: (window as any).google.maps.Animation.DROP,
-      icon: {
-        path: (window as any).google.maps.SymbolPath.CIRCLE,
-        scale: 10,
-        fillColor: "#fbbf24",
-        fillOpacity: 0.8,
-        strokeWeight: 2,
-        strokeColor: "#ffffff",
-      }
+      content: (() => {
+        const div = document.createElement('div');
+        div.innerHTML = `<div style="font-size: 24px;">📍</div>`;
+        return div;
+      })()
     });
   };
 

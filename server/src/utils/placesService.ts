@@ -90,3 +90,30 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceDetails | n
         return null;
     }
 }
+/**
+ * Retrieves autocomplete predictions for a query string.
+ */
+export async function getAutocompletePredictions(input: string): Promise<any[]> {
+    if (!GOOGLE_MAPS_API_KEY) {
+        console.error('[PLACES_ERROR] Google Maps API Key is missing.');
+        return [];
+    }
+
+    try {
+        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&types=establishment|geocode&location=47.0425,-122.9007&radius=10000&key=${GOOGLE_MAPS_API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.status === 'OK') {
+            return data.predictions;
+        } else if (data.status === 'ZERO_RESULTS') {
+            return [];
+        } else {
+            console.warn(`[PLACES_WARNING] Autocomplete failed: ${data.status}`);
+            return [];
+        }
+    } catch (error) {
+        console.error('[PLACES_ERROR] Error fetching predictions:', error);
+        return [];
+    }
+}

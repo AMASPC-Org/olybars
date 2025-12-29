@@ -586,6 +586,38 @@ v1Router.get('/config/maps-key', (req, res) => {
 });
 
 /**
+ * @route GET /api/places/search
+ * @desc Proxy for Google Places Autocomplete
+ */
+v1Router.get('/places/search', async (req, res) => {
+    const { q } = req.query;
+    if (!q) return res.json([]);
+    try {
+        const { getAutocompletePredictions } = await import('./utils/placesService');
+        const predictions = await getAutocompletePredictions(q as string);
+        res.json(predictions);
+    } catch (error) {
+        res.status(500).json({ error: 'Places search failed' });
+    }
+});
+
+/**
+ * @route GET /api/places/details/:placeId
+ * @desc Proxy for Google Places Details
+ */
+v1Router.get('/places/details/:placeId', async (req, res) => {
+    const { placeId } = req.params;
+    try {
+        const { getPlaceDetails } = await import('./utils/placesService');
+        const details = await getPlaceDetails(placeId);
+        if (!details) return res.status(404).json({ error: 'Place not found' });
+        res.json(details);
+    } catch (error) {
+        res.status(500).json({ error: 'Place details failed' });
+    }
+});
+
+/**
  * @route PATCH /api/users/:uid
  * @desc Update user profile data with business logic (e.g. handle cooldown)
  */

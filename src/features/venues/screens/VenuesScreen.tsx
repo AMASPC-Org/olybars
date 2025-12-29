@@ -43,9 +43,10 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
             result = result.filter(v =>
-                v.name.toLowerCase().includes(q) ||
-                v.address?.toLowerCase().includes(q) ||
-                v.venueType.replace('_', ' ').toLowerCase().includes(q)
+                (v.name && v.name.toLowerCase().includes(q)) ||
+                (v.address && v.address.toLowerCase().includes(q)) ||
+                (v.venueType && v.venueType.replace(/_/g, ' ').toLowerCase().includes(q)) ||
+                (v.vibe && v.vibe.toLowerCase().includes(q))
             );
         }
 
@@ -179,8 +180,8 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                             key={type.id}
                             onClick={() => setActiveType(type.id as VenueType | 'all')}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${activeType === type.id
-                                    ? 'bg-white text-black border-white'
-                                    : 'bg-transparent text-slate-500 border-slate-800 hover:border-slate-600'
+                                ? 'bg-white text-black border-white'
+                                : 'bg-transparent text-slate-500 border-slate-800 hover:border-slate-600'
                                 }`}
                         >
                             {type.label}
