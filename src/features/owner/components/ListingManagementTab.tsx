@@ -3,12 +3,12 @@ import {
     Info, Phone, Globe, Instagram, Facebook, Twitter,
     Save, Clock, MapPin, Mail, ChevronRight, Beer
 } from 'lucide-react';
-import { Venue } from '../../../types';
+import { Venue, VenueType, VibeTag } from '../../../types';
 import { updateVenueDetails, syncVenueWithGoogle } from '../../../services/venueService';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { PlaceAutocomplete } from '../../../components/ui/PlaceAutocomplete';
 import { AssetToggleGrid } from '../../../components/partners/AssetToggleGrid';
-import { AmenityManager } from './AmenityManager';
+import { GameFeatureManager } from './GameFeatureManager';
 import { Gamepad2 } from 'lucide-react';
 
 interface ListingManagementTabProps {
@@ -35,11 +35,10 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         isLowCapacity: venue.isLowCapacity || false,
         isSoberFriendly: venue.isSoberFriendly || false,
         establishmentType: venue.establishmentType || 'Bar Only',
-        subtypes: venue.subtypes || [],
-        isVisible: venue.isVisible !== false,
-        assets: venue.assets || {},
+        vibeTags: venue.vibeTags || [],
+        tier_config: venue.tier_config || { is_directory_listed: true, is_league_eligible: false },
         hasGameVibeCheckEnabled: venue.hasGameVibeCheckEnabled || false,
-        amenityDetails: venue.amenityDetails || []
+        gameFeatures: venue.gameFeatures || []
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -162,34 +161,51 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                             <div className="relative group">
                                 <Beer className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4" />
                                 <select
-                                    name="establishmentType"
-                                    value={formData.establishmentType || 'Bar Only'}
-                                    onChange={(e: any) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                                    name="venueType"
+                                    value={formData.venueType || 'bar_pub'}
+                                    onChange={(e: any) => setFormData(prev => ({ ...prev, venueType: e.target.value as VenueType }))}
                                     className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-100 focus:border-primary/50 outline-none appearance-none cursor-pointer"
                                 >
-                                    <option value="Bar Only" className="bg-black">Bar Only</option>
-                                    <option value="Bar & Restaurant" className="bg-black">Bar & Restaurant</option>
-                                    <option value="Restaurant with Bar" className="bg-black">Restaurant with Bar</option>
+                                    <option value="bar_pub" className="bg-black">Bar / Pub (Standard)</option>
+                                    <option value="restaurant_bar" className="bg-black">Restaurant & Bar</option>
+                                    <option value="brewery_taproom" className="bg-black">Brewery / Taproom</option>
+                                    <option value="lounge_club" className="bg-black">Lounge / Club</option>
+                                    <option value="arcade_bar" className="bg-black">Arcade Bar</option>
                                 </select>
                                 <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4 rotate-90" />
                             </div>
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Subtypes (Comma Separated)</label>
-                            <div className="relative group">
-                                <Info className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4" />
-                                <input
-                                    type="text"
-                                    name="subtypes"
-                                    value={Array.isArray(formData.subtypes) ? formData.subtypes.join(', ') : ''}
-                                    onChange={(e) => {
-                                        const types = e.target.value.split(',').map(s => s.trim()).filter(s => s !== '');
-                                        setFormData(prev => ({ ...prev, subtypes: types }));
-                                    }}
-                                    placeholder="Ex: Wine Bar, Martini Bar, Dive Bar"
-                                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-100 placeholder:text-slate-800 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-all font-medium"
-                                />
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Vibe Tags (Select All That Apply)</label>
+                            <div className="flex flex-wrap gap-2">
+                                {([
+                                    { value: 'dive', label: 'Dive' },
+                                    { value: 'speakeasy', label: 'Speakeasy' },
+                                    { value: 'sports', label: 'Sports Bar' },
+                                    { value: 'tiki_theme', label: 'Tiki / Theme' },
+                                    { value: 'wine_focus', label: 'Wine Bar' },
+                                    { value: 'cocktail_focus', label: 'Cocktail / Mixology' },
+                                    { value: 'lgbtq', label: 'LGBTQ+ / Queer Bar' },
+                                    { value: 'patio_garden', label: 'Patio / Beer Garden' }
+                                ] as { value: VibeTag, label: string }[]).map((tag) => (
+                                    <button
+                                        key={tag.value}
+                                        onClick={() => {
+                                            const currentTags = formData.vibeTags || [];
+                                            const newTags = currentTags.includes(tag.value)
+                                                ? currentTags.filter((t: VibeTag) => t !== tag.value) // Explicit type for clarity
+                                                : [...currentTags, tag.value];
+                                            setFormData(prev => ({ ...prev, vibeTags: newTags }));
+                                        }}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${(formData.vibeTags || []).includes(tag.value)
+                                                ? 'bg-primary text-black border-primary'
+                                                : 'bg-black/40 text-slate-500 border-white/10 hover:border-white/30'
+                                            }`}
+                                    >
+                                        {tag.label}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -369,8 +385,11 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
 
                         <div className="flex items-center gap-3 bg-black/40 p-1 rounded-xl border border-white/10">
                             <button
-                                onClick={() => setFormData(prev => ({ ...prev, isVisible: true }))}
-                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${(formData as any).isVisible !== false
+                                onClick={() => setFormData(prev => ({
+                                    ...prev,
+                                    tier_config: { ...prev.tier_config!, is_directory_listed: true }
+                                }))}
+                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${formData.tier_config?.is_directory_listed !== false
                                     ? 'bg-primary text-black shadow-lg'
                                     : 'text-slate-500 hover:text-white'
                                     }`}
@@ -378,8 +397,11 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                 Public
                             </button>
                             <button
-                                onClick={() => setFormData(prev => ({ ...prev, isVisible: false }))}
-                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${(formData as any).isVisible === false
+                                onClick={() => setFormData(prev => ({
+                                    ...prev,
+                                    tier_config: { ...prev.tier_config!, is_directory_listed: false }
+                                }))}
+                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${formData.tier_config?.is_directory_listed === false
                                     ? 'bg-red-500 text-white shadow-lg'
                                     : 'text-slate-500 hover:text-white'
                                     }`}
@@ -399,13 +421,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                 </div>
 
                 <div className="bg-slate-900/50 border border-white/5 rounded-3xl p-8 space-y-8">
-                    <AssetToggleGrid
-                        selectedAssets={formData.assets || {}}
-                        onChange={(id, val) => setFormData(prev => ({
-                            ...prev,
-                            assets: { ...prev.assets, [id]: val }
-                        }))}
-                    />
+                    {/* Deprecated AssetToggleGrid removed in favor of detailed GameFeature tracking */}
 
                     <div className="pt-8 border-t border-white/10">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
@@ -434,7 +450,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                     </div>
                     {formData.hasGameVibeCheckEnabled && (
                         <div className="pt-8 border-t border-white/10">
-                            <AmenityManager
+                            <GameFeatureManager
                                 venue={venue}
                                 onChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))}
                             />

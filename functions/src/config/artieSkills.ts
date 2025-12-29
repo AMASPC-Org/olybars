@@ -17,24 +17,30 @@ export interface ArtieSkill {
 }
 
 export const ARTIE_SKILLS: Record<string, ArtieSkill> = {
-    update_flash_deal: {
-        id: 'update_flash_deal',
+    schedule_flash_deal: {
+        id: 'schedule_flash_deal',
         name: 'Flash Deal',
-        description: 'Post a limited-time special offer.',
+        description: 'Schedule a limited-time special offer.',
         category: 'PROMOTION',
         protocol: `
-Collect and confirm these 3 details:
+Collect and confirm these details:
 1. Title (Punchy name, e.g., "$3 Wells")
-2. Description (What is included, e.g., "All wells, limit 2")
-3. Duration (How long it lasts, e.g., "60 minutes")
-COMPLIANCE: Strictly forbid language implying rapid/excessive consumption (e.g., "Chug", "Bottomless", "Get Hammered"). Provide a legal "Artie Pivot" if necessary.`,
+2. Description & Terms (e.g., "All wells, limit 2, dine-in only")
+3. Date & Start Time (e.g., "Tonight at 7pm", "Tomorrow at 4pm")
+4. Duration (Maximum 180 minutes / 3 hours)
+COMPLIANCE: Strictly forbid language implying rapid/excessive consumption.
+PIT RULE: You MUST explicitly ask: "Have you told your staff/bartender about this deal?" before confirming.
+LEAD TIME: All deals must be scheduled at least 180 minutes (3 hours) in advance.
+TRAFFIC: If the slot is "BUSY", warn the user they will rotate with up to 2 other bars on the homepage.`,
         params: [
             { name: 'summary', description: 'Title of the deal', required: true },
-            { name: 'details', description: 'Description of the deal', required: true },
-            { name: 'price', description: 'Price or discount', required: false },
-            { name: 'duration', description: 'Duration in minutes or hours (Artie will translate to timestamp)', required: true }
+            { name: 'details', description: 'Description and terms', required: true },
+            { name: 'startTimeISO', description: 'ISO string of the start time', required: true },
+            { name: 'duration', description: 'Duration in minutes', required: true },
+            { name: 'staffBriefingConfirmed', description: 'Boolean confirming staff is aware', required: true },
+            { name: 'price', description: 'Optional price string', required: false }
         ],
-        actionTemplate: '[ACTION]: {"skill": "update_flash_deal", "params": {"summary": "{{summary}}", "details": "{{details}}", "price": "{{price}}", "duration": "{{duration}}"}}'
+        actionTemplate: '[ACTION]: {"skill": "schedule_flash_deal", "params": {"summary": "{{summary}}", "details": "{{details}}", "startTimeISO": "{{startTimeISO}}", "duration": "{{duration}}", "staffBriefingConfirmed": {{staffBriefingConfirmed}}, "price": "{{price}}"}}'
     },
     update_hours: {
         id: 'update_hours',

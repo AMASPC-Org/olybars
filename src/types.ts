@@ -1,6 +1,26 @@
 import { SystemRole, VenueRole } from './types/auth_schema';
 
-export type VenueStatus = 'dead' | 'chill' | 'lively' | 'buzzing' | 'packed';
+export type VenueStatus = 'dead' | 'chill' | 'buzzing' | 'packed';
+
+export enum PartnerTier {
+  FREE = 'FREE',    // 1 Token/mo
+  DIY = 'DIY',      // 2 Tokens/mo
+  PRO = 'PRO',      // 4 Tokens/mo
+  AGENCY = 'AGENCY' // 8 Tokens/mo
+}
+
+export const TIER_LIMITS: Record<PartnerTier, number> = {
+  [PartnerTier.FREE]: 1,
+  [PartnerTier.DIY]: 2,
+  [PartnerTier.PRO]: 4,
+  [PartnerTier.AGENCY]: 8
+};
+
+export interface PartnerConfig {
+  tier: PartnerTier;
+  billingCycleStart: number; // Timestamp for monthly reset
+  flashDealsUsed: number;    // Counter
+}
 
 export interface FlashDeal {
   id?: string;
@@ -13,48 +33,103 @@ export interface FlashDeal {
   isActive: boolean;
   isApproved?: boolean; // Admin approval required
   termsAccepted?: boolean;
+  offerDetails?: string; // [NEW] e.g. "BOGO"
+  terms?: string; // [NEW] e.g. "Limit 2"
+}
+
+export interface ScheduledDeal {
+  id?: string;
+  venueId?: string;
+  title: string;
+  description: string;
+  price?: string;
+  startTime: number;
+  endTime: number;
+  durationMinutes: number;
+  status: 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  createdBy: 'ARTIE' | 'MANUAL';
+  staffBriefingConfirmed: boolean;
+  offerDetails?: string;
+  terms?: string;
+  createdAt?: any; // Firestore serverTimestamp
+}
+
+export type VenueType = 'bar_pub' | 'restaurant_bar' | 'brewery_taproom' | 'lounge_club' | 'arcade_bar';
+
+export type VibeTag =
+  | 'dive'
+  | 'speakeasy'
+  | 'sports'
+  | 'tiki_theme'
+  | 'wine_focus'
+  | 'cocktail_focus'
+  | 'lgbtq'
+  | 'patio_garden';
+
+export type FoodServiceLevel = 'none_byof' | 'snacks' | 'limited_kitchen' | 'full_kitchen';
+
+export type GameFeatureStatus = 'active' | 'out_of_order';
+
+export interface GameFeature {
+  id: string; // e.g. "pinball_godzilla" or just "pool_table_1"
+  type: 'arcade_game' | 'pinball_machine' | 'pool_table' | 'darts' | 'skeeball' | 'shuffleboard' | 'foosball' | 'cornhole' | 'beer_pong' | 'trivia' | 'karaoke' | 'giant_jenga' | 'unknown';
+  name: string; // Display name e.g. "Godzilla Pinball"
+  status: GameFeatureStatus;
+  count: number;
+  highlight?: boolean; // If true, show in summary tags
+  description?: string; // [NEW] For artie lore or condition notes
+  isLeaguePartner?: boolean; // [NEW] For tracking league assets
 }
 
 export interface Venue {
   id: string;
   name: string;
-  type: string;
+  venueType: VenueType; // [NEW] Primary Business Model
+  vibeTags?: VibeTag[]; // [NEW] Vibe Tags
+
   status: VenueStatus;
   checkIns: number;
   isPaidLeagueMember?: boolean;
-  nicknames?: string[]; // [NEW] AI Resolution Helper // Paid "Venue League Member" status (vs Unpaid Venue)
+  nicknames?: string[];
 
   // Legacy/Computed fields for Frontend
-  deal?: string;         // Title of active, approved flash deal
-  dealEndsIn?: number;   // Minutes remaining
+  deal?: string;
+  dealEndsIn?: number;
 
   // Robust Deal Data
   flashDeals?: FlashDeal[];
   activeFlashDealId?: string;
   activeFlashDeal?: FlashDeal;
 
-  // ... (rest) ...
   vibe: string;
-  coordinates: { x: number; y: number }; // Relative map coordinates
-  location?: { lat: number; lng: number }; // Real-world coordinates for geofencing
+  coordinates: { x: number; y: number };
+  location?: { lat: number; lng: number };
   currentBuzz?: {
     score: number;
     lastUpdated: number;
   };
+
+  // Events & Hours
   leagueEvent?: 'karaoke' | 'trivia' | 'arcade' | 'events' | 'openmic' | 'bingo' | 'live_music' | 'pool' | 'darts' | 'shuffleboard' | 'pinball' | null;
   triviaTime?: string;
-  eventDescription?: string; // [NEW] Unified for Artie
-  happyHourSimple?: string;  // [NEW] Unified for Artie
-  happyHourSpecials?: string; // [NEW] Unified for Artie
-  isHQ?: boolean;
+  eventDescription?: string;
+  happyHourSimple?: string;
+  happyHourSpecials?: string;
   happyHour?: {
     startTime: string;
     endTime: string;
     description: string;
-    days?: string[]; // e.g. ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+    days?: string[];
   };
+
+  // Bonus Points
+  checkin_bonus_points?: number;
+  bonus_expires_at?: number;
+
   alertTags?: string[];
   isFavorite?: boolean;
+  isFeatured?: boolean; // [NEW] Added for backward compatibility/visual tagging
+  featureWeight?: number; // [NEW] Sort priority for featured venues
   description?: string;
   address?: string;
   email?: string;
@@ -64,100 +139,89 @@ export interface Venue {
   instagram?: string;
   facebook?: string;
   twitter?: string;
-  venueName?: string; // This field is not in the original Venue interface, but was in the provided snippet. Assuming it should be added.
-  source?: 'google_calendar' | 'facebook' | 'manual'; // This field is not in the original Venue interface, but was in the provided snippet. Assuming it should be added.
-  ticketLink?: string; // This field is not in the original Venue interface, but was in the provided snippet. Assuming it should be added.
-  cheatCodeUrl?: string; // Link to History Blog for Trivia answers
+  venueName?: string;
+  source?: 'google_calendar' | 'facebook' | 'manual';
+  ticketLink?: string;
+  cheatCodeUrl?: string;
+
+  partnerConfig?: PartnerConfig; // [NEW] Flash Deal Tiers & Tokens
+
   ownerId?: string;
   managerIds?: string[];
-  amenities?: string[];
-  amenityDetails?: AmenityDetail[];
-  deals?: {
-    title: string;
-    description: string;
-    days: string[];
-    start: string;
-    end: string;
-  }[];
-  isFeatured?: boolean;
-  featureWeight?: number;
-  isVisible?: boolean;
-  photos?: {
-    url: string;
-    allowMarketingUse: boolean;
-    isApprovedForFeed?: boolean;
-    isApprovedForSocial?: boolean;
-    timestamp: number;
-    userId: string;
-    id: string; // Add id for management
-  }[];
-  // Local Maker / Artesian Anchor Fields
-  isLocalMaker?: boolean; // Toggled by owner/admin
-  localScore?: number; // 0-100 score for impact
-  carryingMakers?: string[]; // IDs of other makers this venue carries
-  isVerifiedMaker?: boolean; // Gatekeeper: Must be true to enable Maker tools
-  isVerifiedHost?: boolean; // Gatekeeper: Must be true to enable League Host tools
 
-  // Local Lore / History Fields
-  isHistoricalAnchor?: boolean;
-  historySnippet?: string;
-  relatedBlogIds?: string[];
+  // Inventory / Taxonomy [NEW]
+  foodService: FoodServiceLevel; // [NEW] Replaces attributes.food_service
+  gameFeatures?: GameFeature[]; // [NEW] Replaces amenityDetails
 
-  // Strategic Market Audit & Two-Tier Model (Dec 2025)
-  category: 'Dive' | 'Cocktail Lounge' | 'Brewery' | 'Restaurant Bar' | 'Club' | 'Arcade/Activity';
+  // Deprecated / Mapped fields (Keep for TS compatibility during migration if needed, or remove if strict)
+  // category: 'Dive' | 'Cocktail Lounge' | 'Brewery' | 'Restaurant Bar' | 'Club' | 'Arcade/Activity'; // REMOVED
+  // attributes: ... // REMOVED -> Mapped to top level fields
 
   tier_config: {
-    is_directory_listed: boolean;   // Passed the Stool Test (Visible on Map)
-    is_league_eligible: boolean;    // "Anchor" status (Gamification enabled)
+    is_directory_listed: boolean;
+    is_league_eligible: boolean;
   };
 
   attributes: {
-    has_manned_bar: boolean;        // Hard requirement for listing
-    food_service: 'Full Kitchen' | 'Snacks' | 'None' | 'BYOF';
-    minors_allowed: boolean;        // Critical for dining/bar separation
+    has_manned_bar: boolean;
+    minors_allowed: boolean;
     noise_level: 'Conversational' | 'Lively' | 'Loud/Music';
+    // food_service moved to top level
   };
 
   makerType?: 'Brewery' | 'Distillery' | 'Cidery' | 'Winery';
-  physicalRoom?: boolean; // Yes/No - if No, mark as 'Production Only'
-  insiderVibe?: string; // 2-sentence 'Insider Vibe' for the app listing
-  originStory?: string; // Rich text origin story
+  physicalRoom?: boolean;
+  insiderVibe?: string;
+  originStory?: string;
   geoLoop?: 'Downtown_Walkable' | 'Warehouse_Tumwater' | 'Destination_Quest';
-  isLowCapacity?: boolean; // "Tiny Taproom" warning
-  isSoberFriendly?: boolean; // "Self Care" tag
-  isBoutique?: boolean; // For small capacity like Whitewood Cider
-  isActive?: boolean; // For Ghost List / Legacy soft-delete
+  isLowCapacity?: boolean;
+  isSoberFriendly?: boolean;
+  isBoutique?: boolean;
+  isActive?: boolean;
   scavengerHunts?: {
     title: string;
-    partnerVenues: string[]; // IDs of bars where they are typically tapped
+    partnerVenues: string[];
     badgeId: string;
   }[];
-  establishmentType?: 'Bar Only' | 'Bar & Restaurant' | 'Restaurant with Bar';
-  subtypes?: string[];
-  googlePlaceId?: string; // [NEW] For Google Places SDK Sync
-  vibeDefault?: 'CHILL' | 'LIVELY' | 'BUZZING'; // [NEW] Onboarding MVP
-  assets?: Record<string, boolean>; // [NEW] Grid Toggles (Pool, Darts, etc.)
-  // Game Vibe Check (Premium Feature)
+  establishmentType?: 'Bar Only' | 'Bar & Restaurant' | 'Restaurant with Bar'; // Likely deprecated by venueType
+  googlePlaceId?: string;
+  vibeDefault?: 'CHILL' | 'LIVELY' | 'BUZZING';
+
+  // assets?: Record<string, boolean>; // REMOVED -> use gameFeatures
+
   hasGameVibeCheckEnabled?: boolean;
   liveGameStatus?: Record<string, GameStatus>;
 
-  // Owner Manual Overrides
   manualStatus?: VenueStatus;
   manualStatusExpiresAt?: number;
   manualCheckIns?: number;
   manualCheckInsExpiresAt?: number;
 
-  // Point Bank & Yield Management (Proactive Artie)
   pointBank?: number;
   pointBankLastReset?: number;
 
   updatedAt?: number;
-  managersCanAddUsers?: boolean; // [NEW] Multi-User Support
-  lastGoogleSync?: number; // [FINOPS] For internal sync throttling
+  managersCanAddUsers?: boolean;
+  lastGoogleSync?: number;
+
+  // [NEW] Visuals & Relationships
+  photos?: {
+    id?: string;
+    url: string;
+    caption?: string;
+    allowMarketingUse?: boolean;
+    isApprovedForFeed?: boolean;
+    isApprovedForSocial?: boolean;
+    timestamp?: number;
+    userId?: string;
+  }[];
+  isHQ?: boolean;
+  isLocalMaker?: boolean;
+  carryingMakers?: string[]; // IDs of venues that carry this maker's products
 }
 
 export interface GameStatus {
-  status: 'open' | 'taken';
+  status: 'open' | 'taken' | 'out_of_order';
   timestamp: number;
   reportedBy?: string;
   expiresAt?: number;

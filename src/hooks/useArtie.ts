@@ -41,6 +41,7 @@ export function useArtie() {
                     history: historyForArtie,
                     userId,
                     userRole,
+                    venueId: (window as any)._artie_venue_id || undefined, // Allow global override if needed
                     _hp_id: hpValue // [SECURITY] Honeypot detection
                 })
             });

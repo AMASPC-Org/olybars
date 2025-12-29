@@ -6,7 +6,9 @@ import {
     ChevronLeft, Navigation, Star, Shield, Info,
     Flame, Calendar, Share2, ChevronRight, Zap,
     Settings, Instagram, Facebook, Twitter, Mail, Phone,
-    Scroll, Sparkles, Feather, Gamepad2, LayoutGrid, CheckCircle2
+    Scroll, Sparkles, Feather, Gamepad2, LayoutGrid, CheckCircle2,
+    Utensils, ChefHat, Pizza, ShoppingBag, Ban, AlertTriangle,
+    Target, Mic2, HelpCircle, Box, Disc
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../../types';
 import { SEO } from '../../../components/common/SEO';
@@ -44,7 +46,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
 
         const baseSchema: any = {
             "@context": "https://schema.org",
-            "@type": venue.type === 'Restaurant' ? 'Restaurant' : 'Bar',
+            "@type": venue.venueType === 'restaurant_bar' ? 'Restaurant' : 'Bar',
             "name": venue.name,
             "image": venue.photos?.[0]?.url,
             "address": {
@@ -57,7 +59,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
             },
             "url": window.location.href,
             "telephone": venue.phone,
-            "servesCuisine": venue.type === 'Restaurant' ? venue.vibe : undefined,
+            "servesCuisine": venue.venueType === 'restaurant_bar' ? venue.vibe : undefined,
             "priceRange": "$$",
             "description": venue.insiderVibe || venue.originStory,
             "publicAccess": venue.physicalRoom !== false,
@@ -194,7 +196,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                 />
 
                 {/* Hybrid "Master Maker" Badge (Bar + Maker) */}
-                {venue.isLocalMaker && venue.type !== 'Distillery' && venue.type !== 'Brewery' && (
+                {venue.isLocalMaker && venue.makerType !== 'Distillery' && venue.makerType !== 'Brewery' && (
                     <div className="absolute top-24 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-xl border border-primary/50 px-6 py-2 rounded-full shadow-[0_0_20px_rgba(251,191,36,0.2)] flex items-center gap-2 transform hover:scale-105 transition-transform cursor-help z-20">
                         <Trophy className="w-4 h-4 text-primary fill-primary animate-pulse" />
                         <span className="text-xs font-black text-primary uppercase tracking-widest font-league">Master Maker</span>
@@ -247,7 +249,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                                 {venue.isBoutique && <Sparkles className="w-5 h-5 text-yellow-400 fill-yellow-400" />}
                             </div>
                             <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                <span>{venue.makerType || venue.type}</span>
+                                <span>{venue.makerType || venue.venueType.replace('_', ' ')}</span>
                                 <span>•</span>
                                 <span className="text-primary italic">"{venue.vibe}"</span>
                             </div>
@@ -277,8 +279,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                             <h4 className="text-xs font-black text-slate-300 uppercase tracking-[0.15em]">Live Game Status</h4>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            {venue.amenityDetails?.filter(a => venue.liveGameStatus?.[a.id]).map(amenity => {
-                                const statusData = venue.liveGameStatus![amenity.id];
+                            {venue.gameFeatures?.filter(f => venue.liveGameStatus?.[f.id]).map(feature => {
+                                const statusData = venue.liveGameStatus![feature.id];
                                 const now = Date.now();
 
                                 // Check expiration
@@ -289,8 +291,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                                 const minsLeft = statusData.expiresAt ? Math.ceil((statusData.expiresAt - now) / 60000) : 0;
 
                                 return (
-                                    <div key={amenity.id} className="flex justify-between items-center bg-black/40 p-2 rounded-lg border border-white/5">
-                                        <span className="text-xs font-bold text-slate-300 uppercase">{amenity.name}</span>
+                                    <div key={feature.id} className="flex justify-between items-center bg-black/40 p-2 rounded-lg border border-white/5">
+                                        <span className="text-xs font-bold text-slate-300 uppercase">{feature.name}</span>
                                         <div className="text-right">
                                             <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${isTaken ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
                                                 {isTaken ? 'In Use' : 'Open'}
@@ -307,7 +309,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                 )}
 
                 {/* Quick Stats Grid */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
                         {venue.status === 'buzzing' ? <Flame className="w-5 h-5 text-orange-500" /> :
                             venue.status === 'lively' ? <Users className="w-5 h-5 text-yellow-400" /> :
@@ -325,6 +327,19 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Hours</span>
                         <span className="text-[10px] font-bold text-white uppercase">
                             {typeof venue.hours === 'string' ? venue.hours : 'Featured Hours'}
+                        </span>
+                    </div>
+                    {/* Food Service Status */}
+                    <div className="bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
+                        {venue.foodService === 'full_kitchen' ? <Utensils className="w-5 h-5 text-green-400" /> :
+                            venue.foodService === 'limited_kitchen' ? <ChefHat className="w-5 h-5 text-yellow-400" /> :
+                                venue.foodService === 'snacks' ? <Pizza className="w-5 h-5 text-orange-400" /> :
+                                    <ShoppingBag className="w-5 h-5 text-blue-400" />}
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Food</span>
+                        <span className="text-[10px] font-bold text-white uppercase truncate w-full text-center">
+                            {venue.foodService === 'full_kitchen' ? 'Full Kitchen' :
+                                venue.foodService === 'limited_kitchen' ? 'Pub Grub' :
+                                    venue.foodService === 'snacks' ? 'Snacks' : 'BYO / None'}
                         </span>
                     </div>
                 </div>
@@ -447,52 +462,61 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                         </div>
                     )}
 
-                    {/* Amenities & Assets Grid */}
-                    {((venue.assets && Object.values(venue.assets).some(v => v)) || (venue.amenityDetails && venue.amenityDetails.length > 0)) && (
+                    {/* Game & Activity Features */}
+                    {venue.gameFeatures && venue.gameFeatures.length > 0 && (
                         <div className="space-y-3">
                             <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                <LayoutGrid className="w-3 h-3" />
-                                On-Site Amenities
+                                <Gamepad2 className="w-3 h-3" />
+                                Play & Features
                             </h4>
                             <div className="grid grid-cols-2 gap-2">
-                                {venue.amenityDetails && venue.amenityDetails.length > 0 ? (
-                                    venue.amenityDetails.map(amenity => {
-                                        const asset = ASSETS.find(a => amenity.id.includes(a.id)) || { icon: LayoutGrid, label: amenity.name };
-                                        return (
-                                            <div key={amenity.id} className="bg-slate-900/40 border border-white/5 rounded-xl p-3 flex items-center gap-3">
-                                                <div className="p-2 bg-black/40 rounded-lg text-primary">
-                                                    <asset.icon className="w-4 h-4" />
-                                                </div>
-                                                <div className="flex-1 overflow-hidden">
-                                                    <p className="text-[10px] font-black text-white uppercase truncate">
-                                                        {amenity.count > 1 ? `${amenity.count} ` : ''}{amenity.name}
-                                                    </p>
+                                {venue.gameFeatures.map(feature => {
+                                    // Icon Mapping Fallback
+                                    const ASSET_MAP: Record<string, any> = {
+                                        'pool_table': { icon: Target, label: 'Pool' },
+                                        'darts': { icon: Target, label: 'Darts' },
+                                        'shuffleboard': { icon: Disc, label: 'Shuffleboard' },
+                                        'arcade_game': { icon: Gamepad2, label: 'Arcade' },
+                                        'pinball_machine': { icon: Zap, label: 'Pinball' },
+                                        'skeeball': { icon: Disc, label: 'Skee-ball' },
+                                        'foosball': { icon: Trophy, label: 'Foosball' },
+                                        'cornhole': { icon: Box, label: 'Cornhole' },
+                                        'trivia': { icon: HelpCircle, label: 'Trivia' },
+                                        'karaoke': { icon: Mic2, label: 'Karaoke' },
+                                        'console_gaming': { icon: Gamepad2, label: 'Console' },
+                                        'giant_jenga': { icon: Box, label: 'Giant Jenga' },
+                                        'beer_pong': { icon: Beer, label: 'Beer Pong' }
+                                    };
+                                    const config = ASSET_MAP[feature.type] || { icon: LayoutGrid, label: feature.name };
+                                    const Icon = config.icon;
+                                    const isOutOfOrder = feature.status === 'out_of_order';
+
+                                    return (
+                                        <div key={feature.id} className={`border rounded-xl p-3 flex items-center gap-3 relative overflow-hidden ${isOutOfOrder ? 'bg-red-900/10 border-red-500/30' : 'bg-slate-900/40 border-white/5'
+                                            }`}>
+                                            <div className={`p-2 rounded-lg ${isOutOfOrder ? 'bg-red-500/10 text-red-400' : 'bg-black/40 text-primary'}`}>
+                                                {isOutOfOrder ? <AlertTriangle className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
+                                            </div>
+                                            <div className="flex-1 overflow-hidden">
+                                                <p className={`text-[10px] font-black uppercase truncate ${isOutOfOrder ? 'text-red-400 line-through' : 'text-white'}`}>
+                                                    {feature.count > 1 ? `${feature.count} ` : ''}{feature.name}
+                                                </p>
+                                                {isOutOfOrder ? (
+                                                    <span className="text-[8px] font-black text-red-500 uppercase tracking-widest bg-red-950/50 px-1.5 py-0.5 rounded">
+                                                        Out of Order
+                                                    </span>
+                                                ) : (
                                                     <div className="flex items-center gap-1">
                                                         <CheckCircle2 className="w-2.5 h-2.5 text-primary" />
                                                         <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none">
-                                                            {amenity.isLeaguePartner ? 'League Partner' : 'Verified'}
+                                                            Active
                                                         </span>
                                                     </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                ) : (
-                                    ASSETS.filter(a => !!venue.assets?.[a.id]).map(asset => (
-                                        <div key={asset.id} className="bg-slate-900/40 border border-white/5 rounded-xl p-3 flex items-center gap-3">
-                                            <div className="p-2 bg-black/40 rounded-lg text-primary">
-                                                <asset.icon className="w-4 h-4" />
-                                            </div>
-                                            <div className="flex-1 overflow-hidden">
-                                                <p className="text-[10px] font-black text-white uppercase truncate">{asset.label}</p>
-                                                <div className="flex items-center gap-1">
-                                                    <CheckCircle2 className="w-2.5 h-2.5 text-primary" />
-                                                    <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest leading-none">Verified</span>
-                                                </div>
+                                                )}
                                             </div>
                                         </div>
-                                    ))
-                                )}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

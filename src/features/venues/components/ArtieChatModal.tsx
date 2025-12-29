@@ -95,6 +95,12 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
     useEffect(() => {
         if (isOpen && !greeting) {
             setGreeting(getArtieGreeting(userProfile));
+
+            // Set global venue context for Artie hook
+            if (userProfile?.homeBase) {
+                (window as any)._artie_venue_id = userProfile.homeBase;
+            }
+
             // Default suggestions for new users
             setSuggestions([
                 "Who's winning?",
@@ -179,16 +185,37 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
             let successMessage = "Update complete!";
 
             switch (pendingAction.skill) {
-                case 'update_flash_deal':
-                    await VenueOpsService.updateFlashDeal(venueId, {
+                case 'schedule_flash_deal':
+                    // 1. First run the explicit server-side validation logic
+                    const validation = await VenueOpsService.validateSlot(
+                        { partnerConfig: { tier: userProfile.role as any, flashDealsUsed: 0 } } as any, // Mock venue for validation if needed, or fetch real venue
+                        new Date(pendingAction.params.startTimeISO).getTime(),
+                        Number(pendingAction.params.duration)
+                    );
+
+                    if (!validation.valid) {
+                        showToast(`VALIDATION FAILED: ${validation.reason}`, "error");
+                        setActionStatus('error');
+                        return;
+                    }
+
+                    // 2. Schedule the deal
+                    await VenueOpsService.scheduleFlashDeal(venueId, {
                         title: pendingAction.params.summary,
                         description: pendingAction.params.details,
                         price: pendingAction.params.price,
-                        duration: pendingAction.params.duration,
-                        isActive: true
+                        startTime: new Date(pendingAction.params.startTimeISO).getTime(),
+                        endTime: new Date(pendingAction.params.startTimeISO).getTime() + (Number(pendingAction.params.duration) * 60000),
+                        durationMinutes: Number(pendingAction.params.duration),
+                        status: 'PENDING',
+                        createdBy: 'ARTIE',
+                        staffBriefingConfirmed: pendingAction.params.staffBriefingConfirmed,
+                        offerDetails: pendingAction.params.summary, // Simple sync for now
+                        terms: pendingAction.params.details
                     });
-                    successMessage = `FLASH DEAL: ${pendingAction.params.summary} is now LIVE!`;
+                    successMessage = `FLASH DEAL SCHEDULED: ${pendingAction.params.summary} for ${new Date(pendingAction.params.startTimeISO).toLocaleString()}!`;
                     break;
+                case 'update_flash_deal':
                 case 'update_hours':
                     await VenueOpsService.updateHours(venueId, pendingAction.params.hours);
                     successMessage = `OFFICIAL HOURS: Updated to ${pendingAction.params.hours}`;

@@ -1092,6 +1092,17 @@ app.use('/api/v1', v1Router);
 app.use('/api/v2', v2Router);
 app.use('/api', v1Router); // Fallback for legacy frontend
 
+
+// Flash Deal Activator (Lazy Cron)
+setInterval(async () => {
+    try {
+        const { syncFlashDeals } = await import('./venueService');
+        await syncFlashDeals();
+    } catch (e) {
+        console.error('[ACTIVATOR] Failed to sync flash deals:', e);
+    }
+}, 60000); // Check every minute
+
 app.listen(port, () => {
-    log('INFO', `OlyBars Backend running on http://localhost:${port}`);
+    log('INFO', `Flash Boarding... OlyBars Server running on port ${port} in ${config.NODE_ENV} mode.`);
 });

@@ -3,7 +3,7 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
     Beer, Bot, ChevronRight, Clock, Crown, Filter, Flame, MapPin, Music, Navigation, Search, Sparkles, Star, Trophy, Users
 } from 'lucide-react';
-import { Venue } from '../../../types';
+import { Venue, VenueType, VibeTag } from '../../../types';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
 import { isVenueOpen, getVenueStatus } from '../../../utils/venueUtils';
@@ -27,6 +27,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
     const [searchQuery, setSearchQuery] = useState('');
     const [activeSort, setActiveSort] = useState<SortOption>('buzz');
     const [showOpenOnly, setShowOpenOnly] = useState(false);
+    const [activeType, setActiveType] = useState<VenueType | 'all'>('all');
     const [activeTag, setActiveTag] = useState<string | null>(searchParams.get('filter') === 'makers' ? 'Makers' : null);
 
     // Filter and Sort Logic
@@ -44,7 +45,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
             result = result.filter(v =>
                 v.name.toLowerCase().includes(q) ||
                 v.address?.toLowerCase().includes(q) ||
-                v.type.toLowerCase().includes(q)
+                v.venueType.replace('_', ' ').toLowerCase().includes(q)
             );
         }
 
@@ -53,21 +54,46 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
             result = result.filter(v => v.isOpen);
         }
 
-        // 3. Tag Filter (Karaoke, Trivia, Deals)
+        // 3. Venue Type Filter (Primary Toggle)
+        if (activeType !== 'all') {
+            result = result.filter(v => v.venueType === activeType);
+        }
+
+        // 4. Tag Filter (Vibe Tags & Functional Tags)
         if (activeTag) {
-            if (activeTag === 'Deals') result = result.filter(v => !!v.deal || (v.deals && v.deals.length > 0));
+            if (activeTag === 'Deals') result = result.filter(v => !!v.deal || (v.flashDeals && v.flashDeals.length > 0));
             else if (activeTag === 'Makers') {
                 result = result.filter(v =>
                     v.isHQ ||
-                    v.type.toLowerCase().includes('brewery') ||
-                    v.type.toLowerCase().includes('distillery')
+                    v.isLocalMaker ||
+                    v.venueType === 'brewery_taproom'
                 );
             }
             else if (activeTag === 'Trivia') result = result.filter(v => v.leagueEvent === 'trivia');
+            // Check Vibe Tags
+            else {
+                // Map display tag back to VibeTag value if needed, or simply check vibeTags array
+                const vibeTagValue = activeTag.toLowerCase().replace(/ /g, '_') as VibeTag; // rough mapping, better to specific map
+                // Helper map for display -> value
+                const TAG_MAP: Record<string, VibeTag> = {
+                    'Dive': 'dive',
+                    'Speakeasy': 'speakeasy',
+                    'Sports': 'sports',
+                    'Tiki': 'tiki_theme',
+                    'Wine': 'wine_focus',
+                    'Cocktails': 'cocktail_focus',
+                    'LGBTQ+': 'lgbtq',
+                    'Patio': 'patio_garden'
+                };
+                const targetVibe = TAG_MAP[activeTag];
+                if (targetVibe) {
+                    result = result.filter(v => v.vibeTags?.includes(targetVibe));
+                }
+            }
         }
 
         // 4. Global Visibility
-        result = result.filter(v => v.isVisible !== false);
+        result = result.filter(v => v.tier_config.is_directory_listed);
 
         // 5. Sorting
         result.sort((a, b) => {
@@ -85,8 +111,8 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
             }
             if (activeSort === 'buzz') {
                 // Priority 1: Has Deal?
-                const aHasDeal = !!(a.deal || (a.deals && a.deals.length > 0));
-                const bHasDeal = !!(b.deal || (b.deals && b.deals.length > 0));
+                const aHasDeal = !!(a.deal || (a.flashDeals && a.flashDeals.length > 0));
+                const bHasDeal = !!(b.deal || (b.flashDeals && b.flashDeals.length > 0));
 
                 if (aHasDeal && !bHasDeal) return -1;
                 if (!aHasDeal && bHasDeal) return 1;
@@ -139,6 +165,29 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                     />
                 </div>
 
+                {/* Type Toggles (Primary) */}
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {[
+                        { id: 'all', label: 'All' },
+                        { id: 'bar_pub', label: 'Bars' },
+                        { id: 'restaurant_bar', label: 'Rest & Bar' },
+                        { id: 'brewery_taproom', label: 'Breweries' },
+                        { id: 'lounge_club', label: 'Lounges' },
+                        { id: 'arcade_bar', label: 'Arcades' }
+                    ].map(type => (
+                        <button
+                            key={type.id}
+                            onClick={() => setActiveType(type.id as VenueType | 'all')}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${activeType === type.id
+                                    ? 'bg-white text-black border-white'
+                                    : 'bg-transparent text-slate-500 border-slate-800 hover:border-slate-600'
+                                }`}
+                        >
+                            {type.label}
+                        </button>
+                    ))}
+                </div>
+
                 {/* Sorting & Quick Filters */}
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -170,11 +219,11 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
 
                     <div className="flex items-center justify-between">
                         <div className="flex gap-2">
-                            {['Makers', 'Trivia', 'Deals'].map(tag => (
+                            {['Makers', 'Trivia', 'Deals', 'Dive', 'Speakeasy', 'Sports', 'Patio', 'Cocktails', 'Wine', 'Tiki', 'LGBTQ+'].map(tag => (
                                 <button
                                     key={tag}
                                     onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-                                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider border transition-all ${activeTag === tag ? 'bg-primary/20 text-primary border-primary' : 'bg-transparent text-slate-500 border-slate-800'}`}
+                                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider border transition-all whitespace-nowrap ${activeTag === tag ? 'bg-primary/20 text-primary border-primary' : 'bg-transparent text-slate-500 border-slate-800'}`}
                                 >
                                     {tag}
                                 </button>
@@ -220,7 +269,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                             )}
                                         </div>
                                         <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest font-body">
-                                            <span>{venue.type}</span>
+                                            <span>{venue.venueType.replace(/_/g, ' ')}</span>
                                             <span>•</span>
                                             <span className="italic">"{venue.vibe}"</span>
                                         </div>

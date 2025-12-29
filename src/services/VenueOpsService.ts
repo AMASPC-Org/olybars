@@ -1,15 +1,18 @@
 import { db } from '../lib/firebase';
-import { doc, updateDoc, serverTimestamp, deleteField } from 'firebase/firestore';
-
-export interface FlashDeal {
-    id: string;
-    title: string;
-    description: string;
-    price: string;
-    startTime: number;
-    endTime: number;
-    isActive: boolean;
-}
+import {
+    doc,
+    updateDoc,
+    serverTimestamp,
+    collection,
+    collectionGroup,
+    query,
+    where,
+    getDocs,
+    increment,
+    writeBatch
+} from 'firebase/firestore';
+import { differenceInHours } from 'date-fns';
+import { Venue, FlashDeal, ScheduledDeal, TIER_LIMITS, PartnerTier } from '../types';
 
 export class VenueOpsService {
     /**
@@ -67,6 +70,100 @@ export class VenueOpsService {
             console.error('Error updating flash deal:', error);
             throw new Error(`Failed to update flash deal: ${error.message}`);
         }
+    }
+
+    /**
+     * Check how many deals are already booked in a given window.
+     * Max 3 allowed city-wide.
+     */
+    static async getSlotAvailability(startTime: number, durationMinutes: number): Promise<'OPEN' | 'BUSY' | 'FULL'> {
+        const endTime = startTime + (durationMinutes * 60000);
+        const q = query(
+            collectionGroup(db, 'scheduledDeals'),
+            where('status', 'in', ['ACTIVE', 'PENDING']),
+            where('startTime', '<', endTime),
+            where('endTime', '>', startTime)
+        );
+
+        const snapshot = await getDocs(q);
+        const count = snapshot.size;
+
+        if (count === 0) return 'OPEN';
+        if (count < 3) return 'BUSY';
+        return 'FULL';
+    }
+
+    /**
+     * Validate if a venue can book a specific slot.
+     */
+    static async validateSlot(venue: Venue, startTime: number, duration: number): Promise<{
+        valid: boolean;
+        reason?: string;
+        trafficStatus?: 'OPEN' | 'BUSY' | 'FULL'
+    }> {
+        const now = Date.now();
+
+        // 1. STAFF BUFFER (The 180-Minute Rule)
+        if (differenceInHours(startTime, now) < 3) {
+            return { valid: false, reason: "Too soon. Staff needs at least 180 minutes (3 hours) notice." };
+        }
+
+        // 2. DURATION LIMIT
+        if (duration > 180) {
+            return { valid: false, reason: "Max duration for a Flash Deal is 3 hours." };
+        }
+
+        // 3. TOKEN CHECK
+        const tier = venue.partnerConfig?.tier || PartnerTier.FREE;
+        const limit = TIER_LIMITS[tier];
+        const used = venue.partnerConfig?.flashDealsUsed || 0;
+
+        if (used >= limit) {
+            return {
+                valid: false,
+                reason: `Monthly limit reached (${used}/${limit}). Upgrade your tier for more slots.`
+            };
+        }
+
+        // 4. TRAFFIC CHECK
+        const trafficStatus = await this.getSlotAvailability(startTime, duration);
+        if (trafficStatus === 'FULL') {
+            return {
+                valid: false,
+                reason: "This time slot is fully booked (3/3 active). Please choose another block.",
+                trafficStatus
+            };
+        }
+
+        return { valid: true, trafficStatus };
+    }
+
+    /**
+     * Schedule a future flash deal.
+     */
+    static async scheduleFlashDeal(venueId: string, deal: ScheduledDeal) {
+        if (!venueId) throw new Error("Venue ID is required.");
+
+        const batch = writeBatch(db);
+
+        // 1. Create the Scheduled Deal in the sub-collection
+        const venueRef = doc(db, 'venues', venueId);
+        const dealRef = doc(collection(venueRef, 'scheduledDeals'));
+
+        batch.set(dealRef, {
+            ...deal,
+            venueId,
+            status: 'PENDING',
+            createdAt: serverTimestamp()
+        });
+
+        // 2. Deduct Token (Increment Usage)
+        batch.update(venueRef, {
+            'partnerConfig.flashDealsUsed': increment(1)
+        });
+
+        await batch.commit();
+        return { success: true, id: dealRef.id };
     }
 
     static async updateHours(venueId: string, hours: string) {

@@ -1,5 +1,5 @@
 ﻿import React, { useState, useRef } from 'react';
-import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin, Gamepad2, Clock, Zap } from 'lucide-react';
+import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin, Gamepad2, Clock, Zap, AlertTriangle } from 'lucide-react';
 import { Venue, VenueStatus, GameStatus } from '../../../types';
 import { getGameTTL } from '../../../config/gameConfig';
 import { useGeolocation } from '../../../hooks/useGeolocation';
@@ -52,7 +52,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
         : null;
 
     const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-    const isAtVenue = (currentDistance !== null && currentDistance <= 100) || isLocalhost;
+    const isAtVenue = (currentDistance !== null && currentDistance <= 25) || isLocalhost;
 
     const startCamera = async () => {
         setCameraError(false);
@@ -118,8 +118,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     const vibeOptions: { status: VenueStatus; label: string; icon: any; color: string; desc: string }[] = [
         { status: 'dead', label: 'Dead', icon: Clock, color: 'text-slate-500', desc: 'Empty, almost no one here' },
         { status: 'chill', label: 'Chill', icon: Beer, color: 'text-blue-400', desc: 'Relaxed, plenty of space' },
-        { status: 'lively', label: 'Lively', icon: Users, color: 'text-primary', desc: 'Good energy, moderate crowd' },
-        { status: 'buzzing', label: 'Buzzing', icon: Flame, color: 'text-red-500', desc: 'Packed, high energy!' },
+        { status: 'buzzing', label: 'Buzzing', icon: Flame, color: 'text-red-500', desc: 'Active, good energy!' },
         { status: 'packed', label: 'Packed', icon: Zap, color: 'text-pink-500', desc: 'Shoulder to shoulder, wild!' },
     ];
 
@@ -235,46 +234,75 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                 </div>
 
                 {/* Game Status Section (Premium) */}
-                {venue.hasGameVibeCheckEnabled && venue.amenityDetails && venue.amenityDetails.length > 0 && (
+                {venue.hasGameVibeCheckEnabled && venue.gameFeatures && venue.gameFeatures.length > 0 && (
                     <div className="bg-slate-900/50 border border-white/5 rounded-xl p-3 space-y-3">
                         <div className="flex items-center gap-2 mb-2">
                             <Gamepad2 className="w-4 h-4 text-purple-400" />
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Game Status (Live)</span>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            {venue.amenityDetails.map((amenity) => {
-                                const current = gameStatus[amenity.id]?.status || 'open';
+                            {venue.gameFeatures.map((feature) => {
+                                const current = gameStatus[feature.id]?.status || 'open';
+                                const isBroken = current === 'out_of_order';
+
                                 return (
-                                    <div key={amenity.id} className="bg-black/40 rounded-lg p-2 border border-white/5 flex flex-col gap-2">
-                                        <span className="text-xs font-bold text-white truncate">{amenity.name}</span>
-                                        <div className="flex bg-slate-800 rounded-lg p-0.5">
-                                            <button
-                                                onClick={() => setGameStatus(prev => ({
-                                                    ...prev,
-                                                    [amenity.id]: { status: 'open', timestamp: Date.now(), reportedBy: 'user' }
-                                                }))}
-                                                className={`flex-1 py-1 text-[9px] font-black uppercase rounded-md transition-all ${current === 'open' ? 'bg-green-500 text-black shadow-sm' : 'text-slate-500 hover:text-white'}`}
-                                            >
-                                                Open
-                                            </button>
+                                    <div key={feature.id} className="bg-black/40 rounded-lg p-2 border border-white/5 flex flex-col gap-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold text-white truncate flex-1">{feature.name}</span>
                                             <button
                                                 onClick={() => {
-                                                    const ttl = getGameTTL(amenity.id);
-                                                    setGameStatus(prev => ({
-                                                        ...prev,
-                                                        [amenity.id]: {
-                                                            status: 'taken',
-                                                            timestamp: Date.now(),
-                                                            reportedBy: 'user',
-                                                            expiresAt: Date.now() + (ttl * 60 * 1000)
-                                                        }
-                                                    }));
+                                                    if (window.confirm(`Report ${feature.name} as broken?`)) {
+                                                        setGameStatus(prev => ({
+                                                            ...prev,
+                                                            [feature.id]: {
+                                                                status: 'out_of_order',
+                                                                timestamp: Date.now(),
+                                                                reportedBy: 'user'
+                                                            }
+                                                        }));
+                                                    }
                                                 }}
-                                                className={`flex-1 py-1 text-[9px] font-black uppercase rounded-md transition-all ${current === 'taken' ? 'bg-red-500 text-white shadow-sm' : 'text-slate-500 hover:text-white'}`}
+                                                className="text-slate-600 hover:text-yellow-400 -mr-1"
                                             >
-                                                Taken
+                                                <AlertTriangle className="w-4 h-4" />
                                             </button>
                                         </div>
+
+                                        {isBroken ? (
+                                            <div className="bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase py-1 text-center rounded flex items-center justify-center gap-1">
+                                                <AlertTriangle className="w-3 h-3" />
+                                                Needs Repair
+                                            </div>
+                                        ) : (
+                                            <div className="flex bg-slate-800 rounded-lg p-0.5">
+                                                <button
+                                                    onClick={() => setGameStatus(prev => ({
+                                                        ...prev,
+                                                        [feature.id]: { status: 'open', timestamp: Date.now(), reportedBy: 'user' }
+                                                    }))}
+                                                    className={`flex-1 py-1 text-[9px] font-black uppercase rounded-md transition-all ${current === 'open' ? 'bg-green-500 text-black shadow-sm' : 'text-slate-500 hover:text-white'}`}
+                                                >
+                                                    Open
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const ttl = getGameTTL(feature.id);
+                                                        setGameStatus(prev => ({
+                                                            ...prev,
+                                                            [feature.id]: {
+                                                                status: 'taken',
+                                                                timestamp: Date.now(),
+                                                                reportedBy: 'user',
+                                                                expiresAt: Date.now() + (ttl * 60 * 1000)
+                                                            }
+                                                        }));
+                                                    }}
+                                                    className={`flex-1 py-1 text-[9px] font-black uppercase rounded-md transition-all ${current === 'taken' ? 'bg-red-500 text-white shadow-sm' : 'text-slate-500 hover:text-white'}`}
+                                                >
+                                                    Taken
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}

@@ -3,7 +3,7 @@ import { ArenaLayout } from '../../../components/layout/ArenaLayout';
 import { UniversalEventCard } from '../../../components/ui/UniversalEventCard';
 import { AmenityCard } from '../components/AmenityCard';
 import { ArtieFieldNote } from '../../artie/components/ArtieFieldNote';
-import { Venue, AmenityDetail } from '../../../types';
+import { Venue, GameFeature } from '../../../types';
 import { Trophy, Zap, Search as SearchIcon } from 'lucide-react';
 import { AMENITY_LORE } from '../config/playConfig';
 import { performPlayCheckIn } from '../../../services/userService';
@@ -34,19 +34,19 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile 
   const searchResults = useMemo(() => {
     if (!searchQuery) return [];
 
-    const results: { venue: Venue, amenity: AmenityDetail }[] = [];
+    const results: { venue: Venue, feature: GameFeature }[] = [];
     venues.forEach(v => {
-      const matchingAmenities = v.amenityDetails?.filter(a =>
-        a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.id.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchingFeatures = v.gameFeatures?.filter(f =>
+        f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        f.id.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-      matchingAmenities?.forEach(a => {
-        results.push({ venue: v, amenity: a });
+      matchingFeatures?.forEach(f => {
+        results.push({ venue: v, feature: f });
       });
     });
 
-    return results.sort((a, b) => (b.amenity.isLeaguePartner ? 1 : 0) - (a.amenity.isLeaguePartner ? 1 : 0));
+    return results.sort((a, b) => (b.feature.isLeaguePartner ? 1 : 0) - (a.feature.isLeaguePartner ? 1 : 0));
   }, [venues, searchQuery]);
 
   // Artie Lore for the current search
@@ -114,11 +114,11 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile 
 
             {searchResults.length > 0 ? (
               <div className="grid grid-cols-1 gap-2">
-                {searchResults.map(({ venue, amenity }, idx) => (
+                {searchResults.map(({ venue, feature }, idx) => (
                   <AmenityCard
-                    key={`${venue.id}-${amenity.id}-${idx}`}
+                    key={`${venue.id}-${feature.id}-${idx}`}
                     venue={venue}
-                    amenity={amenity}
+                    gameFeature={feature}
                     onCheckIn={handlePlayCheckIn}
                   />
                 ))}

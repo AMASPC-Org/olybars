@@ -1,62 +1,59 @@
 import React, { useState } from 'react';
 import {
     Plus, Trash2, Edit2, Gamepad2,
-    ChevronDown, ChevronUp, Star, Search,
-    Hash, Info
+    Search, Hash, Star, LayoutGrid, AlertTriangle, CheckCircle2
 } from 'lucide-react';
-import { Venue, AmenityDetail } from '../../../types';
+import { Venue, GameFeature } from '../../../types';
 import { barGames } from '../../../data/barGames';
 
-interface AmenityManagerProps {
+interface GameFeatureManagerProps {
     venue: Venue;
     onChange: (updates: Partial<Venue>) => void;
 }
 
-export const AmenityManager: React.FC<AmenityManagerProps> = ({ venue, onChange }) => {
+export const GameFeatureManager: React.FC<GameFeatureManagerProps> = ({ venue, onChange }) => {
     const [isAdding, setIsAdding] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    const currentAmenities = venue.amenityDetails || [];
+    const currentFeatures = venue.gameFeatures || [];
 
-    const handleAdd = (gameName: string) => {
-        const id = gameName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-        const newAmenity: AmenityDetail = {
+    const handleAdd = (gameName: string, type: GameFeature['type'] = 'arcade_game') => {
+        const id = `${type}_${Date.now()}`;
+        const newFeature: GameFeature = {
             id,
             name: gameName,
+            type: type,
             count: 1,
+            status: 'active',
             isLeaguePartner: true
         };
 
-        const updated = [...currentAmenities, newAmenity];
+        const updated = [...currentFeatures, newFeature];
         onChange({
-            amenityDetails: updated,
-            assets: { ...venue.assets, [id]: true }
+            gameFeatures: updated,
+            // Sync with legacy logic if needed, but preferably not
         });
         setIsAdding(false);
         setSearchQuery('');
     };
 
     const handleRemove = (id: string) => {
-        const updated = currentAmenities.filter(a => a.id !== id);
-        const updatedAssets = { ...venue.assets };
-        delete updatedAssets[id];
-
+        const updated = currentFeatures.filter(f => f.id !== id);
         onChange({
-            amenityDetails: updated,
-            assets: updatedAssets
+            gameFeatures: updated
         });
     };
 
-    const handleUpdate = (id: string, updates: Partial<AmenityDetail>) => {
-        const updated = currentAmenities.map(a =>
-            a.id === id ? { ...a, ...updates } : a
+    const handleUpdate = (id: string, updates: Partial<GameFeature>) => {
+        const updated = currentFeatures.map(f =>
+            f.id === id ? { ...f, ...updates } : f
         );
-        onChange({ amenityDetails: updated });
+        onChange({ gameFeatures: updated });
     };
 
+    // Flatten barGames to get available options
     const availableGames = barGames.flatMap(cat => cat.games)
-        .filter(g => !currentAmenities.some(a => a.name.toLowerCase() === g.name.toLowerCase()))
         .filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return (
@@ -97,7 +94,7 @@ export const AmenityManager: React.FC<AmenityManagerProps> = ({ venue, onChange 
                         {availableGames.map(game => (
                             <button
                                 key={game.name}
-                                onClick={() => handleAdd(game.name)}
+                                onClick={() => handleAdd(game.name, 'arcade_game' as GameFeature['type'])} // Default type, user can edit
                                 className="text-left p-2.5 bg-white/5 hover:bg-primary/20 border border-white/5 hover:border-primary/50 rounded-lg group transition-all"
                             >
                                 <p className="text-[10px] font-black text-slate-300 group-hover:text-white uppercase transition-colors">{game.name}</p>
@@ -118,28 +115,35 @@ export const AmenityManager: React.FC<AmenityManagerProps> = ({ venue, onChange 
             )}
 
             <div className="space-y-2">
-                {currentAmenities.map(amenity => (
-                    <div key={amenity.id} className="bg-slate-900/50 border border-white/5 rounded-xl p-4 group transition-all hover:bg-slate-900">
+                {currentFeatures.map(feature => (
+                    <div key={feature.id} className="bg-slate-900/50 border border-white/5 rounded-xl p-4 group transition-all hover:bg-slate-900">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 bg-black/40 rounded-lg flex items-center justify-center border border-white/5">
                                     <Hash className="w-5 h-5 text-slate-500" />
                                 </div>
                                 <div>
-                                    <h5 className="text-xs font-black text-white uppercase tracking-wider">{amenity.name}</h5>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase">{amenity.count} Unit{amenity.count !== 1 ? 's' : ''}</p>
+                                    <h5 className={`text-xs font-black uppercase tracking-wider ${feature.status === 'out_of_order' ? 'text-slate-500 line-through' : 'text-white'}`}>
+                                        {feature.name}
+                                    </h5>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-[10px] text-slate-500 font-bold uppercase">{feature.count} Unit{feature.count !== 1 ? 's' : ''}</p>
+                                        {feature.status === 'out_of_order' && (
+                                            <span className="text-[8px] font-black text-red-500 bg-red-900/20 px-1.5 py-0.5 rounded uppercase">Out of Order</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => setEditingId(editingId === amenity.id ? null : amenity.id)}
+                                    onClick={() => setEditingId(editingId === feature.id ? null : feature.id)}
                                     className="p-2 text-slate-500 hover:text-primary transition-colors"
                                 >
                                     <Edit2 size={16} />
                                 </button>
                                 <button
-                                    onClick={() => handleRemove(amenity.id)}
+                                    onClick={() => handleRemove(feature.id)}
                                     className="p-2 text-slate-500 hover:text-red-500 transition-colors"
                                 >
                                     <Trash2 size={16} />
@@ -147,14 +151,14 @@ export const AmenityManager: React.FC<AmenityManagerProps> = ({ venue, onChange 
                             </div>
                         </div>
 
-                        {editingId === amenity.id && (
+                        {editingId === feature.id && (
                             <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-200">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Display Name</label>
                                     <input
                                         type="text"
-                                        value={amenity.name}
-                                        onChange={(e) => handleUpdate(amenity.id, { name: e.target.value })}
+                                        value={feature.name}
+                                        onChange={(e) => handleUpdate(feature.id, { name: e.target.value })}
                                         className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs font-bold text-white uppercase outline-none focus:border-primary"
                                     />
                                 </div>
@@ -162,30 +166,59 @@ export const AmenityManager: React.FC<AmenityManagerProps> = ({ venue, onChange 
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Quantity</label>
                                     <input
                                         type="number"
-                                        value={amenity.count}
-                                        onChange={(e) => handleUpdate(amenity.id, { count: parseInt(e.target.value) || 0 })}
+                                        value={feature.count}
+                                        onChange={(e) => handleUpdate(feature.id, { count: parseInt(e.target.value) || 0 })}
                                         className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs font-bold text-white uppercase outline-none focus:border-primary"
                                     />
                                 </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</label>
+                                    <select
+                                        value={feature.status}
+                                        onChange={(e) => handleUpdate(feature.id, { status: e.target.value as any })}
+                                        className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs font-bold text-white uppercase outline-none focus:border-primary"
+                                    >
+                                        <option value="active">Active / Working</option>
+                                        <option value="out_of_order">Out of Order</option>
+                                        <option value="maintenance">Maintenance</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Type</label>
+                                    <select
+                                        value={feature.type}
+                                        onChange={(e) => handleUpdate(feature.id, { type: e.target.value as GameFeature['type'] })}
+                                        className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs font-bold text-white uppercase outline-none focus:border-primary"
+                                    >
+                                        <option value="arcade_game">Arcade Game</option>
+                                        <option value="pool_table">Pool Table</option>
+                                        <option value="dart_board">Dart Board</option>
+                                        <option value="pinball_machine">Pinball</option>
+                                        <option value="skeeball">Skee-Ball</option>
+                                        <option value="shuffleboard">Shuffleboard</option>
+                                        <option value="karaoke">Karaoke</option>
+                                        <option value="active_play">Active Play (Cornhole, etc)</option>
+                                    </select>
+                                </div>
                                 <div className="col-span-2 space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Artie Lore / Specifics</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Description / Artie Lore</label>
                                     <textarea
-                                        value={amenity.artieLore || ''}
-                                        onChange={(e) => handleUpdate(amenity.id, { artieLore: e.target.value })}
+                                        value={feature.description || ''}
+                                        onChange={(e) => handleUpdate(feature.id, { description: e.target.value })}
                                         placeholder="E.G. LOCATED IN THE BACK ROOM NEAR THE STAGE..."
                                         className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs font-bold text-white uppercase outline-none focus:border-primary h-20 resize-none"
                                     />
                                 </div>
                                 <div className="col-span-2 flex items-center justify-between p-2 bg-black/30 rounded-lg border border-white/5">
                                     <div className="flex items-center gap-2">
-                                        <Star className={`w-4 h-4 ${amenity.isLeaguePartner ? 'text-primary' : 'text-slate-600'}`} />
+                                        <Star className={`w-4 h-4 ${feature.isLeaguePartner ? 'text-primary' : 'text-slate-600'}`} />
                                         <span className="text-[10px] font-black text-slate-400 uppercase">League Partner Machine</span>
                                     </div>
                                     <button
-                                        onClick={() => handleUpdate(amenity.id, { isLeaguePartner: !amenity.isLeaguePartner })}
-                                        className={`w-8 h-4 rounded-full p-0.5 transition-all ${amenity.isLeaguePartner ? 'bg-primary' : 'bg-slate-700'}`}
+                                        onClick={() => handleUpdate(feature.id, { isLeaguePartner: !feature.isLeaguePartner })}
+                                        className={`w-8 h-4 rounded-full p-0.5 transition-all ${feature.isLeaguePartner ? 'bg-primary' : 'bg-slate-700'}`}
                                     >
-                                        <div className={`w-3 h-3 rounded-full bg-white transition-all ${amenity.isLeaguePartner ? 'translate-x-4' : 'translate-x-0'}`} />
+                                        <div className={`w-3 h-3 rounded-full bg-white transition-all ${feature.isLeaguePartner ? 'translate-x-4' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
                             </div>
@@ -193,7 +226,7 @@ export const AmenityManager: React.FC<AmenityManagerProps> = ({ venue, onChange 
                     </div>
                 ))}
 
-                {currentAmenities.length === 0 && !isAdding && (
+                {currentFeatures.length === 0 && !isAdding && (
                     <div className="text-center py-12 border-2 border-dashed border-white/5 rounded-2xl bg-slate-900/30">
                         <Gamepad2 className="w-12 h-12 text-slate-800 mx-auto mb-3" />
                         <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest italic">No specific games configured</p>

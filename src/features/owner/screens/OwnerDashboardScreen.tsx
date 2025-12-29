@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
+import { db } from '../../../lib/firebase';
 import { useNavigate } from 'react-router-dom';
-import {
-    Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info,
-    QrCode, Download, Printer, Calendar, Crown
-} from 'lucide-react';
-import { Venue, UserProfile, GameStatus } from '../../../types';
+import { Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info, QrCode, Download, Printer, Calendar, Crown, Clock } from 'lucide-react';
+import { Venue, UserProfile, GameStatus, PartnerTier, TIER_LIMITS, ScheduledDeal } from '../../../types';
+import { format, addHours, parseISO } from 'date-fns';
 import { OwnerMarketingPromotions } from '../../../components/OwnerMarketingPromotions';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { ListingManagementTab } from '../components/ListingManagementTab';
@@ -40,8 +39,7 @@ const calculatePulseScore = (venue: Venue): number => {
     let score = 50;
     switch (venue.status) {
         case 'buzzing': score += 30; break;
-        case 'lively': score += 15; break;
-        case 'chill': score += 5; break;
+        case 'chill': score += 15; break;
     }
     if (venue.deal) score += 10;
     if (venue.leagueEvent) score += 10;
@@ -88,6 +86,10 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const [statsPeriod, setStatsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
     const [activityStats, setActivityStats] = useState({ earned: 0, redeemed: 0, activeUsers: 0 });
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [scheduledDeals, setScheduledDeals] = useState<ScheduledDeal[]>([]);
+    const [targetDate, setTargetDate] = useState(format(addHours(new Date(), 3), 'yyyy-MM-dd'));
+    const [targetTime, setTargetTime] = useState(format(addHours(new Date(), 3), 'HH:00'));
+    const [staffConfirmed, setStaffConfirmed] = useState(false);
     const { showToast } = useToast();
 
     React.useEffect(() => {
@@ -99,11 +101,11 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
     React.useEffect(() => {
         if (dashboardView === 'marketing' && myVenue) {
-            refreshStats();
+            fetchStats();
         }
     }, [dashboardView, statsPeriod, myVenue?.id]);
 
-    const refreshStats = async () => {
+    const fetchStats = async () => {
         if (!myVenue) return;
         setIsRefreshing(true);
         const { fetchActivityStats } = await import('../../../services/userService');
@@ -111,6 +113,28 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
         setActivityStats(stats);
         setIsRefreshing(false);
     };
+
+    const fetchScheduledDeals = async () => {
+        if (!selectedVenueId) return;
+        try {
+            const { collection, getDocs, orderBy, query } = await import('firebase/firestore');
+            const q = query(
+                collection(db, 'venues', selectedVenueId, 'scheduledDeals'),
+                orderBy('startTime', 'asc')
+            );
+            const snapshot = await getDocs(q);
+            const deals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduledDeal));
+            setScheduledDeals(deals);
+        } catch (e) {
+            console.error("Failed to fetch scheduled deals:", e);
+        }
+    };
+
+    React.useEffect(() => {
+        if (selectedVenueId && isOpen) {
+            fetchScheduledDeals();
+        }
+    }, [selectedVenueId, isOpen]);
 
     const handleTogglePhotoApproval = async (photoId: string, field: 'isApprovedForFeed' | 'isApprovedForSocial', currentVal: boolean) => {
         if (!myVenue) return;
@@ -151,6 +175,66 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
             showToast('FLASH DEAL BROADCASTED TO NETWORK', 'success');
         } catch (e) {
             showToast('FAILED TO PUBLISH DEAL', 'error');
+        }
+    };
+
+    const handleScheduleDeal = async () => {
+        if (!dealText || !myVenue) return;
+        if (!staffConfirmed) {
+            showToast('PLEASE CONFIRM STAFF BRIEFING FIRST', 'error');
+            return;
+        }
+
+        const start = parseISO(`${targetDate}T${targetTime}`);
+
+        try {
+            // 1. Validate
+            const validation = await VenueOpsService.validateSlot(myVenue, start.getTime(), dealDuration);
+            if (!validation.valid) {
+                showToast(validation.reason || 'INVALID SLOT', 'error');
+                return;
+            }
+
+            // 2. Schedule
+            await VenueOpsService.scheduleFlashDeal(myVenue.id, {
+                venueId: myVenue.id,
+                title: dealText,
+                description: dealDescription,
+                startTime: start.getTime(),
+                endTime: start.getTime() + (dealDuration * 60 * 1000),
+                durationMinutes: dealDuration,
+                status: 'PENDING',
+                staffBriefingConfirmed: true,
+                createdBy: 'MANUAL',
+                createdAt: Date.now()
+            });
+
+            showToast('FLASH DEAL SCHEDULED SUCCESSFULLY', 'success');
+            setDealText('');
+            setDealDescription('');
+            setStaffConfirmed(false);
+            fetchScheduledDeals();
+        } catch (e: any) {
+            showToast(e.message || 'FAILED TO SCHEDULE DEAL', 'error');
+        }
+    };
+
+    const handleCancelScheduledDeal = async (dealId: string) => {
+        if (!myVenue || !dealId) return;
+        try {
+            const { doc, updateDoc, increment } = await import('firebase/firestore');
+            const dealRef = doc(db, 'venues', myVenue.id, 'scheduledDeals', dealId);
+            const venueRef = doc(db, 'venues', myVenue.id);
+
+            await updateDoc(dealRef, { status: 'CANCELLED' });
+            // Refund token? The spec doesn't explicitly say, but it's fair. 
+            // However, the tokens are usually "monthly allowance", and used count is reset monthly.
+            // Let's stick to the spec: "Tokens are deducted upon scheduling."
+
+            showToast('DEAL CANCELLED', 'success');
+            fetchScheduledDeals();
+        } catch (e) {
+            showToast('FAILED TO CANCEL DEAL', 'error');
         }
     };
 
@@ -250,10 +334,16 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                     </div>
                     {/* STATUS BADGE & LEVEL UP CTA */}
                     <div className="ml-8 hidden md:flex items-center gap-3">
-                        <div className="px-3 py-1 bg-slate-800 rounded-md border border-white/10">
+                        <div className="px-3 py-1 bg-slate-800 rounded-md border border-white/10 flex flex-col items-center">
                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest font-league">
-                                FREE TIER
+                                {myVenue.partnerConfig?.tier || PartnerTier.FREE} TIER
                             </span>
+                            <div className="flex items-center gap-1">
+                                <Zap className="w-2.5 h-2.5 text-primary fill-current" />
+                                <span className="text-[10px] font-black text-primary font-league">
+                                    {TIER_LIMITS[myVenue.partnerConfig?.tier || PartnerTier.FREE] - (myVenue.partnerConfig?.flashDealsUsed || 0)} TOKENS
+                                </span>
+                            </div>
                         </div>
                         <button
                             onClick={() => {
@@ -324,7 +414,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                 {myVenue && isVenueOwner(userProfile, myVenue.id) && (
                     <>
                         {/* Only show Maker tab if they are already active or verified */}
-                        {(myVenue.isLocalMaker || myVenue.isVerifiedMaker) && (
+                        {myVenue.isLocalMaker && (
                             <button
                                 onClick={() => setDashboardView('maker')}
                                 className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'maker' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
@@ -373,8 +463,8 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                         </span>
                                     )}
                                 </div>
-                                <div className="grid grid-cols-5 gap-1">
-                                    {['dead', 'chill', 'lively', 'buzzing', 'packed'].map((s) => (
+                                <div className="grid grid-cols-4 gap-1">
+                                    {['dead', 'chill', 'buzzing', 'packed'].map((s) => (
                                         <button
                                             key={s}
                                             onClick={() => setManualVibe(s)}
@@ -395,19 +485,19 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                     <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-league">Live Game Status</h3>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {myVenue.amenityDetails?.map(amenity => {
-                                        const statusData = myVenue.liveGameStatus?.[amenity.id];
+                                    {myVenue.gameFeatures?.map(feature => {
+                                        const statusData = myVenue.liveGameStatus?.[feature.id];
                                         const isTaken = statusData?.status === 'taken' && (!statusData?.expiresAt || Date.now() < statusData.expiresAt);
 
                                         return (
-                                            <div key={amenity.id} className="bg-black/40 p-3 rounded-lg flex items-center justify-between border border-white/5">
-                                                <span className="text-xs font-bold text-slate-300 uppercase">{amenity.name}</span>
+                                            <div key={feature.id} className="bg-black/40 p-3 rounded-lg flex items-center justify-between border border-white/5">
+                                                <span className="text-xs font-bold text-slate-300 uppercase">{feature.name}</span>
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => updateVenue(myVenue.id, {
                                                             liveGameStatus: {
                                                                 ...myVenue.liveGameStatus,
-                                                                [amenity.id]: { status: 'open', timestamp: Date.now(), reportedBy: 'owner' }
+                                                                [feature.id]: { status: 'open', timestamp: Date.now(), reportedBy: 'owner' }
                                                             }
                                                         })}
                                                         className={`px-3 py-1.5 rounded text-[10px] font-black uppercase transition-all ${!isTaken ? 'bg-green-500 text-black' : 'bg-white/5 text-slate-500 hover:text-white'}`}
@@ -416,11 +506,11 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                                     </button>
                                                     <button
                                                         onClick={() => {
-                                                            const ttl = getGameTTL(amenity.id);
+                                                            const ttl = getGameTTL(feature.id);
                                                             updateVenue(myVenue.id, {
                                                                 liveGameStatus: {
                                                                     ...myVenue.liveGameStatus,
-                                                                    [amenity.id]: {
+                                                                    [feature.id]: {
                                                                         status: 'taken',
                                                                         timestamp: Date.now(),
                                                                         reportedBy: 'owner',
@@ -462,23 +552,15 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             </div>
                         </div>
 
-                        {/* Flash Deal Section */}
-                        <div className="bg-surface p-6 border border-white/10 border-dashed rounded-lg shadow-2xl relative">
-                            <div className="absolute -top-4 left-6 bg-[#0f172a] border border-primary px-3 py-1 flex items-center gap-2 rounded-md">
-                                <Zap className="w-4 h-4 text-primary fill-current" />
-                                <span className="text-primary text-[10px] font-black uppercase tracking-widest font-league">QUICK FLASH DEAL</span>
-                            </div>
-
-                            {myVenue.deal ? (
-                                <div className="text-center py-4">
-                                    <h4 className="text-2xl font-black text-white mb-1 font-league uppercase">{myVenue.deal}</h4>
-                                    <p className="text-slate-400 text-[10px] font-bold uppercase mb-4 italic">
-                                        {myVenue.activeFlashDeal?.description || 'No additional details.'}
-                                    </p>
-                                    <p className="text-primary font-black mb-6 font-league">{myVenue.dealEndsIn}M REMAINING</p>
-                                    <button onClick={clearDeal} className="w-full bg-red-600/20 hover:bg-red-600 border border-red-500/30 text-white py-3 rounded-lg font-black uppercase tracking-widest transition-all">Terminate Deal</button>
+                        {/* Flash Deal Management Section */}
+                        <div className="space-y-6">
+                            {/* Schedule New Deal Widget */}
+                            <div className="bg-surface p-6 border border-white/10 border-dashed rounded-lg shadow-2xl relative">
+                                <div className="absolute -top-4 left-6 bg-[#0f172a] border border-primary px-3 py-1 flex items-center gap-2 rounded-md">
+                                    <Zap className="w-4 h-4 text-primary fill-current" />
+                                    <span className="text-primary text-[10px] font-black uppercase tracking-widest font-league">SCHEDULE FLASH DEAL</span>
                                 </div>
-                            ) : (
+
                                 <div className="space-y-4 pt-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Deal Title</label>
@@ -491,15 +573,26 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                         />
                                     </div>
 
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Additional Details (Optional)</label>
-                                        <textarea
-                                            value={dealDescription}
-                                            onChange={(e) => setDealDescription(e.target.value)}
-                                            placeholder="Ex: Limit 2 per member..."
-                                            rows={2}
-                                            className="w-full bg-black border border-white/10 rounded-lg p-4 text-slate-200 text-xs placeholder:text-slate-900 outline-none resize-none"
-                                        />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Date</label>
+                                            <input
+                                                type="date"
+                                                value={targetDate}
+                                                onChange={(e) => setTargetDate(e.target.value)}
+                                                className="w-full bg-black border border-white/10 rounded-lg p-3 text-white font-bold outline-none"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Start Time</label>
+                                            <input
+                                                type="time"
+                                                value={targetTime}
+                                                step="900"
+                                                onChange={(e) => setTargetTime(e.target.value)}
+                                                className="w-full bg-black border border-white/10 rounded-lg p-3 text-white font-bold outline-none"
+                                            />
+                                        </div>
                                     </div>
 
                                     <div className="space-y-1.5">
@@ -509,37 +602,67 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                         </div>
                                         <input
                                             type="range"
-                                            min="15"
+                                            min="30"
                                             max="180"
-                                            step="15"
+                                            step="30"
                                             value={dealDuration}
                                             onChange={(e) => setDealDuration(parseInt(e.target.value))}
                                             className="w-full accent-primary h-1.5 bg-black rounded-lg appearance-none cursor-pointer"
                                         />
                                         <div className="flex justify-between px-1">
-                                            <span className="text-[8px] text-slate-700 font-bold">15M</span>
-                                            <span className="text-[8px] text-slate-700 font-bold">3H</span>
+                                            <span className="text-[8px] text-slate-700 font-bold">30M</span>
+                                            <span className="text-[8px] text-slate-700 font-bold">3H (CAP)</span>
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 no-scrollbar">
-                                        {DEAL_PRESETS.map(preset => (
-                                            <button
-                                                key={preset}
-                                                onClick={() => setDealText(preset)}
-                                                className={`px-4 py-1.5 border rounded-full text-[10px] font-black uppercase font-league whitespace-nowrap transition-all ${dealText === preset ? 'bg-primary border-primary text-black' : 'bg-black border-white/5 text-slate-600 hover:text-white'}`}
-                                            >
-                                                {preset}
-                                            </button>
-                                        ))}
-                                    </div>
                                     <button
-                                        onClick={handlePublishDeal}
-                                        disabled={!dealText}
+                                        onClick={() => setStaffConfirmed(!staffConfirmed)}
+                                        className={`w-full p-4 rounded-lg border flex items-center gap-3 transition-all ${staffConfirmed ? 'bg-green-500/10 border-green-500/50 text-green-500' : 'bg-black border-red-500/20 text-slate-500'}`}
+                                    >
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center ${staffConfirmed ? 'bg-green-500 border-green-500' : 'border-slate-700'}`}>
+                                            {staffConfirmed && <Shield className="w-3 h-3 text-black fill-current" />}
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest font-league">Staff Briefing Confirmed (PIT Rule)</span>
+                                    </button>
+
+                                    <button
+                                        onClick={handleScheduleDeal}
+                                        disabled={!dealText || !staffConfirmed}
                                         className="w-full bg-primary text-black font-black py-4 rounded-lg uppercase tracking-widest text-lg font-league shadow-lg shadow-primary/10 disabled:opacity-30 active:scale-[0.98] transition-all"
                                     >
-                                        Publish Deal
+                                        Schedule Deal (-1 Token)
                                     </button>
+                                </div>
+                            </div>
+
+                            {/* Upcoming Scheduled Deals List */}
+                            {scheduledDeals.length > 0 && (
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Upcoming Schedule</h4>
+                                    <div className="space-y-3">
+                                        {scheduledDeals.filter(d => d.status === 'PENDING').map(deal => (
+                                            <div key={deal.id} className="bg-surface p-4 border border-white/5 rounded-xl flex items-center justify-between group">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="bg-black p-3 rounded-lg border border-white/5 flex flex-col items-center min-w-[60px]">
+                                                        <span className="text-[8px] font-black text-primary uppercase font-league">{format(new Date(deal.startTime), 'MMM d')}</span>
+                                                        <span className="text-sm font-black text-white font-league">{format(new Date(deal.startTime), 'h:mm a')}</span>
+                                                    </div>
+                                                    <div>
+                                                        <h5 className="text-sm font-black text-white uppercase font-league leading-none">{deal.title}</h5>
+                                                        <p className="text-[9px] text-slate-500 font-bold uppercase mt-1 tracking-widest">
+                                                            {deal.durationMinutes}M Duration • {deal.createdBy}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => deal.id && handleCancelScheduledDeal(deal.id)}
+                                                    className="p-2 text-slate-700 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                                >
+                                                    <X className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>

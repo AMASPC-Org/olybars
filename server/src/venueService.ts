@@ -97,7 +97,6 @@ export const updateVenueBuzz = async (venueId: string) => {
 
     let status: string = 'chill';
     if (score > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
-    else if (score > PULSE_CONFIG.THRESHOLDS.LIVELY) status = 'lively';
 
     // Manual Overrides (Owner/Admin Control)
     const finalStatus = (venueData?.manualStatus && venueData?.manualStatusExpiresAt > now)
@@ -137,7 +136,6 @@ const applyVirtualDecay = (venue: Venue): Venue => {
     if (!(venue.manualStatus && venue.manualStatusExpiresAt && venue.manualStatusExpiresAt > now)) {
         status = 'chill';
         if (decayedScore > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
-        else if (decayedScore > PULSE_CONFIG.THRESHOLDS.LIVELY) status = 'lively';
     }
 
     // 3. Determine Check-ins (Respect Manual Override)
@@ -289,12 +287,9 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
     // Master Maker (Hybrid/Verified Production): 20 (2x)
 
     let points = 10;
-    const isMasterMaker = venueData.isVerifiedMaker && venueData.isLocalMaker;
-    const isLocalMakerSupporter = venueData.isLocalMaker || (venueData.localScore || 0) > 50;
+    const isLocalMakerSupporter = venueData.isLocalMaker === true;
 
-    if (isMasterMaker) {
-        points = 20; // 2x Multiplier
-    } else if (isLocalMakerSupporter) {
+    if (isLocalMakerSupporter) {
         points = 15; // 1.5x Multiplier
     }
 
@@ -308,7 +303,6 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
         verificationMethod,
         metadata: {
             multiplier: points / 10,
-            isMasterMaker,
             isLocalMakerSupporter
         }
     });
@@ -351,7 +345,6 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
         message: `Checked in at ${venueData.name}!`,
         pointsAwarded: points,
         isLocalMaker: venueData.isLocalMaker,
-        localScore: venueData.localScore,
         badgesEarned: badgesAwarded
     };
 };
@@ -366,7 +359,7 @@ export const checkInAmenity = async (venueId: string, userId: string, amenityId:
     const venueData = venueDoc.data() as Venue;
 
     // Check if the venue actually has this amenity
-    const amenity = venueData.amenityDetails?.find(a => a.id === amenityId);
+    const amenity = venueData.gameFeatures?.find(a => a.id === amenityId);
     if (!amenity) throw new Error(`Venue does not have ${amenityId}`);
 
     const timestamp = Date.now();
@@ -636,8 +629,8 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
 
     // Whitelist allowable fields based on role
     const adminOnlyFields: (keyof Venue)[] = [
-        'isVerifiedMaker', 'isLocalMaker', 'localScore', 'makerType',
-        'isPaidLeagueMember', 'tier_config' as any,
+        'isLocalMaker', 'makerType',
+        'isPaidLeagueMember', 'tier_config',
         'hasGameVibeCheckEnabled'
     ];
 
@@ -645,13 +638,13 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'name', 'nicknames',
         'address', 'description', 'hours', 'phone', 'website',
         'email', 'instagram', 'facebook', 'twitter',
-        'amenities', 'amenityDetails', 'vibe', 'status',
+        'gameFeatures', 'vibe', 'status',
         'originStory', 'insiderVibe', 'geoLoop',
         'isLowCapacity', 'isSoberFriendly',
         'physicalRoom', 'carryingMakers',
         'leagueEvent', 'triviaTime', 'deal', 'dealEndsIn', 'checkIns',
-        'isVisible', 'isActive',
-        'googlePlaceId', 'assets',
+        'isActive',
+        'googlePlaceId',
         'managersCanAddUsers',
         'liveGameStatus', 'photos',
         'manualStatus', 'manualStatusExpiresAt',
@@ -1077,3 +1070,65 @@ export const generateVenueInsights = async (venueId: string) => {
 };
 
 
+
+/**
+ * Flash Deal Activator (Lazy Cron Logic)
+ * Scans for scheduled deals that need to go live.
+ */
+export const syncFlashDeals = async () => {
+    const now = Date.now();
+    console.log(`[FLASH_SYNC] starting scan at ${new Date(now).toISOString()}`);
+
+    try {
+        // Query all pending scheduled deals across all venues
+        // Since Firestore doesn't support easy cross-group sub-collection queries without collectionGroup,
+        // we'll fetch venues that have scheduled deals or just use a collectionGroup query if allowed.
+        // For simplicity in this environment, we'll use collectionGroup for 'scheduledDeals'.
+
+        const pendingDeals = await db.collectionGroup('scheduledDeals')
+            .where('status', '==', 'PENDING')
+            .where('startTime', '<=', now)
+            .get();
+
+        if (pendingDeals.empty) {
+            return { processed: 0 };
+        }
+
+        const batch = db.batch();
+        let processed = 0;
+
+        for (const dealDoc of pendingDeals.docs) {
+            const deal = dealDoc.data();
+            const venueId = deal.venueId;
+            const dealId = dealDoc.id;
+
+            // 1. Mark deal as ACTIVE
+            batch.update(dealDoc.ref, { status: 'ACTIVE', activatedAt: now });
+
+            // 2. Update Venue with active deal
+            const venueRef = db.collection('venues').doc(venueId);
+            batch.update(venueRef, {
+                'activeFlashDeal': {
+                    id: dealId,
+                    title: deal.title,
+                    description: deal.description,
+                    startTime: deal.startTime,
+                    endTime: deal.endTime,
+                    isActive: true,
+                    isApproved: true
+                },
+                'deal': deal.title,
+                'dealEndsIn': Math.ceil((deal.endTime - now) / 60000)
+            });
+
+            processed++;
+        }
+
+        await batch.commit();
+        console.log(`[FLASH_SYNC] Activated ${processed} deals.`);
+        return { processed };
+    } catch (error) {
+        console.error('[FLASH_SYNC] error:', error);
+        throw error;
+    }
+};

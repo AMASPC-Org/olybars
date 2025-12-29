@@ -2,11 +2,11 @@ import React from 'react';
 import { Image as ImageIcon } from 'lucide-react';
 
 interface VenueGalleryProps {
-    photos?: { url: string; allowMarketingUse: boolean; timestamp: number; userId: string }[];
+    photos?: { url: string; allowMarketingUse?: boolean; timestamp?: number; userId?: string }[];
 }
 
 export const VenueGallery: React.FC<VenueGalleryProps> = ({ photos }) => {
-    const consentedPhotos = (photos || []).filter(p => p.allowMarketingUse);
+    const consentedPhotos = (photos || []).filter(p => p.allowMarketingUse !== false);
 
     if (consentedPhotos.length === 0) {
         return (

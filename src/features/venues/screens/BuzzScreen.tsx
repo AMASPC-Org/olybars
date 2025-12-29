@@ -46,13 +46,6 @@ const PulseMeter = ({ status }: { status: VenueStatus }) => {
     );
   }
 
-  if (status === 'lively') {
-    return (
-      <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-900/30 text-yellow-200 text-xs font-bold border border-yellow-800">
-        <Users className="w-3 h-3" /> Lively
-      </span>
-    );
-  }
 
   if (status === 'buzzing') {
     return (
@@ -74,9 +67,8 @@ type FilterKind = 'status' | 'deals' | 'league' | 'tonight' | 'near' | 'games' |
 const STATUS_ORDER: Record<VenueStatus, number> = {
   packed: 0,
   buzzing: 1,
-  lively: 2,
-  chill: 3,
-  dead: 4,
+  chill: 2,
+  dead: 3,
 };
 
 // Main Screen
@@ -112,8 +104,8 @@ export const BuzzScreen: React.FC<{
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const nameMatch = v.name.toLowerCase().includes(q);
-      const typeMatch = v.type.toLowerCase().includes(q);
-      const vibeMatch = v.vibe?.toLowerCase().includes(q);
+      const typeMatch = (v.venueType || '').replace('_', ' ').toLowerCase().includes(q);
+      const vibeMatch = v.vibe?.toLowerCase().includes(q) || v.vibeTags?.some(tag => tag.replace('_', ' ').toLowerCase().includes(q));
       const addressMatch = v.address?.toLowerCase().includes(q);
       const dealMatch = v.deal?.toLowerCase().includes(q) || v.activeFlashDeal?.title?.toLowerCase().includes(q);
 
@@ -139,15 +131,13 @@ export const BuzzScreen: React.FC<{
 
     if (filterKind === 'games' && selectedGame) {
       const g = selectedGame.toLowerCase();
-      const hasAmenity = v.amenityDetails?.some(a => a.name.toLowerCase().includes(g) || a.id.toLowerCase().includes(g));
-      const hasAsset = v.assets && Object.keys(v.assets).some(key => key.toLowerCase().includes(g) && v.assets![key]);
-      const hasSimpleAmenity = v.amenities?.some(a => a.toLowerCase().includes(g));
-      const hasEvent = v.leagueEvent?.toLowerCase().includes(g) || v.type.toLowerCase().includes(g);
-      return !!(hasAmenity || hasAsset || hasSimpleAmenity || hasEvent);
+      const hasFeature = v.gameFeatures?.some(f => f.name.toLowerCase().includes(g) || f.type.toLowerCase().includes(g));
+      const hasEvent = v.leagueEvent?.toLowerCase().includes(g) || v.venueType.replace(/_/g, ' ').toLowerCase().includes(g);
+      return !!(hasFeature || hasEvent);
     }
 
     // Global Visibility Check
-    if (v.isVisible === false || v.isActive === false) return false;
+    if (v.tier_config?.is_directory_listed === false || v.isActive === false) return false;
 
     // Home Pulse Specific: Hide closed bars unless featured
     const open = isVenueOpen(v);
@@ -264,7 +254,6 @@ export const BuzzScreen: React.FC<{
 
   const statusLabel = (() => {
     if (statusFilter === 'buzzing') return '🔥 Buzzing';
-    if (statusFilter === 'lively') return '👥 Lively';
     if (statusFilter === 'chill') return '🍺 Chill';
     if (filterKind === 'tonight') return '🌙 Tonight';
     return 'All Activity';
@@ -374,7 +363,6 @@ export const BuzzScreen: React.FC<{
                 <div className="absolute mt-1 left-0 z-20 bg-surface border border-slate-700 rounded-md shadow-lg overflow-hidden text-xs font-bold">
                   {[
                     { id: 'buzzing', label: '🔥 Buzzing', icon: Flame },
-                    { id: 'lively', label: '👥 Lively', icon: Users },
                     { id: 'chill', label: '🍺 Chill', icon: Beer },
                     { id: 'all', label: 'All Activity', icon: Clock }
                   ].map(option => (
@@ -473,31 +461,75 @@ export const BuzzScreen: React.FC<{
           </div>
         )}
 
-        {/* FLASH DEALS (Immediate) */}
+        {/* FLASH DEALS (Premium Carousel) */}
         {flashDealVenues.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h4 className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
-                <Zap className="w-3 h-3" /> Flash Deals
-              </h4>
-              <span className="text-[9px] font-bold text-slate-500 uppercase animate-pulse">Ending Soon</span>
-            </div>
-            <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-2 px-2">
-              {flashDealVenues.map(fd => (
-                <div key={fd.id} onClick={() => navigate(`/venues/${fd.id}`)} className="min-w-[220px] bg-gradient-to-br from-red-900/40 to-black border border-red-500/30 rounded-xl p-3 relative overflow-hidden group">
-                  {/* Timer Badge */}
-                  <div className="absolute top-0 right-0 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-bl-lg z-10">
-                    {fd.activeFlashDeal ? Math.ceil(((fd.activeFlashDeal.endTime || 0) - Date.now()) / 60000) : fd.dealEndsIn}m LEFT
-                  </div>
-                  <h5 className="font-bold text-white text-sm truncate pr-16">{fd.name}</h5>
-                  <p className="text-red-400 font-black text-xs uppercase leading-tight mt-1 mb-2">
-                    {fd.activeFlashDeal?.title || fd.deal}
-                  </p>
-                  <div className="flex items-center gap-1 text-[9px] text-slate-400 font-bold uppercase">
-                    <Users className="w-3 h-3 text-slate-500" /> {fd.checkIns > 0 ? `${fd.checkIns} Checked In` : 'Just Started'}
-                  </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <div className="bg-red-500 rounded-full p-1 animate-pulse">
+                  <Zap className="w-3 h-3 text-white fill-current" />
                 </div>
-              ))}
+                <h4 className="text-sm font-black text-white uppercase tracking-widest font-league">Live Flash Deals</h4>
+              </div>
+              <div className="flex gap-1">
+                {flashDealVenues.map((_, i) => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-slate-800" />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
+              {flashDealVenues.slice(0, 3).map(fd => {
+                const endTime = fd.activeFlashDeal?.endTime || (Date.now() + (fd.dealEndsIn || 0) * 60000);
+                const minutesLeft = Math.max(0, Math.ceil((endTime - Date.now()) / 60000));
+
+                return (
+                  <div
+                    key={fd.id}
+                    onClick={() => navigate(`/venues/${fd.id}`)}
+                    className="min-w-[85vw] md:min-w-[400px] snap-center bg-gradient-to-br from-red-600 to-red-900 rounded-2xl p-0.5 shadow-[0_0_30px_rgba(220,38,38,0.2)] relative overflow-hidden group active:scale-[0.98] transition-all"
+                  >
+                    <div className="bg-[#0f172a] rounded-[14px] p-5 h-full relative overflow-hidden">
+                      {/* Decorative Background Elements */}
+                      <div className="absolute -right-4 -top-4 w-24 h-24 bg-red-600/10 rounded-full blur-2xl group-hover:bg-red-600/20 transition-all" />
+
+                      <div className="flex justify-between items-start mb-4 relative z-10">
+                        <div>
+                          <h5 className="font-black text-white text-lg uppercase font-league leading-none group-hover:text-primary transition-colors">{fd.name}</h5>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">{fd.venueType.replace(/_/g, ' ')}</p>
+                        </div>
+                        <div className="bg-red-600 text-white px-3 py-1 rounded-lg flex flex-col items-center shadow-lg shadow-red-900/40">
+                          <span className="text-[14px] font-black font-league leading-none">{minutesLeft}</span>
+                          <span className="text-[8px] font-black uppercase tracking-tighter">MINS</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1 relative z-10">
+                        <p className="text-2xl font-black text-primary uppercase font-league leading-tight tracking-tight">
+                          {fd.activeFlashDeal?.title || fd.deal}
+                        </p>
+                        <p className="text-xs text-slate-400 font-medium line-clamp-1 italic">
+                          {fd.activeFlashDeal?.description || 'Limited time offer! Get it while it lasts.'}
+                        </p>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between relative z-10">
+                        <div className="flex items-center gap-2">
+                          <div className="flex -space-x-2">
+                            {[1, 2, 3].map(i => (
+                              <div key={i} className="w-5 h-5 rounded-full border border-[#0f172a] bg-slate-800" />
+                            ))}
+                          </div>
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                            {fd.checkIns > 0 ? `${fd.checkIns} Players Here` : 'Deal is Fresh'}
+                          </span>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -549,7 +581,7 @@ export const BuzzScreen: React.FC<{
                         <Crown className="w-4 h-4 text-primary fill-current" />
                       </div>
                       <p className="text-xs text-slate-400 font-medium">
-                        {spotlight.type} <span className="text-slate-500 italic">"{spotlight.vibe}"</span>
+                        {spotlight.venueType.replace(/_/g, ' ')} <span className="text-slate-500 italic">"{spotlight.vibe}"</span>
                       </p>
                     </div>
                     <PulseMeter status={spotlight.status} />
@@ -622,7 +654,7 @@ export const BuzzScreen: React.FC<{
                         {venue.isHQ && <Crown className="w-4 h-4 text-primary fill-current" />}
                       </div>
                       <p className="text-xs text-slate-400 font-medium">
-                        {venue.type} <span className="text-slate-500 italic">"{venue.vibe}"</span>
+                        {(venue.venueType || 'venue').replace(/_/g, ' ')} <span className="text-slate-500 italic">"{venue.vibe}"</span>
                         {venue.distance !== null && <span className="ml-2 text-primary font-bold">• {venue.distance.toFixed(1)} mi</span>}
                       </p>
                     </div>
