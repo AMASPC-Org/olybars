@@ -337,6 +337,26 @@ export const BuzzScreen: React.FC<{
             </div>
           </div>
 
+          {/* SEARCH BAR (Prominent Placement) */}
+          <div className="relative mb-6">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 group-focus-within:text-primary transition-colors" />
+            <input
+              type="text"
+              placeholder="SEARCH BARS, VIBES, OR DEALS..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-900 border-2 border-slate-800 rounded-2xl py-4 pl-12 pr-12 text-white font-bold placeholder:text-slate-600 focus:border-primary/50 outline-none transition-all shadow-inner font-body text-sm"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-tighter bg-slate-800 px-2 py-1 rounded-md"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
           <div className="flex justify-center items-center gap-2 pb-2 flex-wrap">
             <div className="relative">
               <button
@@ -482,25 +502,6 @@ export const BuzzScreen: React.FC<{
           </div>
         )}
 
-        {/* SEARCH BAR */}
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-primary transition-colors" />
-          <input
-            type="text"
-            placeholder="Search bars, vibes, or deals..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-surface border border-slate-700 rounded-xl py-3 pl-11 pr-4 text-white text-sm font-medium placeholder:text-slate-600 focus:border-primary outline-none transition-all shadow-lg font-body"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-tighter"
-            >
-              Clear
-            </button>
-          )}
-        </div>
 
         <div className="relative group/list">
           {/* JOIN THE LEAGUE CONVERSION BANNER (FOR GUESTS) */}

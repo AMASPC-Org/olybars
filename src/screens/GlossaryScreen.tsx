@@ -8,39 +8,50 @@ const glossaryTerms = [
     {
         category: 'The Game',
         terms: [
-            { term: 'Bar League', def: 'The overarching season-based competition where users compete for points by visiting venues.' },
-            { term: 'Buzz', def: 'The real-time energy level of a venue (Chill, Lively, or Buzzing).' },
-            { term: 'The Weekly Buzz', def: 'The official League email dispatched weekly. It highlights legendary bartenders, explores local bar history, and contains exclusive "Trivia Cheat Codes" for upcoming league events.' },
-            { term: 'Check-In', def: 'The primary scoring action. Users verify their location at an Anchor Venue. Limited to 2 per 12-hour window.' },
+            { term: 'Bar League', def: 'The overarching season-based competition where Users (Players) and Venues (Members) interact to earn points and climb the standings.' },
+            { term: 'Artesian Bar League', def: 'The official name of the Olympia-based league, celebrating the city\'s brewing heritage.' },
+            { term: 'Buzz', def: 'The real-time energy level of a venue (Chill, Lively, or Buzzing), reported by the community.' },
+            { term: 'The Weekly Buzz', def: 'The official League dispatch. It highlights legendary bartenders, explores local bar history, and contains exclusive "Trivia Cheat Codes".' },
+            { term: 'Check-In', def: 'The primary scoring action. Players verify their location at an Anchor Venue. Limited to 2 per 12-hour window.' },
             { term: 'Vibe Check', def: 'A user-submitted report confirming or updating a venue\'s current Buzz. Pays a small point bonus.' },
-            { term: 'Streak', def: 'Consecutive days/weeks of active participation.' },
-            { term: 'Badge', def: 'A digital trophy earned by completing specific sets of visits (e.g., "Dive Bar Hero").' },
+            { term: 'Buzz Clock', def: 'The real-time countdown logic that prioritizes Happy Hour deals based on how much time is left to enjoy them.' },
+            { term: 'Streak', def: 'Consecutive days/weeks of active participation by a League Player.' },
+            { term: 'Badge', def: 'A digital trophy earned by completing specific sets of visits or challenges.' },
+            { term: 'Game Preferences', def: 'A set of player-defined interests (e.g., preferred bar games or vibes) used by Artie to suggest the perfect venue.' },
         ]
     },
     {
         category: 'Roles & People',
         terms: [
-            { term: 'Player / Guest', def: 'A standard user participating in the league.' },
-            { term: 'Venue Owner', def: 'A verified business owner with access to the Owner Dashboard.' },
-            { term: 'Staff', def: 'Venue employees who can update the Vibe and active specials but cannot change business details.' },
-            { term: 'Maker', def: 'A local artisan or producer (Brewer, Distiller) featured in the Maker\'s Trail.' },
+            { term: 'User', def: 'A visitor to OlyBars.com browsing anonymously without being signed in.' },
+            { term: 'Guest', def: 'A registered account holder who has not yet opted into the League via the "Join League" process.' },
+            { term: 'League Player', def: 'A registered member who has officially joined the League. Players earn points, track progress, and unlock digital trophies (Badges).' },
+            { term: 'League Partner', def: 'A verified venue (bar or pub) inducted into the League. Partners have access to the Command Center to manage their vibe.' },
+            { term: 'Venue Owner', def: 'The primary contact and operator of a League Partner venue, responsible for their "60-Second Handover".' },
+            { term: 'Artie', def: 'The official OlyBars concierge, powered by Well 80. Artie is an AI guide that helps players find the right vibe and helps partners manage their presence.' },
+            { term: 'Maker', def: 'Local artisans (Brewers, Distillers, Roasters) whose products are featured on the Maker\'s Trail.' },
+            { term: 'The AMA Network', def: 'The underlying infrastructure powering the OlyBars ecosystem.' },
         ]
     },
     {
-        category: 'Features',
+        category: 'Features & Tools',
         terms: [
-            { term: 'Flash Deal', def: 'A time-limited special offer created by a Venue Owner to drive immediate traffic.' },
-            { term: 'Maker\'s Trail', def: 'A discovery feature guiding users to venues that serve local products.' },
-            { term: 'Amenity', def: 'A physical feature of a venue (Pool Table, Dart Board, Arcade Cabinet).' },
-            { term: 'Safe Ride', def: 'Partnerships with Red Cab and Uber/Lyft to ensure safe transport home.' },
             { term: 'The Manual', def: 'The colloquial name for the OlyBars app/website ("The Artesian Bar League Manual").' },
+            { term: 'The 60-Second Handover', def: 'The streamlined onboarding process for venue owners to claim their listing and activate their partner benefits.' },
+            { term: 'Partner Status', def: 'The membership tier of a League Partner (e.g., Starter, Pro, Legend), determining available tools and visibility.' },
+            { term: 'Flash Deal', def: 'A time-limited special offer created by a League Partner to drive immediate traffic.' },
+            { term: 'Maker\'s Trail', def: 'A discovery feature guiding players to venues that serve products from local Makers.' },
+            { term: 'Safe Ride', def: 'The League\'s commitment to safety, providing direct links to Red Cab and ride-share services.' },
         ]
     },
     {
-        category: 'Legal',
+        category: 'Compliance & Legal',
         terms: [
-            { term: 'Stool Test', def: 'The requirement that a venue must have a manned bar to be listed (No table-service-only restaurants).' },
-            { term: 'Anti-Volume', def: 'The principle that the League rewards attendance and discovery, not the quantity of alcohol consumed.' },
+            { term: 'LCB Compliance', def: 'Strict adherence to Washington State Liquor Control Board rules to protect our partners\' licenses.' },
+            { term: 'Artie Pivot', def: 'A compliant alternative suggested by Artie when marketing copy risks violating LCB rules.' },
+            { term: 'Anti-Volume', def: 'A core rule: the League never encourages rapid or excessive alcohol consumption. Points are for presence, not pints.' },
+            { term: 'Undue Influence', def: 'The separation of gameplay and alcohol. Points are never directly tied to the purchase of liquid volume.' },
+            { term: 'Stool Test', def: 'The requirement that a venue must have a manned bar and social-centric seating to be eligible for Partner induction.' },
         ]
     }
 ];
@@ -150,7 +161,7 @@ const GlossaryScreen = () => {
                 <div className="text-center pt-8 opacity-50">
                     <Zap className="w-6 h-6 mx-auto mb-2 text-slate-600" />
                     <p className="text-[10px] uppercase tracking-widest text-slate-600">
-                        Official League Rules & Definitions<br />v2025.1
+                        Official League Rules & Definitions<br />v2025.1.3
                     </p>
                 </div>
 

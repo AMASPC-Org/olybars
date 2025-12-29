@@ -118,6 +118,24 @@ const ArtieBioScreen = () => {
                     </section>
                 </div>
 
+                {/* EASTER EGG: Note from Grandpa */}
+                <div className="mt-12 mb-16 relative transform -rotate-1 hover:rotate-0 transition-transform duration-300 max-w-[85%] mx-auto">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-24 h-3 bg-yellow-100/10 blur-sm rounded-full" />
+                    <div className="bg-[#fefce8] text-slate-800 p-5 rounded-sm shadow-lg border border-yellow-200/30 relative overflow-hidden scale-95 origin-center">
+                        {/* Paper texture effect */}
+                        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] mix-blend-multiply" />
+
+                        <div className="relative z-10 text-center">
+                            <h3 className="font-handwriting text-xl font-bold text-slate-900 mb-3 opacity-80" style={{ fontFamily: 'Dancing Script, cursive' }}>
+                                A Note from Grandpa
+                            </h3>
+                            <p className="font-handwriting text-base leading-relaxed text-slate-800/90 italic px-2" style={{ fontFamily: 'Dancing Script, cursive', lineHeight: '1.4' }}>
+                                "Artie, kid—remember what I told you. In this town, people don’t just buy a drink; they buy a moment. Keep the tap lines clean and the data honest. It's always been about the water, but now it’s about the people. Don't let the 98501 go thirsty."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 {/* New Section: Ask Artie */}
                 <div className="mt-12 mb-12">
                     <h2 className="text-white font-league font-black text-2xl uppercase tracking-tight mb-6 flex items-center gap-3">
@@ -158,29 +176,11 @@ const ArtieBioScreen = () => {
                             TRY IT OUT NOW. JUST CLICK ARTIE'S LOGO IN THE CORNER.
                         </p>
 
-                        <div className="flex flex-col items-center gap-2">
-                            <span className="text-xs font-black text-slate-500 uppercase flex items-center gap-2">
+                        <div className="flex flex-col items-center gap-3">
+                            <span className="text-[10px] font-black text-primary/40 uppercase tracking-[0.3em] flex flex-col items-center gap-2">
                                 He's Right Here
-                                <span className="animate-bounce">↓</span>
+                                <div className="w-px h-8 bg-gradient-to-b from-primary/40 to-transparent animate-pulse" />
                             </span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* EASTER EGG: Note from Grandpa */}
-                <div className="mt-12 relative transform rotate-1 hover:rotate-0 transition-transform duration-300">
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-4 bg-yellow-100/20 blur-sm rounded-full" />
-                    <div className="bg-[#fefce8] text-slate-800 p-6 rounded-sm shadow-xl border border-yellow-200/50 relative overflow-hidden">
-                        {/* Paper texture effect */}
-                        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] mix-blend-multiply" />
-
-                        <div className="relative z-10">
-                            <h3 className="font-handwriting text-2xl font-bold text-slate-900 mb-4 opacity-80" style={{ fontFamily: 'Dancing Script, cursive' }}>
-                                A Note from Grandpa
-                            </h3>
-                            <p className="font-handwriting text-lg leading-relaxed text-slate-800" style={{ fontFamily: 'Dancing Script, cursive', lineHeight: '1.6' }}>
-                                "Artie, kid—remember what I told you. In this town, people don’t just buy a drink; they buy a moment. It doesn’t matter if it’s under the Dome or down by the Sound—if the water’s good and the company’s real, you’re in the right place. Keep the tap lines clean and the data honest. It's always been about the water, but now it’s about the people. Don't let the 98501 go thirsty."
-                            </p>
                         </div>
                     </div>
                 </div>

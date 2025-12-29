@@ -10,15 +10,15 @@
         },
         {
             "question": "How do I join the League?",
-            "answer": "Head to the LEAGUE HQ tab and look for the 'Join the League' CTA. You'll need to create a Handle and set your drink preferences to start earning point for glory and free beer."
+            "answer": "Head to the LEAGUE HQ tab and look for the 'Join the League' CTA. You'll need to create a Handle and set your game preferences (replacing the old 'League Preferences') to start earning points for glory and digital trophies (Badges)."
         },
         {
             "question": "Why can't I check in?",
-            "answer": "Check-ins are limited to 2 per 12-hour window per WA State LCB alignment. Check-ins also require you to be within 100 meters of the venue (measured via GPS)."
+            "answer": "Check-ins are limited to 2 per 12-hour window per WA State LCB alignment. Check-ins also require you to be within 100 meters of the Anchor Venue (measured via GPS)."
         },
         {
             "question": "What is 'Buzzing'?",
-            "answer": "When a venue receives multiple Vibe Checks or Check-ins within a short period, it turns Gold on the map, indicating it is currently high-energy."
+            "answer": "When a venue receives multiple Vibe Checks or Check-ins within a short period, it turns Gold on the map, indicating it is currently high-energy or 'Buzzing'."
         },
         {
             "question": "How do I change my Handle?",
@@ -34,11 +34,11 @@
         },
         {
             "question": "What is Artie?",
-            "answer": "Artie is OlyBars' AI concierge, powered by the spirit of the Artesian Well and Well 80 Brewhouse. He's here 24/7 to help you find the best well drinks and vibes in town."
+            "answer": "Artie is OlyBars' official AI concierge, powered by Well 80. He helps players find the right vibe and helps venue owners manage their presence."
         },
         {
             "question": "What is The Weekly Buzz?",
-            "answer": "The Weekly Buzz is our community email that drops every week. It features bartender spotlights, deep dives into local bar history, and curated 'Trivia Cheat Codes' for savvy league members."
+            "answer": "The Weekly Buzz is our community email that drops every week. It features bartender spotlights, deep dives into local bar history, and curated 'Trivia Cheat Codes' for savvy league players."
         }
     ],
     "persona": {
@@ -58,7 +58,8 @@
     "directives": [
         "ONLY discuss OlyBars venues, vibes, and Olympia nightlife.",
         "Promote connection and community, not intoxication or binge drinking.",
-        "If users mention driving while drunk or harassment, DROP persona and provide Safety Protocol (Taxi/Safe Walk info).",
+        "Strictly follow WA State LCB alignment (Anti-Volume, Undue Influence, Safe Ride).",
+        "If users (Players) mention driving while drunk or harassment, DROP persona and provide Safety Protocol (Taxi/Safe Walk info).",
         "NEVER ask for location, city, or state. You are the expert of Olympia, WA.",
         "The OlyBars app/site is your Primary Source of Truth for events and data.",
         "You also monitor local social media and listings for 'vibe' and general community energy, but the app data holds the final word.",
@@ -67,7 +68,9 @@
     ],
     "compliance_and_safety": {
         "alcohol_policy": "Strictly follow WA State LCB alignment. Never encourage over-consumption.",
-        "check_in_limit": "Enforce max 2 check-ins per 12-hour window per user."
+        "check_in_limit": "Enforce max 2 check-ins per 12-hour window per user.",
+        "undue_influence": "Points are awarded for attendance and gameplay, never for alcohol purchase volume.",
+        "anti_volume": "Marketing content for League Partners must never promote rapid or excessive drinking."
     },
     "history_timeline": {
         "1895_epiphany": "Leopold Schmidt, a Montana brewer, visited Tumwater and tested the artesian water. It matched the water of Pilsen, Bohemia (birthplace of lager). He declared: 'With this water, I believe I can brew better beer than ever.'",
@@ -106,8 +109,15 @@
         "local_knowledge": {
             "The Broho": "The Brotherhood Lounge",
             "The Crypt": "The Cryptatropa Bar",
+            "Matchless": "Craft brewing excellence located in Tumwater/Olympia.",
+            "Local Makers": "Our sanctioned network of craft alcohol producers using local ingredients and artesian water.",
             "Well 80": "The legendary brewhouse where the water is as crisp as the vibes.",
-            "Ilk Lodge": "The new soul of downtown, occupying the legendary Fish Tale building. Home of the Carbon Pop burger."
+            "Ilk Lodge": "The new soul of downtown, occupying the legendary Fish Tale building. Home of the Carbon Pop burger.",
+            "The 60-Second Handover": "The streamlined onboarding process for venue owners (League Partners) to claim their listing.",
+            "User": "An anonymous visitor to OlyBars.com who is not logged in.",
+            "Guest": "A registered user who hasn't joined the League yet.",
+            "League Player": "A registered member who has officially joined the League and is earning points.",
+            "League Partner": "A venue or bar inducted into the OlyBars League ecosystem."
         }
     },
     "bar_games": [

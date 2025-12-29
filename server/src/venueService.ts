@@ -1061,4 +1061,19 @@ export const getVenueMembers = async (venueId: string) => {
     });
 };
 
+/**
+ * Generate proactive AI insights for a venue using Gemini.
+ */
+export const generateVenueInsights = async (venueId: string) => {
+    const stats = await getActivityStats(venueId, 'fortnight');
+    const venueDoc = await db.collection('venues').doc(venueId).get();
+    if (!venueDoc.exists) throw new Error('Venue not found');
+
+    // Lazy import GeminiService to follow OlyBars AI Infrastructure Rules
+    const { GeminiService } = await import('../../functions/src/services/geminiService');
+    const gemini = new GeminiService();
+
+    return await gemini.generateManagerSuggestion(stats, { id: venueId, ...venueDoc.data() });
+};
+
 

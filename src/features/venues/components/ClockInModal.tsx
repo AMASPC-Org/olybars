@@ -109,7 +109,9 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
         try {
             const { latitude, longitude } = coords;
 
-            await performCheckIn(selectedVenue.id, userId, latitude, longitude);
+            if (userId !== 'guest') {
+                await performCheckIn(selectedVenue.id, userId, latitude, longitude);
+            }
 
             awardPoints('checkin', selectedVenue.id, allowMarketingUse);
             setCheckInHistory(prev => [...prev, { venueId: selectedVenue.id, timestamp: Date.now() }]);
@@ -140,18 +142,34 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                     </div>
                     <div>
                         <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league italic">Checked In!</h2>
-                        <p className="text-primary font-black uppercase tracking-widest text-[10px] mt-1">+10 LEAGUE POINTS AWARDED</p>
+                        {isLoggedIn ? (
+                            <p className="text-primary font-black uppercase tracking-widest text-[10px] mt-1">+10 LEAGUE POINTS AWARDED</p>
+                        ) : (
+                            <p className="text-primary font-black uppercase tracking-widest text-[10px] mt-1">+10 POINTS PENDING CLAIM</p>
+                        )}
                     </div>
 
-                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Current Streak</p>
-                        <div className="flex items-center justify-center gap-2">
-                            <div className="text-2xl font-black text-white font-mono">
-                                {setCheckInHistory ? '🔥 2-DAY STREAK' : '🔥 1-DAY STREAK'}
+                    {isLoggedIn ? (
+                        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Current Streak</p>
+                            <div className="flex items-center justify-center gap-2">
+                                <div className="text-2xl font-black text-white font-mono">
+                                    {setCheckInHistory ? '🔥 2-DAY STREAK' : '🔥 1-DAY STREAK'}
+                                </div>
                             </div>
+                            <p className="text-[9px] text-primary font-bold uppercase mt-1 italic">Keep it up for a Bonus Badge!</p>
                         </div>
-                        <p className="text-[9px] text-primary font-bold uppercase mt-1 italic">Keep it up for a Bonus Badge!</p>
-                    </div>
+                    ) : (
+                        <div className="bg-primary/10 rounded-xl p-4 border border-primary/20">
+                            <p className="text-[10px] text-primary font-bold uppercase tracking-widest mb-2">Claim Your Progress</p>
+                            <button
+                                onClick={() => onLogin('signup')}
+                                className="w-full bg-primary text-black font-black py-2 rounded-lg uppercase tracking-wider text-xs hover:scale-105 transition-transform"
+                            >
+                                Join League to Save
+                            </button>
+                        </div>
+                    )}
 
                     {!vibeChecked && onVibeCheckPrompt ? (
                         <div className="bg-slate-900/80 p-4 rounded-xl border border-white/5 space-y-4">
@@ -304,37 +322,25 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                         </div>
                     )}
 
-                    {!isLoggedIn ? (
-                        <div className="space-y-4">
-                            <button
-                                onClick={() => onLogin('signup')}
-                                className="w-full bg-primary text-black font-black py-4 rounded-2xl uppercase tracking-[0.2em] text-xs shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all outline-none"
-                            >
-                                Join the League to Clock In
-                            </button>
-                            <button
-                                onClick={() => window.location.href = '/perks'}
-                                className="w-full text-slate-500 font-bold uppercase tracking-widest text-[9px] hover:text-primary transition-colors flex items-center justify-center gap-2 outline-none"
-                            >
-                                <Info className="w-3.5 h-3.5" />
-                                Learn More About League Perks
-                            </button>
-                        </div>
-                    ) : (
-                        <button
-                            onClick={confirmClockIn}
-                            disabled={isCheckingIn || !isAtVenue}
-                            className={`w-full py-4 rounded-lg text-lg font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 outline-none ${isAtVenue
-                                ? 'bg-primary text-black shadow-md hover:bg-yellow-400 active:scale-95'
-                                : 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                                }`}
-                        >
-                            {isCheckingIn ? (
-                                <><Loader2 className="w-5 h-5 animate-spin" /> Verifying...</>
-                            ) : (
-                                <><MapPin className="w-5 h-5" /> CONFIRM I AM HERE</>
-                            )}
-                        </button>
+                    <button
+                        onClick={confirmClockIn}
+                        disabled={isCheckingIn || !isAtVenue}
+                        className={`w-full py-4 rounded-lg text-lg font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 outline-none ${isAtVenue
+                            ? 'bg-primary text-black shadow-md hover:bg-yellow-400 active:scale-95'
+                            : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                            }`}
+                    >
+                        {isCheckingIn ? (
+                            <><Loader2 className="w-5 h-5 animate-spin" /> Verifying...</>
+                        ) : (
+                            <><MapPin className="w-5 h-5" /> CONFIRM I AM HERE</>
+                        )}
+                    </button>
+
+                    {!isLoggedIn && (
+                        <p className="text-center text-[9px] text-slate-500 font-bold uppercase mt-2">
+                            Guest Mode: Points will be pending until you join.
+                        </p>
                     )}
 
                     {/* LCB SAFE RIDE HOME - TRIGGER 5:30 PM */}

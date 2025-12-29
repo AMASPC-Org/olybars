@@ -13,6 +13,8 @@ interface VibeCheckModalProps {
     clockedIn?: boolean;
     onClockInPrompt?: () => void;
     verificationMethod?: 'gps' | 'qr';
+    isLoggedIn?: boolean;
+    onLogin?: (mode: 'login' | 'signup') => void;
 }
 
 export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
@@ -22,7 +24,9 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     onConfirm,
     clockedIn,
     onClockInPrompt,
-    verificationMethod = 'gps'
+    verificationMethod = 'gps',
+    isLoggedIn = false,
+    onLogin
 }) => {
     const [selectedStatus, setSelectedStatus] = useState<VenueStatus>(venue.status || 'chill');
     const [showCamera, setShowCamera] = useState(false);
@@ -128,7 +132,11 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                     </div>
                     <div>
                         <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league italic">Vibe Submitted!</h2>
-                        <p className="text-primary font-black uppercase tracking-widest text-xs mt-1">LEAGUE XP GRANTED</p>
+                        {isLoggedIn ? (
+                            <p className="text-primary font-black uppercase tracking-widest text-xs mt-1">LEAGUE XP GRANTED</p>
+                        ) : (
+                            <p className="text-primary font-black uppercase tracking-widest text-xs mt-1">XP PENDING CLAIM</p>
+                        )}
                     </div>
 
                     {!clockedIn && onClockInPrompt ? (
@@ -145,7 +153,20 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                             <button onClick={onClose} className="text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white">Maybe Later</button>
                         </div>
                     ) : (
-                        <p className="text-slate-400 text-xs font-medium italic">Redirecting to status hub...</p>
+                        !isLoggedIn && onLogin ? (
+                            <div className="bg-primary/10 rounded-xl p-4 border border-primary/20 space-y-3">
+                                <p className="text-[10px] text-primary font-bold uppercase tracking-widest">Claim Your Rewards</p>
+                                <button
+                                    onClick={() => onLogin('signup')}
+                                    className="w-full bg-primary text-black font-black py-3 rounded-lg uppercase tracking-wider font-league hover:scale-105 transition-transform"
+                                >
+                                    Join League to Save
+                                </button>
+                                <button onClick={onClose} className="text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white">Close & Lose Points</button>
+                            </div>
+                        ) : (
+                            <p className="text-slate-400 text-xs font-medium italic">Redirecting to status hub...</p>
+                        )
                     )}
                 </div>
             </div>

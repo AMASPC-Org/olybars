@@ -176,106 +176,49 @@ const AboutPage = () => {
                             <Trophy size={12} /> PLAYER'S HANDBOOK
                         </button>
                         <h1 className="text-5xl font-black uppercase tracking-tighter font-league leading-[0.9]">
-                            NIGHTLIFE IS A <span className="text-white block">TEAM SPORT.</span>
+                            NEVER ASK <span className="text-white block">&quot;WHERE NEXT?&quot; AGAIN.</span>
                         </h1>
                         <p className="text-sm text-primary font-bold uppercase tracking-widest mt-2 drop-shadow-lg flex items-center gap-2">
-                            <Sparkles size={14} /> Join the League. Explore the City. Win the Night.
+                            <Sparkles size={14} /> Happy Hours. Live Music. Real-Time Vibe Checks.
                         </p>
                     </div>
                 </div>
             </header>
 
             <div className="space-y-16 max-w-2xl mx-auto">
-                {/* Artie's Field Report - Dynamic Betterment */}
+                {/* Discovery Focus */}
                 <section className="relative">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="h-[2px] w-8 bg-primary/30" />
                         <h2 className="text-primary font-black text-xs uppercase tracking-[0.3em] flex items-center gap-2">
-                            <Activity size={12} /> ARTIE'S FIELD REPORT
+                            <Activity size={12} /> THE SCOUT REPORT
                         </h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Buzzing Right Now */}
-                        <div className="bg-surface/60 backdrop-blur-md border-2 border-primary/20 p-5 rounded-3xl relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <Zap size={48} className="text-primary fill-primary" />
-                            </div>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-primary mb-3 font-league italic">🔥 Buzzing Right Now</h3>
-                            {fetchingVenues ? (
-                                <div className="flex items-center gap-2 text-slate-500 animate-pulse">
-                                    <Loader2 size={12} className="animate-spin" />
-                                    <span className="text-[10px] uppercase font-black">Scanning the field...</span>
-                                </div>
-                            ) : buzzingVenues.length > 0 ? (
-                                <div className="space-y-3">
-                                    {buzzingVenues.map(v => (
-                                        <div key={v.id} className="flex justify-between items-center group/item cursor-pointer" onClick={() => navigate(`/venues/${v.id}`)}>
-                                            <span className="text-sm font-bold text-white font-league uppercase group-hover/item:text-primary transition-colors">{v.name}</span>
-                                            <div className="flex items-center gap-1.5 bg-primary/20 px-2 py-0.5 rounded text-[8px] font-black text-primary border border-primary/30">
-                                                <Users size={8} /> {v.currentBuzz?.score.toFixed(0)} PTS
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-[10px] text-slate-500 font-bold uppercase italic">Olympia is keeping it chill today.</p>
-                            )}
-                        </div>
-
-                        {/* Scouts Pick: Happy Hours */}
-                        <div className="bg-surface/60 backdrop-blur-md border-2 border-white/5 p-5 rounded-3xl relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <Clock size={48} className="text-white" />
-                            </div>
-                            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 font-league italic">🍺 Scout's Pick: Active Deals</h3>
-                            {fetchingVenues ? (
-                                <div className="flex items-center gap-2 text-slate-500 animate-pulse">
-                                    <Loader2 size={12} className="animate-spin" />
-                                    <span className="text-[10px] uppercase font-black">Checking the board...</span>
-                                </div>
-                            ) : activeHappyHours.length > 0 ? (
-                                <div className="space-y-3">
-                                    {activeHappyHours.map(v => (
-                                        <div key={v.id} className="flex flex-col group/item cursor-pointer" onClick={() => navigate(`/venues/${v.id}`)}>
-                                            <span className="text-sm font-bold text-white font-league uppercase group-hover/item:text-primary transition-colors">{v.name}</span>
-                                            <span className="text-[9px] text-slate-500 font-bold uppercase truncate">{v.deal || "Flash Deal Active"}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-[10px] text-slate-500 font-bold uppercase italic">No active scouts in the field right now.</p>
-                            )}
-                        </div>
-                    </div>
-                </section>
-
-                {/* The League Mission Section */}
-                <section className="relative">
-                    <div className="flex items-center gap-2 mb-4">
-                        <div className="h-[2px] w-8 bg-primary/30" />
-                        <h2 className="text-primary font-black text-xs uppercase tracking-[0.3em] flex items-center gap-2">
-                            <Anchor size={12} /> THE LEAGUE MISSION
-                        </h2>
-                    </div>
                     <div className="bg-surface/40 backdrop-blur-sm border border-white/5 p-8 rounded-[2.5rem] relative overflow-hidden group">
-                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all duration-700" />
-
-                        <h3 className="text-white font-black text-2xl uppercase tracking-tight mb-4 font-league italic">REVITALIZING DOWNTOWN OLYMPIA</h3>
-
+                        <h3 className="text-white font-black text-2xl uppercase tracking-tight mb-4 font-league italic">YOUR ALL-ACCESS PASS TO OLYMPIA</h3>
                         <div className="space-y-4 text-slate-300 leading-relaxed text-sm font-body">
                             <p>
-                                We all know the struggle: it’s 7:00 PM, you want to go out, but you don't know where the energy is. So you stay home.
+                                OlyBars is the central nervous system of the 98501. Whether you're looking for a quiet corner for a craft cocktail or a packed house for a Friday night set, we give you the live intel to make the choice.
                             </p>
-                            <p className="font-bold text-white italic bg-primary/10 border-l-2 border-primary px-3 py-2">
-                                OlyBars is here to break that cycle.
-                            </p>
-                            <p>
-                                We are a hyper-local community platform dedicated to one thing: getting you off the couch and into the best spots in Olympia. This handbook is your guide to the 98501.
-                            </p>
-                            <p>
-                                We believe that when our bars, venues, and makers thrive, the whole city comes alive. Whether it's a slow Tuesday or a packed Friday, the League is here to find the vibe.
-                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                                <div className="flex items-center gap-3 text-white font-black uppercase text-[10px] tracking-widest">
+                                    <div className="p-2 bg-primary/10 rounded-lg text-primary"><Clock size={16} /></div>
+                                    Active Happy Hours
+                                </div>
+                                <div className="flex items-center gap-3 text-white font-black uppercase text-[10px] tracking-widest">
+                                    <div className="p-2 bg-primary/10 rounded-lg text-primary"><Zap size={16} /></div>
+                                    Live Event Feed
+                                </div>
+                                <div className="flex items-center gap-3 text-white font-black uppercase text-[10px] tracking-widest">
+                                    <div className="p-2 bg-primary/10 rounded-lg text-primary"><Map size={16} /></div>
+                                    Verified Vibe Maps
+                                </div>
+                                <div className="flex items-center gap-3 text-white font-black uppercase text-[10px] tracking-widest">
+                                    <div className="p-2 bg-primary/10 rounded-lg text-primary"><Users size={16} /></div>
+                                    Real-Time Crowd Stats
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -290,25 +233,14 @@ const AboutPage = () => {
                     </div>
 
                     <div className="relative bg-slate-900 border-2 border-primary/20 p-8 rounded-[3rem] overflow-hidden group">
-                        {/* Background Decoration */}
-                        <div className="absolute top-0 right-0 w-48 h-48 -mr-12 -mt-12 opacity-20 group-hover:opacity-40 transition-opacity">
-                            <img src={leagueBadge} alt="" className="w-full h-full object-contain rotate-12" />
-                        </div>
-
                         <div className="relative z-10 space-y-8">
                             <div className="flex items-start gap-6">
-                                <div className="bg-primary text-black w-10 h-10 rounded-full flex items-center justify-center font-black shrink-0 shadow-xl font-league italic italic text-xl">1</div>
+                                <div className="bg-primary text-black w-10 h-10 rounded-full flex items-center justify-center font-black shrink-0 shadow-xl font-league italic text-xl">1</div>
                                 <div>
                                     <h4 className="text-white font-black text-xl uppercase font-league mb-2 flex items-center gap-2 italic">Check In <ChevronRight size={18} className="text-primary" /></h4>
                                     <p className="text-sm text-slate-400 font-body leading-relaxed">
-                                        Don't just go out—put it on the board. When you arrive at a partner venue, check in to confirm your presence at the physical location.
+                                        When you arrive at a partner venue, check in to confirm your presence. GPS verification ensures the data stays pure.
                                     </p>
-                                    <div className="flex gap-2 mt-3">
-                                        <div className="bg-black/40 border border-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-inner">
-                                            <MapPin size={14} className="text-primary" />
-                                            <span className="text-[10px] font-black uppercase text-slate-300">GPS VERIFIED</span>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -317,14 +249,8 @@ const AboutPage = () => {
                                 <div>
                                     <h4 className="text-white font-black text-xl uppercase font-league mb-2 flex items-center gap-2 italic">Report the Vibe <ChevronRight size={18} className="text-primary" /></h4>
                                     <p className="text-sm text-slate-400 font-body leading-relaxed">
-                                        Tell the League what the energy is (Chill? Buzzing? Loud?). Your qualitative input feeds the real-time "Pulse" that helps everyone else decide where to go.
+                                        Tell the League what the energy is. Chill? Buzzing? Loud? Your qualitative input feeds the real-time "Pulse" for the whole city.
                                     </p>
-                                    <div className="flex gap-2 mt-3">
-                                        <div className="bg-black/40 border border-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-inner">
-                                            <Activity size={14} className="text-primary" />
-                                            <span className="text-[10px] font-black uppercase text-slate-300">REAL-TIME INTEL</span>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -333,14 +259,8 @@ const AboutPage = () => {
                                 <div>
                                     <h4 className="text-white font-black text-xl uppercase font-league mb-2 flex items-center gap-2 italic">Earn League Points <ChevronRight size={18} className="text-primary" /></h4>
                                     <p className="text-sm text-slate-400 font-body leading-relaxed">
-                                        Your participation is the product. Points prove you "Wear the 98501." Level up to unlock exclusive merch and "Mayor" status at your favorite local haunts.
+                                        Your participation is the product. Level up to unlock exclusive merch and "Mayor" status at your favorite haunts.
                                     </p>
-                                    <div className="flex gap-2 mt-3">
-                                        <div className="bg-black/40 border border-white/10 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-inner">
-                                            <Award size={14} className="text-primary" />
-                                            <span className="text-[10px] font-black uppercase text-slate-300">MERCH UNLOCKS</span>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -363,10 +283,10 @@ const AboutPage = () => {
                             </h2>
                             <div className="space-y-4 text-slate-300 leading-relaxed text-sm font-body mb-6">
                                 <p>
-                                    To navigate the 98501, you need a guide. Meet Artie Wells. Inspired by the "Spirit of the Artesian Well" and our deep brewing history, Artie is your AI-powered companion.
+                                    To navigate the city, you need a guide. Meet Artie Wells. Artie is our AI-powered concierge with a singular mission: ensuring you're never bored in the state capital.
                                 </p>
                                 <p>
-                                    Need a plan? Artie knows every happy hour and live set. Whether you're looking for pool at Hannah's or the latest craft tap at Well 80, Artie has the scout report.
+                                    Need a plan? Artie knows every happy hour and live set in Olympia. Whether you're looking for pool at Hannah's or a tap takeover at Well 80, Artie has the scout report.
                                 </p>
                             </div>
                             <button
@@ -379,7 +299,61 @@ const AboutPage = () => {
                     </div>
                 </section>
 
-                {/* Marketing Co-Op */}
+                {/* The Olympia Bar League Mission */}
+                <section className="relative">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="h-[2px] w-8 bg-primary/30" />
+                        <h2 className="text-primary font-black text-xs uppercase tracking-[0.3em] flex items-center gap-2">
+                            <Anchor size={12} /> THE OLYMPIA BAR LEAGUE
+                        </h2>
+                    </div>
+                    <div className="bg-surface/40 backdrop-blur-sm border border-white/5 p-8 rounded-[2.5rem] relative overflow-hidden group">
+                        <h3 className="text-white font-black text-2xl uppercase tracking-tight mb-4 font-league italic">REVITALIZING THROUGH COMMUNITY</h3>
+                        <div className="space-y-4 text-slate-300 leading-relaxed text-sm font-body">
+                            <p>
+                                The <strong>Olympia Bar League</strong> was born from a simple realization: when our local venues thrive, our city comes alive. We are a community-first organization dedicated to supporting the bars, restaurants, and makers that define Olympia.
+                            </p>
+                            <p className="font-bold text-white italic bg-primary/10 border-l-2 border-primary px-3 py-2">
+                                We believe in the "Artesian Energy" of the 98501.
+                            </p>
+                            <p>
+                                By gamifying attendance and creating a shared digital infrastructure, we bridge the gap between "wanting to go out" and "actually being there." Every check-in is a vote for local business.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* The Three-Point Test */}
+                <section className="relative">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="h-[2px] w-8 bg-primary/30" />
+                        <h2 className="text-primary font-black text-xs uppercase tracking-[0.3em] flex items-center gap-2">
+                            <Info size={12} /> WHAT MAKES A BAR?
+                        </h2>
+                    </div>
+                    <div className="bg-slate-900 border border-white/10 p-8 rounded-[2.5rem]">
+                        <h3 className="text-white font-black text-xl uppercase font-league mb-6 italic tracking-wide">THE OLYBARS MEMBERSHIP STANDARD</h3>
+                        <p className="text-sm text-slate-400 mb-8 leading-relaxed">
+                            OlyBars includes every licensed venue in the City of Olympia. If you are on the map, you are in the League. But to be a featured <strong>Partner Venue</strong>, a location must pass our three-point test:
+                        </p>
+                        <div className="grid grid-cols-1 gap-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black italic font-league">1</div>
+                                <span className="text-sm text-white font-black uppercase tracking-widest">A dedicated place to sit.</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black italic font-league">2</div>
+                                <span className="text-sm text-white font-black uppercase tracking-widest">Someone there to serve you.</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black italic font-league">3</div>
+                                <span className="text-sm text-white font-black uppercase tracking-widest">A vibe that belongs in Oly.</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Partner Co-Op */}
                 <section className="relative">
                     <div className="bg-primary/5 border border-primary/20 rounded-[3rem] overflow-hidden relative p-8">
                         <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
@@ -387,40 +361,69 @@ const AboutPage = () => {
                         </div>
 
                         <div className="relative z-10">
-                            <h2 className="text-white font-black text-2xl uppercase tracking-tight mb-4 font-league italic">MARKETING CO-OP FOR VENUES</h2>
+                            <h2 className="text-white font-black text-2xl uppercase tracking-tight mb-4 font-league italic">PARTNER CO-OP FOR VENUES</h2>
                             <p className="text-sm text-slate-400 font-body leading-relaxed mb-6">
-                                For business owners, the League is your fractional marketing team. We package Downtown Olympia as a destination. By gamifying attendance, we drive "butts in seats" on slow Tuesdays and pack the house for your Friday shows.
+                                For venue partners, the League is your fractional marketing team. We package our city as a premier destination. By driving "butts in seats" on slow Tuesdays and packing the floor for weekend shows, we ensure the 98501 stays buzzing.
                             </p>
                             <div className="flex flex-col gap-3">
                                 <div className="text-[10px] font-black uppercase text-primary tracking-widest text-center mb-1 font-league italic">NO FRICTION. NO LOGIN FATIGUE. JUST RESULTS.</div>
                                 <button
                                     onClick={() => {
-                                        navigate('/bars');
+                                        navigate('/venue-handover');
                                     }}
                                     className="bg-primary text-black font-black uppercase text-xs tracking-[0.2em] py-4 rounded-2xl flex items-center justify-center gap-2 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-y-1 hover:shadow-none transition-all font-league italic"
                                 >
-                                    JOIN THE LEAGUE
+                                    JOIN THE LEAGUE AS A PARTNER
                                 </button>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* Final CTA SECTION */}
-                <section className="pt-8 border-t border-white/5 space-y-6">
+                {/* Final CTA SECTION - Dual Path */}
+                <section className="pt-16 border-t border-white/5 space-y-16">
+                    {/* Path A: The Player */}
                     <div className="text-center">
-                        <h2 className="font-league text-3xl font-black uppercase italic tracking-tighter mb-2 italic">START YOUR SEASON</h2>
+                        <h2 className="font-league text-2xl font-black uppercase italic tracking-widest mb-4 opacity-60 italic">START YOUR SEASON</h2>
                         <button
-                            onClick={() => {
-                                navigate('/league');
-                            }}
-                            className="bg-white text-black font-black uppercase text-sm tracking-widest py-4 px-8 rounded-full hover:scale-105 transition-transform flex items-center gap-3 mx-auto shadow-2xl font-league italic"
+                            onClick={() => navigate('/league')}
+                            className="bg-white text-black font-black uppercase text-sm tracking-widest py-4 px-10 rounded-full hover:scale-105 transition-transform flex items-center gap-3 mx-auto shadow-xl font-league italic"
                         >
                             ASK ARTIE &quot;WHERE TO GO?&quot; <Star className="w-5 h-5 fill-primary text-primary" />
                         </button>
                     </div>
 
-                    <div className="flex justify-center gap-8 pt-6">
+                    {/* Path B: The Partner (High Pop / Owner Conversion) */}
+                    <div className="relative group">
+                        <div className="absolute inset-0 bg-primary/20 rounded-[3rem] blur-3xl -z-10 animate-pulse" />
+                        <div className="bg-slate-900/80 backdrop-blur-md border-2 border-primary/40 rounded-[3rem] p-10 text-center relative overflow-hidden">
+                            {/* Spotlight */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/20 rounded-full blur-[80px] pointer-events-none group-hover:bg-primary/30 transition-all duration-700" />
+
+                            <div className="relative z-10 space-y-6">
+                                <h2 className="text-white font-black text-3xl md:text-5xl uppercase tracking-tighter font-league italic leading-none">
+                                    OWN A <span className="text-primary">VENUE?</span>
+                                </h2>
+                                <p className="text-sm md:text-lg text-slate-300 max-w-md mx-auto leading-relaxed font-medium">
+                                    Artie has already built your profile. You just need to unlock it. Instant setup. Zero friction.
+                                </p>
+                                <button
+                                    onClick={() => navigate('/venue-handover')}
+                                    className="group relative inline-flex items-center justify-center px-10 py-5 bg-[#fbbf24] text-black font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all hover:scale-110 shadow-[0_0_50px_-10px_rgba(251,191,36,0.8)] hover:shadow-[0_0_70px_0px_rgba(251,191,36,1)] border-b-4 border-yellow-700 active:translate-y-1 active:border-b-0 font-league italic mt-4"
+                                >
+                                    <Zap className="w-5 h-5 mr-2 fill-black" />
+                                    CLAIM YOUR VENUE NOW
+                                    <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
+                                </button>
+
+                                <p className="text-[10px] text-primary font-black uppercase tracking-[0.4em] pt-4 opacity-80">
+                                    NO LOGIN FATIGUE • JUST RESULTS
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-center gap-8 pt-4">
                         <button
                             onClick={() => setShowContact(true)}
                             className="text-slate-500 font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:text-white transition-colors font-league"

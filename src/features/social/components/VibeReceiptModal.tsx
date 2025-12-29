@@ -8,10 +8,11 @@ import {
     Zap,
     MapPin,
     Activity,
+    CheckCircle2,
+    Instagram,
+    Music2,
     Facebook,
-    Twitter,
-    Copy,
-    CheckCircle2
+    Copy
 } from 'lucide-react';
 import { VibeReceiptData, shareVibeReceipt } from '../services/VibeReceiptService';
 import { logUserActivity } from '../../../services/userService';
@@ -19,15 +20,17 @@ import { logUserActivity } from '../../../services/userService';
 interface VibeReceiptModalProps {
     data: VibeReceiptData;
     onClose: () => void;
+    isLoggedIn?: boolean;
+    onLogin?: (mode: 'login' | 'signup') => void;
 }
 
-export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClose }) => {
+export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClose, isLoggedIn = false, onLogin }) => {
     const isTrivia = data.type === 'trivia';
 
     const [shareStatus, setShareStatus] = React.useState<string | null>(null);
     const [isCopied, setIsCopied] = React.useState(false);
 
-    const handleShare = async (platform?: 'facebook' | 'twitter' | 'copy') => {
+    const handleShare = async (platform?: 'facebook' | 'instagram' | 'tiktok' | 'copy') => {
         const success = await shareVibeReceipt(data, logUserActivity, platform);
         if (success) {
             if (platform === 'copy') {
@@ -83,7 +86,14 @@ export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClos
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-white/5 border border-white/10 p-4 rounded-2xl text-center group hover:border-primary/50 transition-all">
                                 <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest block mb-1">XP Earned</span>
-                                <span className="text-3xl font-black text-primary font-league leading-none">+{data.pointsEarned}</span>
+                                {isLoggedIn ? (
+                                    <span className="text-3xl font-black text-primary font-league leading-none">+{data.pointsEarned}</span>
+                                ) : (
+                                    <div className="flex flex-col">
+                                        <span className="text-2xl font-black text-slate-400 font-league leading-none line-through decoration-primary/50 decoration-2">+{data.pointsEarned}</span>
+                                        <span className="text-[8px] text-primary font-black uppercase tracking-wider mt-1 animate-pulse">PENDING</span>
+                                    </div>
+                                )}
                             </div>
                             <div className="bg-white/5 border border-white/10 p-4 rounded-2xl text-center group hover:border-primary/50 transition-all">
                                 <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest block mb-1">
@@ -113,43 +123,63 @@ export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClos
 
                     {/* Share Footer */}
                     <div className="p-6 bg-primary/5 border-t border-white/5 space-y-4">
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-4 gap-2">
                             <button
                                 onClick={() => handleShare('facebook')}
-                                className="flex flex-col items-center justify-center p-3 rounded-2xl bg-[#1877F2]/10 border border-[#1877F2]/20 hover:bg-[#1877F2]/20 transition-all group"
+                                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-[#1877F2]/10 border border-[#1877F2]/20 hover:bg-[#1877F2]/20 transition-all group"
                                 title="Share to Facebook"
                             >
-                                <Facebook className="w-6 h-6 text-[#1877F2] group-hover:scale-110 transition-transform" />
-                                <span className="text-[8px] font-black text-[#1877F2] mt-2 uppercase">Facebook</span>
+                                <Facebook className="w-5 h-5 text-[#1877F2] group-hover:scale-110 transition-transform" />
+                                <span className="text-[7px] font-black text-[#1877F2] mt-1.5 uppercase">Facebook</span>
                             </button>
                             <button
-                                onClick={() => handleShare('twitter')}
-                                className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
-                                title="Share to X (Twitter)"
+                                onClick={() => handleShare('instagram')}
+                                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-[#E4405F]/10 border border-[#E4405F]/20 hover:bg-[#E4405F]/20 transition-all group"
+                                title="Share to Instagram"
                             >
-                                <Twitter className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
-                                <span className="text-[8px] font-black text-white mt-2 uppercase">X / Twitter</span>
+                                <Instagram className="w-5 h-5 text-[#E4405F] group-hover:scale-110 transition-transform" />
+                                <span className="text-[7px] font-black text-[#E4405F] mt-1.5 uppercase">Instagram</span>
+                            </button>
+                            <button
+                                onClick={() => handleShare('tiktok')}
+                                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
+                                title="Share to TikTok"
+                            >
+                                <Music2 className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
+                                <span className="text-[7px] font-black text-white mt-1.5 uppercase">TikTok</span>
                             </button>
                             <button
                                 onClick={() => handleShare('copy')}
-                                className="flex flex-col items-center justify-center p-3 rounded-2xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all group"
+                                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all group"
                                 title="Copy Message & Link"
                             >
                                 {isCopied ? (
-                                    <CheckCircle2 className="w-6 h-6 text-green-400" />
+                                    <CheckCircle2 className="w-5 h-5 text-green-400" />
                                 ) : (
-                                    <Copy className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+                                    <Copy className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
                                 )}
-                                <span className="text-[8px] font-black text-primary mt-2 uppercase">{isCopied ? 'Copied!' : 'Copy'}</span>
+                                <span className="text-[7px] font-black text-primary mt-1.5 uppercase">{isCopied ? 'Copied!' : 'Copy'}</span>
                             </button>
                         </div>
 
                         <button
-                            onClick={() => handleShare()}
+                            onClick={() => {
+                                if (!isLoggedIn && onLogin) {
+                                    onLogin('signup');
+                                } else {
+                                    handleShare();
+                                }
+                            }}
                             className="w-full bg-primary text-black font-black uppercase tracking-widest py-4 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-lg"
                         >
-                            {shareStatus ? <CheckCircle2 className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
-                            {shareStatus || 'SMART SHARE'}
+                            {!isLoggedIn ? (
+                                <><Trophy className="w-5 h-5" /> JOIN LEAGUE TO CLAIM POINTS</>
+                            ) : (
+                                <>
+                                    {shareStatus ? <CheckCircle2 className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+                                    {shareStatus || 'SMART SHARE'}
+                                </>
+                            )}
                         </button>
 
                         <p className="text-center text-[9px] text-slate-500 font-bold uppercase tracking-tight">

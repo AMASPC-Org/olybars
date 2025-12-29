@@ -237,7 +237,7 @@ export interface UserProfile {
     competitionPoints: number;
   };
   handleLastChanged?: number;
-  leaguePreferences?: string[];
+  playerGamePreferences?: string[];
   favorites?: string[];
   weeklyBuzz?: boolean;
   showMemberSince?: boolean;

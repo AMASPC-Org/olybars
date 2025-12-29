@@ -24,8 +24,9 @@ export const UserUpdateSchema = z.object({
     email: z.string().email().optional(),
     phone: z.string().optional(),
     favoriteDrink: z.string().optional(),
+    favoriteDrinks: z.array(z.string()).optional(),
     homeBase: z.string().optional(),
-    leaguePreferences: z.record(z.string(), z.any()).optional(),
+    playerGamePreferences: z.array(z.string()).optional(),
     hasCompletedMakerSurvey: z.boolean().optional(),
     role: z.string().optional(), // We will gate this in the logic
 });

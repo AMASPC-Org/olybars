@@ -46,7 +46,7 @@ export const getTwitterShareUrl = (url: string, text: string) => {
     return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
 };
 
-export const shareVibeReceipt = async (data: VibeReceiptData, logUserActivity?: any, platform?: 'facebook' | 'twitter' | 'copy') => {
+export const shareVibeReceipt = async (data: VibeReceiptData, logUserActivity?: any, platform?: 'facebook' | 'instagram' | 'tiktok' | 'copy') => {
     const shareUrl = window.location.origin; // Dynamically use current origin
     const shareText = `Tapped into the 98501 via OlyBars.com! Just earned ${data.pointsEarned} points at ${data.venueName}. #OlyBars #SpiritOfTheWell`;
 
@@ -55,9 +55,26 @@ export const shareVibeReceipt = async (data: VibeReceiptData, logUserActivity?: 
     if (platform === 'facebook') {
         window.open(getFacebookShareUrl(shareUrl, shareText), '_blank', 'width=600,height=400');
         shared = true;
-    } else if (platform === 'twitter') {
-        window.open(getTwitterShareUrl(shareUrl, shareText), '_blank', 'width=600,height=400');
-        shared = true;
+    } else if (platform === 'instagram') {
+        // Instagram doesn't support direct link sharing via web intent easily
+        // We'll copy the text and open Instagram
+        try {
+            await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+            window.open('https://www.instagram.com/', '_blank');
+            shared = true;
+        } catch (err) {
+            console.error('Failed to copy for Instagram:', err);
+        }
+    } else if (platform === 'tiktok') {
+        // TikTok doesn't support direct link sharing via web intent easily
+        // We'll copy the text and open TikTok
+        try {
+            await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+            window.open('https://www.tiktok.com/', '_blank');
+            shared = true;
+        } catch (err) {
+            console.error('Failed to copy for TikTok:', err);
+        }
     } else if (platform === 'copy') {
         try {
             await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);

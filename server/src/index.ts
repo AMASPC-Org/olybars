@@ -73,6 +73,7 @@ const allowedOrigins = [
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
     'https://olybars-dev.web.app',
+    'https://olybars.web.app',
     'https://olybars.com',
     'https://www.olybars.com'
 ];
@@ -602,7 +603,7 @@ v1Router.patch('/users/:uid', verifyToken, async (req, res) => {
         return res.status(400).json({ error: 'Invalid update data', details: validation.error.format() });
     }
 
-    const { handle, email, phone, favoriteDrink, homeBase, leaguePreferences, hasCompletedMakerSurvey, role } = validation.data;
+    const { handle, email, phone, favoriteDrink, favoriteDrinks, homeBase, playerGamePreferences, hasCompletedMakerSurvey, role } = validation.data;
 
     try {
         const { db } = await import('./firebaseAdmin');
@@ -620,8 +621,9 @@ v1Router.patch('/users/:uid', verifyToken, async (req, res) => {
 
         if (phone !== undefined) updates.phone = phone;
         if (favoriteDrink !== undefined) updates.favoriteDrink = favoriteDrink;
+        if (favoriteDrinks !== undefined) updates.favoriteDrinks = favoriteDrinks;
         if (homeBase !== undefined) updates.homeBase = homeBase;
-        if (leaguePreferences !== undefined) updates.leaguePreferences = leaguePreferences;
+        if (playerGamePreferences !== undefined) updates.playerGamePreferences = playerGamePreferences;
         if (email !== undefined) updates.email = email;
         if (hasCompletedMakerSurvey !== undefined) updates.hasCompletedMakerSurvey = hasCompletedMakerSurvey;
 

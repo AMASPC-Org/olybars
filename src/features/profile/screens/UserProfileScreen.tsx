@@ -37,7 +37,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
     const [newPassword, setNewPassword] = useState('');
     const [showMemberSince, setShowMemberSince] = useState(userProfile.showMemberSince ?? true);
 
-    const [leaguePrefs, setLeaguePrefs] = useState<string[]>(userProfile.leaguePreferences || ['karaoke', 'trivia', 'arcade', 'live_music']);
+    const [gamePrefs, setGamePrefs] = useState<string[]>(userProfile.playerGamePreferences || ['karaoke', 'trivia', 'arcade', 'live_music']);
 
     const isSuperAdmin = userProfile.role === 'super-admin' || userProfile.email === 'ryan@amaspc.com';
 
@@ -117,7 +117,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                 weeklyBuzz,
                 homeBase,
                 showMemberSince,
-                leaguePreferences: leaguePrefs,
+                playerGamePreferences: gamePrefs,
                 updatedAt: Date.now(),
             };
 
@@ -156,8 +156,8 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
         }
     };
 
-    const toggleLeaguePref = (prefId: string) => {
-        setLeaguePrefs(prev =>
+    const toggleGamePref = (prefId: string) => {
+        setGamePrefs(prev =>
             prev.includes(prefId) ? prev.filter(p => p !== prefId) : [...prev, prefId]
         );
     };
@@ -684,10 +684,10 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => toggleLeaguePref(league.id)}
-                                        className={`w-12 h-6 rounded-full p-1 transition-all ${leaguePrefs.includes(league.id) ? 'bg-primary' : 'bg-slate-800'}`}
+                                        onClick={() => toggleGamePref(league.id)}
+                                        className={`w-12 h-6 rounded-full p-1 transition-all ${gamePrefs.includes(league.id) ? 'bg-primary' : 'bg-slate-800'}`}
                                     >
-                                        <div className={`w-4 h-4 rounded-full bg-white transition-all ${leaguePrefs.includes(league.id) ? 'translate-x-6' : 'translate-x-0'}`} />
+                                        <div className={`w-4 h-4 rounded-full bg-white transition-all ${gamePrefs.includes(league.id) ? 'translate-x-6' : 'translate-x-0'}`} />
                                     </button>
                                 </div>
                             ))}

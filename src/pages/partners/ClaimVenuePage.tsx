@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import {
     Building2, MapPin, Phone, Globe, Check,
     ChevronRight, ArrowLeft, Send, Users,
-    LayoutGrid, Settings2, Info, LogIn
+    LayoutGrid, Settings2, Info, LogIn, Crown
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { PlaceAutocomplete } from '../../components/ui/PlaceAutocomplete';
 import { AssetToggleGrid } from '../../components/partners/AssetToggleGrid';
 import { Venue } from '../../types';
@@ -23,6 +24,7 @@ export default function ClaimVenuePage() {
     const [assets, setAssets] = useState<Record<string, boolean>>({});
     const [vibe, setVibe] = useState<'CHILL' | 'LIVELY' | 'BUZZING'>('LIVELY');
     const [managerEmail, setManagerEmail] = useState('');
+    const navigate = useNavigate();
 
     const handlePlaceSelect = async (place: google.maps.places.PlaceResult) => {
         if (!place.place_id) return;
@@ -428,27 +430,23 @@ export default function ClaimVenuePage() {
                             </div>
 
                             <div className="space-y-4">
-                                <h2 className="text-4xl font-black uppercase font-league text-white">Claim Secured!</h2>
+                                <h2 className="text-4xl font-black uppercase font-league text-white">Venue Inducted into the League!</h2>
                                 <p className="text-slate-400 font-medium max-w-lg mx-auto">
-                                    Congratulations! <span className="text-primary font-bold">{venueData?.name}</span> is now an official node in the Olympia Bar League ecosystem.
+                                    Congratulations! <span className="text-primary font-bold">{venueData?.name}</span> is now an official Member of the Olympia Bar League.
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-xl mx-auto pt-8">
-                                <button className="flex items-center justify-between p-6 bg-slate-950 border border-white/5 rounded-3xl group hover:border-primary/50 transition-all text-left">
-                                    <div className="space-y-1">
-                                        <h4 className="font-black uppercase text-sm leading-none group-hover:text-primary transition-colors">GO TO DASHBOARD</h4>
-                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Manage Events & Pulse</p>
+                            <div className="flex justify-center pt-8">
+                                <button
+                                    onClick={() => navigate('/league-membership')}
+                                    className="flex items-center gap-3 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-8 py-5 rounded-2xl shadow-xl shadow-yellow-900/20 hover:scale-105 transition-transform group"
+                                >
+                                    <Crown className="w-6 h-6 text-black fill-black" />
+                                    <div className="text-left">
+                                        <div className="text-xs font-black uppercase tracking-widest opacity-80">Next Step</div>
+                                        <div className="text-lg font-black uppercase font-league tracking-wide">Setup Member Profile</div>
                                     </div>
-                                    <LayoutGrid className="w-6 h-6 text-slate-700 group-hover:text-primary transition-colors" />
-                                </button>
-
-                                <button className="flex items-center justify-between p-6 bg-slate-950 border border-white/5 rounded-3xl group hover:border-primary/50 transition-all text-left">
-                                    <div className="space-y-1">
-                                        <h4 className="font-black uppercase text-sm leading-none group-hover:text-primary transition-colors">SEE MY PROFILE</h4>
-                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">View as a Player</p>
-                                    </div>
-                                    <ChevronRight className="w-6 h-6 text-slate-700 group-hover:text-primary transition-colors" />
+                                    <ChevronRight className="w-5 h-5 ml-2 text-black/50 group-hover:text-black transition-colors" />
                                 </button>
                             </div>
 

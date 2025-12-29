@@ -8,16 +8,6 @@ export const barGames = [
                 tags: ['High Energy', 'Music', 'Physical']
             },
             {
-                name: 'Karaoke',
-                description: 'You are the star. Choose your song and belt it out. Bad singing is encouraged, enthusiasm is mandatory.',
-                tags: ['Performance', 'Music', 'Social']
-            },
-            {
-                name: 'Open Mic',
-                description: 'Comedy, poetry, or acoustic sets. A stage for local talent to test new material.',
-                tags: ['Performance', 'Creative', 'Social']
-            },
-            {
                 name: 'Trivia / Quiz Nights',
                 description: 'Team-based mental combat. Answer questions on pop culture, history, and science for prizes and bragging rights.',
                 tags: ['Mental', 'Team', 'Competition']
@@ -36,6 +26,41 @@ export const barGames = [
                 name: 'Sing-along / Piano Bar',
                 description: 'Communal singing led by a pianist or host. Raise your glass and join the chorus.',
                 tags: ['Music', 'Social', 'Interactive']
+            }
+        ]
+    },
+    {
+        category: 'Music & Performance',
+        games: [
+            {
+                name: 'Karaoke',
+                description: 'You are the star. Choose your song and belt it out. Bad singing is encouraged, enthusiasm is mandatory.',
+                tags: ['Performance', 'Music', 'Social']
+            },
+            {
+                name: 'Open Mic',
+                description: 'Comedy, poetry, or acoustic sets. A stage for local talent to test new material.',
+                tags: ['Performance', 'Creative', 'Social']
+            },
+            {
+                name: 'Live Bands',
+                description: 'Local and touring acts performing original music or covers.',
+                tags: ['Music', 'Passive', 'Vibe']
+            },
+            {
+                name: 'DJ Sets',
+                description: 'Curated playlists and mixing to set the atmosphere or drive the dance floor.',
+                tags: ['Music', 'Vibe', 'Energy']
+            },
+            {
+                name: 'Jam Sessions',
+                description: 'Musicians improvised collaboration. Bring an instrument and join in.',
+                tags: ['Music', 'Participatory', 'Creative']
+            },
+            {
+                name: 'Drum Circles',
+                description: 'Communal percussion. Find the rhythm together.',
+                tags: ['Music', 'Communal', 'Rhythmic']
             }
         ]
     },
@@ -201,31 +226,6 @@ export const barGames = [
                 name: 'Phone Party Games',
                 description: 'Jackbox style games where your phone is the controller. Witty and interactive.',
                 tags: ['Digital', 'Social', 'Humor']
-            }
-        ]
-    },
-    {
-        category: 'Music & Performance',
-        games: [
-            {
-                name: 'Live Bands',
-                description: 'Local and touring acts performing original music or covers.',
-                tags: ['Music', 'Passive', 'Vibe']
-            },
-            {
-                name: 'DJ Sets',
-                description: 'Curated playlists and mixing to set the atmosphere or drive the dance floor.',
-                tags: ['Music', 'Vibe', 'Energy']
-            },
-            {
-                name: 'Jam Sessions',
-                description: 'Musicians improvised collaboration. Bring an instrument and join in.',
-                tags: ['Music', 'Participatory', 'Creative']
-            },
-            {
-                name: 'Drum Circles',
-                description: 'Communal percussion. Find the rhythm together.',
-                tags: ['Music', 'Communal', 'Rhythmic']
             }
         ]
     },

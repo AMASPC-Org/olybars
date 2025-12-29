@@ -242,8 +242,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       <div className="bg-surface w-full max-w-sm border-2 border-slate-700 shadow-lg rounded-xl relative flex flex-col max-h-[90vh] overflow-hidden">
         {userSubMode === 'login' && (
           <div className="flex border-b-2 border-slate-700">
-            <button onClick={() => setLoginMode('user')} className={`flex-1 py-3 font-bold uppercase ${loginMode === 'user' ? 'bg-primary text-black' : 'text-slate-400'}`}>Member</button>
-            <button onClick={() => setLoginMode('owner')} className={`flex-1 py-3 font-bold uppercase ${loginMode === 'owner' ? 'bg-primary text-black' : 'text-slate-400'}`}>Venue</button>
+            <button onClick={() => setLoginMode('user')} className={`flex-1 py-3 font-bold uppercase ${loginMode === 'user' ? 'bg-primary text-black' : 'text-slate-400'}`}>Player</button>
+            <button onClick={() => setLoginMode('owner')} className={`flex-1 py-3 font-bold uppercase ${loginMode === 'owner' ? 'bg-primary text-black' : 'text-slate-400'}`}>Partner</button>
           </div>
         )}
 
@@ -254,7 +254,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <>
               <form onSubmit={(e) => { e.preventDefault(); userSubMode === 'signup' ? saveUser() : handleUserLogin(); }} className="space-y-4">
                 <div className="text-center">
-                  <h3 className="text-xl font-bold uppercase">{userSubMode === 'signup' ? 'Create Account' : 'Member Login'}</h3>
+                  <h3 className="text-xl font-bold uppercase">{userSubMode === 'signup' ? 'Create Account' : 'Player Login'}</h3>
                   <p className="text-[10px] text-slate-400 uppercase">{userSubMode === 'signup' ? 'Save favorites & earn points' : 'Level up your night'}</p>
                 </div>
 
@@ -387,7 +387,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           ) : (
             <>
               <form onSubmit={(e) => { e.preventDefault(); handleOwnerLogin(); }} className="space-y-4">
-                <div className="bg-red-900/20 p-3 text-[10px] text-red-300 rounded border border-red-800 uppercase text-center">Venue Access</div>
+                <div className="bg-red-900/20 p-3 text-[10px] text-red-300 rounded border border-red-800 uppercase text-center">Partner Access</div>
                 <div className="relative">
                   <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                   <input type="email" value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} placeholder="Email" className={inputClasses} />

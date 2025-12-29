@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info,
-    QrCode, Download, Printer, Calendar
+    QrCode, Download, Printer, Calendar, Crown
 } from 'lucide-react';
 import { Venue, UserProfile, GameStatus } from '../../../types';
 import { OwnerMarketingPromotions } from '../../../components/OwnerMarketingPromotions';
@@ -52,6 +53,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     isOpen, onClose, venues, updateVenue, userProfile,
     initialVenueId, initialView = 'main'
 }) => {
+    const navigate = useNavigate();
     const accessibleVenues = venues.filter(v => {
         if (userProfile.role === 'admin' || userProfile.role === 'super-admin' || userProfile.email === 'ryan@amaspc.com') return true;
         // Check venuePermissions specifically
@@ -245,6 +247,24 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 </p>
                             )}
                         </div>
+                    </div>
+                    {/* STATUS BADGE & LEVEL UP CTA */}
+                    <div className="ml-8 hidden md:flex items-center gap-3">
+                        <div className="px-3 py-1 bg-slate-800 rounded-md border border-white/10">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest font-league">
+                                FREE TIER
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => {
+                                onClose();
+                                navigate('/league-membership');
+                            }}
+                            className="flex items-center gap-2 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black px-4 py-2 rounded-md shadow-lg shadow-yellow-900/20 hover:scale-105 transition-transform group"
+                        >
+                            <Crown className="w-4 h-4 text-black fill-black" />
+                            <span className="text-[10px] font-black uppercase tracking-widest font-league">LEVEL UP</span>
+                        </button>
                     </div>
                 </div>
                 <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">

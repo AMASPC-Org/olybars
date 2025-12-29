@@ -57,6 +57,7 @@ import UserProfileScreen from './features/profile/screens/UserProfileScreen';
 import { VenueProfileScreen } from './features/venues/screens/VenueProfileScreen';
 import AboutPage from './pages/About';
 import ArtieBioScreen from './features/artie/screens/ArtieBioScreen'; // [NEW] Import
+import OwnerPortal from './pages/OwnerPortal';
 import { QRVibeCheckScreen } from './features/vibe-check/screens/QRVibeCheckScreen'; // [NEW] QR Screen
 import MerchStandScreen from './features/merch/screens/MerchStandScreen';
 import MerchDetailScreen from './features/merch/screens/MerchDetailScreen';
@@ -65,6 +66,7 @@ import ScrollToTop from './components/layout/ScrollToTop';
 import { HistoryFeedScreen } from './features/history/screens/HistoryFeedScreen';
 import { HistoryArticleScreen } from './features/history/screens/HistoryArticleScreen';
 import { PulsePlaybookScreen } from './features/marketing/screens/PulsePlaybookScreen';
+import { PlayGatewayScreen } from './features/play/screens/PlayGatewayScreen'; // [NEW]
 import { LeaguePerksScreen } from './features/league/screens/LeaguePerksScreen';
 import AIGatewayScreen from './features/marketing/screens/AIGatewayScreen';
 import AIFeedGuideScreen from './features/marketing/screens/AIFeedGuideScreen';
@@ -72,6 +74,8 @@ import AIConductScreen from './features/marketing/screens/AIConductScreen';
 import ClaimVenuePage from './pages/partners/ClaimVenuePage';
 import GlossaryScreen from './screens/GlossaryScreen';
 import PointsGuideScreen from './features/league/screens/PointsGuideScreen';
+import LeagueMembershipPage from './features/marketing/LeagueMembershipPage';
+import OnboardingHandoverPage from './pages/marketing/OnboardingHandoverPage';
 
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
@@ -317,21 +321,23 @@ export default function OlyBarsApp() {
       gameBonus = Math.min(gameCount * 2, 10);
     }
 
-    // Update Venue Status and Photos
-    handleUpdateVenue(venue.id, {
-      status,
-      liveGameStatus: gameStatus ? { ...(venue.liveGameStatus || {}), ...gameStatus } : venue.liveGameStatus,
-      photos: photoUrl ? [
-        ...(venue.photos || []),
-        {
-          id: `p-${now}-${Math.random().toString(36).substr(2, 6)}`,
-          url: photoUrl,
-          allowMarketingUse: hasConsent,
-          timestamp: now,
-          userId: userProfile.uid
-        }
-      ] : venue.photos
-    });
+    // Update Venue Status and Photos (Skip for Guests to avoid auth errors)
+    if (userProfile.uid !== 'guest') {
+      handleUpdateVenue(venue.id, {
+        status,
+        liveGameStatus: gameStatus ? { ...(venue.liveGameStatus || {}), ...gameStatus } : venue.liveGameStatus,
+        photos: photoUrl ? [
+          ...(venue.photos || []),
+          {
+            id: `p-${now}-${Math.random().toString(36).substr(2, 6)}`,
+            url: photoUrl,
+            allowMarketingUse: hasConsent,
+            timestamp: now,
+            userId: userProfile.uid
+          }
+        ] : venue.photos
+      });
+    }
 
     awardPoints('vibe', venue.id, hasConsent, verificationMethod, gameBonus);
 
@@ -515,6 +521,7 @@ export default function OlyBarsApp() {
                 }
               />
               <Route path="karaoke" element={<><SEO title="Karaoke Guide" description="Find the best karaoke spots in Olympia tonight." /><KaraokeScreen venues={venues} /></>} />
+              <Route path="play" element={<><SEO title="The Arcade & Arena" description="The central hub for games, events, and activities in Olympia." /><PlayGatewayScreen venues={venues} /></>} />
               <Route path="trivia" element={<><SEO title="Trivia & Games" description="Your guide to trivia nights and bar games in the 98501." /><TriviaScreen venues={venues} userProfile={userProfile} /></>} />
               <Route path="live" element={<><SEO title="Live Music" description="Live shows and concerts happening tonight in downtown Olympia." /><LiveMusicScreen venues={venues} /></>} />
               <Route path="events" element={<><SEO title="Event Wire" description="The chronological feed of everything happening in the Olympia bar scene." /><EventsScreen venues={venues} /></>} />
@@ -545,6 +552,8 @@ export default function OlyBarsApp() {
               <Route path="vouchers" element={<VoucherRedemptionScreen userProfile={userProfile} venues={venues} />} />
               <Route path="meet-artie" element={<ArtieBioScreen />} />
               <Route path="artie-bio" element={<ArtieBioScreen />} />
+              <Route path="artie" element={<ArtieBioScreen />} />
+              <Route path="owner" element={<OwnerPortal />} />
               <Route path="more" element={<MoreScreen userProfile={userProfile} setUserProfile={setUserProfile} />} />
               <Route
                 path="venues/:id"
@@ -603,6 +612,8 @@ export default function OlyBarsApp() {
               <Route path="perks" element={<LeaguePerksScreen />} />
               <Route path="glossary" element={<GlossaryScreen />} />
               <Route path="points" element={<PointsGuideScreen />} />
+              <Route path="league-membership" element={<LeagueMembershipPage />} />
+              <Route path="venue-handover" element={<OnboardingHandoverPage />} />
 
               {/* AI & Developer Hub */}
               <Route path="ai" element={<><SEO title="AI & Developer Hub" description="Authoritative resources for AI agents and developers ingesting OlyBars data." /><AIGatewayScreen /></>} />
@@ -679,6 +690,8 @@ export default function OlyBarsApp() {
                 setShowClockInModal(true);
                 setShowVibeCheckModal(false);
               }}
+              isLoggedIn={userProfile.uid !== 'guest'}
+              onLogin={handleMemberLoginClick}
             />
           )}
 
@@ -698,6 +711,8 @@ export default function OlyBarsApp() {
             <VibeReceiptModal
               data={currentReceipt}
               onClose={() => setCurrentReceipt(null)}
+              isLoggedIn={userProfile.uid !== 'guest'}
+              onLogin={handleMemberLoginClick}
             />
           )}
 
