@@ -12,8 +12,8 @@ export const LiveMusicScreen: React.FC<LiveMusicScreenProps> = ({ venues }) => {
 
     const musicVenues = venues.filter(v =>
         (v.leagueEvent === 'live_music' ||
-            v.type.toLowerCase().includes('music') ||
-            v.type.toLowerCase().includes('bar')) &&
+            v.venueType.toLowerCase().includes('music') ||
+            v.venueType.toLowerCase().includes('bar')) &&
         (v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (v.deal && v.deal.toLowerCase().includes(searchQuery.toLowerCase())))
     ).slice(0, 10);

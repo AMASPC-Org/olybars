@@ -71,7 +71,7 @@ export const LocalMakerManagementTab: React.FC<LocalMakerManagementTabProps> = (
     // Filter for venues that are MARKED as Local Makers to add to the "carrying" list
     // In a real scenario, you might want to carry ANY venue/brand, but let's assume we filter for Makers.
     // However, if we simply want to say "We carry Well 80", Well 80 is a Venue.
-    const availableMakers = venues.filter(v => v.id !== venue.id && (v.isLocalMaker || v.type === 'Brewery' || v.type === 'Distillery'));
+    const availableMakers = venues.filter(v => v.id !== venue.id && (v.isLocalMaker || v.makerType === 'Brewery' || v.makerType === 'Distillery'));
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

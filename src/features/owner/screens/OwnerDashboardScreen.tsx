@@ -934,13 +934,13 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                         <div className="p-3 bg-black/40 rounded-xl border border-white/5">
                                             <p className="text-[9px] text-slate-500 uppercase font-black mb-1">Total Check-ins</p>
                                             <p className="text-xl font-black text-white">
-                                                {Object.values(hourlyReport.hourly).reduce((acc: any, h: any) => acc + (h.checkins || 0), 0)}
+                                                {(Object.values(hourlyReport.hourly) as any[]).reduce((acc: number, h: any) => acc + (h.checkins || 0), 0)}
                                             </p>
                                         </div>
                                         <div className="p-3 bg-black/40 rounded-xl border border-white/5">
                                             <p className="text-[9px] text-slate-500 uppercase font-black mb-1">Points Allocated</p>
                                             <p className="text-xl font-black text-amber-500">
-                                                {Object.values(hourlyReport.hourly).reduce((acc: any, h: any) => acc + (h.points || 0), 0).toLocaleString()}
+                                                {(Object.values(hourlyReport.hourly) as any[]).reduce((acc: number, h: any) => acc + (h.points || 0), 0).toLocaleString()}
                                             </p>
                                         </div>
                                     </div>

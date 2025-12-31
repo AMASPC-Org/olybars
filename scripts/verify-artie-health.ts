@@ -24,7 +24,7 @@ async function runDiagnostic() {
             process.exit(1);
         }
 
-        const result = await response.json();
+        const result = await response.json() as any;
         console.log('✅ [DIAGNOSTIC] Artie is healthy:', JSON.stringify(result, null, 2));
 
         if (result.status !== 'healthy' || result.artieBrain !== 'connected') {

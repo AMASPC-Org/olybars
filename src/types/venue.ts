@@ -138,6 +138,8 @@ export interface Venue {
     description?: string;
     address?: string;
     email?: string;
+    isHistoricalAnchor?: boolean;
+    historySnippet?: string;
     hours?: string | { [key: string]: { open: string; close: string } };
     phone?: string;
     website?: string;
