@@ -17,6 +17,8 @@ import { EventsManagementTab } from '../components/EventsManagementTab';
 import { VenueOpsService } from '../../../services/VenueOpsService';
 import { ArtieManagerBriefing } from '../components/ArtieManagerBriefing';
 import { VenueInsight } from '../../../types';
+import { PhotoApprovalCard } from '../../admin/components/PhotoApprovalCard';
+import { Camera } from 'lucide-react';
 
 interface OwnerDashboardProps {
     isOpen: boolean;
@@ -82,7 +84,9 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const [dealDescription, setDealDescription] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
     const [showArtieCommands, setShowArtieCommands] = useState(false);
-    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'maker' | 'host' | 'qr' | 'people' | 'events'>(initialView as any); // Added 'host', 'qr', 'people', 'events'
+    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports'>(initialView as any); // Added 'reports'
+    const [hourlyReport, setHourlyReport] = useState<any>(null);
+    const [selectedReportDate, setSelectedReportDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [statsPeriod, setStatsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
     const [activityStats, setActivityStats] = useState({ earned: 0, redeemed: 0, activeUsers: 0 });
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -130,11 +134,60 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
         }
     };
 
+    const fetchHourlyReport = async () => {
+        if (!myVenue) return;
+        const { fetchPartnerHourlyReport } = await import('../../../services/userService');
+        try {
+            const data = await fetchPartnerHourlyReport(myVenue.id, new Date(selectedReportDate).getTime());
+            setHourlyReport(data);
+        } catch (e) {
+            showToast('FAILED TO FETCH HOURLY REPORT', 'error');
+        }
+    };
+
+    React.useEffect(() => {
+        if (dashboardView === 'reports' && myVenue) {
+            fetchHourlyReport();
+        }
+    }, [dashboardView, selectedReportDate, myVenue?.id]);
+
     React.useEffect(() => {
         if (selectedVenueId && isOpen) {
             fetchScheduledDeals();
         }
     }, [selectedVenueId, isOpen]);
+
+    const handlePhotoTierApprove = async (venueId: string, photoId: string) => {
+        const venue = venues.find(v => v.id === venueId);
+        if (!venue || !venue.photos) return;
+
+        const updatedPhotos = venue.photos.map(p =>
+            p.id === photoId ? { ...p, marketingStatus: 'approved', venueAdminApprovedBy: userProfile.uid, isApprovedForFeed: true } as any : p
+        );
+
+        try {
+            await updateVenue(venueId, { photos: updatedPhotos });
+            showToast('PHOTO APPROVED FOR GALLERY', 'success');
+        } catch (e) {
+            showToast('FAILED TO APPROVE PHOTO', 'error');
+        }
+    };
+
+    const handlePhotoTierReject = async (venueId: string, photoId: string) => {
+        const venue = venues.find(v => v.id === venueId);
+        if (!venue || !venue.photos) return;
+
+        const updatedPhotos = venue.photos.map(p =>
+            p.id === photoId ? { ...p, marketingStatus: 'rejected' } as any : p
+        );
+
+        try {
+            await updateVenue(venueId, { photos: updatedPhotos });
+            showToast('PHOTO REJECTED', 'success');
+        } catch (e) {
+            showToast('FAILED TO REJECT PHOTO', 'error');
+        }
+    };
 
     const handleTogglePhotoApproval = async (photoId: string, field: 'isApprovedForFeed' | 'isApprovedForSocial', currentVal: boolean) => {
         if (!myVenue) return;
@@ -444,6 +497,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         )}
                     </>
                 )}
+                <button
+                    onClick={() => setDashboardView('reports')}
+                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'reports' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                >
+                    Reports
+                </button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-8 p-6 pb-24 scrollbar-hide">
@@ -720,45 +779,55 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         {/* Photo Curation Section */}
                         <section className="space-y-6">
                             <div>
-                                <h3 className="text-2xl font-black text-white uppercase font-league leading-none">PHOTO CURATION</h3>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">Manage User-submitted Content</p>
+                                <h3 className="text-2xl font-black text-white uppercase font-league leading-none">PENDING PHOTO GALLERY</h3>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">Photos approved by OlyBars for your venue</p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                {myVenue.photos?.filter(p => p.allowMarketingUse).map(photo => (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {myVenue.photos?.filter(p => p.marketingStatus === 'pending-venue').map(photo => (
+                                    <PhotoApprovalCard
+                                        key={photo.id}
+                                        venue={myVenue}
+                                        photo={photo}
+                                        onApprove={handlePhotoTierApprove}
+                                        onReject={handlePhotoTierReject}
+                                    />
+                                ))}
+                                {(!myVenue.photos || myVenue.photos.filter(p => p.marketingStatus === 'pending-venue').length === 0) && (
+                                    <div className="col-span-full py-12 text-center border-2 border-dashed border-white/5 rounded-2xl">
+                                        <Camera className="w-8 h-8 text-slate-700 mx-auto mb-2" />
+                                        <p className="text-slate-600 font-bold uppercase text-[10px] tracking-widest font-league">No photos pending venue approval</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="pt-8">
+                                <h3 className="text-xl font-black text-white uppercase font-league leading-none">APPROVED GALLERY</h3>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">Live on your public listing</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {myVenue.photos?.filter(p => p.marketingStatus === 'approved').map(photo => (
                                     <div key={photo.id} className="bg-surface border border-white/10 rounded-xl overflow-hidden group">
                                         <div className="aspect-square bg-black relative">
                                             <img src={photo.url} alt="User vibe" className="w-full h-full object-cover" />
-                                            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[8px] font-black text-primary uppercase">
-                                                CONSENT GRANTED
+                                            <div className="absolute top-2 right-2 bg-green-500/80 backdrop-blur-md px-2 py-0.5 rounded text-[8px] font-black text-black uppercase">
+                                                LIVE
                                             </div>
                                         </div>
-                                        <div className="p-3 space-y-2">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[9px] font-black text-slate-500 uppercase">Public Feed</span>
-                                                <button
-                                                    onClick={() => handleTogglePhotoApproval(photo.id, 'isApprovedForFeed', !!photo.isApprovedForFeed)}
-                                                    className={`w-10 h-5 rounded-full p-1 transition-all ${photo.isApprovedForFeed ? 'bg-primary' : 'bg-slate-800'}`}
-                                                >
-                                                    <div className={`w-3 h-3 rounded-full bg-white transition-all ${photo.isApprovedForFeed ? 'translate-x-5' : 'translate-x-0'}`} />
-                                                </button>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[9px] font-black text-slate-500 uppercase">Social Media</span>
-                                                <button
-                                                    disabled={userProfile.role !== 'admin'}
-                                                    onClick={() => handleTogglePhotoApproval(photo.id, 'isApprovedForSocial', !!photo.isApprovedForSocial)}
-                                                    className={`w-10 h-5 rounded-full p-1 transition-all ${photo.isApprovedForSocial ? 'bg-[#fbbf24]' : 'bg-slate-800'} ${userProfile.role !== 'admin' ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                                >
-                                                    <div className={`w-3 h-3 rounded-full bg-white transition-all ${photo.isApprovedForSocial ? 'translate-x-5' : 'translate-x-0'}`} />
-                                                </button>
-                                            </div>
+                                        <div className="p-2">
+                                            <button
+                                                onClick={() => handlePhotoTierReject(myVenue.id, photo.id)}
+                                                className="w-full py-1.5 text-[8px] font-black text-slate-500 hover:text-red-500 uppercase tracking-widest transition-colors"
+                                            >
+                                                Remove from Gallery
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
-                                {(!myVenue.photos || myVenue.photos.filter(p => p.allowMarketingUse).length === 0) && (
-                                    <div className="col-span-2 py-12 text-center border-2 border-dashed border-white/5 rounded-2xl">
-                                        <p className="text-slate-600 font-bold uppercase text-xs tracking-widest font-league">No approved marketing photos yet</p>
+                                {(!myVenue.photos || myVenue.photos.filter(p => p.marketingStatus === 'approved').length === 0) && (
+                                    <div className="col-span-full py-4 text-center">
+                                        <p className="text-slate-700 font-bold uppercase text-[9px] tracking-widest font-league italic">Gallery is empty</p>
                                     </div>
                                 )}
                             </div>
@@ -841,6 +910,101 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
                 {myVenue && dashboardView === 'people' && (
                     <UserManagementTab venue={myVenue} onUpdate={(updates) => updateVenue(myVenue.id, updates)} currentUser={userProfile} />
+                )}
+
+                {myVenue && dashboardView === 'reports' && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
+                        <header className="flex justify-between items-center">
+                            <div>
+                                <h3 className="text-2xl font-black text-white uppercase font-league leading-none">HOURLY ACTIVITY</h3>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">Heatmap of point-earning actions</p>
+                            </div>
+                            <input
+                                type="date"
+                                value={selectedReportDate}
+                                onChange={(e) => setSelectedReportDate(e.target.value)}
+                                className="bg-black border border-white/10 rounded-lg p-2 text-xs font-bold text-primary outline-none"
+                            />
+                        </header>
+
+                        <div className="bg-surface p-6 border border-white/10 rounded-2xl shadow-xl">
+                            {hourlyReport ? (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4 mb-6">
+                                        <div className="p-3 bg-black/40 rounded-xl border border-white/5">
+                                            <p className="text-[9px] text-slate-500 uppercase font-black mb-1">Total Check-ins</p>
+                                            <p className="text-xl font-black text-white">
+                                                {Object.values(hourlyReport.hourly).reduce((acc: any, h: any) => acc + (h.checkins || 0), 0)}
+                                            </p>
+                                        </div>
+                                        <div className="p-3 bg-black/40 rounded-xl border border-white/5">
+                                            <p className="text-[9px] text-slate-500 uppercase font-black mb-1">Points Allocated</p>
+                                            <p className="text-xl font-black text-amber-500">
+                                                {Object.values(hourlyReport.hourly).reduce((acc: any, h: any) => acc + (h.points || 0), 0).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Simple Hourly Visualizer */}
+                                    <div className="h-48 flex items-end gap-1 px-2 border-b border-white/10 pb-2">
+                                        {Object.entries(hourlyReport.hourly).map(([hour, data]: [string, any]) => {
+                                            const max = Math.max(...Object.values(hourlyReport.hourly).map((h: any) => h.checkins || 0), 1);
+                                            const height = ((data.checkins || 0) / max) * 100;
+                                            return (
+                                                <div key={hour} className="flex-1 flex flex-col items-center group relative">
+                                                    <div className="absolute -top-10 bg-primary text-black text-[9px] font-black px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                                        {data.checkins || 0} hits
+                                                    </div>
+                                                    <div
+                                                        className="w-full bg-primary/20 hover:bg-primary/40 transition-colors rounded-t-sm"
+                                                        style={{ height: `${Math.max(height, 5)}%` }}
+                                                    />
+                                                    <span className="text-[8px] text-slate-600 mt-2 font-mono">{hour}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <p className="text-center text-[9px] text-slate-600 italic">X-Axis: Hour (0-23) | Y-Axis: Live Check-ins</p>
+                                </div>
+                            ) : (
+                                <div className="py-20 flex flex-col items-center gap-4">
+                                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                    <p className="text-xs text-slate-500 uppercase font-black animate-pulse">Running Data Core...</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Activity Type Ledger */}
+                        <div className="space-y-4">
+                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Activity Breakdown</h4>
+                            <div className="grid grid-cols-1 gap-2">
+                                {hourlyReport && Object.entries(hourlyReport.hourly)
+                                    .filter(([_, data]: [string, any]) => (data.checkins || 0) > 0 || (data.vibeReports || 0) > 0)
+                                    .map(([hour, data]: [string, any]) => (
+                                        <div key={hour} className="bg-black/40 p-4 rounded-xl flex items-center justify-between border border-white/5">
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-sm font-black text-primary font-mono">{hour.padStart(2, '0')}:00</span>
+                                                <div className="h-8 w-px bg-white/10" />
+                                                <div className="flex gap-4">
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-500 uppercase font-black">Check-ins</p>
+                                                        <p className="text-sm font-black text-white">{data.checkins || 0}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] text-slate-500 uppercase font-black">Vibes</p>
+                                                        <p className="text-sm font-black text-white">{data.vibeReports || 0}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[9px] text-slate-500 uppercase font-black">Bonus Pts</p>
+                                                <p className="text-sm font-black text-amber-500">+{data.points || 0}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
 

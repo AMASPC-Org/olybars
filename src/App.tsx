@@ -58,6 +58,7 @@ import { VenueProfileScreen } from './features/venues/screens/VenueProfileScreen
 import AboutPage from './features/marketing/screens/About';
 import ArtieBioScreen from './features/artie/screens/ArtieBioScreen'; // [NEW] Import
 import OwnerPortal from './features/owner/screens/OwnerPortal';
+import { PointHistoryScreen } from './features/profile/screens/PointHistoryScreen';
 import { QRVibeCheckScreen } from './features/vibe-check/screens/QRVibeCheckScreen'; // [NEW] QR Screen
 import MerchStandScreen from './features/merch/screens/MerchStandScreen';
 import MerchDetailScreen from './features/merch/screens/MerchDetailScreen';
@@ -237,42 +238,9 @@ export default function OlyBarsApp() {
     const now = Date.now();
 
     // 1. Calculate OlyBars Business Day Start (4:00 AM)
-    const today4AM = new Date();
-    today4AM.setHours(4, 0, 0, 0);
-    const businessDayStart = (now < today4AM.getTime())
-      ? today4AM.getTime() - 24 * 60 * 60 * 1000
-      : today4AM.getTime();
-
-    const nightlyChecks = checkInHistory.filter(c => c.timestamp >= businessDayStart);
-
-    // 2. Nightly Cap Check (Engagement Integrity)
-    if (nightlyChecks.length >= 2) {
-      showToast("Nightly Cap reached! You've checked into 2 bars tonight. See you tomorrow at 4:00 AM!", 'error');
+    if (clockedInVenue === venue.id) {
+      showToast("You're already checked in here!", 'info');
       return;
-    }
-
-    if (clockedInVenue === venue.id) { showToast("You're already checked in here!", 'info'); return; }
-
-    // 3. Impossible Movement Check (Ops/Anti-Gaming)
-    if (nightlyChecks.length > 0) {
-      const lastCheck = nightlyChecks[nightlyChecks.length - 1];
-      const lastVenue = venues.find(v => v.id === lastCheck.venueId);
-
-      if (lastVenue?.location && venue.location) {
-        const distMeters = calculateDistance(
-          lastVenue.location.lat, lastVenue.location.lng,
-          venue.location.lat, venue.location.lng
-        );
-        const timeDiffSec = (now - lastCheck.timestamp) / 1000;
-        const speedMph = (metersToMiles(distMeters) / (timeDiffSec / 3600));
-
-        // Threshold: 100mph city movement is likely GPS spoofing or irresponsible
-        if (speedMph > 100 && timeDiffSec > 0) {
-          showToast("Impossible Movement detected! Engage responsibly. Ops team has been notified.", 'error');
-          logUserActivity(userId, { type: 'bonus', venueId: venue.id, points: 0, metadata: { flagged: 'impossible_movement', speedMph } });
-          return;
-        }
-      }
     }
 
     setSelectedVenue(venue);
@@ -332,6 +300,7 @@ export default function OlyBarsApp() {
             id: `p-${now}-${Math.random().toString(36).substr(2, 6)}`,
             url: photoUrl,
             allowMarketingUse: hasConsent,
+            marketingStatus: hasConsent ? 'pending-super' : undefined,
             timestamp: now,
             userId: userProfile.uid
           }
@@ -612,6 +581,7 @@ export default function OlyBarsApp() {
               <Route path="perks" element={<LeaguePerksScreen />} />
               <Route path="glossary" element={<GlossaryScreen />} />
               <Route path="points" element={<PointsGuideScreen />} />
+              <Route path="points/history" element={<PointHistoryScreen onBack={() => window.history.back()} />} />
               <Route path="league-membership" element={<LeagueMembershipPage />} />
               <Route path="venue-handover" element={<OnboardingHandoverPage />} />
 

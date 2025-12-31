@@ -27,7 +27,8 @@ import {
   Info,
   Home,
   ShoppingBag,
-  Hammer
+  Hammer,
+  Shield
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../types';
 import { ArtieChatModal } from '../../features/venues/components/ArtieChatModal';
@@ -139,23 +140,35 @@ export const AppShell: React.FC<AppShellProps> = ({
     }`
     : 'Join the Olympia Bar League for local events & prizes.';
 
+  const isFullWidthPage = [
+    '/league-membership',
+    '/admin',
+    '/owner',
+    '/venue-handover'
+  ].includes(location.pathname);
+
   return (
-    <div className="h-full bg-background text-white font-sans max-w-md mx-auto relative shadow-2xl overflow-hidden border-x-4 border-black flex flex-col">
+    <div className={`h-full bg-background text-white font-sans mx-auto relative shadow-2xl overflow-hidden flex flex-col transition-all duration-500 ${isFullWidthPage
+      ? 'w-full max-w-none border-x-0'
+      : 'max-w-md border-x-4 border-black'
+      }`}>
       {/* Header Area */}
       <div className="sticky top-0 z-40 bg-background shadow-lg">
-        <div className="p-3 flex justify-between items-center bg-black border-b-2 border-primary">
-          <div
-            onClick={() => navigate('/')}
-            className="text-3xl font-black tracking-wide text-white flex items-center gap-1 drop-shadow-md cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            OLYBARS<span className="text-primary">.COM</span>
+        <div className="bg-black border-b-2 border-primary">
+          <div className={`p-3 flex justify-between items-center mx-auto ${isFullWidthPage ? 'max-w-[1600px]' : ''}`}>
+            <div
+              onClick={() => navigate('/')}
+              className="text-3xl font-black tracking-wide text-white flex items-center gap-1 drop-shadow-md cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              OLYBARS<span className="text-primary">.COM</span>
+            </div>
+            <button
+              onClick={() => setShowMenu(true)}
+              className="text-white hover:text-primary transition-colors"
+            >
+              <Menu className="w-8 h-8" strokeWidth={3} />
+            </button>
           </div>
-          <button
-            onClick={() => setShowMenu(true)}
-            className="text-white hover:text-primary transition-colors"
-          >
-            <Menu className="w-8 h-8" strokeWidth={3} />
-          </button>
         </div>
 
         {/* Restored Buzz Bar: Happy Hour Utility */}
@@ -182,7 +195,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 
         {/* Fixed 2x4 Grid Navigation: Legibility Focus */}
         <div className="bg-background border-b-2 border-black">
-          <div className="grid grid-cols-4 gap-[1px] bg-black/40">
+          <div className={`${isFullWidthPage ? 'max-w-[1600px] mx-auto' : ''} grid ${isFullWidthPage ? 'grid-cols-4 md:grid-cols-8' : 'grid-cols-4'} gap-[1px] bg-black/40`}>
             {navItems.map((tab) => (
               <button
                 key={tab.id}
@@ -216,57 +229,59 @@ export const AppShell: React.FC<AppShellProps> = ({
       </div>
 
       {/* Footer / League Bar */}
-      <div className="sticky bottom-0 w-full max-w-md bg-black border-t-4 border-primary p-3 z-20 shadow-2xl">
-        {leagueMember ? (
-          <div className="flex justify-between items-center">
-            <div
-              className="flex items-center gap-3 cursor-pointer hover:bg-slate-900/50 p-1 rounded-lg transition-all active:scale-95"
-              onClick={() => navigate('/profile')}
-            >
-              <div className="bg-slate-900 p-2 border-2 border-white relative shadow-sm">
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border border-black" />
-                <Trophy className="w-5 h-5 text-primary" strokeWidth={3} />
+      <div className={`sticky bottom-0 w-full ${isFullWidthPage ? 'max-w-none' : 'max-w-md'} bg-black border-t-4 border-primary z-20 shadow-2xl transition-all duration-500`}>
+        <div className={`p-3 mx-auto ${isFullWidthPage ? 'max-w-[1600px]' : ''}`}>
+          {leagueMember ? (
+            <div className="flex justify-between items-center">
+              <div
+                className="flex items-center gap-3 cursor-pointer hover:bg-slate-900/50 p-1 rounded-lg transition-all active:scale-95"
+                onClick={() => navigate('/profile')}
+              >
+                <div className="bg-slate-900 p-2 border-2 border-white relative shadow-sm">
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border border-black" />
+                  <Trophy className="w-5 h-5 text-primary" strokeWidth={3} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[8px] text-primary font-black uppercase tracking-widest leading-none mb-1">League Points</span>
+                  <p key={userPoints} className="font-mono font-black text-2xl text-white leading-none animate-in zoom-in-95 duration-300">
+                    {userPoints.toLocaleString()}
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <span className="text-[8px] text-primary font-black uppercase tracking-widest leading-none mb-1">League Points</span>
-                <p key={userPoints} className="font-mono font-black text-2xl text-white leading-none animate-in zoom-in-95 duration-300">
-                  {userPoints.toLocaleString()}
+              <div
+                className="text-right cursor-pointer hover:bg-slate-900/50 p-1 rounded-lg transition-all active:scale-95"
+                onClick={() => navigate('/league?tab=standings')}
+              >
+                <p className="text-[9px] text-slate-500 font-bold uppercase mx-1">
+                  Season ends Feb 28, 2026
+                </p>
+                <div className="flex items-center justify-end gap-1 mt-0.5">
+                  <span className="text-[10px] text-black font-black bg-primary border-2 border-white px-2 py-0.5 transform -skew-x-12 inline-block">
+                    RANK: #{userRank || '-'}
+                  </span>
+                  <Star className="w-4 h-4 text-primary fill-primary" />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-between items-center gap-3">
+              <div>
+                <p className="text-[9px] text-slate-400 font-bold uppercase">
+                  Olympia Bar League
+                </p>
+                <p className="text-sm font-black text-white leading-snug">
+                  {leaguePromoText}
                 </p>
               </div>
+              <button
+                onClick={onProfileClick}
+                className="bg-primary text-black text-[11px] font-black uppercase tracking-wider px-3 py-2 border-2 border-black shadow-[3px_3px_0px_0px_#000]"
+              >
+                View League
+              </button>
             </div>
-            <div
-              className="text-right cursor-pointer hover:bg-slate-900/50 p-1 rounded-lg transition-all active:scale-95"
-              onClick={() => navigate('/league?tab=standings')}
-            >
-              <p className="text-[9px] text-slate-500 font-bold uppercase mx-1">
-                Season ends Feb 28, 2026
-              </p>
-              <div className="flex items-center justify-end gap-1 mt-0.5">
-                <span className="text-[10px] text-black font-black bg-primary border-2 border-white px-2 py-0.5 transform -skew-x-12 inline-block">
-                  RANK: #{userRank || '-'}
-                </span>
-                <Star className="w-4 h-4 text-primary fill-primary" />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-between items-center gap-3">
-            <div>
-              <p className="text-[9px] text-slate-400 font-bold uppercase">
-                Olympia Bar League
-              </p>
-              <p className="text-sm font-black text-white leading-snug">
-                {leaguePromoText}
-              </p>
-            </div>
-            <button
-              onClick={onProfileClick}
-              className="bg-primary text-black text-[11px] font-black uppercase tracking-wider px-3 py-2 border-2 border-black shadow-[3px_3px_0px_0px_#000]"
-            >
-              View League
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Hamburger Menu Overlay */}
@@ -363,14 +378,36 @@ export const AppShell: React.FC<AppShellProps> = ({
                   </div>
                 </div>
 
-                {/* --- CLUSTER 2: DISCOVERY --- */}
+                {/* --- CLUSTER 2: SYSTEM ADMINISTRATION (SUPER ADMIN / ADMIN) --- */}
+                {(userRole === 'super-admin' || userRole === 'admin' || userProfile?.email === 'ryan@amaspc.com') && (
+                  <div className="pt-2">
+                    <h3 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em] px-1 mb-3">System Administration</h3>
+                    <button
+                      onClick={() => handleMenuNavigation('/admin')}
+                      className="w-full bg-red-500/10 border border-red-500/30 p-4 rounded-xl flex items-center justify-between group shadow-lg active:scale-95 transition-all"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="bg-red-500/20 p-2 rounded-lg text-red-500">
+                          <Shield className="w-6 h-6" strokeWidth={3} />
+                        </div>
+                        <div className="text-left">
+                          <span className="block text-red-500 font-black text-sm uppercase tracking-tighter">System Dashboard</span>
+                          <span className="block text-red-500/60 text-[8px] font-bold uppercase tracking-widest">Global Ops & Moderation</span>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-red-500/40 group-hover:text-red-500 transition-colors" />
+                    </button>
+                  </div>
+                )}
+
+                {/* --- CLUSTER 3: DISCOVERY --- */}
                 <div className="space-y-4">
                   <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Discovery</h3>
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       { label: 'Map', icon: MapIcon, path: '/map' },
                       { label: 'Events', icon: Ticket, path: '/events' },
-                      { label: 'Play', icon: Brain, path: '/trivia' },
+                      { label: 'Play', icon: Brain, path: '/play' },
                       { label: 'Makers', icon: Hammer, path: '/makers' },
                       { label: 'Live Music', icon: Music, path: '/live' },
                       { label: 'Bars', icon: Search, path: '/bars' },
@@ -393,7 +430,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                   </div>
                 </div>
 
-                {/* --- CLUSTER 3: PARTNER ACCESS --- */}
+                {/* --- CLUSTER 4: PARTNER ACCESS --- */}
                 <div className="pt-6 relative">
                   <div className="absolute top-0 inset-x-0 flex items-center gap-4">
                     <div className="h-[1px] bg-gold-500/30 flex-1"></div>
@@ -402,7 +439,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                   </div>
 
                   <h3 className="text-[10px] font-black text-gold-500 uppercase tracking-[0.2em] px-1 mt-4 mb-3 text-center">
-                    Partner Access
+                    {userRole === 'owner' || userRole === 'manager' ? 'Partner Administration' : 'Partner Access'}
                   </h3>
 
                   <div className="space-y-3">

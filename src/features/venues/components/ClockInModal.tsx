@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Camera, Share2, MapPin, Info, Loader2, Sparkles } from 'lucide-react';
+import { X, Camera, Share2, MapPin, Info, Loader2, Sparkles, Facebook, Instagram, Music2 } from 'lucide-react';
 import { Venue, CheckInRecord, PointsReason } from '../../../types';
 import { performCheckIn } from '../../../services/userService';
 import { useGeolocation } from '../../../hooks/useGeolocation';
@@ -141,7 +141,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                         <Sparkles className="w-10 h-10 text-black" />
                     </div>
                     <div>
-                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league italic">Checked In!</h2>
+                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league italic">Clocked In!</h2>
                         {isLoggedIn ? (
                             <p className="text-primary font-black uppercase tracking-widest text-[10px] mt-1">+10 LEAGUE POINTS AWARDED</p>
                         ) : (
@@ -172,17 +172,24 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                     )}
 
                     {!vibeChecked && onVibeCheckPrompt ? (
-                        <div className="bg-slate-900/80 p-4 rounded-xl border border-white/5 space-y-4">
-                            <p className="text-slate-300 text-sm font-bold leading-tight">
-                                Want to double down? Submit a <span className="text-primary italic">Vibe Check</span> for +5 more points!
+                        <div className="bg-slate-950 p-6 rounded-2xl border border-primary/20 space-y-4 shadow-xl">
+                            <div className="flex items-center gap-3 justify-center text-primary mb-2">
+                                <Sparkles className="w-5 h-5" />
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] font-league">Next Level Play</span>
+                                <Sparkles className="w-5 h-5" />
+                            </div>
+                            <p className="text-white text-sm font-bold leading-tight">
+                                High energy? Empty tables? <br />
+                                <span className="text-primary italic">Verify the Vibe & Game Status</span> <br />
+                                to earn +10 more points!
                             </p>
                             <button
                                 onClick={onVibeCheckPrompt}
-                                className="w-full bg-white text-black font-black py-3 rounded-lg uppercase tracking-wider font-league hover:scale-105 transition-transform flex items-center justify-center gap-2"
+                                className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-wider font-league hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(251,191,36,0.2)]"
                             >
-                                <Camera className="w-5 h-5" /> Vibe Check Now
+                                <Camera className="w-5 h-5" /> Vibe & Game Check
                             </button>
-                            <button onClick={onClose} className="text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white">Maybe Later</button>
+                            <button onClick={onClose} className="text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">Maybe Later</button>
                         </div>
                     ) : (
                         <p className="text-slate-400 text-xs font-medium italic">Redirecting to status hub...</p>
@@ -210,13 +217,13 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
                 <div className="bg-primary p-4 text-center border-b border-black/10 relative">
                     <button onClick={onClose} className="absolute top-3 right-3 text-black/70 hover:text-black hover:scale-110 transition-transform"><X className="w-6 h-6" /></button>
-                    <h2 className="text-2xl font-black text-black uppercase tracking-wider font-league">Clock In Check</h2>
-                    <p className="text-black/60 text-[10px] font-black uppercase tracking-widest font-league">Limit: 2 per 12 hours</p>
+                    <h2 className="text-2xl font-black text-black uppercase tracking-wider font-league italic">Clock In</h2>
+                    <p className="text-black/60 text-[10px] font-black uppercase tracking-widest font-league leading-none mt-1">Limit: 2 per 12 hours</p>
                 </div>
 
                 <div className="p-4 space-y-4">
                     <div className="text-center">
-                        <h3 className="text-3xl font-bold text-white uppercase">{selectedVenue.name}</h3>
+                        <h3 className="text-3xl font-bold text-white uppercase tracking-tighter">{selectedVenue.name}</h3>
                         <div className="mt-1">
                             {geoLoading ? (
                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 animate-pulse">
@@ -242,17 +249,46 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                         </div>
                     </div>
 
-                    <div onClick={capturedPhoto ? undefined : startCamera} className={`border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer group relative overflow-hidden ${capturedPhoto ? 'border-primary/50 bg-black' : 'border-slate-600 bg-surface hover:bg-slate-800 hover:border-primary'}`}>
+                    <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer group relative overflow-hidden ${capturedPhoto ? 'border-primary/50 bg-black' : 'border-slate-600 bg-surface hover:bg-slate-800 hover:border-primary'}`}>
                         {capturedPhoto ? (
-                            <div>
-                                <img src={capturedPhoto} alt="Vibe Check" className="w-full h-32 object-cover rounded-md mb-2" />
-                                <div className="flex gap-2">
-                                    <button onClick={() => setCapturedPhoto(null)} className="flex-1 text-xs text-slate-400 py-2 hover:text-white font-bold uppercase rounded-md bg-slate-700/50 hover:bg-slate-700">Retake</button>
-                                    <button onClick={handleShare} className="flex-1 bg-primary/10 text-primary text-xs font-bold py-2 border border-primary/20 rounded-md flex items-center justify-center gap-1 hover:bg-primary/20"><Share2 className="w-3 h-3" /> SHARE (+5 PTS)</button>
+                            <div className="space-y-3">
+                                <img src={capturedPhoto} alt="Vibe Check" className="w-full h-40 object-cover rounded-md" />
+                                <div className="flex flex-col gap-3">
+                                    <div className="grid grid-cols-4 gap-2">
+                                        <button
+                                            onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}`, '_blank')}
+                                            className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#1877F2]/10 border border-[#1877F2]/20 hover:bg-[#1877F2]/20 transition-all group"
+                                        >
+                                            <Facebook className="w-4 h-4 text-[#1877F2]" />
+                                            <span className="text-[7px] font-black text-[#1877F2] mt-1.5 uppercase">FB</span>
+                                        </button>
+                                        <button
+                                            onClick={() => window.open('https://www.instagram.com/', '_blank')}
+                                            className="flex flex-col items-center justify-center p-2 rounded-xl bg-[#E4405F]/10 border border-[#E4405F]/20 hover:bg-[#E4405F]/20 transition-all group"
+                                        >
+                                            <Instagram className="w-4 h-4 text-[#E4405F]" />
+                                            <span className="text-[7px] font-black text-[#E4405F] mt-1.5 uppercase">IG</span>
+                                        </button>
+                                        <button
+                                            onClick={() => window.open('https://www.tiktok.com/', '_blank')}
+                                            className="flex flex-col items-center justify-center p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
+                                        >
+                                            <Music2 className="w-4 h-4 text-white" />
+                                            <span className="text-[7px] font-black text-white mt-1.5 uppercase">TikTok</span>
+                                        </button>
+                                        <button
+                                            onClick={handleShare}
+                                            className="flex flex-col items-center justify-center p-2 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all group"
+                                        >
+                                            <Share2 className="w-4 h-4 text-primary" />
+                                            <span className="text-[7px] font-black text-primary mt-1.5 uppercase">Share</span>
+                                        </button>
+                                    </div>
+                                    <button onClick={() => setCapturedPhoto(null)} className="text-xs text-slate-500 hover:text-white font-bold uppercase tracking-widest pb-1">Retake Photo</button>
                                 </div>
                             </div>
                         ) : (
-                            <>
+                            <div onClick={startCamera}>
                                 {cameraError ? (
                                     <div className="py-4"><p className="text-red-500 text-xs mb-2 font-bold">Camera access denied. Enable permissions in your browser.</p></div>
                                 ) : (
@@ -262,7 +298,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                                         <p className="text-[10px] text-slate-500 mt-1 font-bold uppercase">Logo, Menu, or Selfie</p>
                                     </>
                                 )}
-                            </>
+                            </div>
                         )}
                     </div>
 
@@ -292,7 +328,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                                 <div className="space-y-1">
                                     <p className="text-[9px] text-slate-300 font-bold uppercase tracking-tight">Usage Transparency:</p>
                                     <p className="text-[8px] text-slate-500 leading-normal font-medium italic">
-                                        By submitting a "Vibe Check" with the "Marketing Consent" toggle active, users grant OlyBars a non-exclusive right to display the photo on the specific venue's listing page. In exchange, users receive a Premium Point Reward (+20 pts). Standard "Vibe Checks" (+5 pts) are ephemeral and are not stored for public gallery use.
+                                        When you select "Clock In" with the "Marketing Consent" toggle active, users grant OlyBars a non-exclusive right to display the photo on the specific venue's listing page. In exchange, users receive a Premium Point Reward (+25 pts). A standard "Clock In" (+10 pts) will signal your presence on the map/feed, but photos are not stored for public gallery use.
                                     </p>
                                 </div>
                             </div>
@@ -311,7 +347,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                         <div className="space-y-1">
                             <p className="font-black uppercase tracking-widest text-white">GPS Verification Disclosure</p>
                             <p className="font-medium italic text-[9px]">
-                                OlyBars utilizes real-time GPS verification to ensure League integrity. To "Clock In" or perform a "Vibe Check," users must be physically present within a 100-foot radius of the participating venue. This location data is used solely for point verification and is not stored or shared for advertising purposes.
+                                OlyBars utilizes real-time GPS verification to ensure League integrity. To "Clock In," users must be physically present within a 100-foot radius of the participating venue. This location data is used solely for point verification and is not stored or shared for advertising purposes.
                             </p>
                         </div>
                     </div>

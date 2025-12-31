@@ -11,14 +11,14 @@ The "Pulse" is composed of two distinct metrics that are calculated every time a
 **Formula**: `Sum(Signal * Decay)`
 
 *   **Signals**:
-    *   **Check-In**: 10.0 Points (Hard confirmation of presence)
-    *   **Vibe Report**: 3.0 Points (Soft qualitative input)
-    *   **Photo Vibe**: 10.0 Points (Visual proof)
+    *   **Clock In**: 10.0 Points (Hard confirmation of presence)
+    *   **Vibe Check**: 3.0 Points (Soft qualitative input)
+    *   **Marketing Consent (Visual)**: 10.0 Points (Visual proof)
     *   **Verified Bonus**: +15.0 Points (e.g. QR Verify)
 
 *   **Decay (The "Fade")**:
     *   Every **60 minutes**, a signal's value drops by **50%**.
-    *   Example: A check-in is worth 10pts now. In 1 hour, it is worth 5pts. In 2 hours, 2.5pts. In 12 hours, ~0pts.
+    *   Example: A clock-in is worth 10pts now. In 1 hour, it is worth 5pts. In 2 hours, 2.5pts. In 12 hours, ~0pts.
 
 ### 2. Live Headcount (Presence)
 **Formula**: `Unique User IDs in Last 90 Minutes`

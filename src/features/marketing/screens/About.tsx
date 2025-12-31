@@ -237,9 +237,9 @@ const AboutPage = () => {
                             <div className="flex items-start gap-6">
                                 <div className="bg-primary text-black w-10 h-10 rounded-full flex items-center justify-center font-black shrink-0 shadow-xl font-league italic text-xl">1</div>
                                 <div>
-                                    <h4 className="text-white font-black text-xl uppercase font-league mb-2 flex items-center gap-2 italic">Check In <ChevronRight size={18} className="text-primary" /></h4>
+                                    <h4 className="text-white font-black text-xl uppercase font-league mb-2 flex items-center gap-2 italic">Clock In <ChevronRight size={18} className="text-primary" /></h4>
                                     <p className="text-sm text-slate-400 font-body leading-relaxed">
-                                        When you arrive at a partner venue, check in to confirm your presence. GPS verification ensures the data stays pure.
+                                        When you arrive at a partner venue, clock in to confirm your presence. GPS verification ensures the data stays pure.
                                     </p>
                                 </div>
                             </div>
@@ -317,7 +317,7 @@ const AboutPage = () => {
                                 We believe in the "Artesian Energy" of the 98501.
                             </p>
                             <p>
-                                By gamifying attendance and creating a shared digital infrastructure, we bridge the gap between "wanting to go out" and "actually being there." Every check-in is a vote for local business.
+                                By gamifying attendance and creating a shared digital infrastructure, we bridge the gap between "wanting to go out" and "actually being there." Every clock-in is a vote for local business.
                             </p>
                         </div>
                     </div>

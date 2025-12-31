@@ -209,6 +209,9 @@ export interface Venue {
         url: string;
         caption?: string;
         allowMarketingUse?: boolean;
+        marketingStatus?: 'pending-super' | 'pending-venue' | 'approved' | 'rejected';
+        superAdminApprovedBy?: string;
+        venueAdminApprovedBy?: string;
         isApprovedForFeed?: boolean;
         isApprovedForSocial?: boolean;
         timestamp?: number;

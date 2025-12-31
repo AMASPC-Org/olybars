@@ -126,7 +126,8 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                 if (cooldownActive && !isSuperAdmin) {
                     throw new Error(`Handle change locked! Wait ${daysRemaining} more days.`);
                 }
-                updates.handle = handle;
+                const cleanHandle = handle.replace(/^#/, '');
+                updates.handle = cleanHandle;
                 updates.handleLastChanged = Date.now();
             }
 
@@ -286,7 +287,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-surface p-4 rounded-2xl border border-white/5 shadow-xl">
                             <History className="w-5 h-5 text-blue-400 mb-3" />
-                            <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Check-ins</p>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Clock-ins</p>
                             <p className="text-2xl font-black font-league">{userProfile.stats?.lifetimeCheckins || 0}</p>
                         </div>
                         <div className="bg-surface p-4 rounded-2xl border border-white/5 shadow-xl">
@@ -487,15 +488,21 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                                     <input
                                         type="text"
                                         value={handle}
-                                        onChange={(e) => setHandle(e.target.value)}
+                                        onChange={(e) => setHandle(e.target.value.replace(/[^a-zA-Z0-9_#]/g, ''))}
                                         disabled={!isEditing || (cooldownActive && !isSuperAdmin)}
+                                        placeholder="OLY_LEGEND"
                                         className={`w-full bg-slate-900 border ${isEditing && (!cooldownActive || isSuperAdmin) ? 'border-primary' : 'border-white/5'} rounded-2xl py-4 pl-10 pr-4 text-sm font-black uppercase font-league outline-none disabled:opacity-50`}
                                     />
-                                    {isEditing && cooldownActive && !isSuperAdmin && (
-                                        <div className="absolute -bottom-6 left-0 text-[9px] text-primary font-bold uppercase flex items-center gap-1">
-                                            <Info className="w-3 h-3" /> Handles can only be optimized once every 30 days.
-                                        </div>
-                                    )}
+                                    <div className="flex justify-between items-center mt-2 px-1">
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-1.5">
+                                            <Info className="w-3 h-3 text-primary" /> 3-15 Alphanumeric characters
+                                        </p>
+                                        {isEditing && cooldownActive && !isSuperAdmin && (
+                                            <div className="text-[10px] text-primary font-black uppercase flex items-center gap-1.5 bg-primary/10 px-2 py-0.5 rounded">
+                                                <Lock className="w-3 h-3" /> Locked for {daysRemaining}D
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -524,9 +531,12 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                                             onChange={(e) => setPhone(e.target.value)}
                                             disabled={!isEditing}
                                             placeholder="555-555-5555"
-                                            className="w-full bg-slate-900 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold outline-none disabled:opacity-50 font-mono"
+                                            className="w-full bg-slate-900 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold outline-none disabled:opacity-50 font-mono text-primary"
                                         />
                                     </div>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-2 ml-1 flex items-center gap-1.5">
+                                        <AlertTriangle className="w-3 h-3 text-amber-500" /> Use format: 555-555-5555
+                                    </p>
                                 </div>
                             </div>
 

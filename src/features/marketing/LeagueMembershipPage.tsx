@@ -111,11 +111,12 @@ export const LeagueMembershipPage = () => {
                         <Shield className="w-8 h-8 text-gold-400" />
                     </div>
 
-                    <h1 className="text-4xl md:text-6xl font-black text-gold-400 uppercase font-league tracking-tighter mb-4 drop-shadow-xl">
+                    <h1 className="text-4xl md:text-7xl font-black text-gold-400 uppercase font-league tracking-tighter mb-6 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
                         Select Venue Tier
                     </h1>
-                    <p className="text-lg md:text-xl text-slate-300 font-medium max-w-2xl mx-auto leading-relaxed">
-                        Upgrade your Venue's standing in the League. Unlock visibility for Players.
+                    <p className="text-lg md:text-2xl text-slate-300 font-bold max-w-3xl mx-auto leading-tight italic opacity-90">
+                        Upgrade your Venue's standing in the League. <br className="hidden md:block" />
+                        Unlock premium visibility for Players and dominate the local scene.
                     </p>
 
                     {/* Toggle Switch */}

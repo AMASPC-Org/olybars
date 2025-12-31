@@ -20,9 +20,9 @@ export const AdminRequestSchema = z.object({
 });
 
 export const UserUpdateSchema = z.object({
-    handle: z.string().regex(/^@[a-zA-Z0-9_]{3,15}$/, 'Invalid handle format').optional(),
+    handle: z.string().regex(/^[a-zA-Z0-9_]{3,15}$/, 'Handle must be 3-15 characters and alphanumeric (no special characters except underscores)').optional(),
     email: z.string().email().optional(),
-    phone: z.string().optional(),
+    phone: z.string().regex(/^\d{3}-\d{3}-\d{4}$/, 'Invalid phone format. Please use 555-555-5555').optional().or(z.literal('')),
     favoriteDrink: z.string().optional(),
     favoriteDrinks: z.array(z.string()).optional(),
     homeBase: z.string().optional(),
@@ -89,6 +89,19 @@ export const VenueUpdateSchema = z.object({
         lng: z.number()
     }).optional(),
     managersCanAddUsers: z.boolean().optional(),
+    photos: z.array(z.object({
+        id: z.string().optional(),
+        url: z.string(),
+        caption: z.string().optional(),
+        allowMarketingUse: z.boolean().optional(),
+        marketingStatus: z.enum(['pending-super', 'pending-venue', 'approved', 'rejected']).optional(),
+        superAdminApprovedBy: z.string().optional(),
+        venueAdminApprovedBy: z.string().optional(),
+        isApprovedForFeed: z.boolean().optional(),
+        isApprovedForSocial: z.boolean().optional(),
+        timestamp: z.number().optional(),
+        userId: z.string().optional(),
+    })).optional(),
 });
 
 export const VenueOnboardSchema = z.object({

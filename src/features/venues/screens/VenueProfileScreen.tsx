@@ -319,7 +319,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     </div>
                     <div className="bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
                         <Trophy className="w-5 h-5 text-primary" />
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Checkins</span>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Clock-ins</span>
                         <span className="text-sm font-black text-white font-mono">{venue.checkIns}</span>
                     </div>
                     <div className="bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg">

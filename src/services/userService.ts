@@ -241,3 +241,39 @@ export const fetchRecentActivity = async (limit: number = 20) => {
     return [];
   }
 };
+
+/**
+ * Fetch hourly reporting for a partner venue.
+ */
+export const fetchPartnerHourlyReport = async (venueId: string, day?: number) => {
+  try {
+    const url = new URL(`${API_BASE_URL}/partners/reports/hourly`);
+    url.searchParams.append('venueId', venueId);
+    if (day) url.searchParams.append('day', day.toString());
+
+    const response = await fetch(url.toString(), {
+      headers: await getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch partner report');
+    return await response.json();
+  } catch (e) {
+    console.error('Error fetching hourly report:', e);
+    throw e;
+  }
+};
+
+/**
+ * Fetch point history (receipts) for the current user.
+ */
+export const fetchUserPointHistory = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/me/history`, {
+      headers: await getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch point history');
+    return await response.json();
+  } catch (e) {
+    console.error('Error fetching point history:', e);
+    return [];
+  }
+};

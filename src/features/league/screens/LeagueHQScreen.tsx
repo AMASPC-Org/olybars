@@ -196,7 +196,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
                 ))}
               </div>
             </div>
-            <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest">Tie-Breaker: Check-ins &gt; Streak &gt; A-Z</p>
+            <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest">Tie-Breaker: Clock-ins &gt; Streak &gt; A-Z</p>
           </div>
         );
       case 'prizes':
@@ -209,7 +209,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
                 { title: "The Silver Chalice", prize: "$200 Gift Pack", requirement: "2nd Place Overall", icon: Gift },
                 { title: "Bronze Medallion", prize: "Limited Edition League Tee", requirement: "3rd Place Overall", icon: Star },
                 { title: "Venue MVP", prize: "Free Appetizer (Nightly)", requirement: "Most Points at a specific HQ", icon: Zap },
-                { title: "Mayor of the Bar", prize: "Custom Bar Stool Plaque", requirement: "Most Check-ins (Monthly)", icon: Crown },
+                { title: "Mayor of the Bar", prize: "Custom Bar Stool Plaque", requirement: "Most Clock-ins (Monthly)", icon: Crown },
               ].map((p, i) => (
                 <div key={i} className="bg-slate-900/50 border border-white/5 p-5 rounded-2xl flex items-center gap-5 group hover:border-primary/20 transition-all">
                   <div className="bg-slate-800 p-3 rounded-xl border-2 border-slate-700 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all">

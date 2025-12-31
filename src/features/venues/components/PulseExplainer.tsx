@@ -39,7 +39,7 @@ export const PulseExplainer: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-3 pb-2">
                         <div className="bg-black/40 p-3 rounded-xl border border-white/5">
-                            <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">Check-In</span>
+                            <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">Clock In</span>
                             <span className="text-xl font-black text-white font-league">+{PULSE_CONFIG.POINTS.CHECK_IN} Pts</span>
                         </div>
                         <div className="bg-black/40 p-3 rounded-xl border border-white/5">
@@ -109,7 +109,7 @@ export const PulseExplainer: React.FC = () => {
             <footer className="p-4 bg-primary/5 rounded-2xl border border-primary/20 flex gap-3">
                 <Info className="w-5 h-5 text-primary shrink-0" />
                 <p className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed">
-                    Rules are strictly enforced by the WA State LCB Compliance Layer. Check-ins are limited to 2 per 12-hour window.
+                    Rules are strictly enforced by the WA State LCB Compliance Layer. Clock-ins are limited to 2 per 12-hour window.
                 </p>
             </footer>
         </div>

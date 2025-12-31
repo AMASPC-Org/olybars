@@ -43,7 +43,7 @@ export const AmenityCard: React.FC<AmenityCardProps> = ({ venue, gameFeature, on
                 onClick={() => onCheckIn(venue.id, gameFeature.id)}
                 className="w-full bg-slate-900 border border-white/10 hover:border-primary/50 text-white font-black py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 group/btn shadow-lg"
             >
-                <span className="text-[10px] uppercase tracking-widest font-league">Check-In to this {gameFeature.name}</span>
+                <span className="text-[10px] uppercase tracking-widest font-league">Clock In to this {gameFeature.name}</span>
                 <CheckCircle size={14} className="text-slate-500 group-hover/btn:text-primary transition-colors" />
             </button>
         </div>

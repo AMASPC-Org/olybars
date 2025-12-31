@@ -11,6 +11,8 @@ import { fetchAllUsers, fetchSystemStats, fetchRecentActivity } from '../../../s
 import { fetchVenues, updateVenueDetails } from '../../../services/venueService';
 import { UserProfile, ActivityLog, Venue } from '../../../types';
 import { AiAccessTab } from '../components/AiAccessTab';
+import { PhotoApprovalCard } from '../components/PhotoApprovalCard';
+import { Camera } from 'lucide-react';
 
 interface AdminDashboardScreenProps {
     userProfile: any;
@@ -18,7 +20,7 @@ interface AdminDashboardScreenProps {
 
 export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ userProfile }) => {
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'venues' | 'league' | 'system' | 'ai'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'venues' | 'league' | 'system' | 'ai' | 'photos'>('overview');
     const [systemStats, setSystemStats] = useState({ totalUsers: 0, activeUsers: 0, totalPoints: 0 });
     const [leagueUsers, setLeagueUsers] = useState<UserProfile[]>([]);
     const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
@@ -116,6 +118,43 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
             queryClient.invalidateQueries({ queryKey: ['venues'] });
         }
     };
+    const handleApprovePhoto = async (venueId: string, photoId: string) => {
+        const venue = venues.find(v => v.id === venueId);
+        if (!venue || !venue.photos) return;
+
+        const updatedPhotos = venue.photos.map(p =>
+            p.id === photoId ? { ...p, marketingStatus: 'pending-venue', superAdminApprovedBy: userProfile.uid } as any : p
+        );
+
+        try {
+            await updateVenueDetails(venueId, { photos: updatedPhotos });
+            queryClient.invalidateQueries({ queryKey: ['venues'] });
+        } catch (error) {
+            console.error('Failed to approve photo', error);
+        }
+    };
+
+    const handleRejectPhoto = async (venueId: string, photoId: string) => {
+        const venue = venues.find(v => v.id === venueId);
+        if (!venue || !venue.photos) return;
+
+        const updatedPhotos = venue.photos.map(p =>
+            p.id === photoId ? { ...p, marketingStatus: 'rejected' } as any : p
+        );
+
+        try {
+            await updateVenueDetails(venueId, { photos: updatedPhotos });
+            queryClient.invalidateQueries({ queryKey: ['venues'] });
+        } catch (error) {
+            console.error('Failed to reject photo', error);
+        }
+    };
+
+    const pendingPhotos = venues.flatMap(v =>
+        (v.photos || [])
+            .filter(p => p.marketingStatus === 'pending-super')
+            .map(p => ({ venue: v, photo: p }))
+    );
 
 
 
@@ -158,7 +197,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
 
             {/* Tabs */}
             <div className="flex gap-2 mb-6 bg-black/40 p-1 rounded-xl overflow-x-auto">
-                {(['overview', 'users', 'venues', 'league', 'system', 'ai'] as const).map((tab) => (
+                {(['overview', 'users', 'venues', 'photos', 'league', 'system', 'ai'] as const).map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -387,6 +426,38 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                 <span className="text-[10px] font-mono text-green-400">READY</span>
                              </div> */}
                         </div>
+                    </div>
+                )}
+
+                {activeTab === 'photos' && (
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-lg font-black font-league uppercase">Photo Quality Control</h2>
+                            <span className="bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                {pendingPhotos.length} Pending Approval
+                            </span>
+                        </div>
+
+                        {pendingPhotos.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 bg-black/20 rounded-2xl border border-dashed border-white/5">
+                                <Camera className="w-12 h-12 text-slate-700 mb-4" />
+                                <p className="text-sm font-bold text-slate-500 uppercase">All caught up!</p>
+                                <p className="text-[10px] text-slate-600 uppercase mt-1">No new photos need verification.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {pendingPhotos.map(({ venue, photo }) => (
+                                    <PhotoApprovalCard
+                                        key={photo.id}
+                                        venue={venue}
+                                        photo={photo}
+                                        onApprove={handleApprovePhoto}
+                                        onReject={handleRejectPhoto}
+                                        isAdminView={true}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 

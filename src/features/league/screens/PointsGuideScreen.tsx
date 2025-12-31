@@ -10,16 +10,16 @@ const PointsGuideScreen: React.FC = () => {
             category: 'Core Actions',
             items: [
                 {
-                    name: 'Venue Check-in',
-                    points: '10 - 20 pts',
-                    desc: 'Clock in when you arrive. Maker venues (Well 80, Matchless, etc.) pay double!',
+                    name: 'Clock In',
+                    points: '10 pts',
+                    desc: 'Clock in when you arrive. Maker venues (Well 80, Matchless, etc.) pay double points!',
                     icon: Target,
                     color: 'bg-blue-500/20 text-blue-400'
                 },
                 {
-                    name: 'Vibe Report',
+                    name: 'Vibe Check',
                     points: '5 pts',
-                    desc: 'Confirm the current energy (Dead, Chill, Lively, etc.) for the city map.',
+                    desc: 'Confirm the current energy (Dead, Chill, Lively, etc.) for the city map and homepage.',
                     icon: Zap,
                     color: 'bg-primary/20 text-primary'
                 }
@@ -29,21 +29,14 @@ const PointsGuideScreen: React.FC = () => {
             category: 'Multipliers & Bonuses',
             items: [
                 {
-                    name: 'Field Photo',
-                    points: '+10 pts',
-                    desc: 'Attach a live photo to your report. Show the city what it looks like!',
-                    icon: Camera,
-                    color: 'bg-purple-500/20 text-purple-400'
-                },
-                {
                     name: 'Marketing Consent',
                     points: '+15 pts',
-                    desc: 'Allow the venue to use your photo for social/marketing. High-impact support.',
+                    desc: 'Share your vibe photo and allow the venue to use it for social/marketing. High-impact support.',
                     icon: Star,
                     color: 'bg-gold-500/20 text-gold-400'
                 },
                 {
-                    name: 'Game Status Check',
+                    name: 'Game Vibe Check',
                     points: '+2 pts',
                     desc: 'Update the live status (Open/Taken) for Pool, Darts, or Shuffleboard. (Max +10 bonus)',
                     icon: Target,

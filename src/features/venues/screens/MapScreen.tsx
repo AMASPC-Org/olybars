@@ -176,7 +176,7 @@ const MapScreen = () => {
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 10px; font-weight: bold; color: #cbd5e1;">
               <div style="display: flex; align-items: center; gap: 3px;">
                 <span>👥</span>
-                <span>${venue.checkIns || 0} Checked In</span>
+                <span>${venue.checkIns || 0} Clocked In</span>
               </div>
               ${isBuzzing ? '<div style="display: flex; align-items: center; gap: 3px; color: #fbbf24;"><span>🔥</span><span>Buzzing</span></div>' : ''}
               ${(venue.status === 'chill' || !venue.status) ? '<div style="display: flex; align-items: center; gap: 3px; color: #60a5fa;"><span>🧊</span><span>Chill</span></div>' : ''}

@@ -373,6 +373,40 @@ v1Router.get('/activity', async (req, res) => {
 });
 
 /**
+ * @route GET /api/partners/reports/hourly
+ * @desc Fetch hourly activity reports for a venue
+ */
+v1Router.get('/partners/reports/hourly', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+    const { venueId, day } = req.query;
+    if (!venueId) return res.status(400).json({ error: 'venueId is required' });
+
+    try {
+        const { getPartnerHourlyReport } = await import('./venueService');
+        const report = await getPartnerHourlyReport(venueId as string, day ? parseInt(day as string) : undefined);
+        res.json(report);
+    } catch (error: any) {
+        log('ERROR', 'Failed to fetch hourly report', { error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route GET /api/users/me/history
+ * @desc Fetch point history for the authenticated user
+ */
+v1Router.get('/users/me/history', verifyToken, async (req, res) => {
+    const userId = (req as any).user.uid;
+    try {
+        const { getUserPointHistory } = await import('./venueService');
+        const history = await getUserPointHistory(userId);
+        res.json(history);
+    } catch (error: any) {
+        log('ERROR', 'Failed to fetch user history', { error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
  * @route PATCH /api/venues/:id
  * @desc Update general venue information (Listing management)
  */

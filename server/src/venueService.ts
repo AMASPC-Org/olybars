@@ -228,20 +228,29 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
 
     const timestamp = Date.now();
 
-    // 2. LCB Compliance Check (Rule 03-A): Max 2 check-ins per window
+    // 2. LCB Compliance Check (Rule 03-A) & Nightly Cap
+    // WA State law limits users to 2 League check-ins per 12-hour window.
+    // Also enforcing the OlyBars 4:00 AM Business Day cap of 2.
+    const today4AM = new Date();
+    today4AM.setHours(4, 0, 0, 0);
+    const businessDayStart = (timestamp < today4AM.getTime())
+        ? today4AM.getTime() - 24 * 60 * 60 * 1000
+        : today4AM.getTime();
+
     const lcbWindowAgo = timestamp - PULSE_CONFIG.WINDOWS.LCB_WINDOW;
-    const checkInsLast12h = await db.collection('signals')
+    const windowStart = Math.min(businessDayStart, lcbWindowAgo);
+
+    const checkInsLastWindow = await db.collection('signals')
         .where('userId', '==', userId)
         .where('type', '==', 'check_in')
-        .where('timestamp', '>', lcbWindowAgo)
+        .where('timestamp', '>', windowStart)
         .get();
 
-    if (checkInsLast12h.size >= 2) {
-        throw new Error('LCB Compliance Limit: WA State law limits users to 2 League check-ins per 12-hour window. Please try again later.');
+    if (checkInsLastWindow.size >= 2) {
+        throw new Error('Nightly Cap Reached: You have reached the limit of 2 League check-ins for this window. Please try again tomorrow after 4:00 AM!');
     }
 
-    // 3. Throttling Logic (Rule 03-C)
-    // We fetch the most recent check-in to enforce minimum gaps
+    // 3. Throttling & Impossible Movement (Rule 03-C)
     const recentSignals = await db.collection('signals')
         .where('userId', '==', userId)
         .where('type', '==', 'check_in')
@@ -252,19 +261,39 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
     if (!recentSignals.empty) {
         const lastCheckIn = recentSignals.docs[0].data() as Signal;
         const timeSinceLast = timestamp - lastCheckIn.timestamp;
+        const timeDiffSec = timeSinceLast / 1000;
 
-        // Global Throttle: (e.g. 120 minutes / 2 hours)
+        // Impossible Movement Check (Centralized from Frontend)
+        if (venueData.location && lastCheckIn.venueId !== venueId) {
+            const lastVenueDoc = await db.collection('venues').doc(lastCheckIn.venueId).get();
+            const lastVenueData = lastVenueDoc.data() as Venue;
+
+            if (lastVenueData?.location) {
+                const distMeters = calculateDistance(
+                    lastVenueData.location.lat, lastVenueData.location.lng,
+                    venueData.location.lat, venueData.location.lng
+                );
+
+                // Threshold: 100mph (approx 44.7 m/s)
+                const speedMps = distMeters / timeDiffSec;
+                if (speedMps > 44.7 && timeDiffSec > 60) { // 1 min buffer for very close venues
+                    console.warn(`[ANTI-CHEAT] Impossible Movement: ${userId} moved ${Math.round(distMeters)}m in ${Math.round(timeDiffSec)}s (${Math.round(speedMps * 2.237)} mph)`);
+                    throw new Error('Impossible Movement detected! Please engage responsibly and stay within local travel speeds.');
+                }
+            }
+        }
+
+        // Global Throttle
         if (timeSinceLast < PULSE_CONFIG.WINDOWS.CHECK_IN_THROTTLE) {
             const minutesSinceLast = Math.floor(timeSinceLast / (60 * 1000));
             const waitTime = (PULSE_CONFIG.WINDOWS.CHECK_IN_THROTTLE / (60 * 1000)) - minutesSinceLast;
             throw new Error(`Slow down, League Legend! The Pulse needs a bit more time. You can clock in again in ${Math.ceil(waitTime)} minutes.`);
         }
 
-        // Same-Venue Throttle: (e.g. 360 minutes / 6 hours)
+        // Same-Venue Throttle
         if (lastCheckIn.venueId === venueId && timeSinceLast < PULSE_CONFIG.WINDOWS.SAME_VENUE_THROTTLE) {
-            const minutesSinceLast = Math.floor(timeSinceLast / (60 * 1000));
-            const waitTime = (PULSE_CONFIG.WINDOWS.SAME_VENUE_THROTTLE / (60 * 1000)) - minutesSinceLast;
-            throw new Error(`Already checked in here recently! To keep the Pulse fair, please wait another ${Math.floor(waitTime / 60)} hours and ${Math.ceil(waitTime % 60)} minutes before checking into ${venueData.name} again.`);
+            const waitTime = (PULSE_CONFIG.WINDOWS.SAME_VENUE_THROTTLE - timeSinceLast) / (60 * 1000);
+            throw new Error(`Already checked in here recently! Please wait another ${Math.floor(waitTime / 60)} hours and ${Math.ceil(waitTime % 60)} minutes before checking into ${venueData.name} again.`);
         }
     }
 
@@ -502,7 +531,11 @@ export const logUserActivity = async (data: {
     verificationMethod?: 'gps' | 'qr'
 }) => {
     const timestamp = Date.now();
-    const logItem = { ...data, timestamp };
+    const logItem = {
+        ...data,
+        timestamp,
+        receiptId: `rcpt_${timestamp}_${Math.random().toString(36).substring(2, 7)}`
+    };
 
     // 1. Save to activity_logs collection
     await db.collection('activity_logs').add(logItem);
@@ -1131,4 +1164,60 @@ export const syncFlashDeals = async () => {
         console.error('[FLASH_SYNC] error:', error);
         throw error;
     }
+};
+
+/**
+ * getPartnerHourlyReport: Aggregate signals by hour for a specific day.
+ */
+export const getPartnerHourlyReport = async (venueId: string, dayTimestamp?: number) => {
+    const startOfDay = new Date(dayTimestamp || Date.now());
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+
+    const snapshot = await db.collection('activity_logs')
+        .where('venueId', '==', venueId)
+        .where('timestamp', '>=', startOfDay.getTime())
+        .where('timestamp', '<', endOfDay.getTime())
+        .get();
+
+    const hourlyData: Record<number, { checkins: number, vibeReports: number, points: number }> = {};
+    for (let i = 0; i < 24; i++) {
+        hourlyData[i] = { checkins: 0, vibeReports: 0, points: 0 };
+    }
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const hour = new Date(data.timestamp).getHours();
+
+        if (data.type === 'check_in' || data.type === 'checkin') {
+            hourlyData[hour].checkins++;
+        } else if (data.type === 'vibe' || data.type === 'vibe_report') {
+            hourlyData[hour].vibeReports++;
+        }
+
+        hourlyData[hour].points += (data.points || 0);
+    });
+
+    return {
+        venueId,
+        date: startOfDay.toISOString().split('T')[0],
+        hourly: hourlyData
+    };
+};
+
+/**
+ * getUserPointHistory: Fetch paginated activity logs with receipt data for a user.
+ */
+export const getUserPointHistory = async (userId: string, limit: number = 50) => {
+    const snapshot = await db.collection('activity_logs')
+        .where('userId', '==', userId)
+        .orderBy('timestamp', 'desc')
+        .limit(limit)
+        .get();
+
+    return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    }));
 };

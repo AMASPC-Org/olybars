@@ -12,7 +12,7 @@ interface Deal {
  * LcbCompliantCheckin
  * 
  * COMPLIANCE METRICS:
- * 1. Rule 3: Max 2 check-ins per 12-hour window.
+ * 1. Rule 3: Max 2 clock-ins per 12-hour window.
  * 2. Happy Hour Sorting: Prioritize by TimeRemaining, push >4h to bottom.
  */
 export const LcbCompliantCheckin: React.FC = () => {
@@ -28,9 +28,9 @@ export const LcbCompliantCheckin: React.FC = () => {
   const handleCheckIn = () => {
     if (canCheckIn) {
       setCheckInTimestamps([...checkInTimestamps, Date.now()]);
-      console.log('Check-in successful and logged within LCB limits.');
+      console.log('Clock-in successful and logged within LCB limits.');
     } else {
-      console.warn('LCB RESTRICTION: Maximum check-in frequency reached (2 per 12h).');
+      console.warn('LCB RESTRICTION: Maximum clock-in frequency reached (2 per 12h).');
     }
   };
 
@@ -68,7 +68,7 @@ export const LcbCompliantCheckin: React.FC = () => {
 
       <section className="mb-8 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
         <div className="flex justify-between items-center mb-4">
-          <span className="text-sm font-medium">Check-in Status</span>
+          <span className="text-sm font-medium">Clock-in Status</span>
           {canCheckIn ? (
             <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">AVAILABLE</span>
           ) : (
@@ -84,13 +84,13 @@ export const LcbCompliantCheckin: React.FC = () => {
             : 'bg-slate-700 text-slate-500 cursor-not-allowed grayscale'
             }`}
         >
-          Check In Now
+          Clock In Now
         </button>
 
         {!canCheckIn && (
           <p className="mt-3 text-[10px] text-rose-400/80 leading-tight flex items-start gap-1">
             <AlertCircle className="w-3 h-3 mt-0.5" />
-            WA LCB mandates a limit of 2 passport check-ins per 12-hour period.
+            WA LCB mandates a limit of 2 passport clock-ins per 12-hour period.
           </p>
         )}
       </section>

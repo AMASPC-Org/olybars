@@ -47,7 +47,7 @@ const TermsScreen: React.FC = () => {
                     </p>
                     <div className="bg-slate-900/50 border border-slate-700 p-4 rounded-xl">
                         <p className="text-slate-300 text-xs italic">
-                            <strong>GPS & Geofencing Disclosure:</strong> OlyBars utilizes real-time GPS verification to ensure League integrity. To "Clock In" or perform a "Vibe Check," users must be physically present within a 100-foot radius of the participating venue. This location data is used solely for point verification and is not stored or shared for advertising purposes.
+                            <strong>GPS & Geofencing Disclosure:</strong> OlyBars utilizes real-time GPS verification to ensure League integrity. To "Clock In," users must be physically present within a 100-foot radius of the participating venue. This location data is used solely for point verification and is not stored or shared for advertising purposes.
                         </p>
                     </div>
                 </section>
@@ -55,7 +55,7 @@ const TermsScreen: React.FC = () => {
                 <section className="space-y-4">
                     <h2 className="text-xl font-black uppercase tracking-wide font-league text-primary">4. Content Usage & Marketing Rights</h2>
                     <p className="text-slate-300 leading-relaxed text-sm">
-                        By submitting a "Vibe Check" with the "Marketing Consent" toggle active, users grant OlyBars a non-exclusive right to display the photo on the specific venue's listing page. In exchange, users receive a Premium Point Reward (+20 pts). Standard "Vibe Checks" (+5 pts) are ephemeral and are not stored for public gallery use.
+                        When you select "Clock In" with the "Marketing Consent" toggle active, users grant OlyBars a non-exclusive right to display the photo on the specific venue's listing page. In exchange, users receive a Premium Point Reward (+25 pts). A standard "Clock In" (+10 pts) will signal your presence on the map/feed, but photos are not stored for public gallery use.
                     </p>
                 </section>
 

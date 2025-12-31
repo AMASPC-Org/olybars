@@ -69,7 +69,7 @@ export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClos
                         </div>
 
                         <h3 className="text-[14px] font-black tracking-widest uppercase mb-1 drop-shadow-sm font-league">
-                            {isTrivia ? '98501 LEAGUE: TRIVIA CHAMPIONS' : '98501 PLAY CHECK-IN'}
+                            {isTrivia ? '98501 LEAGUE: TRIVIA CHAMPIONS' : '98501 PLAY CLOCK-IN'}
                         </h3>
                         <h2 className="text-3xl font-black uppercase tracking-tighter leading-none mb-2 font-league">
                             {data.venueName}

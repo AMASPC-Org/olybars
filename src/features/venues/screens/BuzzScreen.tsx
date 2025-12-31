@@ -67,8 +67,9 @@ type FilterKind = 'status' | 'deals' | 'league' | 'tonight' | 'near' | 'games' |
 const STATUS_ORDER: Record<VenueStatus, number> = {
   packed: 0,
   buzzing: 1,
-  chill: 2,
-  dead: 3,
+  lively: 2,
+  chill: 3,
+  dead: 4,
 };
 
 // Main Screen
@@ -673,7 +674,7 @@ export const BuzzScreen: React.FC<{
                         {venue.manualCheckInsExpiresAt && venue.manualCheckInsExpiresAt > Date.now() && (
                           <ShieldCheck className="w-2.5 h-2.5 text-blue-400" />
                         )}
-                        <span className="text-[10px] text-slate-500 font-bold">{venue.checkIns} Checked In</span>
+                        <span className="text-[10px] text-slate-500 font-bold">{venue.checkIns} Clocked In</span>
                       </div>
                     </div>
                   </div>

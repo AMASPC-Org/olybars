@@ -23,8 +23,8 @@ export const LeagueHomeScreen: React.FC = () => {
                 <span className="text-white text-xs font-bold font-body">+10 PTS</span>
               </div>
               <div className="bg-surface/50 border border-white/5 p-4 rounded-xl">
-                <span className="text-primary font-black text-[10px] uppercase block mb-1 font-league">VIBE PHOTO</span>
-                <span className="text-white text-xs font-bold font-body">+10 PTS</span>
+                <span className="text-primary font-black text-[10px] uppercase block mb-1 font-league">MARKETING BONUS</span>
+                <span className="text-white text-xs font-bold font-body">+15 PTS</span>
               </div>
             </div>
           </div>
@@ -74,8 +74,8 @@ export const LeagueHomeScreen: React.FC = () => {
               <p className="text-xs text-red-200/70 font-bold font-body">Harassment or disrespecting staff is an immediate lifetime ban from the League. We keep it chill.</p>
             </div>
             <div className="bg-surface/50 border border-white/5 p-4 rounded-xl">
-              <h3 className="text-primary font-black text-xs uppercase mb-1 font-league">CHECK-IN LIMIT</h3>
-              <p className="text-xs text-slate-400 font-bold font-body">Max 2 check-ins per 12-hour window. This is for vibes, not over-consumption.</p>
+              <h3 className="text-primary font-black text-xs uppercase mb-1 font-league">CLOCK-IN LIMIT</h3>
+              <p className="text-xs text-slate-400 font-bold font-body">Max 2 clock-ins per 12-hour window. This is for vibes, not over-consumption.</p>
             </div>
           </div>
         );
