@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SEO } from '../../components/common/SEO';
+import { SEO } from '../../../components/common/SEO';
 import { Lock, Zap, ShieldCheck, Check, AppWindow, X } from 'lucide-react';
 
 export const OnboardingHandoverPage = () => {

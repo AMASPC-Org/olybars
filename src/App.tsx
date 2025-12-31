@@ -55,9 +55,9 @@ import FAQScreen from './features/marketing/screens/FAQScreen';
 import { AdminDashboardScreen } from './features/admin/screens/AdminDashboardScreen';
 import UserProfileScreen from './features/profile/screens/UserProfileScreen';
 import { VenueProfileScreen } from './features/venues/screens/VenueProfileScreen';
-import AboutPage from './pages/About';
+import AboutPage from './features/marketing/screens/About';
 import ArtieBioScreen from './features/artie/screens/ArtieBioScreen'; // [NEW] Import
-import OwnerPortal from './pages/OwnerPortal';
+import OwnerPortal from './features/owner/screens/OwnerPortal';
 import { QRVibeCheckScreen } from './features/vibe-check/screens/QRVibeCheckScreen'; // [NEW] QR Screen
 import MerchStandScreen from './features/merch/screens/MerchStandScreen';
 import MerchDetailScreen from './features/merch/screens/MerchDetailScreen';
@@ -71,11 +71,11 @@ import { LeaguePerksScreen } from './features/league/screens/LeaguePerksScreen';
 import AIGatewayScreen from './features/marketing/screens/AIGatewayScreen';
 import AIFeedGuideScreen from './features/marketing/screens/AIFeedGuideScreen';
 import AIConductScreen from './features/marketing/screens/AIConductScreen';
-import ClaimVenuePage from './pages/partners/ClaimVenuePage';
-import GlossaryScreen from './screens/GlossaryScreen';
+import ClaimVenuePage from './features/owner/screens/ClaimVenuePage';
+import GlossaryScreen from './features/marketing/screens/GlossaryScreen';
 import PointsGuideScreen from './features/league/screens/PointsGuideScreen';
 import LeagueMembershipPage from './features/marketing/LeagueMembershipPage';
-import OnboardingHandoverPage from './pages/marketing/OnboardingHandoverPage';
+import OnboardingHandoverPage from './features/marketing/screens/OnboardingHandoverPage';
 
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {

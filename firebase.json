@@ -29,6 +29,13 @@
       ],
       "rewrites": [
         {
+          "source": "/api/**",
+          "run": {
+            "serviceId": "olybars-backend",
+            "region": "us-west1"
+          }
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
@@ -63,6 +70,13 @@
         "**/node_modules/**"
       ],
       "rewrites": [
+        {
+          "source": "/api/**",
+          "run": {
+            "serviceId": "olybars-backend",
+            "region": "us-west1"
+          }
+        },
         {
           "source": "**",
           "destination": "/index.html"

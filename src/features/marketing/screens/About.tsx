@@ -5,17 +5,17 @@ import {
     Sparkles, Anchor, Map, Info, Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Venue } from '../types';
-import { fetchVenues } from '../services/venueService';
-import { isVenueOpen } from '../utils/venueUtils';
+import { Venue } from '../../../types';
+import { fetchVenues } from '../../../services/venueService';
+import { isVenueOpen } from '../../../utils/venueUtils';
 
 // Assets
-import heroArena from '../assets/hero-arena.png';
-import leagueBadge from '../assets/league-badge.png';
-import artieCoachBg from '../assets/artie-coach-bg.png';
-import venuePartnerBg from '../assets/venue-partner-bg.png';
+import heroArena from '../../../assets/hero-arena.png';
+import leagueBadge from '../../../assets/league-badge.png';
+import artieCoachBg from '../../../assets/artie-coach-bg.png';
+import venuePartnerBg from '../../../assets/venue-partner-bg.png';
 
-import { API_BASE_URL } from '../lib/api-config';
+import { API_BASE_URL } from '../../../lib/api-config';
 
 const AboutPage = () => {
     const navigate = useNavigate();

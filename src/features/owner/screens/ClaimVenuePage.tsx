@@ -5,13 +5,13 @@ import {
     LayoutGrid, Settings2, Info, LogIn, Crown
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { PlaceAutocomplete } from '../../components/ui/PlaceAutocomplete';
-import { AssetToggleGrid } from '../../components/partners/AssetToggleGrid';
-import { Venue } from '../../types';
-import { syncVenueWithGoogle, updateVenueDetails, checkVenueClaim, onboardVenue } from '../../services/venueService';
-import { useToast } from '../../components/ui/BrandedToast';
-import { SEO } from '../../components/common/SEO';
-import { auth } from '../../lib/firebase';
+import { PlaceAutocomplete } from '../../../components/ui/PlaceAutocomplete';
+import { AssetToggleGrid } from '../../../components/partners/AssetToggleGrid';
+import { Venue } from '../../../types';
+import { syncVenueWithGoogle, updateVenueDetails, checkVenueClaim, onboardVenue } from '../../../services/venueService';
+import { useToast } from '../../../components/ui/BrandedToast';
+import { SEO } from '../../../components/common/SEO';
+import { auth } from '../../../lib/firebase';
 
 type OnboardingStep = 'SEARCH' | 'VERIFY' | 'CONFIG' | 'INVITE' | 'SUCCESS';
 

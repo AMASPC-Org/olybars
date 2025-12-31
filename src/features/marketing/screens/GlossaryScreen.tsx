@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, BookOpen, Search, Zap } from 'lucide-react';
-import { SEO } from '../components/common/SEO';
-import { barGames } from '../data/barGames';
+import { SEO } from '../../../components/common/SEO';
+import { barGames } from '../../../data/barGames';
 
 const glossaryTerms = [
     {

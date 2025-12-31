@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, TrendingUp, Users, ShieldCheck, Sparkles } from 'lucide-react';
-import { SEO } from '../components/common/SEO';
+import { SEO } from '../../../components/common/SEO';
 
 const OwnerPortal: React.FC = () => {
     const navigate = useNavigate();
