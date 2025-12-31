@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Venue } from '../../../types';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { Save, AlertTriangle, Plus, X, Search, Check } from 'lucide-react';
+import { API_BASE_URL } from '../../../lib/api-config';
 
 interface LocalMakerManagementTabProps {
     venue: Venue;
@@ -16,12 +17,11 @@ export const LocalMakerManagementTab: React.FC<LocalMakerManagementTabProps> = (
     const [carryingMakers, setCarryingMakers] = useState<string[]>(venue.carryingMakers || []);
     const [makerSearch, setMakerSearch] = useState('');
     const [isRequesting, setIsRequesting] = useState(false);
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
     const handleRequestActivation = async () => {
         setIsRequesting(true);
         try {
-            const response = await fetch(`${apiUrl}/api/requests`, {
+            const response = await fetch(`${API_BASE_URL}/requests`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

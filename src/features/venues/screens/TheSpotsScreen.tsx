@@ -38,8 +38,10 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
             result = result.filter(v =>
                 v.isVerifiedMaker ||
                 v.isLocalMaker ||
-                v.type.toLowerCase().includes('brewery') ||
-                v.type.toLowerCase().includes('distillery') ||
+                (v.venueType || '').toLowerCase().includes('brewery') ||
+                (v.venueType || '').toLowerCase().includes('distillery') ||
+                (v.makerType || '').toLowerCase().includes('brewery') ||
+                (v.makerType || '').toLowerCase().includes('distillery') ||
                 v.isHQ
             );
         } else if (mode === 'bars') {
@@ -54,9 +56,12 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
 
         // 1. Search filter
         if (searchQuery) {
+            const query = searchQuery.toLowerCase();
             result = result.filter(v =>
-                v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                v.type.toLowerCase().includes(searchQuery.toLowerCase())
+                v.name.toLowerCase().includes(query) ||
+                (v.venueType || '').toLowerCase().includes(query) ||
+                (v.makerType || '').toLowerCase().includes(query) ||
+                (v.vibe || '').toLowerCase().includes(query)
             );
         }
 
@@ -166,8 +171,18 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
                                                 {venue.name}
                                             </h3>
                                             <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="text-[9px] font-bold text-slate-500 uppercase">{venue.type}</span>
-                                                {distance !== null && (
+                                                <span className="text-[9px] font-bold text-slate-500 uppercase">
+                                                    {venue.makerType || venue.venueType?.replace('_', ' ')}
+                                                </span>
+                                                {venue.physicalRoom === false && (
+                                                    <>
+                                                        <span className="text-[8px] text-slate-700">•</span>
+                                                        <span className="text-[9px] font-black text-amber-500/70 uppercase tracking-tighter">
+                                                            PRODUCTION ONLY
+                                                        </span>
+                                                    </>
+                                                )}
+                                                {distance !== null && venue.physicalRoom !== false && (
                                                     <>
                                                         <span className="text-[8px] text-slate-700">•</span>
                                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter flex items-center gap-1">

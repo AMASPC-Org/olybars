@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Shield, Bot, Globe } from 'lucide-react';
+import { Bot, Globe, Shield } from 'lucide-react';
+import { API_BASE_URL } from '../../../lib/api-config';
 
 interface AiLog {
     id: string;
@@ -17,7 +18,7 @@ export const AiAccessTab: React.FC = () => {
     useEffect(() => {
         const fetchLogs = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/ai/access-logs`);
+                const response = await fetch(`${API_BASE_URL}/ai/access-logs`);
                 const data = await response.json();
                 setLogs(data);
             } catch (error) {

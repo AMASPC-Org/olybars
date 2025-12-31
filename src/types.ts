@@ -1,6 +1,6 @@
 import { SystemRole, VenueRole } from './types/auth_schema';
 
-export type VenueStatus = 'dead' | 'chill' | 'buzzing' | 'packed';
+export type VenueStatus = 'dead' | 'chill' | 'lively' | 'buzzing' | 'packed';
 
 export enum PartnerTier {
   FREE = 'FREE',    // 1 Token/mo
@@ -178,6 +178,7 @@ export interface Venue {
   isSoberFriendly?: boolean;
   isBoutique?: boolean;
   isActive?: boolean;
+  isVisible?: boolean;
   scavengerHunts?: {
     title: string;
     partnerVenues: string[];
@@ -218,6 +219,9 @@ export interface Venue {
   isHQ?: boolean;
   isLocalMaker?: boolean;
   carryingMakers?: string[]; // IDs of venues that carry this maker's products
+  isVerifiedHost?: boolean;
+  isVerifiedMaker?: boolean;
+  localScore?: number;
 }
 
 export interface GameStatus {

@@ -15,7 +15,7 @@ import leagueBadge from '../assets/league-badge.png';
 import artieCoachBg from '../assets/artie-coach-bg.png';
 import venuePartnerBg from '../assets/venue-partner-bg.png';
 
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { API_BASE_URL } from '../lib/api-config';
 
 const AboutPage = () => {
     const navigate = useNavigate();
@@ -42,11 +42,11 @@ const AboutPage = () => {
     }, []);
 
     const buzzingVenues = useMemo(() =>
-        venues.filter(v => v.status === 'buzzing' && v.isVisible !== false).slice(0, 2),
+        venues.filter(v => v.status === 'buzzing' && v.isActive !== false).slice(0, 2),
         [venues]);
 
     const activeHappyHours = useMemo(() =>
-        venues.filter(v => (v.deal || (v.deals && v.deals.length > 0)) && isVenueOpen(v)).slice(0, 3),
+        venues.filter(v => (v.deal || (v.flashDeals && v.flashDeals.length > 0)) && isVenueOpen(v)).slice(0, 3),
         [venues]);
 
     const handleSend = async () => {
@@ -56,7 +56,7 @@ const AboutPage = () => {
         }
         setLoading(true);
         try {
-            const response = await fetch(`${apiUrl}/api/requests`, {
+            const response = await fetch(`${API_BASE_URL}/requests`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

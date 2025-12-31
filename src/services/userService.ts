@@ -4,7 +4,7 @@ import { UserAlertPreferences, CheckInRecord, UserProfile } from '../types';
 import { getAuthHeaders } from './apiUtils';
 
 // Forcing production URL for now since user is running frontend-only locally
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
+import { API_BASE_URL } from '../lib/api-config';
 
 export const toggleFavorite = async (userId: string, venueId: string, favorites: string[]) => {
   try {

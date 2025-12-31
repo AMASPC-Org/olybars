@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
@@ -17,49 +17,40 @@ const firebaseConfig = {
 // Initialize the Shared Network Backend
 const app = initializeApp(firebaseConfig);
 
-// Initialize App Check
-if (typeof window !== 'undefined') {
-  const isDebug = import.meta.env.VITE_APP_CHECK_DEBUG === 'true' ||
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1';
-
-  if (isDebug) {
-    // @ts-ignore
-    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-    console.log('🛡️ [AppCheck] Debug mode enabled');
-  }
-  const siteKey = import.meta.env.VITE_APP_CHECK_KEY;
-
-  if (siteKey && !siteKey.includes('PLACEHOLDER') && siteKey.length > 20) {
-    console.log('🛡️ [AppCheck] Initializing with Site Key');
-    initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(siteKey),
-      isTokenAutoRefreshEnabled: true
-    });
-  } else if (isDebug) {
-    console.log('🛡️ [AppCheck] Initializing in Debug mode');
-    // For debug mode, we can use a dummy key or just the debug token property
-    // But initializeAppCheck still needs a provider instance.
-    const dummyKey = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'; // Standard ReCAPTCHA test key
-    initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(dummyKey),
-      isTokenAutoRefreshEnabled: true
-    });
-  } else {
-    console.warn('⚠️ [AppCheck] Skipping initialization: Missing or invalid Site Key.');
-  }
-}
-
 // Export the services so the rest of the app can use them
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const functions = getFunctions(app, 'us-west1');
 
-// DISABLED: Forcing emulator connect on localhost was blocking Artie when emulators aren't running.
-// To use emulators, explicitly enable this or use an environment variable.
-/*
-if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+// --- EMULATOR WIRING ---
+// If we are on localhost, connect to the local emulators instead of the cloud.
+if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+  console.log('🔧 Connecting to Local Firebase Emulators...');
+  
+  // Connect Firestore (Database)
+  connectFirestoreEmulator(db, 'localhost', 8080);
+  
+  // Connect Auth (Login)
+  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+  
+  // Connect Functions (Backend Logic)
   connectFunctionsEmulator(functions, 'localhost', 5001);
+  
+  // Enable a dummy App Check token so local requests don't get blocked
+  // @ts-ignore
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  console.log('🛡� [AppCheck] Local Debug Token Enabled');
+} else {
+  // --- PRODUCTION APP CHECK ---
+  // Only run standard App Check in production/staging
+  if (typeof window !== 'undefined') {
+    const siteKey = import.meta.env.VITE_APP_CHECK_KEY;
+    if (siteKey && !siteKey.includes('PLACEHOLDER')) {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(siteKey),
+        isTokenAutoRefreshEnabled: true
+      });
+    }
+  }
 }
-*/

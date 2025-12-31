@@ -35,12 +35,12 @@ service cloud.firestore {
 
     // --- RULES ---
 
-    // Users: Users can read their own profile. Admins can do everything.
+    // Users: Publicly readable for leaderboards/ranks.
     match /users/{userId} {
-      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-      allow create: if isAuthenticated() && request.auth.uid == userId && 
+      allow read: if true; 
+      allow create: if isAuthenticated() && request.auth.uid == userId &&
                     !request.resource.data.keys().hasAny(['role', 'isAdmin', 'systemRole']);
-      allow update: if isAuthenticated() && (isAdmin() || (request.auth.uid == userId && 
+      allow update: if isAuthenticated() && (isAdmin() || (request.auth.uid == userId &&
                     !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdmin', 'systemRole'])));
     }
 

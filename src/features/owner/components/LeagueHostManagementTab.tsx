@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Venue } from '../../../types';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { Calendar, AlertTriangle, Lock, Users, Zap, Check, Info } from 'lucide-react';
+import { API_BASE_URL } from '../../../lib/api-config';
 
 interface LeagueHostManagementTabProps {
     venue: Venue;
@@ -43,7 +44,6 @@ export const LeagueHostManagementTab: React.FC<LeagueHostManagementTabProps> = (
         }
     };
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
     const handleRequestSubmit = async () => {
         // Basic validation: description is the big one
@@ -53,7 +53,7 @@ export const LeagueHostManagementTab: React.FC<LeagueHostManagementTabProps> = (
         }
 
         try {
-            const response = await fetch(`${apiUrl}/api/requests`, {
+            const response = await fetch(`${API_BASE_URL}/requests`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
