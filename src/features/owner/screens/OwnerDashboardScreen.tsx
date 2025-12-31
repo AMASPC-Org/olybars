@@ -9,7 +9,7 @@ import { useToast } from '../../../components/ui/BrandedToast';
 import { ListingManagementTab } from '../components/ListingManagementTab';
 import { LocalMakerManagementTab } from '../components/LocalMakerManagementTab'; // New Component
 import { LeagueHostManagementTab } from '../components/LeagueHostManagementTab'; // New Component
-import { isVenueOwner, isVenueManager } from '../../../types/auth_schema';
+import { isVenueOwner, isVenueManager, isSystemAdmin } from '../../../types/auth_schema';
 import { Layout, Gamepad2 } from 'lucide-react';
 import { getGameTTL } from '../../../config/gameConfig';
 import { UserManagementTab } from '../components/UserManagementTab';
@@ -55,15 +55,8 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 }) => {
     const navigate = useNavigate();
     const accessibleVenues = venues.filter(v => {
-        if (userProfile.role === 'admin' || userProfile.role === 'super-admin' || userProfile.email === 'ryan@amaspc.com') return true;
-        // Check venuePermissions specifically
-        const venueRole = userProfile.venuePermissions?.[v.id];
-        if (venueRole === 'owner' || venueRole === 'manager') return true;
-
-        // Fallback to legacy fields
-        if (userProfile.role === 'owner' && v.ownerId === userProfile.uid) return true;
-        if (userProfile.role === 'manager' && v.managerIds?.includes(userProfile.uid)) return true;
-        return false;
+        if (isSystemAdmin(userProfile)) return true;
+        return isVenueManager(userProfile, v.id);
     });
 
     const [selectedVenueId, setSelectedVenueId] = useState<string | null>(initialVenueId || null);
@@ -487,6 +480,14 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         >
                             QR Assets
                         </button>
+                        {isVenueManager(userProfile, myVenue.id) && (
+                            <button
+                                onClick={() => setDashboardView('reports')}
+                                className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'reports' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                            >
+                                Reports
+                            </button>
+                        )}
                         {(isVenueOwner(userProfile, myVenue.id) || myVenue.managersCanAddUsers) && (
                             <button
                                 onClick={() => setDashboardView('people')}
@@ -497,12 +498,6 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         )}
                     </>
                 )}
-                <button
-                    onClick={() => setDashboardView('reports')}
-                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'reports' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
-                >
-                    Reports
-                </button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-8 p-6 pb-24 scrollbar-hide">
@@ -912,8 +907,8 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                     <UserManagementTab venue={myVenue} onUpdate={(updates) => updateVenue(myVenue.id, updates)} currentUser={userProfile} />
                 )}
 
-                {myVenue && dashboardView === 'reports' && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
+                {myVenue && dashboardView === 'reports' && isVenueManager(userProfile, myVenue.id) && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 max-w-4xl mx-auto">
                         <header className="flex justify-between items-center">
                             <div>
                                 <h3 className="text-2xl font-black text-white uppercase font-league leading-none">HOURLY ACTIVITY</h3>
@@ -977,7 +972,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         {/* Activity Type Ledger */}
                         <div className="space-y-4">
                             <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Activity Breakdown</h4>
-                            <div className="grid grid-cols-1 gap-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                                 {hourlyReport && Object.entries(hourlyReport.hourly)
                                     .filter(([_, data]: [string, any]) => (data.checkins || 0) > 0 || (data.vibeReports || 0) > 0)
                                     .map(([hour, data]: [string, any]) => (

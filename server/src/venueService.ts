@@ -1,7 +1,7 @@
 import { PULSE_CONFIG } from '../../src/config/pulse';
 import { db } from './firebaseAdmin.js';
 import admin from 'firebase-admin';
-import { Venue, Signal, SignalType, Badge, UserBadgeProgress } from '../../src/types';
+import { Venue, Signal, SignalType, Badge, UserBadgeProgress, VenueStatus, GameStatus } from '../../src/types';
 import { geocodeAddress } from './utils/geocodingService';
 import { searchPlace, getPlaceDetails } from './utils/placesService';
 import { BADGES } from '../../src/config/badges';
@@ -315,11 +315,11 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
     // Local Maker (Supporter/High Local Score): 15 (1.5x)
     // Master Maker (Hybrid/Verified Production): 20 (2x)
 
-    let points = 10;
+    let points = PULSE_CONFIG.POINTS.CHECK_IN; // 10.0
     const isLocalMakerSupporter = venueData.isLocalMaker === true;
 
     if (isLocalMakerSupporter) {
-        points = 15; // 1.5x Multiplier
+        points = Math.round(points * 1.5); // 1.5x Multiplier (15 points)
     }
 
     // Pass calculated points to the activity logger
@@ -375,6 +375,120 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
         pointsAwarded: points,
         isLocalMaker: venueData.isLocalMaker,
         badgesEarned: badgesAwarded
+    };
+};
+
+/**
+ * Perform a Vibe Check (Signal + Points)
+ */
+export const performVibeCheck = async (
+    venueId: string,
+    userId: string,
+    status: VenueStatus,
+    hasConsent: boolean,
+    photoUrl?: string,
+    verificationMethod: 'gps' | 'qr' = 'gps',
+    gameStatus?: Record<string, GameStatus>
+) => {
+    const venueDoc = await db.collection('venues').doc(venueId).get();
+    if (!venueDoc.exists) throw new Error('Venue not found');
+
+    const venueData = venueDoc.data() as Venue;
+    const now = Date.now();
+
+    // 1. Calculate Points
+    // Base Vibe Report: 5.0 (PULSE_CONFIG.POINTS.VIBE_REPORT)
+    // Photo Bonus: 10.0 (PULSE_CONFIG.POINTS.PHOTO_VIBE)
+    // Consent Bonus: 15.0 (PULSE_CONFIG.POINTS.VERIFIED_BONUS)
+
+    let points = 0;
+
+    // Core Vibe Points
+    points += PULSE_CONFIG.POINTS.VIBE_REPORT; // 5
+
+    // Photo Bonus
+    if (photoUrl) {
+        points += PULSE_CONFIG.POINTS.PHOTO_VIBE; // 10
+    }
+
+    // Marketing Consent Bonus
+    if (hasConsent) {
+        points += PULSE_CONFIG.POINTS.VERIFIED_BONUS; // 15
+    }
+
+    // Game Status Bonus (2 pts per game, max 10)
+    let gameBonus = 0;
+    if (gameStatus && Object.keys(gameStatus).length > 0) {
+        const gameCount = Object.keys(gameStatus).length;
+        gameBonus = Math.min(gameCount * 2, 10);
+        points += gameBonus;
+    }
+
+    // 2. Create Signal (Important for Buzz)
+    const signal: Partial<Signal> = {
+        venueId,
+        userId,
+        type: 'vibe_report',
+        timestamp: now,
+        verificationMethod,
+        value: {
+            status,
+            hasPhoto: !!photoUrl,
+            gameCount: gameStatus ? Object.keys(gameStatus).length : 0
+        }
+    };
+    await db.collection('signals').add(signal);
+
+    // 3. Log User Activity (Points & Wallet)
+    await logUserActivity({
+        userId,
+        type: 'vibe',
+        venueId,
+        points,
+        hasConsent,
+        verificationMethod,
+        metadata: {
+            status,
+            photoUrl,
+            gameBonus
+        }
+    });
+
+    // 4. Update Venue Data (Status, Photos, Games)
+    const venueUpdates: any = {
+        updatedAt: now,
+        status: status, // Direct update (Buzz algo will eventually read signal too)
+        'currentBuzz.lastUpdated': now
+    };
+
+    if (gameStatus) {
+        // Merge with existing game status
+        const existingGames = venueData.liveGameStatus || {};
+        venueUpdates.liveGameStatus = { ...existingGames, ...gameStatus };
+    }
+
+    if (photoUrl) {
+        const newPhoto = {
+            id: `p-${now}-${Math.random().toString(36).substr(2, 6)}`,
+            url: photoUrl,
+            allowMarketingUse: hasConsent,
+            marketingStatus: hasConsent ? 'pending-super' : undefined,
+            timestamp: now,
+            userId
+        };
+        const photos = venueData.photos || [];
+        venueUpdates.photos = [...photos, newPhoto];
+    }
+
+    await db.collection('venues').doc(venueId).update(venueUpdates);
+
+    // 5. Trigger Buzz Recalc
+    await updateVenueBuzz(venueId);
+
+    return {
+        success: true,
+        pointsAwarded: points,
+        message: `Vibe Checked! You earned ${points} Ops.`
     };
 };
 

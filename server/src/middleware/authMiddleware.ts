@@ -6,6 +6,7 @@ export interface AuthenticatedRequest extends Request {
         uid: string;
         email?: string;
         role?: string;
+        venuePermissions?: Record<string, string>;
     };
     appCheck?: any;
 }
@@ -55,7 +56,8 @@ export const verifyToken = async (req: AuthenticatedRequest, res: Response, next
         req.user = {
             uid: decodedToken.uid,
             email: decodedToken.email,
-            role: userData?.role || 'user'
+            role: userData?.role || 'user',
+            venuePermissions: userData?.venuePermissions || {}
         };
 
         next();
@@ -93,6 +95,55 @@ export const identifyUser = async (req: AuthenticatedRequest, res: Response, nex
         // Silently fail to continue as guest
     }
     next();
+};
+
+/**
+ * Middleware to restrict access based on venue-specific permissions
+ * Checks: 
+ * 1. Admin/Super-Admin status (Master Key)
+ * 2. venuePermissions on the User document
+ * 3. venueId matching in query or params
+ */
+export const requireVenueAccess = (minRole: 'owner' | 'manager' | 'staff' = 'staff') => {
+    return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+        const user = req.user;
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+        // Admin Bypass
+        if (user.role === 'admin' || user.role === 'super-admin') return next();
+
+        // Detect venueId from request
+        const venueId = (req.params.id || req.params.venueId || req.query.venueId) as string;
+        if (!venueId) return res.status(400).json({ error: 'venueId is required' });
+
+        // Check user document's venuePermissions
+        const userRole = user.venuePermissions?.[venueId];
+
+        const roleHierarchy = { 'owner': 3, 'manager': 2, 'staff': 1 };
+        const userScore = userRole ? (roleHierarchy[userRole as keyof typeof roleHierarchy] || 0) : 0;
+        const requiredScore = roleHierarchy[minRole];
+
+        if (userScore >= requiredScore) return next();
+
+        // Fallback: Check the Venue document itself (for legacy ownerId/managerIds)
+        try {
+            const venueDoc = await db.collection('venues').doc(venueId).get();
+            if (!venueDoc.exists) return res.status(404).json({ error: 'Venue not found' });
+
+            const venueData = venueDoc.data();
+            const isOwner = venueData?.ownerId === user.uid;
+            const isManager = venueData?.managerIds?.includes(user.uid);
+
+            if (minRole === 'staff' && (isOwner || isManager)) return next();
+            if (minRole === 'manager' && (isOwner || isManager)) return next();
+            if (minRole === 'owner' && isOwner) return next();
+
+        } catch (e) {
+            console.error('Venue access check failed:', e);
+        }
+
+        return res.status(403).json({ error: `Forbidden: Insufficient permissions for venue ${venueId}` });
+    };
 };
 
 /**

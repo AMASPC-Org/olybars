@@ -12,6 +12,20 @@ export const PlayCheckInSchema = z.object({
     amenityId: z.string().min(1),
 });
 
+export const VibeCheckSchema = z.object({
+    venueId: z.string().min(1),
+    status: z.enum(['dead', 'chill', 'lively', 'buzzing', 'packed']),
+    hasConsent: z.boolean(),
+    photoUrl: z.string().optional(),
+    verificationMethod: z.enum(['gps', 'qr']).optional(),
+    gameStatus: z.record(z.string(), z.object({
+        status: z.enum(['open', 'taken', 'out_of_order']),
+        timestamp: z.number().optional(),
+        reportedBy: z.string().optional(),
+        expiresAt: z.number().optional()
+    })).optional()
+});
+
 export const AdminRequestSchema = z.object({
     type: z.enum(['CONTACT', 'LEAGUE_JOIN', 'MAKER_ONBOARD', 'ADMIN_SETUP']),
     payload: z.record(z.string(), z.any()),

@@ -7,7 +7,7 @@ export const PULSE_CONFIG = {
     // Scoring Weights
     POINTS: {
         CHECK_IN: 10.0,
-        VIBE_REPORT: 3.0,
+        VIBE_REPORT: 5.0,
         PHOTO_VIBE: 10.0,
         VERIFIED_BONUS: 15.0 // For verified QR/GPS consent
     },

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, Shield, Trash2, Plus, Users, Mail, CheckCircle2, AlertCircle } from 'lucide-react';
+import { isVenueOwner, isSystemAdmin } from '../../../types/auth_schema';
 import { Venue, UserProfile } from '../../../types';
 import { VenueRole } from '../../../types/auth_schema';
 import { fetchVenueMembers, addVenueMember, removeVenueMember } from '../../../services/venueService';
@@ -82,7 +83,7 @@ export const UserManagementTab: React.FC<UserManagementTabProps> = ({ venue, onU
         }
     };
 
-    const isOwner = venue.ownerId === currentUser.uid || currentUser.role === 'admin' || currentUser.role === 'super-admin';
+    const isOwner = isVenueOwner(currentUser, venue.id) || isSystemAdmin(currentUser);
     const canManageMembers = isOwner || (venue.managersCanAddUsers && members.find(m => m.uid === currentUser.uid)?.role === 'manager');
 
     if (isLoading) {

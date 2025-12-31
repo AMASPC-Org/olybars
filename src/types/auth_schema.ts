@@ -61,3 +61,11 @@ export const isVenueManager = (user: { systemRole?: SystemRole; venuePermissions
     const role = user.venuePermissions?.[venueId];
     return role === 'owner' || role === 'manager';
 };
+// Helper to check if user is a system admin (League HQ)
+export const isSystemAdmin = (user: { systemRole?: SystemRole; role?: string; email?: string } | null | undefined): boolean => {
+    if (!user) return false;
+    return user.systemRole === 'admin' ||
+        user.role === 'admin' ||
+        user.role === 'super-admin' ||
+        user.email === 'ryan@amaspc.com';
+};

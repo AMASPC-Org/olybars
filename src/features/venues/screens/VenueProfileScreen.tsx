@@ -1,5 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { isVenueOwner, isVenueManager, hasVenueAccess } from '../../../types/auth_schema';
 import { ASSETS } from '../../../components/partners/AssetToggleGrid';
 import {
     MapPin, Clock, Beer, Trophy, Music, Users,
@@ -228,7 +229,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     >
                         <Share2 className="w-5 h-5" />
                     </button>
-                    {(userProfile.role === 'admin' || userProfile.role === 'super-admin' || userProfile.email === 'ryan@amaspc.com' || venue.ownerId === userProfile.uid) && (
+                    {isVenueManager(userProfile, venue.id) && (
                         <button
                             onClick={() => onEdit?.(venue.id)}
                             className="p-2 bg-primary/20 backdrop-blur-md rounded-full text-primary border border-primary/30 hover:bg-primary/40 transition-colors"

@@ -9,6 +9,7 @@ import { queryClient } from './lib/queryClient';
 import {
   Venue, PointsReason, UserProfile, CheckInRecord, UserAlertPreferences, VenueStatus, ActivityLog, GameStatus
 } from './types';
+import { isSystemAdmin } from './types/auth_schema';
 
 // --- REAL SERVICES ---
 import { fetchVenues, updateVenueDetails } from './services/venueService';
@@ -17,7 +18,8 @@ import {
   fetchUserRank,
   toggleFavorite,
   updateUserProfile,
-  fetchRecentActivity // New Export
+  fetchRecentActivity, // New Export
+  performVibeCheck
 } from './services/userService';
 
 // --- MODULAR COMPONENTS ---
@@ -189,7 +191,7 @@ export default function OlyBarsApp() {
 
   const openInfo = (title: string, text: string) => { setInfoContent({ title, text }); };
 
-  const awardPoints = (reason: PointsReason, venueId?: string, hasConsent?: boolean, verificationMethod?: 'gps' | 'qr', bonusPoints: number = 0) => {
+  const awardPoints = (reason: PointsReason, venueId?: string, hasConsent?: boolean, verificationMethod?: 'gps' | 'qr', bonusPoints: number = 0, skipBackend: boolean = false) => {
     let delta = 0;
     if (reason === 'checkin' || reason === 'photo') delta = 10;
     else if (reason === 'share' || reason === 'social_share') delta = 5;
@@ -213,7 +215,9 @@ export default function OlyBarsApp() {
       }));
     }
 
-    logUserActivity(userId, { type: reason, venueId, hasConsent, points: delta, verificationMethod });
+    if (!skipBackend) {
+      logUserActivity(userId, { type: reason, venueId, hasConsent, points: delta, verificationMethod });
+    }
   };
 
   const handleUpdateVenue = async (venueId: string, updates: Partial<Venue>) => {
@@ -291,24 +295,18 @@ export default function OlyBarsApp() {
 
     // Update Venue Status and Photos (Skip for Guests to avoid auth errors)
     if (userProfile.uid !== 'guest') {
-      handleUpdateVenue(venue.id, {
-        status,
-        liveGameStatus: gameStatus ? { ...(venue.liveGameStatus || {}), ...gameStatus } : venue.liveGameStatus,
-        photos: photoUrl ? [
-          ...(venue.photos || []),
-          {
-            id: `p-${now}-${Math.random().toString(36).substr(2, 6)}`,
-            url: photoUrl,
-            allowMarketingUse: hasConsent,
-            marketingStatus: hasConsent ? 'pending-super' : undefined,
-            timestamp: now,
-            userId: userProfile.uid
-          }
-        ] : venue.photos
-      });
+      try {
+        await performVibeCheck(venue.id, userProfile.uid, status, hasConsent, photoUrl, verificationMethod, gameStatus);
+      } catch (err) {
+        console.error('[OlyBars] Vibe Check Backend Error:', err);
+        showToast('Vibe Check recorded offline (points may be delayed)', 'warning');
+      }
+    } else {
+      // Guest mode fallback (or keep updating local state if desired)
+      // Original logic for guests could remain or be skipped if we don't support guest vibe buzz updates
     }
 
-    awardPoints('vibe', venue.id, hasConsent, verificationMethod, gameBonus);
+    awardPoints('vibe', venue.id, hasConsent, verificationMethod, gameBonus, userProfile.uid !== 'guest');
 
     // Generate Vibe Receipt
     const receipt: VibeReceiptData = {
@@ -569,7 +567,7 @@ export default function OlyBarsApp() {
               <Route
                 path="admin"
                 element={
-                  userProfile.role === 'super-admin' || userProfile.role === 'admin' || userProfile.email === 'ryan@amaspc.com'
+                  isSystemAdmin(userProfile)
                     ? <AdminDashboardScreen userProfile={userProfile} />
                     : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
                 }
@@ -581,7 +579,7 @@ export default function OlyBarsApp() {
               <Route path="perks" element={<LeaguePerksScreen />} />
               <Route path="glossary" element={<GlossaryScreen />} />
               <Route path="points" element={<PointsGuideScreen />} />
-              <Route path="points/history" element={<PointHistoryScreen onBack={() => window.history.back()} />} />
+              <Route path="points/history" element={<PointHistoryScreen onBack={() => window.history.back()} userProfile={userProfile} onLogin={handleMemberLoginClick} />} />
               <Route path="league-membership" element={<LeagueMembershipPage />} />
               <Route path="venue-handover" element={<OnboardingHandoverPage />} />
 

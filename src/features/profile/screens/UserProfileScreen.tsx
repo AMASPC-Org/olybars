@@ -13,6 +13,7 @@ import { auth } from '../../../lib/firebase';
 import { updateUserProfile } from '../../../services/userService';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { Link, useNavigate } from 'react-router-dom';
+import { isSystemAdmin } from '../../../types/auth_schema';
 
 interface UserProfileScreenProps {
     userProfile: UserProfile;
@@ -246,7 +247,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
             </div>
 
             {/* Quick Admin Override for Testing Swapping roles */}
-            {isSuperAdmin && (
+            {isSystemAdmin(userProfile) && (
                 <div className="bg-slate-900 border-y border-white/5 px-6 py-4">
                     <div className="flex items-center gap-2 mb-3">
                         <Shield className="w-4 h-4 text-primary" />
@@ -307,7 +308,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                         </div>
 
                         {/* [NEW] SUPER-ADMIN QUICK ACCESS */}
-                        {isSuperAdmin && (
+                        {isSystemAdmin(userProfile) && (
                             <div className="col-span-2 bg-gradient-to-r from-red-950/40 to-black border border-red-500/30 p-5 rounded-2xl relative overflow-hidden group hover:border-red-500/60 transition-all cursor-pointer" onClick={() => navigate('/admin')}>
                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                     <Shield className="w-24 h-24 text-red-500" />
@@ -353,7 +354,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                             </p>
 
                             {/* [NEW] REDEEM GEAR BUTTON */}
-                            {userProfile.makersTrailProgress && userProfile.makersTrailProgress >= 5 && (
+                            {(userProfile.makersTrailProgress && userProfile.makersTrailProgress >= 5) || isSystemAdmin(userProfile) && (
                                 <button
                                     onClick={() => navigate('/merch')}
                                     className="w-full mt-4 py-3 bg-[#D4AF37] text-black font-black text-xs uppercase tracking-[0.2em] rounded-xl shadow-lg hover:scale-[1.02] transition-transform active:scale-95 border-2 border-black"

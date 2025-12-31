@@ -10,7 +10,7 @@ interface ClockInModalProps {
     isOpen: boolean;
     onClose: () => void;
     selectedVenue: Venue | null;
-    awardPoints: (reason: PointsReason, venueId?: string, hasConsent?: boolean) => void;
+    awardPoints: (reason: PointsReason, venueId?: string, hasConsent?: boolean, verificationMethod?: 'gps' | 'qr', bonusPoints?: number, skipBackend?: boolean) => void;
     setCheckInHistory: React.Dispatch<React.SetStateAction<CheckInRecord[]>>;
     setClockedInVenue: React.Dispatch<React.SetStateAction<string | null>>;
     vibeChecked?: boolean;
@@ -113,7 +113,8 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                 await performCheckIn(selectedVenue.id, userId, latitude, longitude);
             }
 
-            awardPoints('checkin', selectedVenue.id, allowMarketingUse);
+            // Skip backend logging if user is not guest
+            awardPoints('checkin', selectedVenue.id, allowMarketingUse, 'gps', 0, userId !== 'guest');
             setCheckInHistory(prev => [...prev, { venueId: selectedVenue.id, timestamp: Date.now() }]);
             setClockedInVenue(selectedVenue.id);
 

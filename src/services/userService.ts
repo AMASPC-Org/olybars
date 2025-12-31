@@ -89,6 +89,35 @@ export const updatePhotoApproval = async (venueId: string, photoId: string, upda
 };
 
 /**
+ * Perform a Vibe Check via the production backend.
+ */
+export const performVibeCheck = async (
+  venueId: string,
+  userId: string,
+  status: string,
+  hasConsent: boolean,
+  photoUrl?: string,
+  verificationMethod: 'gps' | 'qr' = 'gps',
+  gameStatus?: any
+) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/vibe-check`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ venueId, userId, status, hasConsent, photoUrl, verificationMethod, gameStatus })
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({ error: 'Failed' }));
+      throw new Error(errData.error || 'Failed to perform vibe check');
+    }
+    return await response.json();
+  } catch (e) {
+    console.error('Vibe check error:', e);
+    throw e;
+  }
+};
+
+/**
  * Perform a geofenced check-in via the production backend.
  */
 export const performCheckIn = async (venueId: string, userId: string, lat: number, lng: number, verificationMethod: 'gps' | 'qr' = 'gps') => {

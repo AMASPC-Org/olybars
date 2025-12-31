@@ -5,7 +5,7 @@ import { rateLimit } from 'express-rate-limit';
 import { config } from './config';
 import { fetchVenues, checkIn } from './venueService';
 import { isAiBot, getBotName } from './utils/botDetector';
-import { verifyToken, requireRole, verifyAppCheck, identifyUser } from './middleware/authMiddleware';
+import { verifyToken, requireRole, requireVenueAccess, verifyAppCheck, identifyUser } from './middleware/authMiddleware';
 import {
     CheckInSchema,
     PlayCheckInSchema,
@@ -271,6 +271,32 @@ v1Router.post('/check-in', verifyAppCheck, verifyToken, async (req, res) => {
     }
 });
 
+/**
+ * @route POST /api/vibe-check
+ * @desc Submit a vibe check (Signal + Points)
+ */
+v1Router.post('/vibe-check', verifyToken, async (req, res) => {
+    const { VibeCheckSchema } = await import('./utils/validation'); // Dynamic import to ensure schema is loaded
+    const validation = VibeCheckSchema.safeParse(req.body);
+
+    if (!validation.success) {
+        return res.status(400).json({ error: 'Invalid vibe data', details: validation.error.format() });
+    }
+
+    const { venueId, status, hasConsent, photoUrl, verificationMethod, gameStatus } = validation.data;
+    const userId = (req as any).user.uid;
+
+    try {
+        const { performVibeCheck } = await import('./venueService');
+        // Cast gameStatus to any to match strict type expectation if needed, or ensure validation schema matches exactly
+        const result = await performVibeCheck(venueId, userId, status as any, hasConsent, photoUrl, verificationMethod as any, gameStatus as any);
+        res.json(result);
+    } catch (error: any) {
+        log('WARNING', 'Vibe check failed', { venueId, userId, error: error.message });
+        res.status(400).json({ error: error.message });
+    }
+});
+
 v1Router.post('/play/check-in', verifyToken, async (req, res) => {
     const validation = PlayCheckInSchema.safeParse(req.body);
     if (!validation.success) {
@@ -376,7 +402,7 @@ v1Router.get('/activity', async (req, res) => {
  * @route GET /api/partners/reports/hourly
  * @desc Fetch hourly activity reports for a venue
  */
-v1Router.get('/partners/reports/hourly', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+v1Router.get('/partners/reports/hourly', verifyToken, requireVenueAccess('manager'), async (req, res) => {
     const { venueId, day } = req.query;
     if (!venueId) return res.status(400).json({ error: 'venueId is required' });
 
@@ -410,7 +436,7 @@ v1Router.get('/users/me/history', verifyToken, async (req, res) => {
  * @route PATCH /api/venues/:id
  * @desc Update general venue information (Listing management)
  */
-v1Router.patch('/venues/:id', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager', 'user', 'PLAYER']), async (req, res) => {
+v1Router.patch('/venues/:id', verifyToken, requireVenueAccess('manager'), async (req, res) => {
     const { id } = req.params;
     const validation = VenueUpdateSchema.safeParse(req.body.updates);
     if (!validation.success) {
@@ -468,7 +494,7 @@ v1Router.get('/venues/:id/pulse', async (req, res) => {
  * @route GET /api/venues/:id/insights
  * @desc Fetch proactive AI insights for a venue
  */
-v1Router.get('/venues/:id/insights', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+v1Router.get('/venues/:id/insights', verifyToken, requireVenueAccess('manager'), async (req, res) => {
     const { id } = req.params;
     try {
         const { generateVenueInsights } = await import('./venueService');
@@ -541,7 +567,7 @@ v1Router.patch('/venues/:id/photos/:photoId', verifyToken, requireRole(['admin',
  * @route GET /api/venues/:id/members
  * @desc Fetch all members of a venue
  */
-v1Router.get('/venues/:id/members', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+v1Router.get('/venues/:id/members', verifyToken, requireVenueAccess('manager'), async (req, res) => {
     const { id } = req.params;
     try {
         const { getVenueMembers } = await import('./venueService');
@@ -557,7 +583,7 @@ v1Router.get('/venues/:id/members', verifyToken, requireRole(['admin', 'super-ad
  * @route POST /api/venues/:id/members
  * @desc Add a new member to a venue
  */
-v1Router.post('/venues/:id/members', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+v1Router.post('/venues/:id/members', verifyToken, requireVenueAccess('manager'), async (req, res) => {
     const { id } = req.params;
     const { email, role } = req.body;
     const requestingUserId = (req as any).user.uid;
@@ -580,7 +606,7 @@ v1Router.post('/venues/:id/members', verifyToken, requireRole(['admin', 'super-a
  * @route DELETE /api/venues/:id/members/:memberId
  * @desc Remove a member from a venue
  */
-v1Router.delete('/venues/:id/members/:memberId', verifyToken, requireRole(['admin', 'super-admin', 'owner', 'manager']), async (req, res) => {
+v1Router.delete('/venues/:id/members/:memberId', verifyToken, requireVenueAccess('manager'), async (req, res) => {
     const { id: venueId, memberId } = req.params;
     const requestingUserId = (req as any).user.uid;
 
