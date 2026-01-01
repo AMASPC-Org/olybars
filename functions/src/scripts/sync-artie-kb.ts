@@ -37,7 +37,14 @@ async function syncKnowledge() {
             knowledgeItems.push({ question: `Market: ${k}`, answer: v, category: 'Market' });
         });
 
-        // 5. Batch Upload to Firestore
+        // 5. Add Local Knowledge (Glossary)
+        if (kb.lore && kb.lore.local_knowledge) {
+            Object.entries(kb.lore.local_knowledge).forEach(([k, v]) => {
+                knowledgeItems.push({ question: `Glossary: ${k}`, answer: v, category: 'Glossary' });
+            });
+        }
+
+        // 6. Batch Upload to Firestore
         const batch = db.batch();
         const knowledgeCol = db.collection('knowledge');
 
