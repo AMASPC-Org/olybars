@@ -46,7 +46,15 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                 (v.name && v.name.toLowerCase().includes(q)) ||
                 (v.address && v.address.toLowerCase().includes(q)) ||
                 (v.venueType && v.venueType.replace(/_/g, ' ').toLowerCase().includes(q)) ||
-                (v.vibe && v.vibe.toLowerCase().includes(q))
+                (v.vibe && v.vibe.toLowerCase().includes(q)) ||
+                // Keyword matches for amenities [NEW]
+                (q.includes('dog') && v.isDogFriendly) ||
+                (q.includes('family') && v.isAllAges) ||
+                (q.includes('all ages') && v.isAllAges) ||
+                (q.includes('kids') && v.isAllAges) ||
+                (q.includes('outdoor') && v.hasOutdoorSeating) ||
+                (q.includes('patio') && v.hasOutdoorSeating) ||
+                (q.includes('private') && v.hasPrivateRoom)
             );
         }
 
@@ -173,6 +181,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                         { id: 'bar_pub', label: 'Bars' },
                         { id: 'restaurant_bar', label: 'Rest & Bar' },
                         { id: 'brewery_taproom', label: 'Breweries' },
+                        { id: 'brewpub', label: 'Brewpubs' },
                         { id: 'lounge_club', label: 'Lounges' },
                         { id: 'arcade_bar', label: 'Arcades' }
                     ].map(type => (

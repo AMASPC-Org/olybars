@@ -1,45 +1,169 @@
 import React, { useState, useEffect } from 'react';
 import { ArenaLayout } from '../../../components/layout/ArenaLayout';
 import { UniversalEventCard } from '../../../components/ui/UniversalEventCard';
-import { Venue, AppEvent } from '../../../types';
-import { Ticket, Plus, Sparkles, Loader2 } from 'lucide-react';
-import { EventService } from '../../../services/eventService';
+import { Venue } from '../../../types';
+import { Ticket, Plus, Sparkles, Loader2, List, Music, Mic, Star } from 'lucide-react';
 import { EventSubmissionModal } from '../components/EventSubmissionModal';
 
 interface EventsScreenProps {
   venues: Venue[];
 }
 
+// Local Helper Type (Flexible source of truth)
+interface UnifiedEvent {
+  id: string;
+  venueId: string;
+  venueName: string;
+  title: string;
+  date: string; // ISO Date "2023-10-31"
+  time: string; // "20:00"
+  description: string;
+  type: 'live' | 'play' | 'event' | 'karaoke'; // Changed 'live_music' to 'live' to match UniversalEventCard prop
+  is_featured?: boolean;
+  score?: number;
+  is_ritual?: boolean;
+}
+
 export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [events, setEvents] = useState<AppEvent[]>([]);
+  const [events, setEvents] = useState<UnifiedEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [eventTypeFilter, setEventTypeFilter] = useState<'all' | 'music' | 'activities'>('all');
 
+  // --- UNIFIED FEED ENGINE ---
   useEffect(() => {
-    const loadEvents = async () => {
+    const generateFeed = async () => {
       setIsLoading(true);
-      const fetchedEvents = await EventService.fetchEvents();
-      setEvents(fetchedEvents);
+      const today = new Date();
+      const normalizeDate = (d: Date) => d.toISOString().split('T')[0];
+      const todayStr = normalizeDate(today);
+
+      // 1. Fetch One-Time Events (Flatten from Venues)
+      const specialEvents: UnifiedEvent[] = venues.flatMap(v =>
+        (v.special_events || []).map(evt => ({
+          id: evt.id,
+          venueId: v.id,
+          venueName: v.name,
+          title: evt.title,
+          date: evt.date,
+          time: evt.startTime,
+          description: evt.description || '',
+          type: evt.type === 'music' ? 'live' : 'event', // Map music -> live
+          is_featured: evt.is_featured,
+          score: evt.is_featured ? 100 : 10,
+          is_ritual: false
+        }))
+      ).filter(e => e.date >= todayStr);
+
+      // 2. Generate Ritual Instances (Next 7 Days)
+      const rituals: UnifiedEvent[] = [];
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+      venues.forEach(v => {
+        if (v.weekly_schedule) {
+          Object.entries(v.weekly_schedule).forEach(([day, activities]) => {
+            const dayIndex = days.indexOf(day.toLowerCase());
+            if (dayIndex === -1) return;
+
+            // Find next occurrence
+            const instanceDate = new Date();
+            const dayDiff = (dayIndex - today.getDay() + 7) % 7;
+            instanceDate.setDate(today.getDate() + dayDiff);
+            const dateStr = normalizeDate(instanceDate);
+
+            // Determine rough category
+            const getActivityType = (act: string): UnifiedEvent['type'] => {
+              const lower = act.toLowerCase();
+              if (lower.includes('trivia') || lower.includes('bingo') || lower.includes('quiz')) return 'play';
+              if (lower.includes('karaoke')) return 'karaoke';
+              if (lower.includes('music') || lower.includes('jazz')) return 'live';
+              return 'event';
+            };
+
+            activities.forEach(act => {
+              rituals.push({
+                id: `ritual-${v.id}-${day}-${act}`,
+                venueId: v.id,
+                venueName: v.name,
+                title: act + ' ' + (dayDiff === 0 ? '(Tonight)' : ''),
+                date: dateStr,
+                time: v.triviaTime || '19:00',
+                description: `Weekly ${act} at ${v.name}`,
+                type: getActivityType(act),
+                is_featured: false,
+                score: 5,
+                is_ritual: true
+              });
+            });
+          });
+        }
+      });
+
+      // 3. Merge & Sort
+      const allEvents = [...specialEvents, ...rituals].sort((a, b) => {
+        // Boost featured items
+        if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+        // Then by Date
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        // Then by Time
+        return a.time.localeCompare(b.time);
+      });
+
+      setEvents(allEvents);
       setIsLoading(false);
     };
-    loadEvents();
-  }, []);
 
-  const filteredEvents = events.filter(e =>
-    e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    e.venueName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    if (venues.length > 0) generateFeed();
+  }, [venues]);
+
+
+  const filteredEvents = events.filter(e => {
+    const matchesSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.venueName.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    if (eventTypeFilter === 'all') return true;
+    const isMusic = e.type === 'live';
+    const isActivity = e.type === 'play' || e.type === 'karaoke';
+
+    if (eventTypeFilter === 'music') return isMusic;
+    if (eventTypeFilter === 'activities') return isActivity;
+
+    return true;
+  });
 
   return (
     <ArenaLayout
       title="The Citywire"
       subtitle="Chronological Citywide Feed"
       activeCategory="events"
-      artieTip="The 98501 is always on. Find your rhythm, claim your spot, and make your mark. Check 'The Wire' for community-submitted gems."
+      artieTip="The 98501 is always on. Featured events and weekly rituals, all in one timelines."
       onSearchChange={setSearchQuery}
       searchPlaceholder="Search the wire..."
     >
+      {/* Event Type Toggles */}
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        {[
+          { id: 'all', label: 'All Events', icon: List },
+          { id: 'music', label: 'Live Music', icon: Music },
+          { id: 'activities', label: 'Activities', icon: Mic },
+        ].map((type) => (
+          <button
+            key={type.id}
+            onClick={() => setEventTypeFilter(type.id as any)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${eventTypeFilter === type.id
+              ? 'bg-primary text-black shadow-[0_0_15px_rgba(251,191,36,0.5)]'
+              : 'bg-white/5 text-slate-400 hover:bg-white/10 border border-white/5'
+              }`}
+          >
+            <type.icon size={14} />
+            {type.label}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-6">
         {/* Submit Event Trigger */}
         <button
@@ -52,22 +176,37 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-4">
             <Loader2 className="w-8 h-8 animate-spin" />
-            <p className="font-black uppercase tracking-widest text-xs animate-pulse">Refreshing the Wire...</p>
+            <p className="font-black uppercase tracking-widest text-xs animate-pulse">refreshing the wire...</p>
           </div>
         ) : filteredEvents.length > 0 ? (
-          <div className="space-y-2">
+          <div className="space-y-4">
             {filteredEvents.map(event => (
-              <UniversalEventCard
-                key={event.id}
-                event={event}
-                venue={venues.find(v => v.id === event.venueId)}
-                contextSlot={
-                  <div className="flex items-center gap-2">
-                    <Ticket size={14} className="text-primary" />
-                    <span className="text-[10px] text-white font-black uppercase font-league">Community Submission</span>
+              <div key={event.id} className="relative group">
+                {event.is_featured && (
+                  <div className="absolute -top-3 left-4 z-20 bg-primary text-black text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1 border border-black/10">
+                    <Star size={10} className="fill-black" />
+                    Featured
                   </div>
-                }
-              />
+                )}
+                <div className={event.is_featured ? "border-2 border-primary/50  rounded-[2.2rem] shadow-[0_0_30px_rgba(251,191,36,0.1)]" : ""}>
+                  <UniversalEventCard
+                    // Pass specific props to bypass strict AppEvent requirement
+                    title={event.title}
+                    time={`${event.date} @ ${event.time}`}
+                    venue={venues.find(v => v.id === event.venueId)}
+                    category={event.type}
+                    points={event.score}
+                    contextSlot={
+                      <div className="flex items-center gap-2">
+                        <Ticket size={14} className={event.is_ritual ? "text-slate-500" : "text-primary"} />
+                        <span className={`text-[10px] font-black uppercase font-league ${event.is_ritual ? "text-slate-500" : "text-white"}`}>
+                          {event.is_ritual ? 'Weekly Ritual' : 'Special Event'}
+                        </span>
+                      </div>
+                    }
+                  />
+                </div>
+              </div>
             ))}
           </div>
         ) : (
@@ -75,38 +214,6 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
             <Sparkles className="w-10 h-10 text-slate-700 mx-auto" />
             <p className="text-slate-500 font-black uppercase tracking-widest font-league">Wire is Silent</p>
             <p className="text-[10px] text-slate-600 font-bold uppercase">Be the first to share what's happening</p>
-            <button
-              onClick={() => setShowSubmitModal(true)}
-              className="text-primary font-black uppercase tracking-widest text-[9px] hover:underline"
-            >
-              + Submit Event
-            </button>
-          </div>
-        )}
-
-        {/* Legacy/Sanctioned Fallback Section */}
-        {!isLoading && venues.filter(v => v.leagueEvent).length > 0 && (
-          <div className="pt-8 border-t border-white/5 space-y-4">
-            <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] font-league ml-4">Sanctioned League Hubs</h3>
-            <div className="space-y-2">
-              {venues
-                .filter(v => v.leagueEvent && !events.some(e => e.venueId === v.id))
-                .map(venue => (
-                  <UniversalEventCard
-                    key={`legacy-${venue.id}`}
-                    venue={venue}
-                    title={venue.deal || "Daily Ritual"}
-                    time={venue.triviaTime || "Tonight"}
-                    category="event"
-                    contextSlot={
-                      <div className="flex items-center gap-2">
-                        <Ticket size={14} className="text-primary" />
-                        <span className="text-[10px] text-white font-black uppercase font-league">Official Bar League Partner</span>
-                      </div>
-                    }
-                  />
-                ))}
-            </div>
           </div>
         )}
       </div>

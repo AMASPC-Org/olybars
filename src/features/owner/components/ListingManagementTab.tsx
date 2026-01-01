@@ -1,22 +1,23 @@
 import React, { useState } from 'react';
 import {
     Info, Phone, Globe, Instagram, Facebook, Twitter,
-    Save, Clock, MapPin, Mail, ChevronRight, Beer
+    Save, Clock, MapPin, Mail, ChevronRight, Beer,
+    Sparkles, Users, Shield, Gamepad2, Trophy, Zap, Utensils, X
 } from 'lucide-react';
 import { Venue, VenueType, VibeTag } from '../../../types';
-import { updateVenueDetails, syncVenueWithGoogle } from '../../../services/venueService';
+import { syncVenueWithGoogle } from '../../../services/venueService';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { PlaceAutocomplete } from '../../../components/ui/PlaceAutocomplete';
 import { AssetToggleGrid } from '../../../components/partners/AssetToggleGrid';
 import { GameFeatureManager } from './GameFeatureManager';
-import { Gamepad2 } from 'lucide-react';
 
 interface ListingManagementTabProps {
     venue: Venue;
-    onUpdate: (venueId: string, updates: Partial<Venue>) => void;
+    venues?: Venue[];
+    onUpdate: (venueId: string, updates: Partial<Venue>) => Promise<void> | void;
 }
 
-export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venue, onUpdate }) => {
+export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venue, venues, onUpdate }) => {
     const { showToast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -38,8 +39,58 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         vibeTags: venue.vibeTags || [],
         tier_config: venue.tier_config || { is_directory_listed: true, is_league_eligible: false },
         hasGameVibeCheckEnabled: venue.hasGameVibeCheckEnabled || false,
-        gameFeatures: venue.gameFeatures || []
+        gameFeatures: venue.gameFeatures || [],
+        happyHour: venue.happyHour || { startTime: '', endTime: '', description: '', days: [] },
+        happyHourSpecials: venue.happyHourSpecials || '',
+        happyHourSimple: venue.happyHourSimple || '',
+        leagueEvent: venue.leagueEvent || null,
+        triviaTime: venue.triviaTime || '',
+        triviaHost: venue.triviaHost || '',
+        triviaPrizes: venue.triviaPrizes || '',
+        triviaSpecials: venue.triviaSpecials || '',
+        triviaHowItWorks: venue.triviaHowItWorks || [],
+        happyHourMenu: venue.happyHourMenu || [],
+        reservationUrl: venue.reservationUrl || ''
     });
+
+    // [FIX] Synchronize formData when venue prop changes (e.g. switching in dropdown)
+    React.useEffect(() => {
+        setFormData({
+            description: venue.description || '',
+            hours: typeof venue.hours === 'string' ? venue.hours : 'Standard Hours',
+            phone: venue.phone || '',
+            email: venue.email || '',
+            website: venue.website || '',
+            instagram: venue.instagram || '',
+            facebook: venue.facebook || '',
+            twitter: venue.twitter || '',
+            vibe: venue.vibe || '',
+            originStory: venue.originStory || '',
+            isLowCapacity: venue.isLowCapacity || false,
+            isSoberFriendly: venue.isSoberFriendly || false,
+            establishmentType: venue.establishmentType || 'Bar Only',
+            vibeTags: venue.vibeTags || [],
+            tier_config: venue.tier_config || { is_directory_listed: true, is_league_eligible: false },
+            hasGameVibeCheckEnabled: venue.hasGameVibeCheckEnabled || false,
+            gameFeatures: venue.gameFeatures || [],
+            happyHour: venue.happyHour || { startTime: '', endTime: '', description: '', days: [] },
+            happyHourSpecials: venue.happyHourSpecials || '',
+            happyHourSimple: venue.happyHourSimple || '',
+            leagueEvent: venue.leagueEvent || null,
+            triviaTime: venue.triviaTime || '',
+            triviaHost: venue.triviaHost || '',
+            triviaPrizes: venue.triviaPrizes || '',
+            triviaSpecials: venue.triviaSpecials || '',
+            triviaHowItWorks: venue.triviaHowItWorks || [],
+            reservationUrl: venue.reservationUrl || '',
+            insiderVibe: venue.insiderVibe || '', // Added missing field
+            geoLoop: (venue as any).geoLoop || '', // Cast to any to handle "" option in select
+            venueType: venue.venueType || 'bar_pub', // Added missing field
+            physicalRoom: venue.physicalRoom !== false, // Added missing field
+            makerType: (venue as any).makerType || '', // Added missing field
+            happyHourMenu: venue.happyHourMenu || [],
+        });
+    }, [venue]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -49,12 +100,12 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            const result = await updateVenueDetails(venue.id, formData);
-            if (result.success) {
-                onUpdate(venue.id, formData);
-                showToast('VENUE LISTING UPDATED SUCCESSFULLY', 'success');
-            }
+            // [REMEDIATION] Remove redundant direct call; rely on App-level handleUpdateVenue (onUpdate)
+            // handleUpdateVenue handles optimistic state and persistence with correct userId
+            await onUpdate(venue.id, formData);
+            showToast('VENUE LISTING UPDATED SUCCESSFULLY', 'success');
         } catch (error) {
+            console.error('[OwnerDashboard] Failed to save:', error);
             showToast('FAILED TO UPDATE LISTING', 'error');
         } finally {
             setIsSaving(false);
@@ -171,6 +222,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                     <option value="brewery_taproom" className="bg-black">Brewery / Taproom</option>
                                     <option value="lounge_club" className="bg-black">Lounge / Club</option>
                                     <option value="arcade_bar" className="bg-black">Arcade Bar</option>
+                                    <option value="brewpub" className="bg-black">Brewpub / Gastro</option>
                                 </select>
                                 <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4 rotate-90" />
                             </div>
@@ -199,8 +251,8 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                             setFormData(prev => ({ ...prev, vibeTags: newTags }));
                                         }}
                                         className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${(formData.vibeTags || []).includes(tag.value)
-                                                ? 'bg-primary text-black border-primary'
-                                                : 'bg-black/40 text-slate-500 border-white/10 hover:border-white/30'
+                                            ? 'bg-primary text-black border-primary'
+                                            : 'bg-black/40 text-slate-500 border-white/10 hover:border-white/30'
                                             }`}
                                     >
                                         {tag.label}
@@ -334,6 +386,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                         onPlaceSelect={(place) => setSelectedPlaceId(place.place_id || null)}
                         placeholder="Search for your business on Google..."
                         className="!bg-black/20"
+                        venues={venues}
                     />
 
                     {selectedPlaceId && (
@@ -349,6 +402,112 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                     <InputField label="Public Email" name="email" value={formData.email} icon={Mail} placeholder="info@yourvenue.com" />
                     <InputField label="Website" name="website" value={formData.website} icon={Globe} placeholder="www.yourvenue.com" />
                     <InputField label="Hours of Operation" name="hours" value={formData.hours} icon={Clock} placeholder="Daily 11:30 AM - Midnight" />
+                </div>
+            </section>
+
+            {/* Happy Hour & Specials Section */}
+            <section id="happy-hour-editor" className="space-y-6 scroll-mt-32">
+                <div className="flex justify-between items-end">
+                    <div>
+                        <h3 className="text-xl font-black text-white uppercase font-league leading-none">HAPPY HOUR & SPECIALS</h3>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest italic">Daily recurring deals (Excludes Flash Deals)</p>
+                    </div>
+                </div>
+
+                <div className="bg-black/20 border border-white/5 rounded-2xl p-6 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Daily Schedule</label>
+                            <div className="flex flex-wrap gap-2">
+                                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                                    <button
+                                        key={day}
+                                        type="button"
+                                        onClick={() => {
+                                            const currentDays = formData.happyHour?.days || [];
+                                            const newDays = currentDays.includes(day)
+                                                ? currentDays.filter(d => d !== day)
+                                                : [...currentDays, day];
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                happyHour: { ...(prev.happyHour || { startTime: '', endTime: '', description: '' }), days: newDays }
+                                            }));
+                                        }}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${(formData.happyHour?.days || []).includes(day)
+                                            ? 'bg-primary text-black border-primary'
+                                            : 'bg-black/40 text-slate-500 border-white/10 hover:border-white/30'
+                                            }`}
+                                    >
+                                        {day}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Start Time</label>
+                                <input
+                                    type="time"
+                                    value={formData.happyHour?.startTime || ''}
+                                    onChange={(e) => setFormData(prev => ({
+                                        ...prev,
+                                        happyHour: { ...(prev.happyHour || { startTime: '', endTime: '', description: '', days: [] }), startTime: e.target.value }
+                                    }))}
+                                    className="w-full bg-black border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-primary/50 font-medium"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">End Time</label>
+                                <input
+                                    type="time"
+                                    value={formData.happyHour?.endTime || ''}
+                                    onChange={(e) => setFormData(prev => ({
+                                        ...prev,
+                                        happyHour: { ...(prev.happyHour || { startTime: '', endTime: '', description: '', days: [] }), endTime: e.target.value }
+                                    }))}
+                                    className="w-full bg-black border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-primary/50 font-medium"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Full Description (Detail View)</label>
+                        <textarea
+                            value={formData.happyHour?.description || ''}
+                            onChange={(e) => setFormData(prev => ({
+                                ...prev,
+                                happyHour: { ...(prev.happyHour || { startTime: '', endTime: '', description: '', days: [] }), description: e.target.value }
+                            }))}
+                            rows={2}
+                            placeholder="Ex: $1 Off Drafts, $5 Well Drinks, and Half-Price Appetizers"
+                            className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder:text-slate-800 focus:border-primary/50 outline-none transition-all font-medium resize-none"
+                        />
+                    </div>
+
+                    <div className="space-y-1.5 pt-4 border-t border-white/5">
+                        <div className="flex justify-between items-center">
+                            <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <Beer className="w-3 h-3" />
+                                Buzz Clock Title (Crucial)
+                            </label>
+                            <span className={`text-[9px] font-black uppercase tracking-widest ${(formData.happyHourSpecials?.length || 0) > 40 ? 'text-red-500' : 'text-slate-500'}`}>
+                                {formData.happyHourSpecials?.length || 0} / 40 CHARS
+                            </span>
+                        </div>
+                        <input
+                            type="text"
+                            name="happyHourSpecials"
+                            value={formData.happyHourSpecials || ''}
+                            onChange={handleChange}
+                            maxLength={45}
+                            placeholder="Ex: $5 Craft Pints & Pretzels"
+                            className={`w-full bg-blue-900/10 border rounded-xl py-3 px-4 text-sm text-blue-100 placeholder:text-blue-900/50 outline-none transition-all font-black uppercase tracking-tighter ${(formData.happyHourSpecials?.length || 0) > 40 ? 'border-red-500/50' : 'border-primary/30 focus:border-primary'
+                                }`}
+                        />
+                        <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest ml-1">This appears in the high-density Buzz Clock. Keep it punched!</p>
+                    </div>
                 </div>
             </section>
 
@@ -410,6 +569,222 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                             </button>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            {/* Access & Amenities Section [NEW] */}
+            <section className="space-y-6">
+                <div>
+                    <h3 className="text-xl font-black text-white uppercase font-league leading-none">ACCESS & AMENITIES</h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest italic">Define local access policies and onsite features</p>
+                </div>
+
+                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6 space-y-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[
+                            { label: 'All Ages', key: 'isAllAges', icon: Users },
+                            { label: 'Dog Friendly', key: 'isDogFriendly', icon: Sparkles },
+                            { label: 'Outdoor Seats', key: 'hasOutdoorSeating', icon: MapPin },
+                            { label: 'Private Room', key: 'hasPrivateRoom', icon: Shield }
+                        ].map((amenity) => (
+                            <button
+                                key={amenity.key}
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, [amenity.key]: !(prev as any)[amenity.key] }))}
+                                className={`flex flex-col items-center justify-center p-4 rounded-xl border transition-all gap-2 ${(formData as any)[amenity.key]
+                                    ? 'bg-primary/10 border-primary text-primary shadow-[0_0_15px_rgba(251,191,36,0.1)]'
+                                    : 'bg-black/40 border-white/5 text-slate-500 hover:border-white/20'
+                                    }`}
+                            >
+                                <amenity.icon className={`w-5 h-5 ${(formData as any)[amenity.key] ? 'animate-pulse' : ''}`} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">{amenity.label}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <InputField
+                            label="Reservations Policy"
+                            name="reservations"
+                            value={(formData as any).reservations || ''}
+                            icon={Info}
+                            placeholder="Ex: First come, first served / Resy"
+                        />
+                        <InputField
+                            label="Reservations URL (Link)"
+                            name="reservationUrl"
+                            value={(formData as any).reservationUrl || ''}
+                            icon={MapPin}
+                            placeholder="https://..."
+                        />
+                        <InputField
+                            label="Opening Time"
+                            name="openingTime"
+                            value={(formData as any).openingTime || ''}
+                            icon={Clock}
+                            placeholder="Ex: 11:30 AM"
+                        />
+                    </div>
+                </div>
+            </section>
+
+            {/* Happy Hour Menu Section */}
+            <section className="space-y-6">
+                <div>
+                    <h3 className="text-xl font-black text-white uppercase font-league leading-none text-primary">Happy Hour Menu</h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest italic">Itemized food and drink specials</p>
+                </div>
+
+                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6 space-y-4">
+                    {formData.happyHourMenu.map((item: any, index: number) => (
+                        <div key={item.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-black/40 rounded-xl border border-white/5 relative group">
+                            <div className="md:col-span-1">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Category</label>
+                                <select
+                                    value={item.category}
+                                    onChange={(e) => {
+                                        const newMenu = [...formData.happyHourMenu];
+                                        newMenu[index].category = e.target.value as 'food' | 'drink';
+                                        setFormData({ ...formData, happyHourMenu: newMenu });
+                                    }}
+                                    className="w-full bg-slate-800 border-none rounded-lg p-2 text-sm text-white font-bold"
+                                >
+                                    <option value="food">Food</option>
+                                    <option value="drink">Drink</option>
+                                </select>
+                            </div>
+                            <div className="md:col-span-1">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Item Name</label>
+                                <input
+                                    type="text"
+                                    value={item.name}
+                                    onChange={(e) => {
+                                        const newMenu = [...formData.happyHourMenu];
+                                        newMenu[index].name = e.target.value;
+                                        setFormData({ ...formData, happyHourMenu: newMenu });
+                                    }}
+                                    className="w-full bg-slate-800 border-none rounded-lg p-2 text-sm text-white font-bold"
+                                    placeholder="e.g. Draft Pints"
+                                />
+                            </div>
+                            <div className="md:col-span-1">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Price</label>
+                                <input
+                                    type="text"
+                                    value={item.price}
+                                    onChange={(e) => {
+                                        const newMenu = [...formData.happyHourMenu];
+                                        newMenu[index].price = e.target.value;
+                                        setFormData({ ...formData, happyHourMenu: newMenu });
+                                    }}
+                                    className="w-full bg-slate-800 border-none rounded-lg p-2 text-sm text-white font-bold font-mono"
+                                    placeholder="e.g. $6"
+                                />
+                            </div>
+                            <div className="md:col-span-1 flex items-end gap-2 text-white">
+                                <div className="flex-1">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Description</label>
+                                    <input
+                                        type="text"
+                                        value={item.description || ''}
+                                        onChange={(e) => {
+                                            const newMenu = [...formData.happyHourMenu];
+                                            newMenu[index].description = e.target.value;
+                                            setFormData({ ...formData, happyHourMenu: newMenu });
+                                        }}
+                                        className="w-full bg-slate-800 border-none rounded-lg p-2 text-sm text-white font-bold"
+                                        placeholder="Optional details..."
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const newMenu = formData.happyHourMenu.filter((_: any, i: number) => i !== index);
+                                        setFormData({ ...formData, happyHourMenu: newMenu });
+                                    }}
+                                    className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const newItem = { id: Math.random().toString(36).substr(2, 9), name: '', price: '', category: 'food' as 'food' | 'drink' };
+                            setFormData({ ...formData, happyHourMenu: [...formData.happyHourMenu, newItem] });
+                        }}
+                        className="w-full py-4 bg-white/5 border border-dashed border-white/10 rounded-xl text-xs font-black uppercase text-slate-400 hover:bg-white/10 hover:border-primary/30 hover:text-primary transition-all flex items-center justify-center gap-2"
+                    >
+                        <Utensils className="w-4 h-4" />
+                        Add Menu Item
+                    </button>
+                </div>
+            </section>
+
+            {/* League & Programming Section */}
+            <section className="space-y-6">
+                <div>
+                    <h3 className="text-xl font-black text-white uppercase font-league leading-none">LEAGUE & PROGRAMMING</h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest italic">Manage sanctioned league nights and rituals</p>
+                </div>
+
+                <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6 space-y-6">
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sanctioned League Event</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {(['trivia', 'karaoke', 'bingo', 'live_music'] as const).map((type) => (
+                                <button
+                                    key={type}
+                                    type="button"
+                                    onClick={() => setFormData(prev => ({ ...prev, leagueEvent: prev.leagueEvent === type ? null : type }))}
+                                    className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${formData.leagueEvent === type
+                                        ? 'bg-primary text-black border-primary'
+                                        : 'bg-black/40 text-slate-500 border-white/10 hover:border-white/30'
+                                        }`}
+                                >
+                                    {type}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {formData.leagueEvent === 'trivia' && (
+                        <div className="space-y-6 pt-4 border-t border-white/5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <InputField
+                                    label="Trivia Host"
+                                    name="triviaHost"
+                                    value={formData.triviaHost || ''}
+                                    icon={Users}
+                                    placeholder="Ex: Jim Westerling"
+                                />
+                                <InputField
+                                    label="Trivia Start Time"
+                                    name="triviaTime"
+                                    value={formData.triviaTime || ''}
+                                    icon={Clock}
+                                    placeholder="Ex: 7:00 PM"
+                                />
+                            </div>
+                            <InputField
+                                label="Trivia Prizes"
+                                name="triviaPrizes"
+                                value={formData.triviaPrizes || ''}
+                                icon={Trophy}
+                                placeholder="Ex: $50 Gift Card & League Points"
+                            />
+                            <InputField
+                                label="Tonight's Specials (Limited Offer)"
+                                name="triviaSpecials"
+                                value={formData.triviaSpecials || ''}
+                                icon={Zap}
+                                placeholder="Ex: $2 Pints during play!"
+                            />
+                        </div>
+                    )}
                 </div>
             </section>
 

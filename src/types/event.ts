@@ -22,4 +22,12 @@ export interface AppEvent {
     updatedAt?: number;
     isLeagueEvent?: boolean;
     analysis?: EventAnalysis;
+
+    // Rich Metadata (from Well 80 Quiz Specs)
+    host?: string;
+    prizes?: string;
+    eventSpecials?: string;
+    howItWorks?: string[];
+    cluesUrl?: string;
+    secondaryImage?: string;
 }

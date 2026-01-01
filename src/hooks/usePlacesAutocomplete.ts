@@ -3,8 +3,9 @@ import { useOutletContext } from 'react-router-dom';
 import { Venue } from '../types';
 import { API_BASE_URL } from '../lib/api-config';
 
-export const usePlacesAutocomplete = (onPlaceSelect: (place: google.maps.places.PlaceResult) => void) => {
-    const { venues } = useOutletContext<{ venues: Venue[] }>();
+export const usePlacesAutocomplete = (onPlaceSelect: (place: google.maps.places.PlaceResult) => void, providedVenues?: Venue[]) => {
+    const outletContext = useOutletContext<{ venues: Venue[] }>() || { venues: [] };
+    const venues = providedVenues || outletContext.venues || [];
     const [query, setQuery] = useState('');
     const [predictions, setPredictions] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);

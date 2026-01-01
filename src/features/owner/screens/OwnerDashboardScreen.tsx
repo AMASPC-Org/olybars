@@ -355,25 +355,30 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league leading-none">
                                 THE BREW HOUSE
                             </h2>
-                            <HelpCircle className="w-4 h-4 text-slate-500" />
+                            <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded border border-primary/30 font-black uppercase tracking-widest">
+                                Admin Dashboard
+                            </span>
                         </div>
-                        <div className="flex flex-col mt-1">
+                        <div className="flex flex-col mt-2">
                             {accessibleVenues.length > 1 ? (
-                                <div className="relative inline-block">
-                                    <select
-                                        value={selectedVenueId || ''}
-                                        onChange={(e) => setSelectedVenueId(e.target.value)}
-                                        className="bg-transparent text-primary text-xs font-black uppercase tracking-widest outline-none appearance-none pr-6 cursor-pointer font-league"
-                                    >
-                                        {accessibleVenues.map(v => (
-                                            <option key={v.id} value={v.id} className="bg-[#0f172a]">{v.name}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronRight className="w-3 h-3 text-primary absolute right-0 top-1 rotate-90 pointer-events-none" />
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-league">Managing:</span>
+                                    <div className="relative inline-block">
+                                        <select
+                                            value={selectedVenueId || ''}
+                                            onChange={(e) => setSelectedVenueId(e.target.value)}
+                                            className="bg-primary/10 text-primary text-sm font-black uppercase tracking-widest outline-none appearance-none pl-2 pr-8 py-1 rounded border border-primary/20 cursor-pointer font-league hover:bg-primary/20 transition-colors"
+                                        >
+                                            {accessibleVenues.map(v => (
+                                                <option key={v.id} value={v.id} className="bg-[#0f172a]">{v.name}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronRight className="w-3 h-3 text-primary absolute right-2 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" />
+                                    </div>
                                 </div>
                             ) : (
-                                <p className="text-xs text-primary font-black uppercase tracking-widest font-league">
-                                    ADMIN: {myVenue?.name}
+                                <p className="text-xs text-primary font-black uppercase tracking-widest font-league flex items-center gap-2">
+                                    <span className="text-slate-500">Managing:</span> {myVenue?.name}
                                 </p>
                             )}
                         </div>
@@ -530,6 +535,31 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 </div>
                             </div>
                         </div>
+
+                        {/* Happy Hour Quick Action */}
+                        <button
+                            onClick={() => {
+                                setDashboardView('listing');
+                                setTimeout(() => {
+                                    const element = document.getElementById('happy-hour-editor');
+                                    if (element) {
+                                        element.scrollIntoView({ behavior: 'smooth' });
+                                    }
+                                }, 100);
+                            }}
+                            className="w-full bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 rounded-lg p-4 flex items-center justify-between group active:scale-[0.98] transition-all"
+                        >
+                            <div className="flex items-center gap-3 text-left">
+                                <div className="p-2 bg-primary/20 rounded text-primary">
+                                    <Clock className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-black uppercase tracking-widest text-white">RECURRING HAPPY HOUR</p>
+                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Update daily deals & Buzz Clock text</p>
+                                </div>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
+                        </button>
 
                         {/* Live Game Status Management */}
                         {myVenue.hasGameVibeCheckEnabled && (
@@ -831,7 +861,11 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                 )}
 
                 {myVenue && dashboardView === 'listing' && (
-                    <ListingManagementTab venue={myVenue} onUpdate={updateVenue} />
+                    <ListingManagementTab
+                        venue={myVenue}
+                        venues={venues}
+                        onUpdate={updateVenue}
+                    />
                 )}
 
                 {myVenue && dashboardView === 'maker' && isVenueOwner(userProfile, myVenue.id) && (

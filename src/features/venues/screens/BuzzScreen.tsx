@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useCallback } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { GlobalSearch } from '../../../components/features/search/GlobalSearch';
 import {
   Flame, Beer, Star, Users, MapPin,
   Trophy, ChevronRight, Crown, Search, Filter,
@@ -83,12 +84,16 @@ export const BuzzScreen: React.FC<{
   lastVibeChecks?: Record<string, number>;
   lastGlobalVibeCheck?: number;
   isLoading?: boolean;
-}> = ({ venues, userProfile, userPoints, handleClockIn, clockedInVenue, handleVibeCheck, lastVibeChecks, lastGlobalVibeCheck, isLoading = false }) => {
+  onToggleWeeklyBuzz?: () => void;
+}> = ({ venues, userProfile, userPoints, handleClockIn, clockedInVenue, handleVibeCheck, lastVibeChecks, lastGlobalVibeCheck, isLoading = false, onToggleWeeklyBuzz }) => {
   const isGuest = userProfile.role === 'guest';
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialQuery = searchParams.get('q') || '';
+
   const [filterKind, setFilterKind] = useState<FilterKind>('all');
   const [statusFilter, setStatusFilter] = useState<VenueStatus | 'all'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const searchQuery = initialQuery; // Sync with URL
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const { coords } = useGeolocation();
@@ -100,7 +105,7 @@ export const BuzzScreen: React.FC<{
     return Math.floor(totalMinutes / 5) % Math.max(1, venues.length);
   }, [venues.length]);
 
-  const applyFilter = (v: Venue): boolean => {
+  const applyFilter = useCallback((v: Venue): boolean => {
     // Search Filter (Applies globally)
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -109,10 +114,27 @@ export const BuzzScreen: React.FC<{
       const vibeMatch = v.vibe?.toLowerCase().includes(q) || v.vibeTags?.some(tag => tag.replace('_', ' ').toLowerCase().includes(q));
       const addressMatch = v.address?.toLowerCase().includes(q);
       const dealMatch = v.deal?.toLowerCase().includes(q) || v.activeFlashDeal?.title?.toLowerCase().includes(q);
+      // New: Search Game Features
+      const gameMatch = v.gameFeatures?.some(f => f.name.toLowerCase().includes(q) || f.type.toLowerCase().includes(q));
 
-      if (!(nameMatch || typeMatch || vibeMatch || addressMatch || dealMatch)) {
-        return false;
-      }
+      // Upgrade: Search Amenities & Rituals
+      const amenityMatch = v.amenities?.some(a => a.toLowerCase().includes(q));
+      const scheduleMatch = v.weekly_schedule
+        ? Object.values(v.weekly_schedule).flat().some(event => event.toLowerCase().includes(q))
+        : false;
+
+      // [NEW] Description & Nicknames (Universal Search Expansion)
+      const descriptionMatch = v.description?.toLowerCase().includes(q) || v.eventDescription?.toLowerCase().includes(q) || v.historySnippet?.toLowerCase().includes(q);
+      const nicknameMatch = v.nicknames?.some(n => n.toLowerCase().includes(q));
+      const happyHourMatch = v.happyHourSimple?.toLowerCase().includes(q) || v.happyHourSpecials?.toLowerCase().includes(q) || v.happyHour?.description?.toLowerCase().includes(q);
+
+      const isMatch = nameMatch || typeMatch || vibeMatch || addressMatch || dealMatch || gameMatch || amenityMatch || scheduleMatch || descriptionMatch || nicknameMatch || happyHourMatch;
+
+      if (!isMatch) return false;
+
+      // If we have a specific search, we generally ignore the 'Status' filter unless the user explicitly set it.
+      // But for now, ifsearching, let's SHOW EVERYTHING matching the search, ignoring the "Buzzing/Chill" View.
+      return true;
     }
 
     if (filterKind === 'status') {
@@ -145,7 +167,7 @@ export const BuzzScreen: React.FC<{
     if (!open && !v.isFeatured) return false;
 
     return true;
-  };
+  }, [searchQuery, filterKind, statusFilter, selectedGame]);
 
   const venuesWithDistance = React.useMemo(() => venues.map(v => ({
     ...v,
@@ -186,7 +208,7 @@ export const BuzzScreen: React.FC<{
       }
 
       return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
-    }), [venuesWithDistance, filterKind, statusFilter]);
+    }), [venuesWithDistance, filterKind, statusFilter, applyFilter]);
 
   // --- NEW LOGIC: Buzz Clock (Happy Hours) & Flash Deals ---
   const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
@@ -254,8 +276,10 @@ export const BuzzScreen: React.FC<{
   };
 
   const statusLabel = (() => {
+    if (statusFilter === 'packed') return '⚡ Packed';
     if (statusFilter === 'buzzing') return '🔥 Buzzing';
     if (statusFilter === 'chill') return '🍺 Chill';
+    if (statusFilter === 'dead') return '💀 Dead';
     if (filterKind === 'tonight') return '🌙 Tonight';
     return 'All Activity';
   })();
@@ -327,24 +351,12 @@ export const BuzzScreen: React.FC<{
             </div>
           </div>
 
-          {/* SEARCH BAR (Prominent Placement) */}
-          <div className="relative mb-6">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5 group-focus-within:text-primary transition-colors" />
-            <input
-              type="text"
+          {/* SEARCH BAR (Prominent Placement) - Unified Global Search */}
+          <div className="mb-6">
+            <GlobalSearch
               placeholder="SEARCH BARS, VIBES, OR DEALS..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-900 border-2 border-slate-800 rounded-2xl py-4 pl-12 pr-12 text-white font-bold placeholder:text-slate-600 focus:border-primary/50 outline-none transition-all shadow-inner font-body text-sm"
+              variant="hero"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-tighter bg-slate-800 px-2 py-1 rounded-md"
-              >
-                Clear
-              </button>
-            )}
           </div>
 
           <div className="flex justify-center items-center gap-2 pb-2 flex-wrap">
@@ -361,10 +373,12 @@ export const BuzzScreen: React.FC<{
               </button>
 
               {showStatusMenu && (
-                <div className="absolute mt-1 left-0 z-20 bg-surface border border-slate-700 rounded-md shadow-lg overflow-hidden text-xs font-bold">
+                <div className="absolute mt-1 left-0 z-20 bg-surface border border-slate-700 rounded-md shadow-lg overflow-hidden text-xs font-bold min-w-[140px]">
                   {[
+                    { id: 'packed', label: '⚡ Packed', icon: Zap },
                     { id: 'buzzing', label: '🔥 Buzzing', icon: Flame },
                     { id: 'chill', label: '🍺 Chill', icon: Beer },
+                    { id: 'dead', label: '💀 Dead', icon: Clock },
                     { id: 'all', label: 'All Activity', icon: Clock }
                   ].map(option => (
                     <button
@@ -379,9 +393,9 @@ export const BuzzScreen: React.FC<{
                         }
                         setShowStatusMenu(false);
                       }}
-                      className="w-full text-left px-3 py-2 hover:bg-slate-800 flex items-center gap-2"
+                      className="w-full text-left px-4 py-2.5 hover:bg-slate-800 flex items-center gap-3 transition-colors text-slate-200"
                     >
-                      <option.icon className="w-3 h-3" /> {option.label}
+                      <option.icon className="w-3.5 h-3.5" /> {option.label}
                     </button>
                   ))}
                 </div>
@@ -406,64 +420,11 @@ export const BuzzScreen: React.FC<{
             >
               🌙 Tonight
             </button>
-            <button
-              onClick={() => {
-                setShowStatusMenu(false);
-                setFilterKind((prev) => (prev === 'games' ? 'all' : 'games'));
-                const firstGame = barGames[0]?.games[0]?.name;
-                if (filterKind !== 'games' && firstGame) setSelectedGame(firstGame);
-              }}
-              className={`${baseChipClasses} ${filterKind === 'games' ? 'bg-primary text-black border-primary' : 'bg-surface text-slate-300 border-slate-700 hover:border-slate-500'}`}
-            >
-              🎯 Games
-            </button>
           </div>
-
-          {filterKind === 'games' && (
-            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide -mx-4 px-4 mt-4">
-              {barGames.flatMap(cat => cat.games).map(game => (
-                <button
-                  key={game.name}
-                  onClick={() => setSelectedGame(game.name)}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${selectedGame === game.name
-                    ? 'bg-primary border-primary text-black shadow-[0_0_15px_rgba(251,191,36,0.3)]'
-                    : 'bg-slate-900 border-white/5 text-slate-400 hover:border-white/20'
-                    }`}
-                >
-                  {game.name}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
-
-        {/* BUZZ CLOCK (Happy Hours) */}
-        {buzzClockVenues.length > 0 && (
-          <div className={`bg-gradient-to-r ${isUpcomingBuzz ? 'from-blue-500/10 border-blue-500' : 'from-amber-500/10 border-amber-500'} to-transparent border-l-4 pl-4 py-2`}>
-            <h4 className={`text-[10px] font-black ${isUpcomingBuzz ? 'text-blue-400' : 'text-amber-500'} uppercase tracking-widest mb-1 flex items-center gap-2`}>
-              <Clock className="w-3 h-3" /> {isUpcomingBuzz ? 'Upcoming Happy Hours' : 'Buzz Clock'}
-            </h4>
-            <div className="flex overflow-x-auto gap-4 scrollbar-hide">
-              {buzzClockVenues.map(hh => (
-                <div key={hh.id} className="min-w-[200px] shrink-0">
-                  <span className="text-white font-bold text-xs">{hh.name}</span>
-                  <p className="text-slate-400 text-[10px] uppercase truncate">
-                    {hh.happyHourSimple || hh.happyHour?.description}
-                  </p>
-                  <p className={`${isUpcomingBuzz ? 'text-blue-400' : 'text-amber-500'} text-[9px] font-bold`}>
-                    {hh.happyHourSpecials ? hh.happyHourSpecials : (isUpcomingBuzz
-                      ? `Starts ${parseInt(hh.happyHour?.startTime.split(':')[0] || '0') > 12 ? parseInt(hh.happyHour?.startTime.split(':')[0] || '0') - 12 : hh.happyHour?.startTime.split(':')[0]}:${hh.happyHour?.startTime.split(':')[1]} ${parseInt(hh.happyHour?.startTime.split(':')[0] || '0') >= 12 ? 'PM' : 'AM'}`
-                      : `Ends ${parseInt(hh.happyHour?.endTime.split(':')[0] || '0') > 12 ? parseInt(hh.happyHour?.endTime.split(':')[0] || '0') - 12 : hh.happyHour?.endTime.split(':')[0]}:${hh.happyHour?.endTime.split(':')[1]} PM`
-                    )}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* FLASH DEALS (Premium Carousel) */}
-        {flashDealVenues.length > 0 && (
+        {/* FLASH DEALS (Premium Carousel) - Hidden when searching to show results immediately */}
+        {!searchQuery && flashDealVenues.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
@@ -488,11 +449,12 @@ export const BuzzScreen: React.FC<{
                   <div
                     key={fd.id}
                     onClick={() => navigate(`/venues/${fd.id}`)}
-                    className="min-w-[85vw] md:min-w-[400px] snap-center bg-gradient-to-br from-red-600 to-red-900 rounded-2xl p-0.5 shadow-[0_0_30px_rgba(220,38,38,0.2)] relative overflow-hidden group active:scale-[0.98] transition-all"
+                    className="min-w-[85vw] md:min-w-[400px] snap-center bg-gradient-to-br from-red-600 to-red-900 rounded-2xl p-0.5 shadow-[0_0_40px_rgba(220,38,38,0.2)] relative overflow-hidden group active:scale-[0.97] transition-all shimmer-sweep"
                   >
-                    <div className="bg-[#0f172a] rounded-[14px] p-5 h-full relative overflow-hidden">
+                    <div className="bg-[#0b1222] rounded-[14px] p-5 h-full relative overflow-hidden flex flex-col justify-between">
                       {/* Decorative Background Elements */}
-                      <div className="absolute -right-4 -top-4 w-24 h-24 bg-red-600/10 rounded-full blur-2xl group-hover:bg-red-600/20 transition-all" />
+                      <div className="absolute -right-4 -top-4 w-32 h-32 bg-red-600/5 rounded-full blur-3xl group-hover:bg-red-600/15 transition-all duration-700" />
+                      <div className="absolute -left-10 -bottom-10 w-24 h-24 bg-primary/5 rounded-full blur-2xl transition-all" />
 
                       <div className="flex justify-between items-start mb-4 relative z-10">
                         <div>
@@ -537,8 +499,8 @@ export const BuzzScreen: React.FC<{
 
 
         <div className="relative group/list">
-          {/* JOIN THE LEAGUE CONVERSION BANNER (FOR GUESTS) */}
-          {!isLoading && isGuest && (
+          {/* JOIN THE LEAGUE CONVERSION BANNER (FOR GUESTS) - Hidden when searching */}
+          {!isLoading && isGuest && !searchQuery && (
             <div className="mb-6 px-1">
               <button
                 onClick={() => navigate('/league')}
@@ -568,41 +530,50 @@ export const BuzzScreen: React.FC<{
 
             {/* 1. Paid Position: League Spotlight (Featured) */}
             {!isLoading && !isFallbackActive && venuesWithDistance.filter(v => v.isFeatured && v.isOpen).slice(0, 1).map(spotlight => (
-              <div key={`spotlight-${spotlight.id}`} className="bg-gradient-to-br from-slate-900 to-black rounded-2xl border-2 border-primary/40 p-1 shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 px-3 py-1 bg-primary text-black text-[9px] font-black uppercase tracking-widest rounded-bl-xl z-10 shadow-lg">
+              <div key={`spotlight-${spotlight.id}`} className="bg-gradient-to-br from-slate-900 to-black rounded-2xl border-2 border-primary p-1 shadow-[0_0_30px_rgba(251,191,36,0.2)] relative overflow-hidden group/spotlight active:scale-[0.99] transition-all">
+                <div className="absolute top-0 right-0 px-4 py-1.5 bg-primary text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-bl-2xl z-20 shadow-xl font-league">
                   Spotlight
                 </div>
-                <div className="bg-surface rounded-xl p-4">
-                  <div className="flex justify-between items-start mb-3">
+                <div className="bg-surface/40 backdrop-blur-sm rounded-xl p-5 relative overflow-hidden">
+                  {/* Background Glow */}
+                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover/spotlight:bg-primary/20 transition-all duration-700" />
+
+                  <div className="flex justify-between items-start mb-4 relative z-10">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 mb-1">
                         <Link to={`/venues/${spotlight.id}`} className="hover:text-primary transition-colors">
-                          <h4 className="font-bold text-lg text-white">{spotlight.name}</h4>
+                          <h4 className="font-black text-2xl text-white font-league uppercase tracking-tight">{spotlight.name}</h4>
                         </Link>
-                        <Crown className="w-4 h-4 text-primary fill-current" />
+                        <Crown className="w-5 h-5 text-primary fill-current animate-pulse" />
                       </div>
-                      <p className="text-xs text-slate-400 font-medium">
-                        {spotlight.venueType.replace(/_/g, ' ')} <span className="text-slate-500 italic">"{spotlight.vibe}"</span>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                        {spotlight.venueType.replace(/_/g, ' ')}
+                        <span className="w-1 h-1 bg-slate-700 rounded-full" />
+                        <span className="text-primary italic">"{spotlight.vibe}"</span>
                       </p>
                     </div>
                     <PulseMeter status={spotlight.status} />
                   </div>
-                  <p className="text-xs text-slate-300 font-medium mb-4 line-clamp-1 italic">
-                    {spotlight.activeFlashDeal?.title || spotlight.deal || spotlight.description || "The heart of Oly's bar scene."}
-                  </p>
-                  <div className="flex gap-2">
+
+                  <div className="bg-black/30 border border-white/5 rounded-xl p-3 mb-5 relative z-10">
+                    <p className="text-xs text-slate-300 font-medium leading-relaxed italic">
+                      "{spotlight.activeFlashDeal?.title || spotlight.deal || spotlight.description || "Olympia's premier nightlife destination."}"
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3 relative z-10">
                     <button
                       onClick={() => navigate(`/venues/${spotlight.id}`)}
-                      className="flex-1 py-3 bg-primary text-black rounded-lg font-black text-[10px] uppercase tracking-wider hover:bg-primary/90 transition-all"
+                      className="flex-2 py-3.5 bg-primary text-black rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white hover:scale-[1.02] transition-all shadow-xl shadow-primary/10"
                     >
-                      Visit Spot
+                      EXPLORE SPOT
                     </button>
                     <button
                       onClick={() => onClockIn(spotlight)}
                       disabled={clockedInVenue === spotlight.id}
-                      className="px-4 py-3 bg-slate-800 text-white rounded-lg font-black text-[10px] uppercase tracking-wider border border-slate-700 disabled:opacity-50"
+                      className="flex-1 py-3.5 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest border-2 border-slate-800 disabled:opacity-50 hover:border-slate-600 transition-all"
                     >
-                      {clockedInVenue === spotlight.id ? 'Joined' : 'Clock In'}
+                      {clockedInVenue === spotlight.id ? 'JOINED' : 'CLOCK IN'}
                     </button>
                   </div>
                 </div>
@@ -643,78 +614,110 @@ export const BuzzScreen: React.FC<{
 
             {/* 2. Main Pulse List */}
             {!isLoading && displayVenues
-              .filter(v => !(!isFallbackActive && v.isFeatured && v.isOpen)) // Don't repeat the spotlighted venue if it's already at top
+              .filter(v => !(!isFallbackActive && v.isFeatured && v.isOpen))
               .map((venue) => (
-                <div key={venue.id} className={`bg-surface rounded-xl border p-4 shadow-lg transition-transform duration-100 ${isFallbackActive ? 'border-primary/10 bg-slate-900/40 opacity-80' : 'border-slate-800'}`}>
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Link to={`/venues/${venue.id}`} className="hover:text-primary transition-colors">
-                          <h4 className="font-bold text-lg text-white">{venue.name}</h4>
+                <div
+                  key={venue.id}
+                  className={`bg-surface/50 backdrop-blur-sm rounded-2xl border-2 p-5 shadow-xl transition-all duration-300 relative group/card active:scale-[0.98] ${isFallbackActive ? 'border-slate-800/10 opacity-70 scale-95' :
+                    venue.status === 'packed' ? 'border-red-500/30' :
+                      venue.status === 'buzzing' ? 'border-primary/30 shadow-[0_4px_25px_-10px_rgba(251,191,36,0.15)]' :
+                        'border-slate-800/60 hover:border-slate-700'
+                    }`}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1 min-w-0 pr-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Link to={`/venues/${venue.id}`} className="hover:text-primary transition-colors flex-shrink-0">
+                          <h4 className="font-bold text-xl text-white font-league uppercase tracking-tight truncate max-w-[200px]">{venue.name}</h4>
                         </Link>
-                        {venue.isHQ && <Crown className="w-4 h-4 text-primary fill-current" />}
+                        {venue.isHQ && <div className="text-primary animate-in zoom-in duration-500"><Crown className="w-4 h-4 fill-current" /></div>}
                       </div>
-                      <p className="text-xs text-slate-400 font-medium">
-                        {(venue.venueType || 'venue').replace(/_/g, ' ')} <span className="text-slate-500 italic">"{venue.vibe}"</span>
-                        {venue.distance !== null && <span className="ml-2 text-primary font-bold">• {venue.distance.toFixed(1)} mi</span>}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                          {(venue.venueType || 'venue').replace(/_/g, ' ')}
+                        </span>
+                        <span className="text-slate-700">•</span>
+                        <span className="text-[10px] text-slate-400 font-medium italic truncate max-w-[120px]">
+                          "{venue.vibe}"
+                        </span>
+                        {venue.distance !== null && (
+                          <>
+                            <span className="text-slate-700">•</span>
+                            <span className="text-[10px] text-primary font-black tracking-tighter">{venue.distance.toFixed(1)} MI</span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <div className="flex items-center gap-1.5">
-                        {venue.manualStatusExpiresAt && venue.manualStatusExpiresAt > Date.now() && (
-                          <div className="flex items-center gap-1 bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">
-                            <ShieldCheck className="w-2.5 h-2.5" />
-                            Verified
-                          </div>
-                        )}
-                        <PulseMeter status={venue.status} />
+
+                    <div className="flex flex-col items-end gap-2">
+                      <PulseMeter status={venue.status} />
+                      {venue.hourStatus === 'last_call' && (
+                        <div className="bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter animate-pulse shadow-lg shadow-red-900/40">
+                          LAST CALL
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Operational Instrument Panel */}
+                  <div className="flex items-center gap-2 mb-4">
+                    {venue.manualStatusExpiresAt && venue.manualStatusExpiresAt > Date.now() && (
+                      <div className="flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest font-league">
+                        <ShieldCheck className="w-3 h-3" />
+                        STAFF VERIFIED
                       </div>
-                      {venue.hourStatus === 'last_call' && <span className="text-[10px] text-white font-black bg-red-600 px-2 py-0.5 rounded transform -skew-x-12 animate-pulse mt-1">LAST CALL 🕒</span>}
-                      <div className="flex items-center gap-1.5 mt-1">
-                        {venue.manualCheckInsExpiresAt && venue.manualCheckInsExpiresAt > Date.now() && (
-                          <ShieldCheck className="w-2.5 h-2.5 text-blue-400" />
-                        )}
-                        <span className="text-[10px] text-slate-500 font-bold">{venue.checkIns} Clocked In</span>
-                      </div>
+                    )}
+                    <div className="flex items-center gap-2 bg-slate-900/40 border border-white/5 px-2 py-1 rounded-lg">
+                      <div className={`w-1.5 h-1.5 rounded-full ${venue.checkIns > 0 ? 'bg-primary animate-pulse' : 'bg-slate-700'}`} />
+                      <span className="text-[10px] text-slate-400 font-black tracking-widest font-league">{venue.checkIns} CLOCKED IN</span>
                     </div>
                   </div>
 
                   {venue.leagueEvent && (
-                    <div onClick={() => navigate(`/venues/${venue.id}`)} className="mb-4 bg-gradient-to-r from-slate-800 to-slate-900 rounded-lg p-3 border border-slate-700/50 flex justify-between items-center group cursor-pointer hover:border-primary/50 transition-colors">
-                      <div className="flex items-center gap-2.5">
-                        <div className="bg-primary/20 p-1.5 rounded-md text-primary"><Trophy className="w-4 h-4" /></div>
+                    <div
+                      onClick={() => navigate(`/venues/${venue.id}`)}
+                      className="mb-5 bg-gradient-to-r from-slate-900 to-black rounded-xl p-4 border border-white/5 flex justify-between items-center group cursor-pointer hover:border-primary/50 transition-all shadow-inner"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="bg-primary/10 p-2 rounded-lg text-primary border border-primary/20 shadow-lg">
+                          <Trophy className="w-5 h-5" strokeWidth={2.5} />
+                        </div>
                         <div>
-                          <p className="text-xs text-primary font-bold uppercase tracking-wide">League Night</p>
-                          <p className="text-sm font-bold text-white capitalize">
-                            {venue.leagueEvent} {venue.eventDescription ? `- ${venue.eventDescription}` : ''}
+                          <p className="text-[9px] text-primary font-black uppercase tracking-[0.2em] mb-0.5">TONIGHT'S EVENT</p>
+                          <p className="text-sm font-black text-white uppercase font-league tracking-wide group-hover:text-primary transition-colors">
+                            {venue.leagueEvent}
                           </p>
                         </div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
+                      <div className="bg-white/5 p-2 rounded-full group-hover:bg-primary group-hover:text-black transition-all">
+                        <ChevronRight className="w-4 h-4" />
+                      </div>
                     </div>
                   )}
 
                   <div className="flex gap-2">
-
                     <button
                       onClick={() => handleVibeCheck && handleVibeCheck(venue)}
-                      className={`flex-1 py-3 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all border-2 shadow-sm ${(() => {
+                      className={`flex-1 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all border-2 font-league ${(() => {
                         const now = Date.now();
                         const lastCheck = lastVibeChecks?.[venue.id];
                         const isVenueCooldown = lastCheck && (now - lastCheck) < 60 * 60 * 1000;
                         const lastGlobal = lastGlobalVibeCheck;
                         const isGlobalCooldown = lastGlobal && (now - lastGlobal) < 30 * 60 * 1000;
-                        return (isVenueCooldown || isGlobalCooldown) ? 'bg-slate-800/50 border-slate-700 text-slate-500 cursor-not-allowed' : 'bg-primary/5 border-primary/30 text-primary hover:bg-primary/10';
+                        return (isVenueCooldown || isGlobalCooldown) ? 'bg-slate-900/50 border-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-surface border-white/5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-500 active:scale-95';
                       })()}`}
                     >
-                      <Users size={14} strokeWidth={3} /> Vibe Check (+5)
+                      <Users size={14} strokeWidth={3} className="text-primary" /> VIBE CHECK
                     </button>
                     <button
                       onClick={() => onClockIn(venue)}
                       disabled={clockedInVenue === venue.id}
-                      className={`flex-1 py-3 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md ${clockedInVenue === venue.id ? 'bg-slate-700 text-slate-300 cursor-not-allowed' : 'bg-primary text-black hover:bg-primary/90 shadow-primary/20'}`}
+                      className={`flex-1 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all shadow-xl font-league ${clockedInVenue === venue.id
+                        ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
+                        : 'bg-primary text-black hover:bg-white hover:scale-[1.02] shadow-primary/20 active:scale-95'
+                        }`}
                     >
-                      {clockedInVenue === venue.id ? 'Joined' : <><MapPin className="w-3.5 h-3.5" /> Clock In</>}
+                      {clockedInVenue === venue.id ? 'JOINED' : <><MapPin className="w-4 h-4" strokeWidth={3} /> CLOCK IN</>}
                     </button>
                   </div>
                 </div>
@@ -724,59 +727,84 @@ export const BuzzScreen: React.FC<{
           <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none z-10" />
         </div>
 
-        {/* Artie's Weekly Recommendations - Moved to Bottom */}
-        <div className="mt-12 bg-gradient-to-br from-primary/10 to-surface border-2 border-primary/20 rounded-2xl p-6 relative overflow-hidden group">
-          <div className="absolute -top-6 -right-6 w-24 h-24 bg-primary/20 rounded-full blur-3xl group-hover:bg-primary/30 transition-all duration-700" />
-          <div className="flex items-center gap-3 mb-6 relative z-10">
-            <div className="bg-primary p-2.5 rounded-xl shadow-lg shadow-primary/20">
-              <Bot className="w-6 h-6 text-black" />
+        {/* Artie's Weekly Recommendations - Premium AI Section */}
+        <div className="mt-12 bg-gradient-to-br from-[#0f172a] to-black border-2 border-primary/20 rounded-3xl p-8 relative overflow-hidden group/artie shadow-2xl">
+          {/* AI Neural Background Effect */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] group-hover/artie:bg-primary/10 transition-all duration-1000" />
+          <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-blue-500/5 rounded-full blur-[80px]" />
+
+          <div className="flex items-center justify-between mb-8 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="bg-primary p-3 rounded-2xl shadow-[0_0_20px_rgba(251,191,36,0.2)] group-hover/artie:rotate-12 transition-transform duration-500">
+                <Bot className="w-6 h-6 text-black" strokeWidth={2.5} />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-white uppercase tracking-tight font-league">Artie's Intelligence</h3>
+                <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">Next-Gen Recommendations</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-black text-white uppercase tracking-tight font-league">Artie's Weekly Buzz</h3>
-              <p className="text-[10px] text-primary font-bold uppercase tracking-widest">Personalized Highlights</p>
-            </div>
+            {!userProfile.weeklyBuzz && (
+              <div className="hidden sm:block">
+                <span className="text-[9px] bg-white/5 text-slate-500 border border-white/10 px-3 py-1 rounded-full font-black uppercase tracking-widest">v1.2 Stable</span>
+              </div>
+            )}
           </div>
 
           {!userProfile.weeklyBuzz ? (
-            <div className="relative z-10 space-y-6">
-              <div className="space-y-4">
+            <div className="relative z-10 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
-                  { icon: Star, text: 'Custom bar picks based on your favorite drinks and vibes.' },
-                  { icon: Zap, text: 'Early access to exclusive "Artie-Only" drink promos.' },
-                  { icon: Trophy, text: 'Score an extra 50 points just for joining the weekly report.' }
+                  { icon: Star, title: 'CURATED PICKS', text: 'Tailored to your favorite vibes.' },
+                  { icon: Zap, title: 'SECRET DEALS', text: 'Inside access for Artie users.' },
+                  { icon: Trophy, title: 'POINT BOOSTS', text: '+50 pts just for checking in.' }
                 ].map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <div className="mt-1 bg-primary/20 p-1 rounded-full"><item.icon className="w-3 h-3 text-primary" /></div>
-                    <p className="text-[11px] font-bold text-slate-300 uppercase leading-snug">{item.text}</p>
+                  <div key={idx} className="bg-white/5 border border-white/5 p-4 rounded-2xl group/item hover:border-primary/20 transition-all">
+                    <div className="bg-primary/10 w-8 h-8 rounded-lg flex items-center justify-center mb-3 group-hover/item:scale-110 transition-transform">
+                      <item.icon className="w-4 h-4 text-primary" />
+                    </div>
+                    <h5 className="text-[10px] font-black text-white uppercase tracking-widest mb-1">{item.title}</h5>
+                    <p className="text-[11px] font-medium text-slate-400 italic leading-snug">{item.text}</p>
                   </div>
                 ))}
               </div>
-              <button className="w-full py-4 bg-primary text-black font-league font-black text-sm uppercase tracking-widest rounded-xl shadow-xl hover:scale-[1.02] transition-transform active:scale-95">
-                SIGN UP FOR WEEKLY BUZZ
-              </button>
-              <p className="text-[9px] text-center text-slate-500 font-bold uppercase tracking-tighter italic">Your data stays in the 98501. No spam, just vibe.</p>
+
+              <div className="space-y-4">
+                <button
+                  onClick={() => onToggleWeeklyBuzz?.()}
+                  className="w-full py-5 bg-primary text-black font-league font-black text-lg uppercase tracking-[0.2em] rounded-2xl shadow-xl hover:bg-white hover:scale-[1.01] transition-all active:scale-95"
+                >
+                  JOIN THE WEEKLY BUZZ
+                </button>
+                <div className="flex items-center justify-center gap-2 opacity-50">
+                  <ShieldCheck className="w-3 h-3 text-primary" />
+                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">Your data is secured within the Artesian Network</p>
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="space-y-3 relative z-10">
+            <div className="space-y-4 relative z-10">
               {[
-                { title: 'Trivia Champ night', venue: 'Legions Arcade Trivia', text: '🔥 Starts 7PM', chips: ['Double Points', 'No Cover'] },
-                { title: 'Karaoke Legends', venue: 'China Clipper Karaoke', text: '🎤 Starts 9PM', chips: ['+25 Pts Bonus', 'Happy Hour extended'] }
+                { title: 'Trivia Champ night', venue: 'Legions Arcade Trivia', text: '🔥 Starts 7PM', score: '98%', chips: ['Double Points', 'No Cover'] },
+                { title: 'Karaoke Legends', venue: 'China Clipper Karaoke', text: '🎤 Starts 9AM', score: '94%', chips: ['+25 Pts Bonus', 'HH Extended'] }
               ].map((rec, idx) => (
-                <div key={idx} className="bg-black/40 backdrop-blur-md p-4 rounded-xl border border-white/10 hover:border-primary/50 transition-all cursor-pointer">
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-xs font-black text-primary uppercase">{rec.title}</span>
+                <div key={idx} className="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10 hover:border-primary/50 transition-all cursor-pointer group/rec shadow-lg">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-primary uppercase tracking-widest">{rec.title}</span>
+                      <span className="bg-primary/20 text-primary text-[8px] px-2 py-0.5 rounded-full font-black">{rec.score} MATCH</span>
+                    </div>
                     <span className="text-[10px] text-slate-500 font-bold">{rec.text}</span>
                   </div>
-                  <p className="text-sm font-bold text-white mb-2 font-league uppercase">{rec.venue}</p>
+                  <p className="text-xl font-black text-white mb-3 font-league uppercase tracking-tight group-hover/rec:text-primary transition-colors">{rec.venue}</p>
                   <div className="flex items-center gap-2">
                     {rec.chips.map(chip => (
-                      <span key={chip} className="text-[9px] px-2 py-0.5 bg-slate-800 text-slate-300 rounded-full font-bold uppercase">{chip}</span>
+                      <span key={chip} className="text-[9px] px-2.5 py-1 bg-slate-900/60 text-slate-400 border border-white/5 rounded-lg font-black uppercase tracking-widest group-hover/rec:border-primary/20">{chip}</span>
                     ))}
                   </div>
                 </div>
               ))}
-              <button className="w-full mt-4 py-3 border-2 border-primary/40 rounded-xl text-primary font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-black transition-all">
-                View All Weekly Recommendations
+              <button className="w-full mt-4 py-4 border-2 border-primary/20 rounded-2xl text-primary font-black text-xs uppercase tracking-widest hover:bg-primary/10 hover:border-primary transition-all font-league">
+                VIEW ALL PERSONALIZED RECOMMENDATIONS
               </button>
             </div>
           )}

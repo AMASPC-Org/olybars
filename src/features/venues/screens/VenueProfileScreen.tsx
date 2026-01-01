@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { isVenueOwner, isVenueManager, hasVenueAccess } from '../../../types/auth_schema';
 import { ASSETS } from '../../../components/partners/AssetToggleGrid';
@@ -9,13 +9,16 @@ import {
     Settings, Instagram, Facebook, Twitter, Mail, Phone,
     Scroll, Sparkles, Feather, Gamepad2, LayoutGrid, CheckCircle2,
     Utensils, ChefHat, Pizza, ShoppingBag, Ban, AlertTriangle,
-    Target, Mic2, HelpCircle, Box, Disc
+    Target, Mic2, HelpCircle, Box, Disc, ExternalLink
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../../types';
 import { SEO } from '../../../components/common/SEO';
 import { VenueGallery } from '../components/VenueGallery';
 import { getVenueStatus, isVenueOpen } from '../../../utils/venueUtils';
 import { useToast } from '../../../components/ui/BrandedToast';
+import { useGeolocation } from '../../../hooks/useGeolocation';
+import { calculateDistance, metersToMiles, estimateWalkTime, getZone } from '../../../utils/geoUtils';
+import { ArtieDistanceWarningModal } from '../components/ArtieDistanceWarningModal';
 
 interface VenueProfileScreenProps {
     venues: Venue[];
@@ -40,6 +43,11 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
     const navigate = useNavigate();
     const { showToast } = useToast();
     const venue = venues.find(v => v.id === id);
+    const { coords } = useGeolocation({ shouldPrompt: false });
+
+    const [isWarningOpen, setIsWarningOpen] = useState(false);
+    const [distanceInfo, setDistanceInfo] = useState({ miles: 0, mins: 0 });
+    const [zones, setZones] = useState({ user: '', destination: '' });
 
     // AI SEO: Generate Schema.org JSON-LD
     const generateLDSchema = () => {
@@ -165,6 +173,33 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
         }
     };
 
+    const handleDirectionsClick = () => {
+        if (!venue || !venue.location) return;
+
+        if (coords) {
+            const distMeters = calculateDistance(
+                coords.latitude,
+                coords.longitude,
+                venue.location.lat,
+                venue.location.lng
+            );
+            const miles = metersToMiles(distMeters);
+            const mins = estimateWalkTime(distMeters);
+            const userZone = getZone(coords.latitude, coords.longitude);
+            const destZone = getZone(venue.location.lat, venue.location.lng);
+
+            if (miles > 0.8 || mins > 15 || (userZone !== destZone && userZone !== 'Unknown' && destZone !== 'Unknown')) {
+                setDistanceInfo({ miles, mins });
+                setZones({ user: userZone, destination: destZone });
+                setIsWarningOpen(true);
+                return;
+            }
+        }
+
+        // Direct to Google Maps if close or location unknown
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${venue.location.lat},${venue.location.lng}`, '_blank');
+    };
+
     if (!venue) {
         return (
             <div className="p-10 text-center text-slate-500 font-bold">
@@ -250,7 +285,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                                 {venue.isBoutique && <Sparkles className="w-5 h-5 text-yellow-400 fill-yellow-400" />}
                             </div>
                             <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                <span>{venue.makerType || venue.venueType.replace('_', ' ')}</span>
+                                <span>{venue.venueType === 'brewpub' ? 'Brewpub' : (venue.makerType || venue.venueType.replace('_', ' '))}</span>
                                 <span>•</span>
                                 <span className="text-primary italic">"{venue.vibe}"</span>
                             </div>
@@ -346,7 +381,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                 </div>
 
                 {/* Strategic Tags: Capacity & Sober Friendly */}
-                {(venue.isLowCapacity || venue.isSoberFriendly) && (
+                {(venue.isLowCapacity || venue.isSoberFriendly || venue.isAllAges || venue.isDogFriendly || venue.hasOutdoorSeating) && (
                     <div className="flex gap-2 flex-wrap">
                         {venue.isLowCapacity && (
                             <div className="bg-red-900/20 border border-red-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
@@ -358,6 +393,24 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                             <div className="bg-blue-900/20 border border-blue-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
                                 <Sparkles className="w-3 h-3 text-blue-400" />
                                 <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">Sober Friendly Choice</span>
+                            </div>
+                        )}
+                        {venue.isAllAges && (
+                            <div className="bg-green-900/20 border border-green-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                <Users className="w-3 h-3 text-green-400" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-green-300">All Ages Welcome</span>
+                            </div>
+                        )}
+                        {venue.isDogFriendly && (
+                            <div className="bg-purple-900/20 border border-purple-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                <Sparkles className="w-3 h-3 text-purple-400" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-purple-300">Dog Friendly</span>
+                            </div>
+                        )}
+                        {venue.hasOutdoorSeating && (
+                            <div className="bg-orange-900/20 border border-orange-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                <MapPin className="w-3 h-3 text-orange-400" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-orange-300">Outdoor Seating</span>
                             </div>
                         )}
                     </div>
@@ -419,6 +472,12 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                             </div>
                             <span className="text-[7px] text-primary/60 mt-1">REPORT FROM THE FIELD</span>
                         </button>
+                        <button
+                            onClick={handleDirectionsClick}
+                            className="bg-slate-900 border-2 border-slate-700 p-4 rounded-2xl text-slate-100 hover:border-primary/50 transition-all active:scale-95"
+                        >
+                            <Navigation className="w-5 h-5 text-primary" />
+                        </button>
                     </div>
                 ) : (
                     <div className="bg-blue-900/20 border-2 border-blue-500/30 rounded-3xl p-6 text-center shadow-2xl relative overflow-hidden">
@@ -451,14 +510,145 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     )}
 
                     {venue.leagueEvent && (
-                        <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 flex gap-4">
-                            <div className="bg-slate-800 p-2.5 h-fit rounded-xl">
-                                <Calendar className="w-5 h-5 text-primary" />
+                        <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 space-y-4 relative overflow-hidden group shadow-2xl">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 -translate-y-1/2 translate-x-1/2 rounded-full blur-3xl" />
+
+                            <div className="flex gap-4 relative z-10">
+                                <div className="bg-primary/20 p-3 h-fit rounded-xl border border-primary/20">
+                                    <Calendar className="w-6 h-6 text-primary" />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1 italic">League Integration</p>
+                                    <h4 className="text-xl font-black text-white uppercase font-league tracking-wide leading-none mb-1">
+                                        {venue.leagueEvent === 'trivia' ? 'Artesian Pub Quiz' : `${venue.leagueEvent} Tonight`}
+                                    </h4>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                                        Starts at {venue.triviaTime || '7:00 PM'} • Double League Points
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">League Integration</p>
-                                <p className="text-sm font-black text-white uppercase font-league tracking-wide">{venue.leagueEvent} Tonight</p>
-                                <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">Starts at 7:00 PM • Double Points</p>
+
+                            {venue.leagueEvent === 'trivia' && (venue.triviaHost || venue.triviaPrizes || venue.triviaSpecials) && (
+                                <div className="grid grid-cols-1 gap-3 bg-black/40 rounded-xl p-4 border border-white/5 relative z-10">
+                                    {venue.triviaHost && (
+                                        <div className="flex items-center gap-3">
+                                            <Users className="w-3.5 h-3.5 text-primary" />
+                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Hosted By: <span className="text-white">{venue.triviaHost}</span></span>
+                                        </div>
+                                    )}
+                                    {venue.triviaPrizes && (
+                                        <div className="flex items-center gap-3">
+                                            <Trophy className="w-3.5 h-3.5 text-primary" />
+                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Prizes: <span className="text-white">{venue.triviaPrizes}</span></span>
+                                        </div>
+                                    )}
+                                    {venue.triviaSpecials && (
+                                        <div className="flex items-center gap-3">
+                                            <Zap className="w-3.5 h-3.5 text-primary" />
+                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Tonight's Special: <span className="text-primary">{venue.triviaSpecials}</span></span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {venue.triviaHowItWorks && venue.triviaHowItWorks.length > 0 && (
+                                <div className="space-y-2 relative z-10">
+                                    <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest ml-1">How it Works</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {venue.triviaHowItWorks.map((step, idx) => (
+                                            <div key={idx} className="bg-white/5 px-2 py-1 rounded text-[9px] font-bold text-slate-400 border border-white/5">
+                                                {idx + 1}. {step}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Happy Hour Menu Section */}
+                    {venue.happyHourMenu && venue.happyHourMenu.length > 0 && (
+                        <div className="space-y-4">
+                            <h3 className="text-xs font-black text-primary uppercase tracking-[0.3em] font-league italic">Happy Hour Menu</h3>
+                            <div className="bg-slate-900 border border-primary/20 rounded-2xl overflow-hidden shadow-2xl relative">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+
+                                <div className="divide-y divide-white/5 relative z-10">
+                                    {/* Drink Section */}
+                                    {venue.happyHourMenu.some(i => i.category === 'drink') && (
+                                        <div className="p-5 space-y-4">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Beer className="w-4 h-4 text-primary" />
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Drink Specials</p>
+                                            </div>
+                                            <div className="space-y-4">
+                                                {venue.happyHourMenu.filter(i => i.category === 'drink').map((item, idx) => (
+                                                    <div key={item.id || idx} className="flex justify-between items-start">
+                                                        <div className="flex-1 pr-4">
+                                                            <p className="text-sm font-black text-white uppercase font-league tracking-wide leading-none mb-1">{item.name}</p>
+                                                            {item.description && <p className="text-[10px] text-slate-500 font-bold leading-relaxed">{item.description}</p>}
+                                                        </div>
+                                                        <span className="text-sm font-black text-primary font-mono">{item.price}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Food Section */}
+                                    {venue.happyHourMenu.some(i => i.category === 'food') && (
+                                        <div className="p-5 space-y-4 bg-white/[0.02]">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Utensils className="w-4 h-4 text-primary" />
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Food Specials</p>
+                                            </div>
+                                            <div className="space-y-4">
+                                                {venue.happyHourMenu.filter(i => i.category === 'food').map((item, idx) => (
+                                                    <div key={item.id || idx} className="flex justify-between items-start">
+                                                        <div className="flex-1 pr-4">
+                                                            <p className="text-sm font-black text-white uppercase font-league tracking-wide leading-none mb-1">{item.name}</p>
+                                                            {item.description && <p className="text-[10px] text-slate-500 font-bold leading-relaxed">{item.description}</p>}
+                                                        </div>
+                                                        <span className="text-sm font-black text-primary font-mono">{item.price}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Weekly Rituals Section */}
+                    {venue.weekly_schedule && Object.keys(venue.weekly_schedule).length > 0 && (
+                        <div className="space-y-4">
+                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">Weekly Rituals</h3>
+                            <div className="bg-surface border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+                                {(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const).map((day) => {
+                                    const activities = venue.weekly_schedule?.[day];
+                                    if (!activities || activities.length === 0) return null;
+
+                                    const isToday = new Date().toLocaleDateString('en-US', { weekday: 'long' }) === day;
+
+                                    return (
+                                        <div key={day} className={`flex items-center justify-between p-4 border-b border-white/5 last:border-0 ${isToday ? 'bg-primary/10' : ''}`}>
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-1 h-1 rounded-full ${isToday ? 'bg-primary animate-pulse' : 'bg-slate-700'}`} />
+                                                <span className={`text-[10px] font-black uppercase tracking-widest ${isToday ? 'text-primary' : 'text-slate-500'}`}>
+                                                    {day}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1">
+                                                {activities.map((act, i) => (
+                                                    <span key={i} className="text-xs font-black text-white uppercase font-league tracking-wide">
+                                                        {act}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -601,6 +791,53 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     </div>
                 </div>
 
+                {/* Policies & Access Detail [NEW] */}
+                {(venue.reservations || venue.hasPrivateRoom || venue.openingTime) && (
+                    <div className="space-y-4">
+                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">Policies & Reservations</h3>
+                        <div className="bg-surface border border-white/5 rounded-2xl p-4 space-y-4">
+                            {venue.openingTime && (
+                                <div className="flex items-center gap-3">
+                                    <Clock className="w-4 h-4 text-primary" />
+                                    <div>
+                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Opens At</span>
+                                        <p className="text-xs font-bold text-white uppercase">{venue.openingTime}</p>
+                                    </div>
+                                </div>
+                            )}
+                            {venue.reservations && (
+                                <div className="flex items-center gap-3">
+                                    <Info className="w-4 h-4 text-primary" />
+                                    <div>
+                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Reservations</span>
+                                        <p className="text-xs font-bold text-white uppercase">{venue.reservations}</p>
+                                        {venue.reservationUrl && (
+                                            <a
+                                                href={venue.reservationUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="mt-2 inline-flex items-center gap-2 bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all"
+                                            >
+                                                <ExternalLink size={10} />
+                                                Book a Table
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            {venue.hasPrivateRoom && (
+                                <div className="flex items-center gap-3">
+                                    <Shield className="w-4 h-4 text-primary" />
+                                    <div>
+                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Private Space</span>
+                                        <p className="text-xs font-bold text-white uppercase">Available for Booking</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* Location Info / Conditional Navigation */}
                 {venue.physicalRoom !== false && (
                     <div className="space-y-4">
@@ -621,6 +858,20 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     </div>
                 )}
             </div>
+            {/* Distance Warning Modal */}
+            {venue && venue.location && (
+                <ArtieDistanceWarningModal
+                    isOpen={isWarningOpen}
+                    onClose={() => setIsWarningOpen(false)}
+                    distanceMiles={distanceInfo.miles}
+                    walkTimeMins={distanceInfo.mins}
+                    destinationName={venue.name}
+                    destinationAddress={venue.address || ''}
+                    destinationCoords={{ lat: venue.location.lat, lng: venue.location.lng }}
+                    userZone={zones.user}
+                    destinationZone={zones.destination}
+                />
+            )}
         </div>
     );
 };

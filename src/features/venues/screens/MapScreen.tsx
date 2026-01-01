@@ -81,14 +81,23 @@ const MapScreen = () => {
           const div = document.createElement('div');
           div.className = "custom-marker";
           const iconColor = isLeagueAnchor ? "#fbbf24" : "#64748b";
+
+          // Badge Logic for Clock-Ins
+          const badgeHtml = (venue.checkIns && venue.checkIns > 0)
+            ? `<div style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; border: 2px solid #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10;">${venue.checkIns}</div>`
+            : '';
+
           div.innerHTML = showBeerMug
-            ? `<div style="color: ${iconColor}; filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));">
+            ? `<div style="position: relative; color: ${iconColor}; filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));">
+                 ${badgeHtml}
                  <svg viewBox="0 0 24 24" width="${isBuzzing ? 32 : 24}" height="${isBuzzing ? 32 : 24}" fill="currentColor" stroke="#000" stroke-width="1.5">
                    <path d="${BEER_MUG_PATH}"></path>
                  </svg>
                  <div style="background: rgba(15, 23, 42, 0.8); color: white; padding: 2px 6px; border-radius: 4px; font-size: ${isLeagueAnchor ? '11px' : '9px'}; font-weight: 900; white-space: nowrap; margin-top: -4px;">${venue.name}</div>
                </div>`
-            : `<div style="width: 12px; height: 12px; background: ${iconColor}; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`;
+            : `<div style="position: relative; width: 12px; height: 12px; background: ${iconColor}; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+                ${badgeHtml}
+               </div>`;
           return div;
         })()
       });

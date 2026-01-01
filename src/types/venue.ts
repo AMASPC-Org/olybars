@@ -52,7 +52,15 @@ export interface ScheduledDeal {
     createdAt?: any; // Firestore serverTimestamp
 }
 
-export type VenueType = 'bar_pub' | 'restaurant_bar' | 'brewery_taproom' | 'lounge_club' | 'arcade_bar';
+export type VenueType = 'bar_pub' | 'restaurant_bar' | 'brewery_taproom' | 'lounge_club' | 'arcade_bar' | 'brewpub';
+
+export interface HappyHourMenuItem {
+    id: string;
+    name: string;
+    description?: string;
+    price: string;
+    category: 'food' | 'drink';
+}
 
 export type VibeTag =
     | 'dive'
@@ -117,6 +125,10 @@ export interface Venue {
     // Events & Hours
     leagueEvent?: 'karaoke' | 'trivia' | 'arcade' | 'events' | 'openmic' | 'bingo' | 'live_music' | 'pool' | 'darts' | 'shuffleboard' | 'pinball' | null;
     triviaTime?: string;
+    triviaHost?: string;
+    triviaPrizes?: string;
+    triviaSpecials?: string;
+    triviaHowItWorks?: string[];
     eventDescription?: string;
     happyHourSimple?: string;
     happyHourSpecials?: string;
@@ -126,6 +138,7 @@ export interface Venue {
         description: string;
         days?: string[];
     };
+    happyHourMenu?: HappyHourMenuItem[];
 
     // Bonus Points
     checkin_bonus_points?: number;
@@ -160,6 +173,27 @@ export interface Venue {
     foodService: FoodServiceLevel; // [NEW] Replaces attributes.food_service
     gameFeatures?: GameFeature[]; // [NEW] Replaces amenityDetails
 
+    // Discovery Attributes
+    amenities?: string[]; // e.g. ['Pool', 'Shuffleboard', 'Darts']
+    weekly_schedule?: Record<string, string[]>; // e.g. { 'thursday': ['Karaoke'] }
+
+    // [NEW] One-Time & Featured Events
+    special_events?: {
+        id: string;
+        title: string;
+        date: string; // ISO 2023-10-31
+        startTime: string; // 20:00
+        endTime?: string;
+        description?: string;
+        type: 'music' | 'activity' | 'special';
+        is_featured?: boolean; // Manual override (Weight = 100)
+        host?: string;
+        prizes?: string;
+        eventSpecials?: string;
+        howItWorks?: string[];
+        cluesUrl?: string;
+    }[];
+
     tier_config: {
         is_directory_listed: boolean;
         is_league_eligible: boolean;
@@ -186,7 +220,7 @@ export interface Venue {
         partnerVenues: string[];
         badgeId: string;
     }[];
-    establishmentType?: 'Bar Only' | 'Bar & Restaurant' | 'Restaurant with Bar'; // Likely deprecated by venueType
+    establishmentType?: 'Bar Only' | 'Bar & Restaurant' | 'Restaurant with Bar' | 'Brewpub'; // Likely deprecated by venueType
     googlePlaceId?: string;
     vibeDefault?: 'CHILL' | 'LIVELY' | 'BUZZING';
 
@@ -225,6 +259,16 @@ export interface Venue {
     isVerifiedHost?: boolean;
     isVerifiedMaker?: boolean;
     localScore?: number;
+
+    // Taxonomy Update [NEW]
+    isAllAges?: boolean;
+    isDogFriendly?: boolean;
+    hasOutdoorSeating?: boolean;
+    hasPrivateRoom?: boolean;
+    reservations?: string;
+    reservationUrl?: string;
+    openingTime?: string;
+    services?: string[];
 }
 
 export interface AmenityDetail {

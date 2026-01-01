@@ -113,6 +113,9 @@ export const updateVenueBuzz = async (venueId: string) => {
         'status': finalStatus,
         'checkIns': finalCheckIns
     });
+
+    // Invalidate cache
+    venueCache = null;
 };
 
 /**
@@ -310,6 +313,9 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
         checkIns: (venueData.checkIns || 0) + 1
     });
 
+    // Invalidate cache
+    venueCache = null;
+
     // Calculate Dynamic Points (Maker Atlas Protocol Dec 2025)
     // Base: 10
     // Local Maker (Supporter/High Local Score): 15 (1.5x)
@@ -481,6 +487,9 @@ export const performVibeCheck = async (
     }
 
     await db.collection('venues').doc(venueId).update(venueUpdates);
+
+    // Invalidate cache
+    venueCache = null;
 
     // 5. Trigger Buzz Recalc
     await updateVenueBuzz(venueId);
@@ -743,6 +752,10 @@ export const updatePhotoStatus = async (
     });
 
     await venueRef.update({ photos: updatedPhotos });
+
+    // Invalidate cache
+    venueCache = null;
+
     return { success: true };
 };
 /**
@@ -795,7 +808,8 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'managersCanAddUsers',
         'liveGameStatus', 'photos',
         'manualStatus', 'manualStatusExpiresAt',
-        'manualCheckIns', 'manualCheckInsExpiresAt'
+        'manualCheckIns', 'manualCheckInsExpiresAt',
+        'happyHour', 'happyHourSpecials', 'happyHourSimple'
     ];
 
     const playerFields: (keyof Venue)[] = ['status', 'liveGameStatus', 'photos'];
@@ -853,6 +867,9 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
 
     filteredUpdates.updatedAt = Date.now();
     await venueRef.update(filteredUpdates);
+
+    // [CACHE_INVALIDATION] Force refresh on next fetch
+    venueCache = null;
 
     return { success: true, updates: filteredUpdates };
 };
@@ -950,6 +967,9 @@ export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: strin
 
     // 4. Update Database
     await venueRef.update(updates);
+
+    // [CACHE_INVALIDATION] Force refresh on next fetch
+    venueCache = null;
 
     console.log(`[PLACES_SYNC] Successfully synced ${venueData.name} with Google.`);
 
@@ -1072,6 +1092,9 @@ export const onboardVenue = async (googlePlaceId: string, ownerId: string) => {
         });
     }
 
+    // Invalidate cache
+    venueCache = null;
+
     // 2. User update (Role sync)
     const userRef = db.collection('users').doc(ownerId);
     await userRef.update({
@@ -1139,6 +1162,9 @@ export const addVenueMember = async (venueId: string, email: string, role: strin
         if (!managerIds.includes(userId)) {
             managerIds.push(userId);
             await venueRef.update({ managerIds });
+
+            // Invalidate cache
+            venueCache = null;
         }
     }
 
@@ -1177,6 +1203,9 @@ export const removeVenueMember = async (venueId: string, memberId: string, reque
     // 2. Remove from venue's managerIds if present
     const managerIds = (venueData.managerIds || []).filter(id => id !== memberId);
     await venueRef.update({ managerIds });
+
+    // Invalidate cache
+    venueCache = null;
 
     return { success: true };
 };
@@ -1272,6 +1301,10 @@ export const syncFlashDeals = async () => {
         }
 
         await batch.commit();
+
+        // Invalidate cache
+        venueCache = null;
+
         console.log(`[FLASH_SYNC] Activated ${processed} deals.`);
         return { processed };
     } catch (error) {

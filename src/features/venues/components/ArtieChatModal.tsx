@@ -199,16 +199,14 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
         setInput('');
 
         if (isOpsMode) {
-            // In Ops mode, typing usually means submitting input for a step
-            // If state is 'flash_deal_input', this text is the deal content
+            // In Ops mode, check if we are in a specific input step
             if (opsArtie.opsState === 'flash_deal_input') {
                 await opsArtie.processAction('SUBMIT_DEAL_TEXT', userText);
             } else if (opsArtie.opsState === 'event_input') {
-                // Future event logic
                 await opsArtie.processAction('SUBMIT_EVENT_TEXT', userText);
             } else {
-                // General chat fallback or error
-                await opsArtie.processAction('SUBMIT_UNKNOWN', userText);
+                // General chat fallback for partners
+                await guestArtie.sendMessage(userText, userProfile?.uid, userProfile?.role, hpValue);
             }
         } else {
             // Guest Mode: Send to LLM
@@ -312,9 +310,13 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
     if (!isOpen) return null;
 
     // Unified Messages Array
-    const activeMessages = isOpsMode ? opsArtie.messages : guestArtie.messages;
-    const activeIsLoading = isOpsMode ? opsArtie.isLoading : guestArtie.isLoading;
-    const activeError = isOpsMode ? null : guestArtie.error;
+    const activeMessages = isOpsMode
+        ? [...opsArtie.messages, ...guestArtie.messages.map(m => ({ ...m, role: m.role === 'model' ? 'artie' : 'user', text: m.content, timestamp: Date.now() }))]
+            .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
+        : guestArtie.messages;
+
+    const activeIsLoading = isOpsMode ? (opsArtie.isLoading || guestArtie.isLoading) : guestArtie.isLoading;
+    const activeError = isOpsMode ? guestArtie.error : guestArtie.error;
 
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -345,8 +347,8 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/50">
-                    {/* Welcome Message (Guest Mode Only - Ops has it in messages) */}
-                    {!isOpsMode && activeMessages.length === 0 && greeting && (
+                    {/* Welcome Message (Show Guest Greeting if no guest messages yet) */}
+                    {guestArtie.messages.length === 0 && greeting && (
                         <div className="space-y-4">
                             <div className="flex justify-start animate-in fade-in slide-in-from-left-4 duration-500">
                                 <div className="max-w-[85%] p-3 rounded-2xl text-sm font-medium leading-relaxed bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none">
@@ -488,10 +490,8 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                            placeholder={isOpsMode ? (opsArtie.opsState === 'flash_deal_input' ? "Type deal details..." : "Type response...") : "Ask Artie..."}
+                            placeholder={isOpsMode ? (opsArtie.opsState === 'flash_deal_input' ? "Type deal details..." : "Ask Artie...") : "Ask Artie..."}
                             className="flex-1 bg-transparent px-3 text-sm text-white outline-none placeholder:text-slate-600 font-medium"
-                            // Disable input if Chips are the expected interaction (optional, but good for UX)
-                            disabled={isOpsMode && opsArtie.currentBubbles.length > 0}
                         />
                         {/* Honeypot Field */}
                         <div style={{ display: 'none' }} aria-hidden="true">

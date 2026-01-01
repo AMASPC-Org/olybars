@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu,
@@ -28,14 +28,17 @@ import {
   Home,
   ShoppingBag,
   Hammer,
-  Shield
+  Shield,
+  Zap
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../types';
+import { isSystemAdmin } from '../../types/auth_schema';
 import { ArtieChatModal } from '../../features/venues/components/ArtieChatModal';
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
 import { CookieBanner } from '../ui/CookieBanner';
 import { Footer } from './Footer';
 import { BuzzClock } from '../ui/BuzzClock';
+import logoIcon from '../../assets/OlyBars.com Emblem Logo PNG Transparent (512px by 512px).png';
 
 interface AppShellProps {
   venues: Venue[];
@@ -83,6 +86,16 @@ export const AppShell: React.FC<AppShellProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const [showMenu, setShowMenu] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Scroll listener for compact header
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 40);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Pulse & Buzz Logic
   const activeDeals = venues
@@ -116,6 +129,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   const activeTab = getActiveTab();
 
+  /* Floating Buttons style with individual borders and gaps */
   const navItems = [
     { id: 'pulse', label: 'PULSE', icon: Flame, path: '/' },
     { id: 'bars', label: 'BARS', icon: Search, path: '/bars' },
@@ -123,8 +137,6 @@ export const AppShell: React.FC<AppShellProps> = ({
     { id: 'league', label: 'LEAGUE', icon: Crown, path: '/league' },
     { id: 'events', label: 'EVENTS', icon: Ticket, path: '/events' },
     { id: 'play', label: 'PLAY', icon: Brain, path: '/play' },
-    { id: 'makers', label: 'MAKERS', icon: Hammer, path: '/makers' },
-    { id: 'live', label: 'LIVE', icon: Music, path: '/live' },
   ];
 
   const handleMenuNavigation = (path: string) => {
@@ -154,48 +166,76 @@ export const AppShell: React.FC<AppShellProps> = ({
       : 'max-w-md border-x-4 border-black'
       }`}>
       {/* Header Area */}
-      <div className="sticky top-0 z-40 bg-background shadow-lg">
-        <div className="bg-black border-b-2 border-primary">
-          <div className={`p-3 flex justify-between items-center mx-auto ${isFullWidthPage ? 'max-w-[1600px]' : ''}`}>
+      <div className={`sticky top-0 z-40 backdrop-blur-xl transition-all duration-300 ${pulseStatus === 'buzzing' ? 'shadow-[0_4px_20px_-5px_rgba(251,191,36,0.5)]' : 'shadow-lg'
+        }`}>
+        <div className={`relative border-b-2 transition-colors duration-500 ${pulseStatus === 'buzzing' ? 'bg-black/80 border-primary' : 'bg-black/90 border-slate-800'
+          }`}>
+          {/* Top Glow bar for "Buzzing" status */}
+          {pulseStatus === 'buzzing' && (
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse" />
+          )}
+
+          <div className={`p-3 flex justify-between items-center mx-auto transition-all ${isFullWidthPage ? 'max-w-[1600px] px-6' : ''}`}>
             <div
               onClick={() => navigate('/')}
-              className="text-3xl font-black tracking-wide text-white flex items-center gap-1 drop-shadow-md cursor-pointer hover:opacity-80 transition-opacity"
+              className="text-2xl md:text-3xl font-black tracking-tighter text-white flex items-center gap-3 drop-shadow-md cursor-pointer group"
             >
-              OLYBARS<span className="text-primary">.COM</span>
+              <div className="relative flex-shrink-0">
+                <img
+                  src={logoIcon}
+                  alt="Logo Icon"
+                  className="w-10 h-10 md:w-12 md:h-12 object-contain group-hover:rotate-12 transition-transform duration-300"
+                />
+                {pulseStatus === 'buzzing' && (
+                  <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-black animate-ping" />
+                )}
+              </div>
+              <span className="font-league uppercase leading-none group-hover:text-primary transition-colors flex flex-col">
+                <span className="flex items-center">
+                  OLYBARS<span className="text-primary">.COM</span>
+                </span>
+              </span>
             </div>
-            <button
-              onClick={() => setShowMenu(true)}
-              className="text-white hover:text-primary transition-colors"
-            >
-              <Menu className="w-8 h-8" strokeWidth={3} />
-            </button>
+
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowMenu(true)}
+                className="text-white hover:text-primary transition-all active:scale-95"
+              >
+                <Menu className="w-8 h-8" strokeWidth={3} />
+              </button>
+            </div>
           </div>
         </div>
 
         {/* The Buzz Clock Component */}
-        <BuzzClock />
+        <BuzzClock venues={venues} />
 
-        {/* Fixed 2x4 Grid Navigation: Legibility Focus */}
-        <div className="bg-background border-b-2 border-black">
-          <div className={`${isFullWidthPage ? 'max-w-[1600px] mx-auto' : ''} grid ${isFullWidthPage ? 'grid-cols-4 md:grid-cols-8' : 'grid-cols-4'} gap-[1px] bg-black/40`}>
+        {/* Navigation Grid: "Floating Buttons" Style */}
+        <div className={`bg-black border-b border-[#333] backdrop-blur-sm transition-all duration-500 overflow-hidden ${isScrolled ? 'max-h-0 invisible scale-y-0 opacity-0' : 'max-h-[200px] visible scale-y-100 opacity-100'}`}>
+          <div className={`${isFullWidthPage ? 'max-w-[1600px] mx-auto' : ''} p-1.5 grid ${isFullWidthPage ? 'grid-cols-4 md:grid-cols-6' : 'grid-cols-3'} gap-1.5 bg-black`}>
             {navItems.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => navigate(tab.path)}
-                className={`flex flex-col items-center justify-center py-3.5 transition-all relative overflow-hidden ${activeTab === tab.id
-                  ? 'bg-primary text-black shadow-inner'
+                className={`flex flex-col items-center justify-center py-3 px-1 rounded-md transition-all relative overflow-hidden group/nav border ${activeTab === tab.id
+                  ? 'bg-[#FFD700] text-black border-[#FFD700] font-bold shadow-[0_0_10px_rgba(255,215,0,0.4)]'
                   : tab.id === 'pulse' && pulseStatus === 'buzzing'
-                    ? 'bg-primary/10 text-primary'
-                    : 'bg-surface text-slate-400 hover:bg-surface/80'
-                  }`}
+                    ? 'bg-[#1A1D21] text-primary border-primary/50 shadow-[0_0_8px_rgba(251,191,36,0.2)]'
+                    : 'bg-[#1A1D21] border-[#333] text-[#888] hover:border-[#666] hover:text-[#ccc]'
+                  } active:scale-95 active:border-[#FFD700] active:text-[#FFD700]`}
               >
                 {tab.id === 'pulse' && (pulseStatus === 'buzzing' || pulseStatus === 'lively') && (
-                  <div className={`absolute top-1 right-1 w-2 h-2 rounded-full ${pulseStatus === 'buzzing' ? 'bg-primary animate-ping' : 'bg-blue-400'}`} />
+                  <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${pulseStatus === 'buzzing' ? 'bg-primary animate-ping' : 'bg-blue-400'}`} />
                 )}
-                <tab.icon className="w-4 h-4 mb-1" strokeWidth={activeTab === tab.id ? 4 : 3} />
-                <span className={`text-[10px] font-black tracking-widest font-league uppercase leading-none ${activeTab === tab.id ? 'text-black' : ''}`}>
+
+                <tab.icon className={`w-4 h-4 mb-1 transition-transform group-hover/nav:scale-110 ${activeTab === tab.id ? 'scale-110' : ''}`} strokeWidth={activeTab === tab.id ? 4 : 3} />
+
+                <span className={`text-[10px] font-black tracking-widest font-league uppercase leading-none transition-all ${activeTab === tab.id ? 'text-black' : 'group-hover/nav:tracking-[0.15em]'
+                  }`}>
                   {tab.id === 'pulse' && pulseStatus !== 'quiet' ? pulseStatus : tab.label}
                 </span>
+
               </button>
             ))}
           </div>
@@ -361,7 +401,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                 </div>
 
                 {/* --- CLUSTER 2: SYSTEM ADMINISTRATION (SUPER ADMIN / ADMIN) --- */}
-                {(userRole === 'super-admin' || userRole === 'admin' || userProfile?.email === 'ryan@amaspc.com') && (
+                {isSystemAdmin(userProfile) && (
                   <div className="pt-2">
                     <h3 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em] px-1 mb-3">System Administration</h3>
                     <button
@@ -421,12 +461,12 @@ export const AppShell: React.FC<AppShellProps> = ({
                   </div>
 
                   <h3 className="text-[10px] font-black text-gold-500 uppercase tracking-[0.2em] px-1 mt-4 mb-3 text-center">
-                    {userRole === 'owner' || userRole === 'manager' ? 'Partner Administration' : 'Partner Access'}
+                    {userRole === 'owner' || userRole === 'manager' || isSystemAdmin(userProfile) ? 'Partner Administration' : 'Partner Access'}
                   </h3>
 
                   <div className="space-y-3">
-                    {/* VENUE OPS DASHBOARD (If Logged In) */}
-                    {(userRole === 'owner' || userRole === 'manager') && (
+                    {/* THE BREW HOUSE (If Logged In as Owner/Admin) */}
+                    {(userRole === 'owner' || userRole === 'manager' || isSystemAdmin(userProfile)) && (
                       <button
                         onClick={() => {
                           onVenueDashboardClick?.();
@@ -437,7 +477,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                         <div className="flex items-center gap-2">
                           <Hammer className="w-4 h-4 text-primary" />
                           <span className="text-primary font-black text-[10px] uppercase tracking-widest font-league">
-                            MY VENUE PORTAL
+                            THE BREW HOUSE
                           </span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-primary" />
@@ -462,7 +502,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                     </button>
 
                     {/* Default Login/Portal Link if not logged in */}
-                    {(!userRole || userRole === 'guest' || userRole === 'member') && (
+                    {(!userRole || userRole === 'guest' || userRole === 'member') && !isSystemAdmin(userProfile) && (
                       <button
                         onClick={() => {
                           onOwnerLoginClick?.();

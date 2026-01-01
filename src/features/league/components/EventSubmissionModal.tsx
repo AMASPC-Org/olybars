@@ -23,6 +23,10 @@ export const EventSubmissionModal: React.FC<EventSubmissionModalProps> = ({ isOp
         time: '',
         description: '',
         isLeagueEvent: false,
+        host: '',
+        prizes: '',
+        eventSpecials: '',
+        howItWorks: '',
     });
     const [_hp_id, set_hp_id] = useState(''); // Honeypot
 
@@ -51,11 +55,13 @@ export const EventSubmissionModal: React.FC<EventSubmissionModalProps> = ({ isOp
 
         setIsSubmitting(true);
         try {
-            await EventService.submitEvent({
+            const finalEvent = {
                 venueId: selectedVenueId,
                 venueName: selectedVenue.name,
-                ...formData
-            });
+                ...formData,
+                howItWorks: formData.howItWorks ? formData.howItWorks.split('\n').filter(line => line.trim() !== '') : undefined
+            };
+            await EventService.submitEvent(finalEvent as any);
             showToast('Event submitted for sanctioning! The Commish will review it shortly.', 'success');
             onClose();
         } catch (error: any) {
@@ -223,6 +229,55 @@ export const EventSubmissionModal: React.FC<EventSubmissionModalProps> = ({ isOp
                         </div>
                         <div className={`w-12 h-6 rounded-full p-1 transition-all ${formData.isLeagueEvent ? 'bg-primary' : 'bg-slate-800'}`}>
                             <div className={`w-4 h-4 rounded-full bg-white transition-all ${formData.isLeagueEvent ? 'translate-x-6' : 'translate-x-0'}`} />
+                        </div>
+                    </div>
+
+                    {/* Rich Metadata Section */}
+                    <div className="space-y-4 border-t border-white/5 pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-primary uppercase tracking-widest">Host / MC</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Jim Westerling"
+                                    value={formData.host}
+                                    onChange={(e) => setFormData({ ...formData, host: e.target.value })}
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:border-primary outline-none transition-all font-body text-sm"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-primary uppercase tracking-widest">Prizes</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. $50 Gift Card"
+                                    value={formData.prizes}
+                                    onChange={(e) => setFormData({ ...formData, prizes: e.target.value })}
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:border-primary outline-none transition-all font-body text-sm"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-primary uppercase tracking-widest">Event Specials</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. $2 Tall Boys while you play"
+                                value={formData.eventSpecials}
+                                onChange={(e) => setFormData({ ...formData, eventSpecials: e.target.value })}
+                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:border-primary outline-none transition-all font-body text-sm"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-primary uppercase tracking-widest">How it Works (Instructions)</label>
+                            <textarea
+                                rows={3}
+                                placeholder="1. Form a team&#10;2. Answer questions&#10;3. Win prizes"
+                                value={formData.howItWorks}
+                                onChange={(e) => setFormData({ ...formData, howItWorks: e.target.value })}
+                                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:border-primary outline-none transition-all font-body text-sm resize-none"
+                            ></textarea>
+                            <p className="text-[8px] text-slate-500 font-bold uppercase trekking-widest italic">One instruction per line</p>
                         </div>
                     </div>
 

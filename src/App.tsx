@@ -230,11 +230,12 @@ export default function OlyBarsApp() {
     // 2. Persist to Backend
     try {
       await updateVenueDetails(venueId, updates, userProfile.uid);
-    } catch (err) {
+    } catch (err: any) {
       console.error('[OlyBars] Failed to persist venue update:', err);
-      showToast('Connection issue: Update might not be permanent.', 'error');
+      showToast(err.message || 'Connection issue: Update might not be permanent.', 'error');
       // Invalidate on error to revert to server state
       queryClient.invalidateQueries({ queryKey: ['venues'] });
+      throw err; // Re-throw so callers can manage their own UI state (e.g. isSaving)
     }
   };
 
@@ -483,6 +484,7 @@ export default function OlyBarsApp() {
                       lastVibeChecks={userProfile.lastVibeChecks}
                       lastGlobalVibeCheck={userProfile.lastGlobalVibeCheck}
                       isLoading={isLoading}
+                      onToggleWeeklyBuzz={handleToggleWeeklyBuzz}
                     />
                   </>
                 }

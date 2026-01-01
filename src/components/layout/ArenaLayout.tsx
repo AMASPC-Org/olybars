@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Calendar, MapPin, ChevronLeft, Bell, X } from 'lucide-react';
+import { GlobalSearch } from '../features/search/GlobalSearch';
 
 interface ArenaLayoutProps {
     children: React.ReactNode;
@@ -65,14 +66,10 @@ export const ArenaLayout: React.FC<ArenaLayoutProps> = ({
                     ) : (
                         <div className="flex-1 flex items-center gap-2">
                             <div className="flex-1 relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                                <input
-                                    autoFocus
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={handleSearch}
+                                <GlobalSearch
                                     placeholder={searchPlaceholder}
-                                    className="w-full bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-primary/50 transition-colors text-white placeholder-slate-600"
+                                    variant="header"
+                                    className="w-full"
                                 />
                             </div>
                             <button

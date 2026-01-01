@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Share2, Plus, Hammer, Trophy, Music, Mic } from 'lucide-react';
+import { MapPin, Share2, Plus, Hammer, Trophy, Music, Mic, Sparkles } from 'lucide-react';
 import { Venue, AppEvent } from '../../types';
 import { VibeSelector } from './VibeSelector';
 
@@ -103,9 +103,52 @@ export const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
 
                 {/* Event Description (if provided by AppEvent) */}
                 {event?.description && (
-                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed line-clamp-2 italic px-1">
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed italic px-1">
                         "{event.description}"
                     </p>
+                )}
+
+                {/* Rich Metadata Section */}
+                {(event?.host || event?.prizes || event?.eventSpecials || (event?.howItWorks && event.howItWorks.length > 0)) && (
+                    <div className="space-y-3 bg-black/30 rounded-2xl p-4 border border-white/5 animate-in fade-in duration-500">
+                        {event.host && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-[8px] font-black text-primary uppercase tracking-widest">Hosted By</span>
+                                <span className="text-[10px] font-bold text-white uppercase">{event.host}</span>
+                            </div>
+                        )}
+
+                        {event.eventSpecials && (
+                            <div className="bg-primary/10 border border-primary/20 rounded-lg p-2 flex items-center gap-3">
+                                <Sparkles size={14} className="text-primary animate-pulse" />
+                                <span className="text-[10px] font-bold text-primary uppercase tracking-tight">{event.eventSpecials}</span>
+                            </div>
+                        )}
+
+                        {event.prizes && (
+                            <div className="flex items-start gap-2">
+                                <Trophy size={14} className="text-yellow-500 shrink-0" />
+                                <div className="space-y-0.5">
+                                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">The Prize</span>
+                                    <span className="text-[10px] font-bold text-white uppercase leading-none">{event.prizes}</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {event.howItWorks && event.howItWorks.length > 0 && (
+                            <div className="space-y-2 pt-2 border-t border-white/5">
+                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">How it Works</span>
+                                <ul className="space-y-1">
+                                    {event.howItWorks.map((step, idx) => (
+                                        <li key={idx} className="flex gap-2 text-[10px] text-slate-300 font-medium leading-tight">
+                                            <span className="text-primary font-black uppercase tracking-tighter shrink-0">{idx + 1}.</span>
+                                            {step}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {/* Pulse Actions - Only show if venue object is available for status update */}

@@ -40,6 +40,13 @@ const venues = [
         deal: "$2 Pretzels & Cheese",
         dealEndsIn: 45,
         vibeDefault: 'LIVELY',
+        happyHourSpecials: "$1 OFF PINTS & LEOPOLD PRETZELS",
+        happyHour: {
+            startTime: '15:00',
+            endTime: '18:00',
+            description: '$1 Off Pints & Leopold Pretzels',
+            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+        },
         gameFeatures: [], // No specific games listed
         ownerId: "KU9KvRYzzrZfVU7BV4gaPYAFlKS2",
         managerIds: ["KU9KvRYzzrZfVU7BV4gaPYAFlKS2"],
@@ -452,6 +459,7 @@ const venues = [
         name: 'The Brotherhood Lounge',
         venueType: 'bar_pub',
         vibeTags: ['dive'],
+        amenities: ['Pool', 'Shuffleboard'],
         foodService: 'none_byof',
         tier_config: { is_directory_listed: true, is_league_eligible: true },
         attributes: { has_manned_bar: true, minors_allowed: false, noise_level: 'Loud/Music' },
@@ -505,6 +513,25 @@ const venues = [
         gameFeatures: [
             { id: 'pool_1', type: 'pool_table', name: 'Pool Table', count: 2, status: 'active' },
             { id: 'darts_1', type: 'darts', name: 'Darts', count: 2, status: 'active' }
+        ],
+        special_events: [
+            {
+                id: 'evt-mccoys-1',
+                title: 'The Olson Bros Band',
+                date: new Date().toISOString().split('T')[0], // Today
+                startTime: '20:00',
+                type: 'music',
+                is_featured: true,
+                description: 'Live Country Rock from the PNW.'
+            },
+            {
+                id: 'evt-mccoys-2',
+                title: 'Halloween Bash',
+                date: '2025-10-31',
+                startTime: '21:00',
+                type: 'special',
+                description: 'Costume contest and spooky vibes.'
+            }
         ]
     },
     {
@@ -570,6 +597,14 @@ const venues = [
         address: '109 Legion Way SW, Olympia, WA 98501, USA',
         physicalRoom: true,
         website: 'https://nicolesbar.com/',
+        // Happy Hour (Scheduled)
+        happyHour: {
+            startTime: '15:30',
+            endTime: '18:30',
+            description: '$2 Domestic Cans & Basket Specials',
+            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+        },
+        happyHourSpecials: "$2 DOMESTIC CANS & BASKET SPECIALS",
         gameFeatures: []
     },
     {
@@ -813,6 +848,7 @@ const venues = [
         id: 'hannahs',
         name: "Hannah's Bar & Grill",
         nicknames: ["Hannah's", "Hannahs", "The Grill", "Hannah's Bar"],
+        weekly_schedule: { 'friday': ['Karaoke'] },
         venueType: 'bar_pub',
         vibeTags: ['dive', 'sports'],
         foodService: 'full_kitchen',

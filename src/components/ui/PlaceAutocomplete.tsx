@@ -6,18 +6,20 @@ interface PlaceAutocompleteProps {
     onPlaceSelect: (place: google.maps.places.PlaceResult) => void;
     placeholder?: string;
     className?: string;
+    venues?: Venue[];
 }
 
 export const PlaceAutocomplete: React.FC<PlaceAutocompleteProps> = ({
     onPlaceSelect,
     placeholder = "Search for a place...",
-    className = ""
+    className = "",
+    venues
 }) => {
     const [showDropdown, setShowDropdown] = useState(false);
     const { query, setQuery, predictions, selectPrediction, loading } = usePlacesAutocomplete((place) => {
         onPlaceSelect(place);
         setShowDropdown(false);
-    });
+    }, venues);
 
     return (
         <div className={`relative group ${className}`}>

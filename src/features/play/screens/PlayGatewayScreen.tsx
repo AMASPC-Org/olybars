@@ -125,7 +125,8 @@ export const PlayGatewayScreen: React.FC<PlayGatewayScreenProps> = ({ venues }) 
                                         {category.games.map((game, gIdx) => (
                                             <span
                                                 key={gIdx}
-                                                className="text-[10px] font-bold text-slate-400 bg-black/40 px-3 py-1.5 rounded-full border border-white/5 uppercase tracking-wide hover:text-white hover:border-primary/50 transition-colors cursor-default"
+                                                onClick={() => navigate(`/?q=${encodeURIComponent(game.name)}`)}
+                                                className="text-[10px] font-bold text-slate-400 bg-black/40 px-3 py-1.5 rounded-full border border-white/5 uppercase tracking-wide hover:text-white hover:border-primary/50 hover:bg-white/10 transition-colors cursor-pointer active:scale-95"
                                             >
                                                 {game.name}
                                             </span>
