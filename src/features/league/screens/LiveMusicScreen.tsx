@@ -37,7 +37,7 @@ export const LiveMusicScreen: React.FC<LiveMusicScreenProps> = ({ venues }) => {
                             time="9:00 PM - 12:00 AM"
                             category="live"
                             points={15}
-                            onCheckIn={() => console.log('Check-in', venue.id)}
+                            onCheckIn={() => console.log('Clock-in', venue.id)}
                             onShare={() => console.log('Share', venue.id)}
                             onVibeChange={(v) => console.log('Vibe', venue.id, v)}
                             contextSlot={

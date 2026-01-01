@@ -73,7 +73,7 @@ export const PointHistoryScreen: React.FC<PointHistoryScreenProps> = ({ onBack, 
                         <h2 className="text-3xl font-black text-white uppercase font-league">Join the League</h2>
                         <p className="text-slate-400 leading-relaxed">
                             Points are essentially the currency of Olympia's nightlife.
-                            Track your check-ins, unlock badges, and climb the leaderboard.
+                            Track your clock-ins, unlock badges, and climb the leaderboard.
                         </p>
                     </div>
                     <button
@@ -141,7 +141,7 @@ export const PointHistoryScreen: React.FC<PointHistoryScreenProps> = ({ onBack, 
                                 Artie's Insight
                             </h3>
                             <p className="text-sm text-slate-400 leading-relaxed italic">
-                                "Every check-in is a soul added to the collective pulse of the South Sound. Your activity history is more than just points—it's a receipt for a life lived well in Olympia."
+                                "Every clock-in is a soul added to the collective pulse of the South Sound. Your activity history is more than just points—it's a receipt for a life lived well in Olympia."
                             </p>
                             {isGuest && (
                                 <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-xl space-y-3">

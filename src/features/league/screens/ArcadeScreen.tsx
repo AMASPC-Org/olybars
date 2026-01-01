@@ -36,7 +36,7 @@ export const ArcadeScreen: React.FC<ArcadeScreenProps> = ({ venues }) => {
               time="Always Active"
               category="play"
               points={10}
-              onCheckIn={() => console.log('Check-in', venue.id)}
+              onCheckIn={() => console.log('Clock-in', venue.id)}
               onShare={() => console.log('Share', venue.id)}
               onVibeChange={(v) => console.log('Vibe', venue.id, v)}
               contextSlot={

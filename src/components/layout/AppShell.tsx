@@ -35,6 +35,7 @@ import { ArtieChatModal } from '../../features/venues/components/ArtieChatModal'
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
 import { CookieBanner } from '../ui/CookieBanner';
 import { Footer } from './Footer';
+import { BuzzClock } from '../ui/BuzzClock';
 
 interface AppShellProps {
   venues: Venue[];
@@ -171,27 +172,8 @@ export const AppShell: React.FC<AppShellProps> = ({
           </div>
         </div>
 
-        {/* Restored Buzz Bar: Happy Hour Utility */}
-        <div className="bg-black border-b border-primary/20 p-2 flex justify-between items-center relative overflow-hidden group">
-          <div className="absolute inset-0 bg-primary/5 animate-pulse" />
-          <div className="flex items-center gap-2 z-10">
-            <Clock className="w-3.5 h-3.5 text-primary animate-pulse" />
-            <div className="flex flex-col">
-              <h2 className="text-[10px] font-black text-primary/80 leading-none uppercase tracking-widest font-league">
-                The Pulse
-              </h2>
-              <span className="text-[10px] text-white font-bold uppercase tracking-tight">
-                {activeDeals.length} Happy Hours Active — {venues.filter(v => v.status === 'buzzing').length} Spots Buzzing
-              </span>
-            </div>
-          </div>
-          {activeDeals.length > 0 && (
-            <div className="z-10 bg-primary/20 border border-primary/50 rounded-lg px-2 py-1 flex items-center gap-1.5">
-              <span className="text-[9px] font-black text-primary uppercase">Ending in</span>
-              <span className="text-[11px] font-mono font-black text-white">{activeDeals[0].dealEndsIn}m</span>
-            </div>
-          )}
-        </div>
+        {/* The Buzz Clock Component */}
+        <BuzzClock />
 
         {/* Fixed 2x4 Grid Navigation: Legibility Focus */}
         <div className="bg-background border-b-2 border-black">

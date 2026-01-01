@@ -243,7 +243,7 @@ export default function OlyBarsApp() {
 
     // 1. Calculate OlyBars Business Day Start (4:00 AM)
     if (clockedInVenue === venue.id) {
-      showToast("You're already checked in here!", 'info');
+      showToast("You're already clocked in here!", 'info');
       return;
     }
 
@@ -299,7 +299,7 @@ export default function OlyBarsApp() {
         await performVibeCheck(venue.id, userProfile.uid, status, hasConsent, photoUrl, verificationMethod, gameStatus);
       } catch (err) {
         console.error('[OlyBars] Vibe Check Backend Error:', err);
-        showToast('Vibe Check recorded offline (points may be delayed)', 'warning');
+        showToast('Vibe Check recorded offline (points may be delayed)', 'info');
       }
     } else {
       // Guest mode fallback (or keep updating local state if desired)

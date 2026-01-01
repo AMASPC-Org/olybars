@@ -89,7 +89,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
               <div className="space-y-8 relative">
                 {[
                   { t: '1. Create Handle', d: 'Stake your claim. Pick a name that will go down in Oly history.', icon: Users },
-                  { t: '2. Check In', d: 'Clock in at any participating venue (max 2 per 12hrs).', icon: ShieldCheck },
+                  { t: '2. Clock In', d: 'Clock in at any participating venue (max 2 per 12hrs).', icon: ShieldCheck },
                   { t: '3. Climb the Ranks', d: 'Earn points for vibing, playing, and existing in the scene.', icon: Trophy },
                   { t: '4. Win Swag', d: 'Score limited-edition gear and exclusive local perks.', icon: Gift }
                 ].map((i, idx) => (
@@ -113,7 +113,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
               </h4>
               <div className="bg-background/50 border border-slate-800 p-4 rounded-xl">
                 <p className="text-sm font-bold text-white mb-1">Double Points at Hannah's</p>
-                <p className="text-[10px] text-slate-500 font-bold uppercase leading-tight">Valid during League Nights. Check in to activate.</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase leading-tight">Valid during League Nights. Clock in to activate.</p>
               </div>
             </div>
 
@@ -266,7 +266,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
               </div>
               <div className="bg-slate-900/50 border border-slate-700/50 p-5 rounded-2xl">
                 <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #2: Points & Limits</h3>
-                <p className="font-bold text-slate-400 text-sm leading-relaxed">Max two (2) check-ins per 12-hour period. No purchase necessary to earn points. Ghosting (checking in without being present) is prohibited.</p>
+                <p className="font-bold text-slate-400 text-sm leading-relaxed">Max two (2) clock-ins per 12-hour period. No purchase necessary to earn points. Ghosting (clocking in without being present) is prohibited.</p>
               </div>
               <div className="bg-slate-900/50 border border-slate-700/50 p-5 rounded-2xl">
                 <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #3: The Vibe Check</h3>
@@ -274,7 +274,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
               </div>
               <div className="bg-slate-900/50 border border-slate-700/50 p-5 rounded-2xl">
                 <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #4: Fair Play</h3>
-                <p className="font-bold text-slate-400 text-sm leading-relaxed">Any attempt to spoof GPS or automate check-ins results in a permanent ban. Play fair, drink responsibly.</p>
+                <p className="font-bold text-slate-400 text-sm leading-relaxed">Any attempt to spoof GPS or automate clock-ins results in a permanent ban. Play fair, drink responsibly.</p>
               </div>
 
               {/* [NEW] Points Guide Link */}

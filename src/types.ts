@@ -6,3 +6,4 @@ export * from './types/badge';
 export * from './types/merch';
 export * from './types/event';
 export * from './types/chat';
+export * from './types/buzz';

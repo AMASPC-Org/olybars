@@ -58,7 +58,7 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile 
 
   const handlePlayCheckIn = async (venueId: string, amenityId: string) => {
     if (!userProfile || userProfile.uid === 'guest') {
-      showToast("Create an OlyBars ID to log check-ins!", "error");
+      showToast("Create an OlyBars ID to log clock-ins!", "error");
       return;
     }
 
@@ -92,7 +92,7 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile 
       title="The Arcade & Play"
       subtitle="Olympia's Activity Engine"
       activeCategory="play"
-      artieTip="Static check-ins at darts or pool tables earn 5 points toward the season leaderboard. Go get 'em."
+      artieTip="Static clock-ins at darts or pool tables earn 5 points toward the season leaderboard. Go get 'em."
       onSearchChange={setSearchQuery}
       searchPlaceholder="Search Darts, Pool, Pinball..."
     >
@@ -150,7 +150,7 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile 
                 time="LIVE NOW"
                 category="play"
                 points={venue.leagueEvent === 'trivia' ? 20 : 15}
-                onCheckIn={() => console.log('Check-in', venue.id)}
+                onCheckIn={() => console.log('Clock-in', venue.id)}
                 onShare={() => console.log('Share', venue.id)}
                 onVibeChange={(v) => console.log('Vibe', venue.id, v)}
                 contextSlot={

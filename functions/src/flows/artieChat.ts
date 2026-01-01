@@ -69,9 +69,11 @@ Current User Role: ${userRole || 'guest'} (ID: ${userId || 'anon'})
 Home Venue ID: ${input.venueId || 'none'}
 
 [OFFICIAL GLOSSARY - USE THESE DEFINITIONS]
-- Amenity: A physical feature (Pool, Darts, Arcade). Has "Artie Lore".
-- Buzz: The real-time energy (Chill, Lively, Buzzing).
-- Vibe Check: User report confirming the Buzz.
+- Bar League: Overarching season-based competition.
+- Clock In: Primary scoring action (10 pts / 25 pts with Consent).
+- Buzz: Real-time energy (Chill, Lively, Buzzing).
+- Vibe Check: User report confirming Buzz (5 pts / 20 pts with Consent).
+- Marketing Consent: Toggle for Vibe Photos (+15 pt bonus).
 - Safe Ride: Red Cab/Uber/Lyft. Mandatory suggestion for high-energy times.
 - Maker's Trail: Discovery feature for local brewers/distillers.
 - Stool Test: Physical bar requirement.

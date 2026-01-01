@@ -12,7 +12,7 @@ export const LeaguePerksScreen: React.FC = () => {
     const perks = [
         {
             icon: MapPin,
-            title: "Check-in Points",
+            title: "Clock-in Points",
             desc: "Clock in at any league bar to score 10+ points towards the season leaderboard.",
             color: "text-blue-400",
             bg: "bg-blue-400/10"

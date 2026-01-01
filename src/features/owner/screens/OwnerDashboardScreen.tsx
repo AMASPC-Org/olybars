@@ -30,7 +30,7 @@ interface OwnerDashboardProps {
     initialView?: 'main' | 'marketing' | 'listing';
 }
 
-const WEEKLY_STATS = { totalCheckIns: 142, newMembers: 18, returnRate: "34%", topNights: "Fri, Sat" };
+const WEEKLY_STATS = { totalClockIns: 142, newMembers: 18, returnRate: "34%", topNights: "Fri, Sat" };
 const TOP_PLAYERS = [
     { rank: 1, handle: "BarFly_99", visits: 4 }, { rank: 2, handle: "TriviaKing", visits: 3 },
     { rank: 3, handle: "PNW_Hiker", visits: 3 }, { rank: 4, handle: "OlyOlyOxen", visits: 2 },
@@ -294,7 +294,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
         }
     };
 
-    const adjustCheckIns = (delta: number) => {
+    const adjustClockIns = (delta: number) => {
         if (!myVenue) return;
         const newCount = Math.max(0, (myVenue.checkIns || 0) + delta);
         updateVenue(myVenue.id, {
@@ -505,7 +505,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                     <>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-surface p-4 border border-white/10 rounded-lg shadow-xl">
-                                <p className="text-[10px] uppercase font-black text-slate-500 mb-1 font-league">Live Check-ins</p>
+                                <p className="text-[10px] uppercase font-black text-slate-500 mb-1 font-league">Live Clock-ins</p>
                                 <p className="text-4xl font-black text-white font-league">{myVenue.checkIns || 0}</p>
                             </div>
                             <div className="bg-surface p-4 border border-white/10 rounded-lg shadow-xl">
@@ -596,11 +596,11 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 )}
                             </div>
                             <div className="flex items-center justify-between">
-                                <button onClick={() => adjustCheckIns(-1)} className="w-14 h-14 flex items-center justify-center bg-black border border-white/10 text-white rounded-lg active:scale-95">
+                                <button onClick={() => adjustClockIns(-1)} className="w-14 h-14 flex items-center justify-center bg-black border border-white/10 text-white rounded-lg active:scale-95">
                                     <Minus className="w-8 h-8" />
                                 </button>
                                 <p className="text-5xl font-black text-white font-league">{myVenue.checkIns || 0}</p>
-                                <button onClick={() => adjustCheckIns(1)} className="w-14 h-14 flex items-center justify-center bg-primary text-black rounded-lg active:scale-95">
+                                <button onClick={() => adjustClockIns(1)} className="w-14 h-14 flex items-center justify-center bg-primary text-black rounded-lg active:scale-95">
                                     <Plus className="w-8 h-8" />
                                 </button>
                             </div>
