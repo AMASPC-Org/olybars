@@ -631,6 +631,12 @@ export const BuzzScreen: React.FC<{
                           <h4 className="font-bold text-xl text-white font-league uppercase tracking-tight truncate max-w-[200px]">{venue.name}</h4>
                         </Link>
                         {venue.isHQ && <div className="text-primary animate-in zoom-in duration-500"><Crown className="w-4 h-4 fill-current" /></div>}
+                        {venue.googleRating && (
+                          <div className="flex items-center gap-1 bg-white/10 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                            <Star size={10} className="text-yellow-400 fill-yellow-400" />
+                            <span className="text-[10px] font-black text-white">{venue.googleRating}</span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">

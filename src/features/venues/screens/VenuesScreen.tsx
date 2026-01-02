@@ -278,6 +278,14 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                                 </div>
                                             )}
                                         </div>
+                                        {/* Google Rating Badge */}
+                                        {venue.googleRating && (
+                                            <div className="flex items-center gap-1.5 mb-2">
+                                                <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                                                <span className="text-xs font-black text-white">{venue.googleRating}</span>
+                                                <span className="text-[10px] text-slate-500 font-bold">({venue.googleReviewCount})</span>
+                                            </div>
+                                        )}
                                         <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest font-body">
                                             <span>{venue.venueType.replace(/_/g, ' ')}</span>
                                             <span>•</span>

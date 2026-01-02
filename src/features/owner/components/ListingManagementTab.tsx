@@ -77,7 +77,8 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         happyHourMenu: venue.happyHourMenu || [],
         happyHourRules: venue.happyHourRules || [],
         reservationUrl: venue.reservationUrl || '',
-        orderUrl: venue.orderUrl || ''
+        orderUrl: venue.orderUrl || '',
+        directMenuUrl: venue.directMenuUrl || ''
     });
 
     // [FIX] Synchronize formData when venue prop changes (e.g. switching in dropdown)
@@ -119,6 +120,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
             happyHourMenu: venue.happyHourMenu || [],
             happyHourRules: venue.happyHourRules || [],
             orderUrl: venue.orderUrl || '',
+            directMenuUrl: venue.directMenuUrl || '',
         });
 
         // [MIGRATION] If legacy happyHour exists but rules don't, create initial rule
@@ -513,6 +515,16 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                         )}
                         {selectedPlaceId ? 'Link & Sync Selected' : 'Auto-Sync Google'}
                     </button>
+                    {/* [NEW] Google Rating Display */}
+                    {(venue.googleRating) && (
+                        <div className="flex flex-col items-end">
+                            <div className="flex items-center gap-1.5 bg-yellow-500/10 px-3 py-1.5 rounded-lg border border-yellow-500/20">
+                                <span className="text-yellow-500 text-xs font-black">{venue.googleRating} ★</span>
+                                <span className="text-slate-500 text-[10px] font-bold">({venue.googleReviewCount || 0})</span>
+                            </div>
+                            <span className="text-[9px] text-slate-600 uppercase tracking-widest mt-1">Google Quality Score</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Manual Link Helper */}
@@ -812,6 +824,13 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                             value={(formData as any).orderUrl || ''}
                             icon={ShoppingBag}
                             placeholder="https://order.toasttab.com/..."
+                        />
+                        <InputField
+                            label="Direct Menu / Untappd Link"
+                            name="directMenuUrl"
+                            value={(formData as any).directMenuUrl || ''}
+                            icon={Utensils}
+                            placeholder="https://untappd.com/v/..."
                         />
                         <InputField
                             label="Opening Time"

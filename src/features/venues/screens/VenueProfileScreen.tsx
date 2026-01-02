@@ -342,20 +342,57 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
 
                 <div className="absolute bottom-6 left-6 right-6">
                     <div className="flex justify-between items-end">
-                        <div>
+                        <div className="max-w-[70%]">
                             <div className="flex items-center gap-2 mb-1">
-                                <h1 className="text-4xl font-black text-white font-league uppercase italic leading-none truncate max-w-[250px]">
+                                <h1 className="text-4xl font-black text-white font-league uppercase italic leading-none truncate">
                                     {venue.name}
                                 </h1>
                                 {venue.isHQ && <Shield className="w-5 h-5 text-primary fill-primary" />}
                                 {venue.isBoutique && <Sparkles className="w-5 h-5 text-yellow-400 fill-yellow-400" />}
                             </div>
-                            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                <span>{venue.venueType === 'brewpub' ? 'Brewpub' : (venue.makerType || VENUE_TYPE_LABELS[venue.venueType] || venue.venueType)}</span>
-                                <span>•</span>
-                                <span className="text-primary italic">"{venue.vibe}"</span>
+
+                            {/* Review Score & Type */}
+                            <div className="flex items-center gap-3 mb-2">
+                                {(venue.googleRating) && (
+                                    <div className="flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-md backdrop-blur-sm">
+                                        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                                        <span className="text-xs font-black text-white">{venue.googleRating}</span>
+                                        <span className="text-[10px] text-slate-300">({venue.googleReviewCount})</span>
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-widest truncate">
+                                    <span>{venue.venueType === 'brewpub' ? 'Brewpub' : (venue.makerType || VENUE_TYPE_LABELS[venue.venueType] || venue.venueType)}</span>
+                                    <span>•</span>
+                                    <span className="text-primary italic">"{venue.vibe}"</span>
+                                </div>
+                            </div>
+
+                            {/* [NEW] Compact Social Row */}
+                            <div className="flex items-center gap-3">
+                                {venue.website && (
+                                    <a href={venue.website} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors">
+                                        <ExternalLink className="w-4 h-4" />
+                                    </a>
+                                )}
+                                {venue.instagram && (
+                                    <a href={`https://instagram.com/${venue.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-primary transition-colors">
+                                        <Instagram className="w-4 h-4" />
+                                    </a>
+                                )}
+                                {venue.facebook && (
+                                    <a href={venue.facebook.startsWith('http') ? venue.facebook : `https://${venue.facebook}`} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-400 transition-colors">
+                                        <Facebook className="w-4 h-4" />
+                                    </a>
+                                )}
+                                {venue.phone && (
+                                    <a href={`tel:${venue.phone}`} className="text-slate-400 hover:text-green-400 transition-colors">
+                                        <Phone className="w-4 h-4" />
+                                    </a>
+                                )}
                             </div>
                         </div>
+
+                        {/* Open Status Badge */}
                         {venue.physicalRoom !== false ? (
                             <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${status === 'open' ? 'bg-green-500/10 text-green-400 border-green-400/30' :
                                 status === 'last_call' ? 'bg-red-600/20 text-red-500 border-red-500/50 animate-pulse' :
@@ -561,23 +598,41 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     </div>
                 )}
 
-                {/* Strategic Action: Online Ordering */}
-                {venue.orderUrl && (
-                    <div className="animate-in slide-in-from-bottom-4 duration-700">
-                        <a
-                            href={venue.orderUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-5 rounded-2xl uppercase tracking-[0.25em] flex items-center justify-center gap-3 shadow-2xl shadow-orange-950/40 border border-orange-400/30 group transition-all active:scale-95"
-                        >
-                            <ShoppingBag className="w-6 h-6 group-hover:animate-bounce" />
-                            <span>Order Online Now</span>
-                        </a>
-                        <p className="text-[9px] text-center text-slate-600 font-bold uppercase tracking-widest mt-2 italic flex items-center justify-center gap-1">
-                            <Zap className="w-3 h-3" /> Powered by Toast & OlyBars
-                        </p>
-                    </div>
-                )}
+                {/* Strategic Actions: Menu & Ordering */}
+                <div className="flex flex-col gap-3">
+                    {/* [NEW] Direct Menu / Taps Link */}
+                    {venue.directMenuUrl && (
+                        <div className="animate-in slide-in-from-bottom-4 duration-700">
+                            <a
+                                href={venue.directMenuUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-4 rounded-2xl uppercase tracking-[0.25em] flex items-center justify-center gap-3 shadow-xl border border-white/5 transition-all active:scale-95"
+                            >
+                                <Utensils className="w-5 h-5 text-primary" />
+                                <span>View Menu / Taps</span>
+                            </a>
+                        </div>
+                    )}
+
+                    {/* Online Ordering */}
+                    {venue.orderUrl && (
+                        <div className="animate-in slide-in-from-bottom-4 duration-700">
+                            <a
+                                href={venue.orderUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-5 rounded-2xl uppercase tracking-[0.25em] flex items-center justify-center gap-3 shadow-2xl shadow-orange-950/40 border border-orange-400/30 group transition-all active:scale-95"
+                            >
+                                <ShoppingBag className="w-6 h-6 group-hover:animate-bounce" />
+                                <span>Order Online Now</span>
+                            </a>
+                            <p className="text-[9px] text-center text-slate-600 font-bold uppercase tracking-widest mt-2 italic flex items-center justify-center gap-1">
+                                <Zap className="w-3 h-3" /> Powered by Toast & OlyBars
+                            </p>
+                        </div>
+                    )}
+                </div>
 
                 {/* Intelligence Section */}
                 <div className="space-y-4">
@@ -863,42 +918,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                         </div>
                     )}
 
-                    {/* Social & Contact info */}
-                    {(venue.instagram || venue.facebook || venue.twitter || venue.email || venue.phone) && (
-                        <div className="bg-surface border border-white/5 rounded-2xl p-5 space-y-4">
-                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                <Users className="w-3 h-3" />
-                                Connect & Inquire
-                            </h4>
-                            <div className="flex flex-wrap gap-3">
-                                {venue.instagram && (
-                                    <a href={`https://instagram.com/${venue.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-black/40 rounded-lg text-primary hover:text-white transition-colors">
-                                        <Instagram className="w-5 h-5" />
-                                    </a>
-                                )}
-                                {venue.facebook && (
-                                    <a href={venue.facebook.startsWith('http') ? venue.facebook : `https://${venue.facebook}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-black/40 rounded-lg text-primary hover:text-white transition-colors">
-                                        <Facebook className="w-5 h-5" />
-                                    </a>
-                                )}
-                                {venue.twitter && (
-                                    <a href={`https://twitter.com/${venue.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-black/40 rounded-lg text-primary hover:text-white transition-colors">
-                                        <Twitter className="w-5 h-5" />
-                                    </a>
-                                )}
-                                {venue.email && (
-                                    <a href={`mailto:${venue.email}`} className="p-2 bg-black/40 rounded-lg text-primary hover:text-white transition-colors">
-                                        <Mail className="w-5 h-5" />
-                                    </a>
-                                )}
-                                {venue.phone && (
-                                    <a href={`tel:${venue.phone}`} className="p-2 bg-black/40 rounded-lg text-primary hover:text-white transition-colors">
-                                        <Phone className="w-5 h-5" />
-                                    </a>
-                                )}
-                            </div>
-                        </div>
-                    )}
+
                 </div>
 
                 {/* "Where to find us" / Scavenger Hunt */}

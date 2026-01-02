@@ -233,6 +233,12 @@ export interface Venue {
     cheatCodeUrl?: string;
     orderUrl?: string;
     giftCardUrl?: string;
+    directMenuUrl?: string; // [NEW] Link to Untappd/DigitalPour/Image
+    newsletterUrl?: string; // [NEW] Link to Mailchimp/Newsletter
+
+    // Google Places Data
+    googleRating?: number;
+    googleReviewCount?: number;
 
     partnerConfig?: PartnerConfig; // [NEW] Flash Deal Tiers & Tokens
 

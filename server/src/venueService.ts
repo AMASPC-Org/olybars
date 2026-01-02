@@ -1009,6 +1009,10 @@ export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: strin
     if (details.website) updates.website = details.website;
     if (details.formatted_address) updates.address = details.formatted_address; // [NEW] Sync address
 
+    // [NEW] Sync Ratings
+    if (details.rating) updates.googleRating = details.rating;
+    if (details.user_ratings_total) updates.googleReviewCount = details.user_ratings_total;
+
     // Construct Google Photo URL if available
     if (details.photos && details.photos.length > 0) {
         const photoRef = details.photos[0].photo_reference;

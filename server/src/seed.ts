@@ -884,23 +884,41 @@ const venues = [
     {
         id: 'the-wine-loft',
         name: 'The Wine Loft',
-        venueType: 'bar_pub',
-        vibeTags: ['wine_focus'],
+        venueType: 'restaurant_bar',
+        vibeTags: ['wine_focus', 'sophisticated', 'chill'],
         foodService: 'snacks',
         tier_config: { is_directory_listed: true, is_league_eligible: true },
         attributes: { has_manned_bar: true, minors_allowed: true, noise_level: 'Conversational' },
-        vibe: 'Intimate loft setting for wine.',
+        description: "Serving up wine and smiles to Olympia and beyond. We offer a uniquely curated selection of retail wine with an emphasis on small-production winemakers from the US and around the globe. Join us for tastings every Saturday from 12-5!",
+        vibe: "Intimate loft setting for curated wine tastings and retail.",
+        insiderVibe: "The Wine Loft is one of those 'if you know, you know' spots. It's upstairs, quiet, and absolutely packed with character. Maggie and the team are incredibly knowledgeable—this isn't a place for mass-produced labels. It's for finding that one bottle you'll remember for years. Their Saturday tastings are a local institution.",
+        originStory: "A cornerstone of the downtown Olympia wine scene, The Wine Loft has dedicated years to championing independent winemakers and providing a sophisticated sanctuary for wine lovers.",
         status: 'chill',
         geoLoop: 'Downtown_Walkable',
         isActive: true,
         isVisible: true,
         checkIns: 0,
         coordinates: { x: 52, y: 62 },
-        location: { lat: 47.047461, lng: -122.903524 },
+        location: { lat: 47.0450, lng: -122.9004 },
         address: '401 Columbia St NW, Olympia, WA 98501, USA',
-        physicalRoom: true,
-        website: 'https://the-wine-loft-1.wheree.com/',
-        gameFeatures: []
+        phone: '(360) 754-6208',
+        email: 'thewineloftoly@gmail.com',
+        website: 'https://www.facebook.com/TheWineLoftOly',
+        facebook: 'https://www.facebook.com/TheWineLoftOly',
+        newsletterUrl: 'https://mailchi.mp/fe8cbe0436cc/54de54v2sn',
+        isAllAges: true,
+        hours: {
+            'Mon': { open: '11:00', close: '16:00' },
+            'Tue': { open: '11:00', close: '18:00' },
+            'Wed': { open: '11:00', close: '18:00' },
+            'Thu': { open: '11:00', close: '18:00' },
+            'Fri': { open: '11:00', close: '18:00' },
+            'Sat': { open: '11:00', close: '18:00' },
+            'Sun': { open: '11:00', close: '16:00' }
+        },
+        weekly_schedule: {
+            'saturday': ['Saturday Tastings (12:00 PM - 5:00 PM)']
+        }
     },
     {
         id: 'legends-arcade',
