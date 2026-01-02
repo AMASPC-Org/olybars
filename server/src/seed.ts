@@ -6,13 +6,15 @@ const venues = [
         id: 'well-80',
         name: 'Well 80 Artesian Brewing',
         venueType: 'brewery_taproom',
-        vibeTags: [],
+        vibeTags: ['sports', 'patio_garden', 'lgbtq'],
         foodService: 'full_kitchen',
         status: 'buzzing',
         checkIns: 0,
         isPaidLeagueMember: true,
         vibe: 'Home of Artie and built on the Artesian Well',
         insiderVibe: "It's slick. Maybe too slick? It feels like a brewpub, not a bar—lots of polished concrete and big screens. But you can't argue with the history. Tapping that well is a boss move, and the 'Leopold's #1 Lager' is legit respect to the old school. It's where you go to watch the game, not to hide from the world.",
+        instagram: 'https://www.instagram.com/well80brewing/',
+        facebook: 'https://www.facebook.com/Well80/',
         originStory: "They literally drilled a hole in the floor to tap into the same mythical aquifer that made Olympia Beer famous in 1896. It's a shiny, high-energy brewpub built directly on top of history, serving crisp lagers made from the 'Water' that put this town on the map.",
         geoLoop: 'Downtown_Walkable',
         isVerifiedMaker: true,
@@ -637,13 +639,16 @@ const venues = [
     },
     {
         id: 'nicoles-bar',
-        name: 'Nicole’s Bar',
-        venueType: 'bar_pub',
-        vibeTags: ['dive', 'sports'],
+        name: "Nicole's Bar",
+        venueType: 'restaurant_bar',
+        vibeTags: ['sports', 'patio_garden', 'lgbtq'],
         foodService: 'full_kitchen',
         tier_config: { is_directory_listed: true, is_league_eligible: true },
         attributes: { has_manned_bar: true, minors_allowed: true, noise_level: 'Lively' },
-        vibe: 'Downtown staple for good food and drinks.',
+        description: "A popular downtown spot known for its welcoming atmosphere, great food, and spacious outdoor patio. Nicole's is a go-to for sports fans and those looking for a lively vibe.",
+        vibe: "Lively and welcoming with a great neighborhood feel.",
+        insiderVibe: "Nicole's is where the locals go. It's got that perfect balance of being a sports bar without being *just* a sports bar. The patio is one of the best in town, and the staff actually knows your name. It's unpretentious and consistently good.",
+        originStory: "Established as a cornerstone of the downtown Olympia bar scene, Nicole's has built a reputation for its inclusivity and commitment to providing a top-tier experience for every guest.",
         status: 'buzzing',
         geoLoop: 'Downtown_Walkable',
         isActive: true,
@@ -652,17 +657,44 @@ const venues = [
         coordinates: { x: 42, y: 52 },
         location: { lat: 47.043006, lng: -122.901831 },
         address: '109 Legion Way SW, Olympia, WA 98501, USA',
-        physicalRoom: true,
+        phone: '(360) 915-9262',
         website: 'https://nicolesbar.com/',
-        // Happy Hour (Scheduled)
-        happyHour: {
-            startTime: '15:30',
-            endTime: '18:30',
-            description: '$2 Domestic Cans & Basket Specials',
-            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+        facebook: 'https://www.facebook.com/nicolesbarolympia/',
+        instagram: 'https://www.instagram.com/nicolesbarolympia/',
+        isAllAges: true,
+        isDogFriendly: true,
+        isSoberFriendly: true,
+        hasOutdoorSeating: true,
+        hours: {
+            'Mon': { open: '11:00', close: '00:00' },
+            'Tue': { open: '11:00', close: '00:00' },
+            'Wed': { open: '11:00', close: '00:00' },
+            'Thu': { open: '11:00', close: '02:00' },
+            'Fri': { open: '11:00', close: '02:00' },
+            'Sat': { open: '11:00', close: '02:00' },
+            'Sun': { open: '11:00', close: '00:00' }
         },
-        happyHourSpecials: "$2 DOMESTIC CANS & BASKET SPECIALS",
-        gameFeatures: []
+        gameFeatures: [
+            { id: 'darts-1', type: 'darts', name: 'Steel Tip Darts', count: 2, status: 'active' }
+        ],
+        happyHourRules: [
+            {
+                id: 'hh-nicoles-1',
+                name: 'Afternoon Happy Hour',
+                days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                startTime: '15:30',
+                endTime: '18:30',
+                description: '$2 Domestic Cans & Basket Specials'
+            }
+        ],
+        happyHourMenu: [
+            { id: 'hhm-1', name: 'Domestic Cans', price: '$2', category: 'Drink' },
+            { id: 'hhm-2', name: 'Basket Specials', price: 'Varies', category: 'Food' }
+        ],
+        weekly_schedule: {
+            'monday': ['Monday Night Football (Seasonal)'],
+            'sunday': ['NFL Sunday Ticket']
+        }
     },
     {
         id: 'cryptatropa-bar',
@@ -772,12 +804,15 @@ const venues = [
     {
         id: 'swing-wine-bar',
         name: 'Swing Wine Bar',
-        venueType: 'bar_pub',
-        vibeTags: ['wine_focus', 'cocktail_focus'],
+        venueType: 'restaurant_bar',
+        vibeTags: ['wine_focus', 'cocktail_focus', 'patio_garden'],
         foodService: 'full_kitchen',
         tier_config: { is_directory_listed: true, is_league_eligible: false },
-        attributes: { has_manned_bar: true, minors_allowed: true, noise_level: 'Conversational' },
-        vibe: 'Elevated wine bar with a view.',
+        attributes: { has_manned_bar: true, minors_allowed: false, noise_level: 'Conversational' },
+        description: "An award-winning wine and cocktail bar perched above Capitol Lake, offering a sophisticated yet comfortable atmosphere and an extensive selection of wines and spirits.",
+        vibe: "Sophisticated and romantic with exceptional views.",
+        insiderVibe: "Swing is the best 'date night' spot in Olympia, period. The view of Capitol Lake at sunset from the patio is unbeatable. It feels grown-up without being stuffy. The cocktail program is just as strong as the wine list—don't sleep on their seasonal specials.",
+        originStory: "Born from a love of fine wine and great company, Swing has become an Olympia landmark, celebrated for its curated cellar and elevated small plates.",
         status: 'chill',
         geoLoop: 'Downtown_Walkable',
         isActive: true,
@@ -786,9 +821,44 @@ const venues = [
         coordinates: { x: 28, y: 38 },
         location: { lat: 47.040638, lng: -122.902593 },
         address: '825 Columbia St SW, Olympia, WA 98501, USA',
-        physicalRoom: true,
+        phone: '(360) 357-9464',
+        email: 'info@swingwinebar.com',
         website: 'https://swingwinebar.com/',
-        gameFeatures: []
+        facebook: 'https://www.facebook.com/swingwinebar/',
+        instagram: 'https://www.instagram.com/swingwinebar/',
+        reservationUrl: 'https://www.opentable.com/restref/client/?rid=105553',
+        giftCardUrl: 'https://www.giftly.com/gift-card/swing-wine-bar-and-cafe-olympia',
+        isAllAges: false,
+        isDogFriendly: true,
+        isSoberFriendly: true,
+        hasOutdoorSeating: true,
+        hasPrivateRoom: true,
+        hours: {
+            'Mon': { open: '16:00', close: '21:00' },
+            'Tue': { open: '16:00', close: '21:00' },
+            'Wed': { open: '16:00', close: '21:00' },
+            'Thu': { open: '16:00', close: '22:00' },
+            'Fri': { open: '16:00', close: '22:00' },
+            'Sat': { open: '16:00', close: '22:00' },
+            'Sun': { open: '16:00', close: '21:00' }
+        },
+        happyHourRules: [
+            {
+                id: 'hh-swing-1',
+                name: 'Sunset Happy Hour',
+                days: ['Mon', 'Tue', 'Wed', 'Thu'],
+                startTime: '16:00',
+                endTime: '18:00',
+                description: 'Select Wine & Appetizer Specials'
+            }
+        ],
+        happyHourMenu: [
+            { id: 'shh-1', name: 'House Red/White', price: '$7', category: 'Drink' },
+            { id: 'shh-2', name: 'Truffle Popcorn', price: '$5', category: 'Food' }
+        ],
+        weekly_schedule: {
+            'tuesday': ['Wine Tasting Tuesday']
+        }
     },
     {
         id: 'rumors-wine-bar',
@@ -904,14 +974,15 @@ const venues = [
     {
         id: 'hannahs',
         name: "Hannah's Bar & Grill",
-        nicknames: ["Hannah's", "Hannahs", "The Grill", "Hannah's Bar"],
-        weekly_schedule: { 'friday': ['Karaoke'] },
-        venueType: 'bar_pub',
-        vibeTags: ['dive', 'sports'],
+        venueType: 'restaurant_bar',
+        vibeTags: ['sports', 'dive'],
         foodService: 'full_kitchen',
         tier_config: { is_directory_listed: true, is_league_eligible: true },
         attributes: { has_manned_bar: true, minors_allowed: true, noise_level: 'Loud/Music' },
-        vibe: 'Classic bar and grill.',
+        description: "A legendary downtown Olympia fixture since 1935, Hannah's offers classic pub fare, a massive selection of spirits, and a vibe that's unchanged by time (in the best way possible).",
+        vibe: "Classic American grill with a thick layer of local history.",
+        insiderVibe: "Hannah's is the definition of a 'comfortable' bar. It's where you go when you want a solid burger, a stiff drink, and to be surrounded by generations of Olympia history. It's high-energy on game days and karaoke nights, but welcoming every single day of the week.",
+        originStory: "Opening its doors in 1935, Hannah's has survived prohibition's end, several world changes, and countless downtown shifts, remaining a steady beacon of hospitality in the heart of the city.",
         status: 'buzzing',
         geoLoop: 'Downtown_Walkable',
         isActive: true,
@@ -920,27 +991,45 @@ const venues = [
         coordinates: { x: 50, y: 50 },
         location: { lat: 47.043830, lng: -122.902591 },
         address: '123 5th Ave SW, Olympia, WA 98501, USA',
-        physicalRoom: true,
+        phone: '(360) 357-3768',
         website: 'https://hannahsoly.com/',
-        happyHour: {
-            startTime: '15:00',
-            endTime: '18:00',
-            description: 'Classic Happy Hour',
-            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+        facebook: 'https://www.facebook.com/hannahsoly/',
+        isAllAges: true,
+        hours: {
+            'Mon': { open: '11:00', close: '02:00' },
+            'Tue': { open: '11:00', close: '02:00' },
+            'Wed': { open: '11:00', close: '02:00' },
+            'Thu': { open: '11:00', close: '02:00' },
+            'Fri': { open: '11:00', close: '02:00' },
+            'Sat': { open: '11:00', close: '02:00' },
+            'Sun': { open: '11:00', close: '02:00' }
         },
-        leagueEvent: 'trivia',
-        triviaTime: '19:00',
+        gameFeatures: [
+            { id: 'pool-1', type: 'pool_table', name: 'Valley Pool Table', count: 2, status: 'active' },
+            { id: 'darts-1', type: 'darts', name: 'Electronic Darts', count: 1, status: 'active' }
+        ],
+        happyHourRules: [
+            {
+                id: 'hh-hannahs-1',
+                name: 'Daily Happy Hour',
+                days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                startTime: '15:00',
+                endTime: '18:00',
+                description: 'Classic drink and appetizer specials'
+            }
+        ],
+        happyHourMenu: [
+            { id: 'hhh-1', name: 'Well Drinks', price: '$5', category: 'Drink' },
+            { id: 'hhh-2', name: 'Draft Pints', price: '$1 Off', category: 'Drink' }
+        ],
+        weekly_schedule: {
+            'friday': ['Karaoke with DJ Mike'],
+            'saturday': ['Karaoke with DJ Mike']
+        },
         isPaidLeagueMember: true,
         ownerId: "KU9KvRYzzrZfVU7BV4gaPYAFlKS2",
         managerIds: ["KU9KvRYzzrZfVU7BV4gaPYAFlKS2"],
         hasGameVibeCheckEnabled: true,
-        gameFeatures: [
-            { id: 'pool_1', type: 'pool_table', name: 'Front Pool Table', count: 1, status: 'active' },
-            { id: 'pool_2', type: 'pool_table', name: 'Back Pool Table', count: 1, status: 'active' },
-            { id: 'pacman', type: 'arcade_game', name: 'Pacman', count: 1, status: 'active' },
-            { id: 'mspacman', type: 'arcade_game', name: 'Ms. Pacman', count: 1, status: 'active' },
-            { id: 'pinball', type: 'pinball_machine', name: 'Pinball', count: 1, status: 'active' } // Assuming singular pinball
-        ],
         liveGameStatus: {}
     },
     {
@@ -1284,7 +1373,100 @@ const venues = [
         tier_config: { is_directory_listed: false, is_league_eligible: false },
         attributes: { has_manned_bar: false, minors_allowed: false, noise_level: 'Conversational' },
         gameFeatures: []
-    }
+    },
+    {
+        id: 'rainwater-brewing',
+        name: 'Rainwater Brewing',
+        venueType: 'brewery_taproom',
+        vibeTags: ['sports', 'patio_garden', 'lgbtq'],
+        foodService: 'snacks',
+        tier_config: { is_directory_listed: true, is_league_eligible: true },
+        attributes: { has_manned_bar: true, minors_allowed: true, noise_level: 'Conversational' },
+        description: "A small-batch brewery focused on high-quality, approachable beers in a relaxed, family-friendly environment.",
+        vibe: "Relaxed and community-focused brewing space.",
+        insiderVibe: "Rainwater is the neighborhood's living room. It's often quieter than the big downtown spots, which makes it perfect for a long conversation over a sample flight. The brewers are almost always around and love to talk shop. The outdoor space is a hidden gem.",
+        originStory: "Founded by local brewing enthusiasts with a passion for the Pacific Northwest's rich water resources, Rainwater Brewing seeks to capture the essence of the region in every pint.",
+        status: 'chill',
+        geoLoop: 'Downtown_Walkable',
+        isActive: true,
+        isVisible: true,
+        checkIns: 0,
+        coordinates: { x: 20, y: 90 },
+        location: { lat: 47.017772, lng: -122.925447 },
+        address: '2442 Mottman Rd SW, Tumwater, WA 98512, USA',
+        phone: '(360) 915-7798',
+        website: 'https://rainwaterbrewing.com/',
+        instagram: 'https://www.instagram.com/rainwaterbrewing/',
+        isAllAges: true,
+        isDogFriendly: true,
+        isSoberFriendly: true,
+        hasOutdoorSeating: true,
+        weekly_schedule: {
+            'wednesday': ['Trivia Night']
+        },
+        gameFeatures: [
+            { id: 'trivia-1', type: 'arcade_game', name: 'Digital Trivia', count: 1, status: 'active' }
+        ],
+        happyHourRules: [
+            {
+                id: 'hh-rainwater-1',
+                name: 'Brewer\'s Happy Hour',
+                days: ['Tue', 'Wed', 'Thu'],
+                startTime: '16:00',
+                endTime: '18:00',
+                description: '$1 Off All Pints'
+            }
+        ],
+        happyHourMenu: [
+            { id: 'rhh-1', name: 'All Pints', price: '$1 Off', category: 'Drink' }
+        ]
+    },
+    {
+        id: 'the-mark-olympia',
+        name: 'The Mark Olympia',
+        venueType: 'restaurant_bar',
+        vibeTags: ['cocktail_focus', 'wine_focus', 'patio_garden'],
+        foodService: 'full_kitchen',
+        tier_config: { is_directory_listed: true, is_league_eligible: false },
+        attributes: { has_manned_bar: true, minors_allowed: true, noise_level: 'Conversational' },
+        description: "An elegant Italian-inspired restaurant and bar known for its organic ingredients, refined cocktails, and beautiful courtyard dining.",
+        vibe: "Elegant, organic, and sophisticated.",
+        insiderVibe: "The Mark is where you go when you want to feel a bit fancy. The courtyard is arguably the most beautiful dining space in Olympia. Their commitment to organic and local ingredients isn't just talk—you can taste it in the food and the drinks. Perfect for a celebration or a high-end night out.",
+        originStory: "Dedicated to the principles of organic cooking and sustainable hospitality, The Mark has been a pioneer in Olympia's fine dining scene for years.",
+        status: 'chill',
+        geoLoop: 'Downtown_Walkable',
+        isActive: true,
+        isVisible: true,
+        checkIns: 0,
+        coordinates: { x: 30, y: 30 },
+        location: { lat: 47.044238, lng: -122.901569 },
+        address: '407 Columbia St SW, Olympia, WA 98501, USA',
+        phone: '(360) 754-4414',
+        email: 'info@themarkolympia.com',
+        website: 'https://themarkolympia.com/',
+        facebook: 'https://www.facebook.com/themarkolympia/',
+        instagram: 'https://www.instagram.com/themarkolympia/',
+        reservationUrl: 'https://themarkolympia.com/reservations/',
+        isAllAges: true,
+        isDogFriendly: false,
+        isSoberFriendly: true,
+        hasOutdoorSeating: true,
+        hasPrivateRoom: true,
+        hours: {
+            'Tue': { open: '17:00', close: '21:00' },
+            'Wed': { open: '17:00', close: '21:00' },
+            'Thu': { open: '17:00', close: '21:00' },
+            'Fri': { open: '17:00', close: '22:00' },
+            'Sat': { open: '17:00', close: '22:00' }
+        },
+        happyHourMenu: [
+            { id: 'mhh-1', name: 'Organic House Wine', price: '$8', category: 'Drink' },
+            { id: 'mhh-2', name: 'Bruschetta', price: '$10', category: 'Food' }
+        ],
+        weekly_schedule: {
+            'friday': ['Live Jazz (Select Fridays)']
+        }
+    },
 ];
 
 async function clearCollection(collectionName: string) {

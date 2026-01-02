@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
     Info, Phone, Globe, Instagram, Facebook, Twitter,
     Save, Clock, MapPin, Mail, ChevronRight, Beer,
-    Sparkles, Users, Shield, Gamepad2, Trophy, Zap, Utensils, X, Feather, Plus, Trash2
+    Sparkles, Users, Shield, Gamepad2, Trophy, Zap, Utensils, X, Feather, Plus, Trash2, ShoppingBag
 } from 'lucide-react';
 import { Venue, VenueType, VibeTag, UserProfile, HappyHourRule } from '../../../types';
 import { isSystemAdmin } from '../../../types/auth_schema';
@@ -13,6 +13,7 @@ import { AssetToggleGrid } from '../../../components/partners/AssetToggleGrid';
 import { GameFeatureManager } from './GameFeatureManager';
 import { SoberPledgeModal } from './SoberPledgeModal';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { normalizeTo24h } from '../../../utils/timeUtils';
 
 interface ListingManagementTabProps {
     venue: Venue;
@@ -75,7 +76,8 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         triviaHowItWorks: venue.triviaHowItWorks || [],
         happyHourMenu: venue.happyHourMenu || [],
         happyHourRules: venue.happyHourRules || [],
-        reservationUrl: venue.reservationUrl || ''
+        reservationUrl: venue.reservationUrl || '',
+        orderUrl: venue.orderUrl || ''
     });
 
     // [FIX] Synchronize formData when venue prop changes (e.g. switching in dropdown)
@@ -116,6 +118,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
             isLocalMaker: venue.isLocalMaker || false, // Added missing field
             happyHourMenu: venue.happyHourMenu || [],
             happyHourRules: venue.happyHourRules || [],
+            orderUrl: venue.orderUrl || '',
         });
 
         // [MIGRATION] If legacy happyHour exists but rules don't, create initial rule
@@ -797,18 +800,25 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                             placeholder="Ex: First come, first served / Resy"
                         />
                         <InputField
-                            label="Reservations URL (Link)"
+                            label="Reservation URL"
                             name="reservationUrl"
                             value={(formData as any).reservationUrl || ''}
                             icon={MapPin}
                             placeholder="https://..."
                         />
                         <InputField
+                            label="Ordering URL (Toast, etc.)"
+                            name="orderUrl"
+                            value={(formData as any).orderUrl || ''}
+                            icon={ShoppingBag}
+                            placeholder="https://order.toasttab.com/..."
+                        />
+                        <InputField
                             label="Opening Time"
                             name="openingTime"
-                            value={(formData as any).openingTime || ''}
+                            value={normalizeTo24h((formData as any).openingTime || '')}
                             icon={Clock}
-                            placeholder="Ex: 11:30 AM"
+                            type="time"
                         />
                     </div>
                 </div>
@@ -950,9 +960,9 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                 <InputField
                                     label="Trivia Start Time"
                                     name="triviaTime"
-                                    value={formData.triviaTime || ''}
+                                    value={normalizeTo24h(formData.triviaTime || '')}
                                     icon={Clock}
-                                    placeholder="Ex: 7:00 PM"
+                                    type="time"
                                 />
                             </div>
                             <InputField

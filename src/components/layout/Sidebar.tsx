@@ -123,6 +123,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <span className="text-sm font-black uppercase text-white tracking-wide">Find Venues</span>
                     </button>
 
+                    <button onClick={() => handleNavigation('/makers')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center gap-4 hover:border-primary/50 transition-all active:scale-[0.98]">
+                        <Store className="w-5 h-5 text-amber-400" />
+                        <span className="text-sm font-black uppercase text-white tracking-wide">Local Makers</span>
+                    </button>
+
                     <div className="grid grid-cols-2 gap-3">
                         <button onClick={() => handleNavigation('/events')} className="bg-slate-900 border border-white/5 p-4 rounded-xl flex flex-col items-center gap-2 hover:border-primary/50 transition-all active:scale-[0.98]">
                             <Ticket className="w-6 h-6 text-purple-400" />

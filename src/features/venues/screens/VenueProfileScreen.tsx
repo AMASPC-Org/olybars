@@ -11,6 +11,7 @@ import {
     Utensils, ChefHat, Pizza, ShoppingBag, Ban, AlertTriangle,
     Target, Mic2, HelpCircle, Box, Disc, ExternalLink, X
 } from 'lucide-react';
+import { formatToAMPM } from '../../../utils/timeUtils';
 import { Venue, UserProfile } from '../../../types';
 import { SEO } from '../../../components/common/SEO';
 import { VenueGallery } from '../components/VenueGallery';
@@ -560,6 +561,24 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     </div>
                 )}
 
+                {/* Strategic Action: Online Ordering */}
+                {venue.orderUrl && (
+                    <div className="animate-in slide-in-from-bottom-4 duration-700">
+                        <a
+                            href={venue.orderUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-5 rounded-2xl uppercase tracking-[0.25em] flex items-center justify-center gap-3 shadow-2xl shadow-orange-950/40 border border-orange-400/30 group transition-all active:scale-95"
+                        >
+                            <ShoppingBag className="w-6 h-6 group-hover:animate-bounce" />
+                            <span>Order Online Now</span>
+                        </a>
+                        <p className="text-[9px] text-center text-slate-600 font-bold uppercase tracking-widest mt-2 italic flex items-center justify-center gap-1">
+                            <Zap className="w-3 h-3" /> Powered by Toast & OlyBars
+                        </p>
+                    </div>
+                )}
+
                 {/* Intelligence Section */}
                 <div className="space-y-4">
                     <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">Intel & Buzz</h3>
@@ -573,7 +592,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                                 <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1 italic">Happy Hour Active</p>
                                 <h4 className="text-md font-black text-white uppercase font-league leading-none mb-1">{activeHappyHour.specials || 'Happy Hour Specials'}</h4>
                                 <p className="text-xs font-bold text-slate-300 leading-tight">{activeHappyHour.description}</p>
-                                <p className="text-[9px] text-primary/60 font-black uppercase mt-2">Ends at {activeHappyHour.endTime}</p>
+                                <p className="text-[9px] text-primary/60 font-black uppercase mt-2">Ends at {formatToAMPM(activeHappyHour.endTime)}</p>
                             </div>
                         </div>
                     )}
@@ -605,7 +624,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                                         {venue.leagueEvent === 'trivia' ? 'Artesian Pub Quiz' : `${venue.leagueEvent} Tonight`}
                                     </h4>
                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                                        Starts at {venue.triviaTime || '7:00 PM'} • Double League Points
+                                        Starts at {formatToAMPM(venue.triviaTime) || '7:00 PM'} • Double League Points
                                     </p>
                                 </div>
                             </div>
@@ -670,7 +689,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                                                         </span>
                                                     ))}
                                                 </div>
-                                                <span className="text-[10px] font-mono text-primary font-bold">{rule.startTime} - {rule.endTime}</span>
+                                                <span className="text-[10px] font-mono text-primary font-bold">{formatToAMPM(rule.startTime)} - {formatToAMPM(rule.endTime)}</span>
                                             </div>
                                             <h5 className="text-sm font-black text-white uppercase font-league tracking-wide">{rule.specials}</h5>
                                             <p className="text-[10px] text-slate-500 font-medium italic leading-tight">{rule.description}</p>

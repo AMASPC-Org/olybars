@@ -137,6 +137,14 @@ export const VenueUpdateSchema = z.object({
         price: z.string(),
         category: z.enum(['food', 'drink'])
     })).optional(),
+    happyHourRules: z.array(z.object({
+        id: z.string(),
+        startTime: z.string(),
+        endTime: z.string(),
+        days: z.array(z.string()),
+        description: z.string(),
+        specials: z.string().optional()
+    })).optional(),
 
     // [PHASE 1] Full Menu Validation
     fullMenu: z.array(z.object({

@@ -24,11 +24,11 @@ export const BADGES: Badge[] = [
     {
         id: 'lager_legend',
         name: 'Lager Legend',
-        description: "A purist’s journey. You’ve toasted with Alex Maffeo’s union-made, IPA-free lagers at Headless Mumby and honored the old-school Leopold Schmidt heritage at Well 80. Clean, crisp, and unpretentious.",
+        description: "A purist’s journey. From the Leopold Schmidt heritage at Well 80 to the curated taps at The Double Tap Tap House, you appreciate the craft in every pour.",
         points: 125,
         criteria: {
             type: 'checkin_set',
-            venueIds: ['headlessmumby', 'well80', 'ilklodge']
+            venueIds: ['double-tap', 'well80', 'ilklodge']
         }
     },
     {
@@ -59,7 +59,7 @@ export const BADGES: Badge[] = [
         criteria: {
             type: 'count',
             count: 5,
-            venueIds: ['well80', 'ilklodge', 'threemagnets', 'headlessmumby', 'whitewood'] // Core 5 Assumption
+            venueIds: ['well80', 'ilklodge', 'threemagnets', 'double-tap', 'whitewood'] // Core 5 Assumption
         }
     },
     {

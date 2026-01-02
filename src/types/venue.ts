@@ -231,6 +231,8 @@ export interface Venue {
     source?: 'google_calendar' | 'facebook' | 'manual';
     ticketLink?: string;
     cheatCodeUrl?: string;
+    orderUrl?: string;
+    giftCardUrl?: string;
 
     partnerConfig?: PartnerConfig; // [NEW] Flash Deal Tiers & Tokens
 
