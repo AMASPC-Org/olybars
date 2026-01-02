@@ -1,5 +1,5 @@
 ﻿import React, { useState, useRef } from 'react';
-import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin, Gamepad2, Clock, Zap, AlertTriangle } from 'lucide-react';
+import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin, Gamepad2, Clock, Zap, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { Venue, VenueStatus, GameStatus } from '../../../types';
 import { getGameTTL } from '../../../config/gameConfig';
 import { useGeolocation } from '../../../hooks/useGeolocation';
@@ -9,7 +9,7 @@ interface VibeCheckModalProps {
     isOpen: boolean;
     onClose: () => void;
     venue: Venue;
-    onConfirm: (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod?: 'gps' | 'qr', gameStatus?: Record<string, GameStatus>) => void;
+    onConfirm: (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod?: 'gps' | 'qr', gameStatus?: Record<string, GameStatus>, soberCheck?: { isGood: boolean; reason?: string }) => void;
     clockedIn?: boolean;
     onClockInPrompt?: () => void;
     verificationMethod?: 'gps' | 'qr';
@@ -39,6 +39,10 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
 
     // Initialize with existing status or empty
     const [gameStatus, setGameStatus] = useState<Record<string, GameStatus>>(venue.liveGameStatus || {});
+
+    // [SOBER FRIENDLY] State
+    const [soberCheck, setSoberCheck] = useState<{ isGood: boolean; reason?: string } | null>(null);
+    const [showSoberReason, setShowSoberReason] = useState(false);
 
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -102,7 +106,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
         setErrorMessage(null);
 
         try {
-            await onConfirm(venue, selectedStatus, allowMarketingUse, capturedPhoto || undefined, verificationMethod, Object.keys(gameStatus).length > 0 ? gameStatus : undefined);
+            await onConfirm(venue, selectedStatus, allowMarketingUse, capturedPhoto || undefined, verificationMethod, Object.keys(gameStatus).length > 0 ? gameStatus : undefined, soberCheck || undefined);
             setIsSuccess(true);
 
             if (clockedIn) {
@@ -307,6 +311,52 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                                 );
                             })}
                         </div>
+                    </div>
+                )}
+
+                {/* Sober Friendly Feedback (GPS Verified Only) */}
+                {venue.isSoberFriendly && isAtVenue && (
+                    <div className="bg-blue-900/40 border border-blue-800 rounded-xl p-3 space-y-3">
+                        <div className="flex items-center gap-2">
+                            <ShieldCheck size={16} className="text-secondary" />
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest">Sober Friendly Promise Kept?</span>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => {
+                                    setSoberCheck({ isGood: true });
+                                    setShowSoberReason(false);
+                                }}
+                                className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${soberCheck?.isGood === true ? 'bg-secondary text-black border-secondary' : 'bg-black/40 text-slate-500 border-white/5'}`}
+                            >
+                                👍 Yes
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setSoberCheck({ isGood: false, reason: 'No Options' });
+                                    setShowSoberReason(true);
+                                }}
+                                className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${soberCheck?.isGood === false ? 'bg-red-500 text-white border-red-500' : 'bg-black/40 text-slate-500 border-white/5'}`}
+                            >
+                                👎 No
+                            </button>
+                        </div>
+
+                        {showSoberReason && (
+                            <div className="animate-in slide-in-from-top duration-200">
+                                <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1 block">What was missing?</label>
+                                <select
+                                    value={soberCheck?.reason}
+                                    onChange={(e) => setSoberCheck({ isGood: false, reason: e.target.value })}
+                                    className="w-full bg-black/60 border border-white/10 rounded-lg p-2 text-[10px] text-white font-bold outline-none focus:border-red-500/50"
+                                >
+                                    <option value="No Options">No NA Options Beyond Soda</option>
+                                    <option value="Bad Service">Poor Service / Pressure to Drink</option>
+                                    <option value="Plastic Cup">Served in Plastic (Glassware Fail)</option>
+                                </select>
+                            </div>
+                        )}
                     </div>
                 )}
 

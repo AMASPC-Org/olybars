@@ -394,7 +394,8 @@ export const performVibeCheck = async (
     hasConsent: boolean,
     photoUrl?: string,
     verificationMethod: 'gps' | 'qr' = 'gps',
-    gameStatus?: Record<string, GameStatus>
+    gameStatus?: Record<string, GameStatus>,
+    soberFriendlyCheck?: { isGood: boolean; reason?: string }
 ) => {
     const venueDoc = await db.collection('venues').doc(venueId).get();
     if (!venueDoc.exists) throw new Error('Venue not found');
@@ -484,6 +485,67 @@ export const performVibeCheck = async (
         };
         const photos = venueData.photos || [];
         venueUpdates.photos = [...photos, newPhoto];
+    }
+
+    // --- SOBER FRIENDLY LOGIC ---
+    if (soberFriendlyCheck && venueData.isSoberFriendly) {
+        // 1. Verify GPS & Check-in Signal (Anti-Griefing)
+        const isGPS = verificationMethod === 'gps';
+        const recentCheckIn = await db.collection('signals')
+            .where('userId', '==', userId)
+            .where('venueId', '==', venueId)
+            .where('type', '==', 'check_in')
+            .where('timestamp', '>', now - (12 * 60 * 60 * 1000)) // Within 12 hours
+            .limit(1)
+            .get();
+
+        if (isGPS && !recentCheckIn.empty) {
+            const reports = venueData.soberFriendlyReports || [];
+
+            // 2. User Cooldown (Anti-Snitch-Griefing: 30 days)
+            const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
+            const userRecentReport = reports.find(r => r.userId === userId && r.timestamp > thirtyDaysAgo);
+
+            if (!userRecentReport) {
+                // Add new report
+                const newReport = {
+                    userId,
+                    timestamp: now,
+                    reason: soberFriendlyCheck.isGood ? undefined : soberFriendlyCheck.reason
+                };
+
+                const updatedReports = [...reports, newReport];
+                venueUpdates.soberFriendlyReports = updatedReports;
+
+                if (!soberFriendlyCheck.isGood) {
+                    // NEGATIVE REPORT PROCESSING
+                    const negativeReports = updatedReports.filter(r => r.reason);
+
+                    // A. Yellow Card Alert (First negative report)
+                    if (negativeReports.length === 1) {
+                        venueUpdates.soberFriendlyNote = "Heads up! A guest wasn't impressed with the NA options tonight. Check your stock.";
+                    }
+
+                    // B. Deactivation Logic
+                    const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
+                    const recentNegatives = negativeReports.filter(r => r.timestamp > sevenDaysAgo);
+                    const uniqueUserCount = new Set(recentNegatives.map(r => r.userId)).size;
+
+                    const THRESHOLD_UNIQUE_7D = 3;
+                    const THRESHOLD_TOTAL = 5;
+
+                    if (uniqueUserCount >= THRESHOLD_UNIQUE_7D || negativeReports.length >= THRESHOLD_TOTAL) {
+                        venueUpdates.isSoberFriendly = false;
+                        venueUpdates.soberFriendlyNote = `Badge auto-disabled due to ${negativeReports.length} guest reports. Verify stock and request review to re-activate.`;
+
+                        console.log(`[SOBER_FRIENDLY] Venue ${venueId} auto-disabled. Unique(7d): ${uniqueUserCount}, Total: ${negativeReports.length}`);
+                    }
+                } else {
+                    // Positive report - could potentially clear recent negative warnings/notes if enough good ones come in?
+                    // For now, just store it.
+                }
+            }
+        }
     }
 
     await db.collection('venues').doc(venueId).update(venueUpdates);
@@ -798,7 +860,7 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'name', 'nicknames',
         'address', 'description', 'hours', 'phone', 'website',
         'email', 'instagram', 'facebook', 'twitter',
-        'gameFeatures', 'vibe', 'status',
+        'gameFeatures', 'vibe', 'vibeTags', 'status',
         'originStory', 'insiderVibe', 'geoLoop',
         'isLowCapacity', 'isSoberFriendly',
         'physicalRoom', 'carryingMakers',
@@ -809,7 +871,9 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'liveGameStatus', 'photos',
         'manualStatus', 'manualStatusExpiresAt',
         'manualCheckIns', 'manualCheckInsExpiresAt',
-        'happyHour', 'happyHourSpecials', 'happyHourSimple'
+        'happyHour', 'happyHourSpecials', 'happyHourSimple',
+        'tier_config', 'hasGameVibeCheckEnabled',
+        'fullMenu' // [PHASE 1] Menu Module
     ];
 
     const playerFields: (keyof Venue)[] = ['status', 'liveGameStatus', 'photos'];

@@ -42,7 +42,7 @@ const VoucherRedemptionScreen: React.FC<VoucherRedemptionScreenProps> = ({ userP
         <div className="min-h-screen bg-slate-900 text-white pb-32">
             {/* Header */}
             <header className="p-6 flex items-center gap-4 bg-background">
-                <button onClick={() => navigate('/more')} className="p-2 -ml-2 hover:bg-white/5 rounded-full transition-colors">
+                <button onClick={() => navigate('/profile')} className="p-2 -ml-2 hover:bg-white/5 rounded-full transition-colors">
                     <ArrowLeft className="w-6 h-6 text-primary" />
                 </button>
                 <div>

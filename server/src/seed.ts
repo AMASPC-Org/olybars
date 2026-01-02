@@ -51,7 +51,64 @@ const venues = [
         ownerId: "KU9KvRYzzrZfVU7BV4gaPYAFlKS2",
         managerIds: ["KU9KvRYzzrZfVU7BV4gaPYAFlKS2"],
         tier_config: { is_directory_listed: true, is_league_eligible: true },
-        attributes: { has_manned_bar: true, minors_allowed: true, noise_level: 'Lively' }
+        attributes: { has_manned_bar: true, minors_allowed: true, noise_level: 'Lively' },
+        fullMenu: [
+            {
+                id: 'menu-1',
+                name: 'Leopold\'s #1 Lager',
+                type: 'Crisp',
+                description: 'The original 1896 recipe. Crisp, clean, and historic.',
+                stats: { abv: 4.8, ibu: 25, price: '$7' },
+                margin_tier: 'High',
+                source: 'Internal_Library',
+                status: 'Live',
+                last_toggled_at: Date.now()
+            },
+            {
+                id: 'menu-2',
+                name: 'Volcanic Ash IPA',
+                type: 'Hoppy',
+                description: 'Hazy, juicy, and explosive. Citra and Mosaic hops.',
+                stats: { abv: 7.2, ibu: 65, price: '$8' },
+                margin_tier: 'Medium',
+                source: 'Untappd',
+                status: 'Live',
+                last_toggled_at: Date.now()
+            },
+            {
+                id: 'menu-3',
+                name: 'Darkness Imperial Stout',
+                type: 'Dark',
+                description: 'Aged in bourbon barrels. Thick, chocolatey, and dangerous.',
+                stats: { abv: 11.5, ibu: 80, price: '$12' },
+                margin_tier: 'High',
+                source: 'Manual',
+                status: 'Live',
+                last_toggled_at: Date.now()
+            },
+            {
+                id: 'menu-4',
+                name: 'Truffle Fries',
+                type: 'Food',
+                description: 'Crispy fries, parmesan, truffle oil, garlic aioli.',
+                stats: { price: '$9' },
+                margin_tier: 'High',
+                source: 'Manual',
+                status: 'Live',
+                last_toggled_at: Date.now()
+            },
+            {
+                id: 'menu-5',
+                name: 'Seasonal Sour',
+                type: 'Sour',
+                description: 'Rotating seasonal fruit sour. Ask server for details.',
+                stats: { abv: 5.5, price: '$8' },
+                margin_tier: 'High',
+                source: 'Internal_Library',
+                status: 'Library',
+                last_toggled_at: Date.now()
+            }
+        ]
     },
     {
         id: 'ilk-lodge',

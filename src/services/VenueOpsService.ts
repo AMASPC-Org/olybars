@@ -259,4 +259,24 @@ export class VenueOpsService {
             throw new Error(`Failed to save draft: ${error.message}`);
         }
     }
+    /**
+     * Generic update for venue details (whitelisted fields only on backend).
+     */
+    static async updateVenue(venueId: string, updates: Partial<Venue>, userId?: string) {
+        if (!venueId) throw new Error("Venue ID is required.");
+
+        try {
+            const venueRef = doc(db, 'venues', venueId);
+            // We append local metadata if needed, but primarily just send updates
+            // Backend rules will enforce whitelist
+            await updateDoc(venueRef, {
+                ...updates,
+                updatedAt: serverTimestamp()
+            });
+            return { success: true };
+        } catch (error: any) {
+            console.error('Error updating venue:', error);
+            throw new Error(`Failed to update venue: ${error.message}`);
+        }
+    }
 }

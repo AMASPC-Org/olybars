@@ -54,12 +54,76 @@ export interface ScheduledDeal {
 
 export type VenueType = 'bar_pub' | 'restaurant_bar' | 'brewery_taproom' | 'lounge_club' | 'arcade_bar' | 'brewpub';
 
+// [PHASE 1] Menu Module Schema
+export enum MenuItemType {
+    Crisp = 'Crisp',
+    Hoppy = 'Hoppy',
+    Malty = 'Malty',
+    Dark = 'Dark',
+    Sour = 'Sour',
+    Cider = 'Cider',
+    Seltzer = 'Seltzer',
+    Cocktail = 'Cocktail',
+    Wine = 'Wine',
+    Food = 'Food',
+    Other = 'Other'
+}
+
+export enum MenuItemStatus {
+    Live = 'Live',
+    Library = 'Library',
+    Archived = 'Archived'
+}
+
+export enum MarginTier {
+    High = 'High',       // High Profit
+    Medium = 'Medium',   // Standard
+    Low = 'Low',         // Low Profit
+    LossLeader = 'LossLeader'
+}
+
+export enum MenuSource {
+    Manual = 'Manual',
+    Untappd = 'Untappd',
+    Internal_Library = 'Internal_Library'
+}
+
+export interface MenuItemStats {
+    abv?: number; // Required for alcohol
+    ibu?: number;
+    price?: string; // e.g. "$7"
+}
+
+export interface MenuItem {
+    id: string; // UUID
+    name: string;
+    type: MenuItemType;
+    description?: string; // Max 140 chars
+    stats: MenuItemStats;
+
+    // [CRITICAL] AI & Ops Fields
+    margin_tier: MarginTier;
+    ai_tags?: string[]; // Auto-generated
+    source: MenuSource;
+    status: MenuItemStatus;
+    last_toggled_at?: number; // Timestamp
+}
+
 export interface HappyHourMenuItem {
     id: string;
     name: string;
     description?: string;
     price: string;
     category: 'food' | 'drink';
+}
+
+export interface HappyHourRule {
+    id: string;
+    startTime: string;
+    endTime: string;
+    days: string[];
+    description: string;
+    specials?: string;
 }
 
 export type VibeTag =
@@ -138,7 +202,11 @@ export interface Venue {
         description: string;
         days?: string[];
     };
+    happyHourRules?: HappyHourRule[];
+
     happyHourMenu?: HappyHourMenuItem[];
+    // [PHASE 1] Full Menu (Library + Live)
+    fullMenu?: MenuItem[];
 
     // Bonus Points
     checkin_bonus_points?: number;
@@ -212,6 +280,8 @@ export interface Venue {
     geoLoop?: 'Downtown_Walkable' | 'Warehouse_Tumwater' | 'Destination_Quest';
     isLowCapacity?: boolean;
     isSoberFriendly?: boolean;
+    soberFriendlyReports?: { userId: string; timestamp: number; reason?: string }[];
+    soberFriendlyNote?: string; // Artie's explanation if badge is disabled
     isBoutique?: boolean;
     isActive?: boolean;
     isVisible?: boolean;

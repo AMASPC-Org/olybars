@@ -25,58 +25,97 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
         return `${h}h ${m}m`;
     };
 
-    // 1. Get Live Happy Hours
+    // Helper to get all effective rules (legacy + new)
+    const getEffectiveRules = (v: Venue) => {
+        const rules = [...(v.happyHourRules || [])];
+        if (v.happyHour?.startTime) {
+            const isAlreadyAccounted = rules.some(r => r.startTime === v.happyHour!.startTime && r.endTime === v.happyHour!.endTime);
+            if (!isAlreadyAccounted) {
+                rules.push({
+                    id: 'legacy',
+                    startTime: v.happyHour.startTime,
+                    endTime: v.happyHour.endTime,
+                    days: v.happyHour.days || [],
+                    description: v.happyHour.description,
+                    specials: v.happyHourSpecials || v.happyHourSimple
+                });
+            }
+        }
+        return rules;
+    };
+
+    // 1. Get Live Happy Hour Slots
     const liveHH = venues
-        .filter(v => {
-            if (!v.happyHour) return false;
-            if (v.happyHour.days && !v.happyHour.days.includes(currentDay)) return false;
-            const start = timeToMinutes(v.happyHour.startTime);
-            const end = timeToMinutes(v.happyHour.endTime);
-            return currentMinutes >= start && currentMinutes < end;
+        .flatMap(v => {
+            const rules = getEffectiveRules(v);
+            const activeRule = rules.find(r => {
+                if (r.days && r.days.length > 0 && !r.days.includes(currentDay)) return false;
+                const start = timeToMinutes(r.startTime);
+                const end = timeToMinutes(r.endTime);
+                return currentMinutes >= start && currentMinutes < end;
+            });
+
+            if (activeRule) {
+                return [{
+                    id: v.id,
+                    name: v.name,
+                    isHQ: v.isHQ,
+                    timeLabel: formatMinutes(timeToMinutes(activeRule.endTime) - currentMinutes),
+                    subLabel: 'LEFT',
+                    deal: activeRule.specials || activeRule.description,
+                    isLive: true,
+                    urgency: (timeToMinutes(activeRule.endTime) - currentMinutes) < 60 ? 'red' : 'green',
+                    checkIns: v.checkIns,
+                    status: v.status
+                }];
+            }
+            return [];
         })
-        .sort((a, b) => timeToMinutes(a.happyHour!.endTime) - timeToMinutes(b.happyHour!.endTime));
+        .sort((a, b) => {
+            const timeA = a.timeLabel.includes('h') ? parseInt(a.timeLabel) * 60 + parseInt(a.timeLabel.split(' ')[1]) : parseInt(a.timeLabel);
+            const timeB = b.timeLabel.includes('h') ? parseInt(b.timeLabel) * 60 + parseInt(b.timeLabel.split(' ')[1]) : parseInt(b.timeLabel);
+            return timeA - timeB;
+        });
 
     // 2. Get Upcoming Happy Hours for Today
-    const upcomingHH = venues
-        .filter(v => {
-            if (!v.happyHour) return false;
+    const allUpcomingItems = venues
+        .flatMap(v => {
             const alreadyLive = liveHH.some(l => l.id === v.id);
-            if (alreadyLive) return false;
-            if (v.happyHour.days && !v.happyHour.days.includes(currentDay)) return false;
-            const start = timeToMinutes(v.happyHour.startTime);
-            return start > currentMinutes;
+            if (alreadyLive) return [];
+
+            const rules = getEffectiveRules(v);
+            const upcomingRules = rules
+                .filter(r => {
+                    if (r.days && r.days.length > 0 && !r.days.includes(currentDay)) return false;
+                    const start = timeToMinutes(r.startTime);
+                    return start > currentMinutes;
+                })
+                .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+
+            if (upcomingRules.length > 0) {
+                const rule = upcomingRules[0];
+                return [{
+                    id: v.id,
+                    name: v.name,
+                    isHQ: v.isHQ,
+                    timeLabel: formatMinutes(timeToMinutes(rule.startTime) - currentMinutes),
+                    subLabel: 'STARTS',
+                    deal: rule.specials || rule.description,
+                    isLive: false,
+                    urgency: 'blue',
+                    checkIns: v.checkIns,
+                    status: v.status
+                }];
+            }
+            return [];
         })
-        .sort((a, b) => timeToMinutes(a.happyHour!.startTime) - timeToMinutes(b.happyHour!.startTime));
+        .sort((a, b) => {
+            const timeA = a.timeLabel.includes('h') ? parseInt(a.timeLabel) * 60 + parseInt(a.timeLabel.split(' ')[1]) : parseInt(a.timeLabel);
+            const timeB = b.timeLabel.includes('h') ? parseInt(b.timeLabel) * 60 + parseInt(b.timeLabel.split(' ')[1]) : parseInt(b.timeLabel);
+            return timeA - timeB;
+        });
 
-    // Determine what to show: All live ones, then fill with upcoming
-    const allLiveItems = liveHH.map(v => ({
-        id: v.id,
-        name: v.name,
-        isHQ: v.isHQ,
-        timeLabel: formatMinutes(timeToMinutes(v.happyHour!.endTime) - currentMinutes),
-        subLabel: 'LEFT',
-        deal: v.happyHourSpecials || v.happyHour!.description,
-        isLive: true,
-        urgency: (timeToMinutes(v.happyHour!.endTime) - currentMinutes) < 60 ? 'red' : 'green',
-        checkIns: v.checkIns,
-        status: v.status
-    }));
-
-    const allUpcomingItems = upcomingHH
-        .map(v => ({
-            id: v.id,
-            name: v.name,
-            isHQ: v.isHQ,
-            timeLabel: formatMinutes(timeToMinutes(v.happyHour!.startTime) - currentMinutes),
-            subLabel: 'STARTS',
-            deal: v.happyHourSpecials || v.happyHour!.description,
-            isLive: false,
-            urgency: 'blue',
-            checkIns: v.checkIns,
-            status: v.status
-        }));
-
-    const totalPotentialItems = [...allLiveItems, ...allUpcomingItems];
+    const totalPotentialItems = [...liveHH, ...allUpcomingItems];
 
     // Implement Rotation: Pick a random starting point if more than 3 items
     const [startIndex, setStartIndex] = React.useState(0);

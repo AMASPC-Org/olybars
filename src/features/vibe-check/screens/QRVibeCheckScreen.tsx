@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance } from '../../../utils/geoUtils';
-import { Venue, VenueStatus } from '../../../types';
+import { Venue, VenueStatus, GameStatus } from '../../../types';
 import { MapPin, Loader2, AlertTriangle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { VibeCheckModal } from '../../venues/components/VibeCheckModal';
 
 interface QRVibeCheckScreenProps {
     venues: Venue[];
-    handleVibeCheck: (v: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod?: 'gps' | 'qr') => void;
+    handleVibeCheck: (v: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod?: 'gps' | 'qr', gameStatus?: Record<string, GameStatus>, soberCheck?: { isGood: boolean; reason?: string }) => void;
 }
 
 export const QRVibeCheckScreen: React.FC<QRVibeCheckScreenProps> = ({ venues, handleVibeCheck }) => {
@@ -36,9 +36,9 @@ export const QRVibeCheckScreen: React.FC<QRVibeCheckScreenProps> = ({ venues, ha
         }
     }, [venue, coords]);
 
-    const handleConfirmVibe = (v: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string) => {
+    const handleConfirmVibe = (v: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod?: 'gps' | 'qr', gameStatus?: Record<string, GameStatus>, soberCheck?: { isGood: boolean; reason?: string }) => {
         // Pass 'qr' as verification method
-        handleVibeCheck(v, status, hasConsent, photoUrl, 'qr');
+        handleVibeCheck(v, status, hasConsent, photoUrl, verificationMethod || 'qr', gameStatus, soberCheck);
         setShowModal(false);
         navigate(`/venues/${v.id}`); // Redirect to venue after
     };

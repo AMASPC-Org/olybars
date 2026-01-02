@@ -2,26 +2,49 @@ import React, { useState } from 'react';
 import {
     Info, Phone, Globe, Instagram, Facebook, Twitter,
     Save, Clock, MapPin, Mail, ChevronRight, Beer,
-    Sparkles, Users, Shield, Gamepad2, Trophy, Zap, Utensils, X
+    Sparkles, Users, Shield, Gamepad2, Trophy, Zap, Utensils, X, Feather, Plus, Trash2
 } from 'lucide-react';
-import { Venue, VenueType, VibeTag } from '../../../types';
+import { Venue, VenueType, VibeTag, UserProfile, HappyHourRule } from '../../../types';
+import { isSystemAdmin } from '../../../types/auth_schema';
 import { syncVenueWithGoogle } from '../../../services/venueService';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { PlaceAutocomplete } from '../../../components/ui/PlaceAutocomplete';
 import { AssetToggleGrid } from '../../../components/partners/AssetToggleGrid';
 import { GameFeatureManager } from './GameFeatureManager';
+import { SoberPledgeModal } from './SoberPledgeModal';
+import { AlertTriangle, RotateCcw } from 'lucide-react';
 
 interface ListingManagementTabProps {
     venue: Venue;
     venues?: Venue[];
     onUpdate: (venueId: string, updates: Partial<Venue>) => Promise<void> | void;
+    userProfile: UserProfile;
 }
 
-export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venue, venues, onUpdate }) => {
+const VENUE_TYPE_LABELS: Record<string, string> = {
+    bar_pub: 'Bar / Pub (Standard)',
+    restaurant_bar: 'Restaurant & Bar',
+    brewery_taproom: 'Brewery / Taproom',
+    lounge_club: 'Lounge / Club',
+    arcade_bar: 'Arcade Bar',
+    brewpub: 'Brewpub / Gastro'
+};
+
+const MAKER_TYPE_LABELS: Record<string, string> = {
+    '': 'Not a Maker',
+    Brewery: 'Brewery (Craft Beer)',
+    Distillery: 'Distillery (Spirits)',
+    Cidery: 'Cidery (Hard Cider)',
+    Winery: 'Winery',
+    Other: 'Other Maker'
+};
+
+export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venue, venues, onUpdate, userProfile }) => {
     const { showToast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+    const [showSoberPledge, setShowSoberPledge] = useState(false);
     const [formData, setFormData] = useState<Partial<Venue>>({
         description: venue.description || '',
         hours: typeof venue.hours === 'string' ? venue.hours : 'Standard Hours',
@@ -37,6 +60,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         isSoberFriendly: venue.isSoberFriendly || false,
         establishmentType: venue.establishmentType || 'Bar Only',
         vibeTags: venue.vibeTags || [],
+        isLocalMaker: venue.isLocalMaker || false,
         tier_config: venue.tier_config || { is_directory_listed: true, is_league_eligible: false },
         hasGameVibeCheckEnabled: venue.hasGameVibeCheckEnabled || false,
         gameFeatures: venue.gameFeatures || [],
@@ -50,6 +74,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         triviaSpecials: venue.triviaSpecials || '',
         triviaHowItWorks: venue.triviaHowItWorks || [],
         happyHourMenu: venue.happyHourMenu || [],
+        happyHourRules: venue.happyHourRules || [],
         reservationUrl: venue.reservationUrl || ''
     });
 
@@ -88,13 +113,51 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
             venueType: venue.venueType || 'bar_pub', // Added missing field
             physicalRoom: venue.physicalRoom !== false, // Added missing field
             makerType: (venue as any).makerType || '', // Added missing field
+            isLocalMaker: venue.isLocalMaker || false, // Added missing field
             happyHourMenu: venue.happyHourMenu || [],
+            happyHourRules: venue.happyHourRules || [],
         });
+
+        // [MIGRATION] If legacy happyHour exists but rules don't, create initial rule
+        if ((!venue.happyHourRules || venue.happyHourRules.length === 0) && venue.happyHour?.startTime) {
+            setFormData(prev => ({
+                ...prev,
+                happyHourRules: [{
+                    id: 'migrated-hh-' + Date.now(),
+                    startTime: venue.happyHour!.startTime,
+                    endTime: venue.happyHour!.endTime,
+                    days: venue.happyHour!.days || [],
+                    description: venue.happyHour!.description,
+                    specials: venue.happyHourSimple || venue.happyHourSpecials
+                }]
+            }));
+        }
     }, [venue]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSoberToggle = () => {
+        if (!formData.isSoberFriendly) {
+            // Turning ON -> Show Pledge
+            setShowSoberPledge(true);
+        } else {
+            // Turning OFF -> Direct update
+            setFormData(prev => ({ ...prev, isSoberFriendly: false }));
+        }
+    };
+
+    const confirmSoberPledge = () => {
+        setFormData(prev => ({ ...prev, isSoberFriendly: true }));
+        setShowSoberPledge(false);
+        showToast('SOBER FRIENDLY PLEDGE SIGNED', 'success');
+    };
+
+    const handleRequestSoberReview = () => {
+        // [PHASE 1] Simulate request
+        showToast('REVIEW REQUESTED. Artie will audit your NA selection.', 'info');
     };
 
     const handleSave = async () => {
@@ -195,20 +258,20 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Insider Vibe (2 Sentences)</label>
+                        <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 italic drop-shadow-sm">Insider Vibe (The Council's Reality Check)</label>
                         <textarea
                             name="insiderVibe"
                             value={(formData as any).insiderVibe || ''}
                             onChange={handleChange}
                             rows={2}
-                            placeholder="The Council's Micro Reality Check..."
+                            placeholder="Ex: Gritty but welcoming. The best place consistently for a quiet pint when the sun goes down."
                             className="w-full bg-blue-900/10 border border-primary/30 rounded-xl py-3 px-4 text-sm text-blue-100 placeholder:text-blue-900/50 focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all font-medium resize-none"
                         />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Establishment Type</label>
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Establishment Category</label>
                             <div className="relative group">
                                 <Beer className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4" />
                                 <select
@@ -217,12 +280,9 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                     onChange={(e: any) => setFormData(prev => ({ ...prev, venueType: e.target.value as VenueType }))}
                                     className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-100 focus:border-primary/50 outline-none appearance-none cursor-pointer"
                                 >
-                                    <option value="bar_pub" className="bg-black">Bar / Pub (Standard)</option>
-                                    <option value="restaurant_bar" className="bg-black">Restaurant & Bar</option>
-                                    <option value="brewery_taproom" className="bg-black">Brewery / Taproom</option>
-                                    <option value="lounge_club" className="bg-black">Lounge / Club</option>
-                                    <option value="arcade_bar" className="bg-black">Arcade Bar</option>
-                                    <option value="brewpub" className="bg-black">Brewpub / Gastro</option>
+                                    {Object.entries(VENUE_TYPE_LABELS).map(([val, label]) => (
+                                        <option key={val} value={val} className="bg-black">{label}</option>
+                                    ))}
                                 </select>
                                 <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4 rotate-90" />
                             </div>
@@ -262,50 +322,71 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Maker Type</label>
-                            <div className="relative group">
-                                <Info className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4" />
-                                <select
-                                    name="makerType"
-                                    value={(formData as any).makerType || ''}
-                                    onChange={(e: any) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                                    className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-100 focus:border-primary/50 outline-none appearance-none cursor-pointer"
-                                >
-                                    <option value="" className="bg-black text-slate-500">Not a Maker</option>
-                                    <option value="Brewery" className="bg-black">Brewery</option>
-                                    <option value="Distillery" className="bg-black">Distillery</option>
-                                    <option value="Cidery" className="bg-black">Cidery</option>
-                                    <option value="Winery" className="bg-black">Winery</option>
-                                </select>
-                                <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4 rotate-90" />
+                    {/* IDENTITY BRANCHING: MAKER VS BAR */}
+                    {(formData.venueType === 'brewpub' || formData.venueType === 'brewery_taproom' || (formData as any).makerType || (formData as any).isLocalMaker) && (
+                        <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 mt-4 animate-in fade-in duration-500">
+                            <div className="flex justify-between items-center mb-4">
+                                <div className="flex items-center gap-2">
+                                    <Feather className="w-4 h-4 text-primary" />
+                                    <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Maker Identity Logic</h4>
+                                </div>
+                                {isSystemAdmin(userProfile) && (
+                                    <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-lg border border-primary/20">
+                                        <span className="text-[9px] font-black text-slate-500 uppercase">Super-Admin Force</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, isLocalMaker: !(formData as any).isLocalMaker }))}
+                                            className={`p-1 rounded flex items-center justify-center transition-all ${(formData as any).isLocalMaker ? 'text-primary' : 'text-slate-700'}`}
+                                        >
+                                            <Zap className={`w-3.5 h-3.5 ${(formData as any).isLocalMaker ? 'fill-primary' : ''}`} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Maker Category</label>
+                                    <div className="relative group">
+                                        <Info className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4" />
+                                        <select
+                                            name="makerType"
+                                            value={(formData as any).makerType || ''}
+                                            onChange={(e: any) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-100 focus:border-primary/50 outline-none appearance-none cursor-pointer"
+                                        >
+                                            {Object.entries(MAKER_TYPE_LABELS).map(([val, label]) => (
+                                                <option key={val} value={val} className="bg-black">{label}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4 rotate-90" />
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-4 justify-end pb-2">
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${(formData as any).physicalRoom !== false ? 'bg-primary border-primary' : 'border-slate-600 bg-transparent'}`}>
+                                            {(formData as any).physicalRoom !== false && <ChevronRight className="w-3 h-3 text-black font-bold" />}
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            name="physicalRoom"
+                                            checked={(formData as any).physicalRoom !== false}
+                                            onChange={e => setFormData(prev => ({ ...prev, physicalRoom: e.target.checked }))}
+                                            className="hidden"
+                                        />
+                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">Has Physical Taproom</span>
+                                    </label>
+
+                                    {/* Visual Helper for Production Only - Strictly for Makers */}
+                                    {(formData as any).physicalRoom === false && (formData as any).makerType && (
+                                        <p className="text-[9px] text-amber-500 font-bold uppercase tracking-widest ml-1 animate-pulse">
+                                            Marked as "Production Only" - Scavenger Hunt Mode Active
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </div>
-
-                        <div className="flex flex-col gap-4 justify-end pb-2">
-                            <label className="flex items-center gap-3 cursor-pointer group">
-                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${(formData as any).physicalRoom !== false ? 'bg-primary border-primary' : 'border-slate-600 bg-transparent'}`}>
-                                    {(formData as any).physicalRoom !== false && <ChevronRight className="w-3 h-3 text-black font-bold" />}
-                                </div>
-                                <input
-                                    type="checkbox"
-                                    name="physicalRoom"
-                                    checked={(formData as any).physicalRoom !== false}
-                                    onChange={e => setFormData(prev => ({ ...prev, physicalRoom: e.target.checked }))}
-                                    className="hidden"
-                                />
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">Has Taproom (Physical)</span>
-                            </label>
-
-                            {/* Visual Helper for Production Only */}
-                            {(formData as any).physicalRoom === false && (
-                                <p className="text-[9px] text-amber-500 font-bold uppercase tracking-widest ml-1 animate-pulse">
-                                    Marked as "Production Only" - Scavenger Hunt Mode Active
-                                </p>
-                            )}
-                        </div>
-                    </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-1.5">
@@ -336,14 +417,75 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">Low Capacity Warning</span>
                             </label>
 
-                            <label className="flex items-center gap-3 cursor-pointer group">
-                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${(formData as any).isSoberFriendly ? 'bg-primary border-primary' : 'border-slate-600 bg-transparent'}`}>
-                                    {(formData as any).isSoberFriendly && <ChevronRight className="w-3 h-3 text-black font-bold" />}
-                                </div>
-                                <input type="checkbox" name="isSoberFriendly" checked={(formData as any).isSoberFriendly || false} onChange={e => setFormData(prev => ({ ...prev, isSoberFriendly: e.target.checked }))} className="hidden" />
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">Sober Friendly</span>
-                            </label>
+                            {/* [REMOVED] Sober Friendly from here - moved to specialized section below */}
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* LEAGUE BADGES & PROGRAMS [NEW SECTION] */}
+            <section className="space-y-6">
+                <div>
+                    <h3 className="text-xl font-black text-primary uppercase font-league leading-none flex items-center gap-2">
+                        <Shield className="w-5 h-5" />
+                        LEAGUE BADGES & PROGRAMS
+                    </h3>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest italic">Verified status for premium directory placement</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className={`p-6 rounded-3xl border transition-all ${formData.isSoberFriendly ? 'bg-blue-600/10 border-blue-500/30' : 'bg-slate-900/50 border-white/5'}`}>
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className={`p-3 rounded-2xl ${formData.isSoberFriendly ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-500'}`}>
+                                    <Shield className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-black text-white uppercase leading-none mb-1">Sober Friendly Badge</h4>
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic">The OlyBars NA Promise</p>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleSoberToggle}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.isSoberFriendly
+                                    ? 'bg-blue-500 text-white shadow-lg'
+                                    : 'bg-slate-800 text-slate-500 hover:text-white'
+                                    }`}
+                            >
+                                {formData.isSoberFriendly ? 'ACTIVE' : 'ACTIVATE'}
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <p className="text-xs text-slate-400 leading-relaxed font-medium">
+                                Commit to providing at least 2 distinct NA options (mocktails, NA beers) served in premium glassware.
+                            </p>
+
+                            {venue.soberFriendlyNote && !formData.isSoberFriendly && (
+                                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl space-y-3 animate-in fade-in slide-in-from-top-2">
+                                    <div className="flex items-center gap-2 text-[10px] text-red-400 font-black uppercase tracking-widest">
+                                        <AlertTriangle className="w-3 h-3" />
+                                        Badge Auto-Disabled
+                                    </div>
+                                    <p className="text-[10px] text-slate-300 leading-tight font-medium italic">"{venue.soberFriendlyNote}"</p>
+                                    <button
+                                        onClick={handleRequestSoberReview}
+                                        className="w-full py-2 bg-red-500/20 hover:bg-red-500/30 text-[9px] font-black text-red-400 uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 transition-all border border-red-500/30"
+                                    >
+                                        <RotateCcw className="w-3 h-3" />
+                                        Request Artie Audit
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Placeholder for future verification badges */}
+                    <div className="p-6 rounded-3xl border border-white/5 bg-slate-900/30 opacity-60 flex flex-col items-center justify-center text-center">
+                        <Feather className="w-8 h-8 text-slate-700 mb-2" />
+                        <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">More Badges Coming</h4>
                     </div>
                 </div>
             </section>
@@ -409,105 +551,149 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
             <section id="happy-hour-editor" className="space-y-6 scroll-mt-32">
                 <div className="flex justify-between items-end">
                     <div>
-                        <h3 className="text-xl font-black text-white uppercase font-league leading-none">HAPPY HOUR & SPECIALS</h3>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest italic">Daily recurring deals (Excludes Flash Deals)</p>
+                        <h3 className="text-xl font-black text-white uppercase font-league leading-none">HAPPY HOUR SCHEDULING</h3>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest italic">Multi-slot & Multi-day recurring deals</p>
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                            ...prev,
+                            happyHourRules: [
+                                ...(prev.happyHourRules || []),
+                                {
+                                    id: Math.random().toString(36).substr(2, 9),
+                                    startTime: '15:00',
+                                    endTime: '18:00',
+                                    days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+                                    description: '',
+                                    specials: ''
+                                }
+                            ]
+                        }))}
+                        className="px-4 py-2 bg-primary/20 hover:bg-primary/30 border border-primary/30 rounded-lg text-[10px] font-black text-primary uppercase tracking-widest transition-all flex items-center gap-2"
+                    >
+                        <Plus className="w-3 h-3" />
+                        Add Time Slot
+                    </button>
                 </div>
 
-                <div className="bg-black/20 border border-white/5 rounded-2xl p-6 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Daily Schedule</label>
-                            <div className="flex flex-wrap gap-2">
-                                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                                    <button
-                                        key={day}
-                                        type="button"
-                                        onClick={() => {
-                                            const currentDays = formData.happyHour?.days || [];
-                                            const newDays = currentDays.includes(day)
-                                                ? currentDays.filter(d => d !== day)
-                                                : [...currentDays, day];
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                happyHour: { ...(prev.happyHour || { startTime: '', endTime: '', description: '' }), days: newDays }
-                                            }));
-                                        }}
-                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${(formData.happyHour?.days || []).includes(day)
-                                            ? 'bg-primary text-black border-primary'
-                                            : 'bg-black/40 text-slate-500 border-white/10 hover:border-white/30'
-                                            }`}
-                                    >
-                                        {day}
-                                    </button>
-                                ))}
-                            </div>
+                <div className="space-y-4">
+                    {(formData.happyHourRules || []).length === 0 ? (
+                        <div className="bg-black/20 border border-dashed border-white/5 rounded-2xl p-12 text-center">
+                            <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">No Happy Hour rules defined</p>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Start Time</label>
-                                <input
-                                    type="time"
-                                    value={formData.happyHour?.startTime || ''}
-                                    onChange={(e) => setFormData(prev => ({
+                    ) : (
+                        formData.happyHourRules?.map((rule, idx) => (
+                            <div key={rule.id} className="bg-black/20 border border-white/5 rounded-2xl p-6 space-y-6 relative group">
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData(prev => ({
                                         ...prev,
-                                        happyHour: { ...(prev.happyHour || { startTime: '', endTime: '', description: '', days: [] }), startTime: e.target.value }
+                                        happyHourRules: prev.happyHourRules?.filter((_, i) => i !== idx)
                                     }))}
-                                    className="w-full bg-black border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-primary/50 font-medium"
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">End Time</label>
-                                <input
-                                    type="time"
-                                    value={formData.happyHour?.endTime || ''}
-                                    onChange={(e) => setFormData(prev => ({
-                                        ...prev,
-                                        happyHour: { ...(prev.happyHour || { startTime: '', endTime: '', description: '', days: [] }), endTime: e.target.value }
-                                    }))}
-                                    className="w-full bg-black border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-primary/50 font-medium"
-                                />
-                            </div>
-                        </div>
-                    </div>
+                                    className="absolute top-4 right-4 p-2 text-slate-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
 
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Full Description (Detail View)</label>
-                        <textarea
-                            value={formData.happyHour?.description || ''}
-                            onChange={(e) => setFormData(prev => ({
-                                ...prev,
-                                happyHour: { ...(prev.happyHour || { startTime: '', endTime: '', description: '', days: [] }), description: e.target.value }
-                            }))}
-                            rows={2}
-                            placeholder="Ex: $1 Off Drafts, $5 Well Drinks, and Half-Price Appetizers"
-                            className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder:text-slate-800 focus:border-primary/50 outline-none transition-all font-medium resize-none"
-                        />
-                    </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Days Active</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                                                <button
+                                                    key={day}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newRules = [...(formData.happyHourRules || [])];
+                                                        const currentDays = rule.days || [];
+                                                        newRules[idx].days = currentDays.includes(day)
+                                                            ? currentDays.filter(d => d !== day)
+                                                            : [...currentDays, day];
+                                                        setFormData(prev => ({ ...prev, happyHourRules: newRules }));
+                                                    }}
+                                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${rule.days.includes(day)
+                                                        ? 'bg-primary text-black border-primary'
+                                                        : 'bg-black/40 text-slate-500 border-white/10 hover:border-white/30'
+                                                        }`}
+                                                >
+                                                    {day}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
 
-                    <div className="space-y-1.5 pt-4 border-t border-white/5">
-                        <div className="flex justify-between items-center">
-                            <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2">
-                                <Beer className="w-3 h-3" />
-                                Buzz Clock Title (Crucial)
-                            </label>
-                            <span className={`text-[9px] font-black uppercase tracking-widest ${(formData.happyHourSpecials?.length || 0) > 40 ? 'text-red-500' : 'text-slate-500'}`}>
-                                {formData.happyHourSpecials?.length || 0} / 40 CHARS
-                            </span>
-                        </div>
-                        <input
-                            type="text"
-                            name="happyHourSpecials"
-                            value={formData.happyHourSpecials || ''}
-                            onChange={handleChange}
-                            maxLength={45}
-                            placeholder="Ex: $5 Craft Pints & Pretzels"
-                            className={`w-full bg-blue-900/10 border rounded-xl py-3 px-4 text-sm text-blue-100 placeholder:text-blue-900/50 outline-none transition-all font-black uppercase tracking-tighter ${(formData.happyHourSpecials?.length || 0) > 40 ? 'border-red-500/50' : 'border-primary/30 focus:border-primary'
-                                }`}
-                        />
-                        <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest ml-1">This appears in the high-density Buzz Clock. Keep it punched!</p>
-                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Start Time</label>
+                                            <input
+                                                type="time"
+                                                value={rule.startTime}
+                                                onChange={(e) => {
+                                                    const newRules = [...(formData.happyHourRules || [])];
+                                                    newRules[idx].startTime = e.target.value;
+                                                    setFormData(prev => ({ ...prev, happyHourRules: newRules }));
+                                                }}
+                                                className="w-full bg-black border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-primary/50 font-medium"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">End Time</label>
+                                            <input
+                                                type="time"
+                                                value={rule.endTime}
+                                                onChange={(e) => {
+                                                    const newRules = [...(formData.happyHourRules || [])];
+                                                    newRules[idx].endTime = e.target.value;
+                                                    setFormData(prev => ({ ...prev, happyHourRules: newRules }));
+                                                }}
+                                                className="w-full bg-black border border-white/10 rounded-xl py-3 px-4 text-sm text-white outline-none focus:border-primary/50 font-medium"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Full Description (Detail View)</label>
+                                        <textarea
+                                            value={rule.description}
+                                            onChange={(e) => {
+                                                const newRules = [...(formData.happyHourRules || [])];
+                                                newRules[idx].description = e.target.value;
+                                                setFormData(prev => ({ ...prev, happyHourRules: newRules }));
+                                            }}
+                                            rows={1}
+                                            placeholder="Ex: $1 Off Drafts, $5 Well Drinks"
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder:text-slate-800 focus:border-primary/50 outline-none transition-all font-medium resize-none"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1 flex items-center gap-2">
+                                                <Beer className="w-3 h-3" />
+                                                Buzz Clock Title
+                                            </label>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={rule.specials || ''}
+                                            onChange={(e) => {
+                                                const newRules = [...(formData.happyHourRules || [])];
+                                                newRules[idx].specials = e.target.value;
+                                                setFormData(prev => ({ ...prev, happyHourRules: newRules }));
+                                            }}
+                                            maxLength={45}
+                                            placeholder="Ex: $5 Craft Pints"
+                                            className="w-full bg-blue-900/10 border border-primary/30 rounded-xl py-3 px-4 text-sm text-blue-100 placeholder:text-blue-900/50 outline-none transition-all font-black uppercase tracking-tighter"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </section>
 
@@ -854,6 +1040,11 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                     )}
                 </button>
             </div>
+            <SoberPledgeModal
+                isOpen={showSoberPledge}
+                onClose={() => setShowSoberPledge(false)}
+                onConfirm={confirmSoberPledge}
+            />
         </div>
     );
 };

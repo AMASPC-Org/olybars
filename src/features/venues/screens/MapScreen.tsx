@@ -192,7 +192,7 @@ const MapScreen = () => {
             </div>
 
             <p style="margin: 0; font-size: 11px; color: #94a3b8; line-height: 1.3; font-style: italic;">"${venue.vibe}"</p>
-            ${venue.attributes?.minors_allowed ? '<p style="margin: 4px 0 0 0; font-size: 10px; color: #059669; font-weight: bold;">✓ Minors Allowed</p>' : ''}
+
             <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                <button id="view-listing-${venue.id}" style="background: #0f172a; color: #fbbf24; border: none; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 900; cursor: pointer; text-transform: uppercase;">
                  View Listing

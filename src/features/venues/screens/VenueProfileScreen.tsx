@@ -9,7 +9,7 @@ import {
     Settings, Instagram, Facebook, Twitter, Mail, Phone,
     Scroll, Sparkles, Feather, Gamepad2, LayoutGrid, CheckCircle2,
     Utensils, ChefHat, Pizza, ShoppingBag, Ban, AlertTriangle,
-    Target, Mic2, HelpCircle, Box, Disc, ExternalLink
+    Target, Mic2, HelpCircle, Box, Disc, ExternalLink, X
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../../types';
 import { SEO } from '../../../components/common/SEO';
@@ -30,6 +30,15 @@ interface VenueProfileScreenProps {
     onEdit?: (venueId: string) => void;
 }
 
+const VENUE_TYPE_LABELS: Record<string, string> = {
+    bar_pub: 'Bar / Pub',
+    restaurant_bar: 'Restaurant & Bar',
+    brewery_taproom: 'Brewery / Taproom',
+    lounge_club: 'Lounge / Club',
+    arcade_bar: 'Arcade Bar',
+    brewpub: 'Brewpub'
+};
+
 export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
     venues,
     userProfile,
@@ -48,6 +57,62 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
     const [isWarningOpen, setIsWarningOpen] = useState(false);
     const [distanceInfo, setDistanceInfo] = useState({ miles: 0, mins: 0 });
     const [zones, setZones] = useState({ user: '', destination: '' });
+
+    const timeToMinutes = (timeStr: string) => {
+        if (!timeStr) return 0;
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+    };
+
+    const activeHappyHour = React.useMemo(() => {
+        const now = new Date();
+        const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getDay()];
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+        const rules = [...(venue.happyHourRules || [])];
+        if (venue.happyHour?.startTime) {
+            rules.push({
+                id: 'legacy',
+                startTime: venue.happyHour.startTime,
+                endTime: venue.happyHour.endTime,
+                days: venue.happyHour.days || [],
+                description: venue.happyHour.description,
+                specials: venue.happyHourSpecials || venue.happyHourSimple
+            });
+        }
+
+        return rules.find(r => {
+            if (r.days && r.days.length > 0 && !r.days.includes(currentDay)) return false;
+            const start = timeToMinutes(r.startTime);
+            const end = timeToMinutes(r.endTime);
+            return currentMinutes >= start && currentMinutes < end;
+        });
+    }, [venue]);
+
+    // [PHASE 1] Menu & Flight Builder State
+    const [flightItems, setFlightItems] = useState<any[]>([]); // Using any for now to avoid extensive type imports in this file if not present
+    const [isFlightModalOpen, setIsFlightModalOpen] = useState(false);
+
+    const toggleFlightItem = (item: any) => {
+        if (flightItems.find(i => i.id === item.id)) {
+            setFlightItems(flightItems.filter(i => i.id !== item.id));
+        } else {
+            if (flightItems.length >= 4) {
+                showToast("Flight full (Max 4 items)", "error");
+                return;
+            }
+            setFlightItems([...flightItems, item]);
+        }
+    };
+
+    const flightStats = React.useMemo(() => {
+        if (flightItems.length === 0) return { abv: 0, price: 0 };
+        const totalAbv = flightItems.reduce((acc, item) => acc + (item.stats?.abv || 0), 0);
+        return {
+            abv: (totalAbv / flightItems.length).toFixed(1),
+            price: '??' // Price logic depends on data
+        };
+    }, [flightItems]);
 
     // AI SEO: Generate Schema.org JSON-LD
     const generateLDSchema = () => {
@@ -285,7 +350,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                                 {venue.isBoutique && <Sparkles className="w-5 h-5 text-yellow-400 fill-yellow-400" />}
                             </div>
                             <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                <span>{venue.venueType === 'brewpub' ? 'Brewpub' : (venue.makerType || venue.venueType.replace('_', ' '))}</span>
+                                <span>{venue.venueType === 'brewpub' ? 'Brewpub' : (venue.makerType || VENUE_TYPE_LABELS[venue.venueType] || venue.venueType)}</span>
                                 <span>•</span>
                                 <span className="text-primary italic">"{venue.vibe}"</span>
                             </div>
@@ -390,9 +455,14 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                             </div>
                         )}
                         {venue.isSoberFriendly && (
-                            <div className="bg-blue-900/20 border border-blue-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                                <Sparkles className="w-3 h-3 text-blue-400" />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">Sober Friendly Choice</span>
+                            <div className="bg-blue-500/10 border border-blue-500/30 px-4 py-2 rounded-2xl flex items-center gap-3 shadow-[0_0_15px_rgba(59,130,246,0.1)] group hover:border-blue-500/50 transition-all">
+                                <div className="p-1.5 bg-blue-500 rounded-lg">
+                                    <Shield className="w-3.5 h-3.5 text-white" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 leading-none">Verified Badge</span>
+                                    <span className="text-[11px] font-bold text-blue-100 uppercase tracking-tighter">Sober Friendly Choice</span>
+                                </div>
                             </div>
                         )}
                         {venue.isAllAges && (
@@ -494,17 +564,29 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                 <div className="space-y-4">
                     <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">Intel & Buzz</h3>
 
-                    {venue.deal && (
-                        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex gap-4">
+                    {activeHappyHour && (
+                        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex gap-4 animate-in zoom-in-95 duration-300">
                             <div className="bg-primary p-2.5 h-fit rounded-xl">
                                 <Beer className="w-5 h-5 text-black" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1 italic">Active Deal</p>
-                                <p className="text-sm font-bold text-white leading-relaxed">{venue.deal}</p>
-                                {venue.dealEndsIn && (
-                                    <p className="text-[9px] text-primary/60 font-black uppercase mt-2">Ends in {venue.dealEndsIn} mins</p>
-                                )}
+                                <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1 italic">Happy Hour Active</p>
+                                <h4 className="text-md font-black text-white uppercase font-league leading-none mb-1">{activeHappyHour.specials || 'Happy Hour Specials'}</h4>
+                                <p className="text-xs font-bold text-slate-300 leading-tight">{activeHappyHour.description}</p>
+                                <p className="text-[9px] text-primary/60 font-black uppercase mt-2">Ends at {activeHappyHour.endTime}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {venue.activeFlashDeal && (
+                        <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-4 flex gap-4 animate-in slide-in-from-right duration-500">
+                            <div className="bg-orange-500 p-2.5 h-fit rounded-xl">
+                                <Zap className="w-5 h-5 text-black" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-1 italic">Flash Deal</p>
+                                <h4 className="text-md font-black text-white uppercase font-league leading-none mb-1">{venue.activeFlashDeal.title}</h4>
+                                <p className="text-xs font-bold text-orange-100 leading-tight">{venue.activeFlashDeal.description}</p>
                             </div>
                         </div>
                     )}
@@ -566,55 +648,105 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                         </div>
                     )}
 
-                    {/* Happy Hour Menu Section */}
-                    {venue.happyHourMenu && venue.happyHourMenu.length > 0 && (
+                    {/* Happy Hour Full Schedule */}
+                    {(venue.happyHourRules && venue.happyHourRules.length > 0) && (
+                        <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 space-y-4 shadow-2xl">
+                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">Happy Hour Rules</h3>
+                            <div className="space-y-3">
+                                {venue.happyHourRules.map((rule) => {
+                                    const now = new Date();
+                                    const currentDayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                                    const currentDayIdx = now.getDay();
+                                    const currentDay = currentDayLabels[currentDayIdx];
+                                    const isToday = rule.days.includes(currentDay);
+
+                                    return (
+                                        <div key={rule.id} className={`p-4 rounded-xl border transition-all ${isToday ? 'bg-primary/5 border-primary/30 shadow-[0_0_15px_rgba(251,191,36,0.05)]' : 'bg-black/20 border-white/5 opacity-60'}`}>
+                                            <div className="flex justify-between items-start mb-1">
+                                                <div className="flex flex-wrap gap-1">
+                                                    {rule.days.map(d => (
+                                                        <span key={d} className={`text-[8px] font-black px-1.5 py-0.5 rounded ${isToday && d === currentDay ? 'bg-primary text-black' : 'bg-white/10 text-slate-400'}`}>
+                                                            {d}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                                <span className="text-[10px] font-mono text-primary font-bold">{rule.startTime} - {rule.endTime}</span>
+                                            </div>
+                                            <h5 className="text-sm font-black text-white uppercase font-league tracking-wide">{rule.specials}</h5>
+                                            <p className="text-[10px] text-slate-500 font-medium italic leading-tight">{rule.description}</p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* [PHASE 1] Live Menu & Taps */}
+                    {(venue.fullMenu?.some(i => i.status === 'Live') || (venue.happyHourMenu && venue.happyHourMenu.length > 0)) && (
                         <div className="space-y-4">
-                            <h3 className="text-xs font-black text-primary uppercase tracking-[0.3em] font-league italic">Happy Hour Menu</h3>
+                            <div className="flex justify-between items-end">
+                                <h3 className="text-xs font-black text-primary uppercase tracking-[0.3em] font-league italic">Live Menu & Taps</h3>
+                                <span className="text-[9px] font-mono text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-500/30 flex items-center gap-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                    LIVE NOW
+                                </span>
+                            </div>
+
                             <div className="bg-slate-900 border border-primary/20 rounded-2xl overflow-hidden shadow-2xl relative">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
                                 <div className="divide-y divide-white/5 relative z-10">
-                                    {/* Drink Section */}
-                                    {venue.happyHourMenu.some(i => i.category === 'drink') && (
-                                        <div className="p-5 space-y-4">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Beer className="w-4 h-4 text-primary" />
-                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Drink Specials</p>
+                                    {/* Legacy Happy Hour Fallback (if no fullMenu) */}
+                                    {(!venue.fullMenu || venue.fullMenu.length === 0) && venue.happyHourMenu?.map((item, idx) => (
+                                        <div key={idx} className="p-4 flex justify-between items-start">
+                                            <div>
+                                                <p className="font-bold text-white text-sm uppercase">{item.name}</p>
+                                                <p className="text-xs text-slate-500">{item.description}</p>
                                             </div>
-                                            <div className="space-y-4">
-                                                {venue.happyHourMenu.filter(i => i.category === 'drink').map((item, idx) => (
-                                                    <div key={item.id || idx} className="flex justify-between items-start">
-                                                        <div className="flex-1 pr-4">
-                                                            <p className="text-sm font-black text-white uppercase font-league tracking-wide leading-none mb-1">{item.name}</p>
-                                                            {item.description && <p className="text-[10px] text-slate-500 font-bold leading-relaxed">{item.description}</p>}
-                                                        </div>
-                                                        <span className="text-sm font-black text-primary font-mono">{item.price}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
+                                            <span className="font-mono text-primary text-sm font-bold">{item.price}</span>
                                         </div>
-                                    )}
+                                    ))}
 
-                                    {/* Food Section */}
-                                    {venue.happyHourMenu.some(i => i.category === 'food') && (
-                                        <div className="p-5 space-y-4 bg-white/[0.02]">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Utensils className="w-4 h-4 text-primary" />
-                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Food Specials</p>
-                                            </div>
-                                            <div className="space-y-4">
-                                                {venue.happyHourMenu.filter(i => i.category === 'food').map((item, idx) => (
-                                                    <div key={item.id || idx} className="flex justify-between items-start">
-                                                        <div className="flex-1 pr-4">
-                                                            <p className="text-sm font-black text-white uppercase font-league tracking-wide leading-none mb-1">{item.name}</p>
-                                                            {item.description && <p className="text-[10px] text-slate-500 font-bold leading-relaxed">{item.description}</p>}
-                                                        </div>
-                                                        <span className="text-sm font-black text-primary font-mono">{item.price}</span>
+                                    {/* New Full Menu Rendering */}
+                                    {venue.fullMenu?.filter(i => i.status === 'Live').map((item) => {
+                                        const isHighAbv = item.stats?.abv && item.stats.abv > 8.0;
+                                        const isInFlight = flightItems.find(f => f.id === item.id);
+
+                                        return (
+                                            <div key={item.id} className="p-4 flex justify-between gap-4 group hover:bg-white/5 transition-colors">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <p className="font-black text-white text-sm uppercase font-league tracking-wide">{item.name}</p>
+                                                        {isHighAbv && (
+                                                            <div className="flex items-center gap-0.5 text-[8px] font-black text-red-500 border border-red-500/30 px-1 rounded bg-red-500/10">
+                                                                <AlertTriangle size={8} /> HI-OCTANE
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                ))}
+                                                    <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">{item.description}</p>
+                                                    <div className="mt-2 flex gap-3 text-[10px] font-mono text-slate-500">
+                                                        {item.type !== 'Food' && <span>{item.stats.abv || '?'}% ABV</span>}
+                                                        {item.stats.ibu && <span>{item.stats.ibu} IBU</span>}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col items-end gap-2">
+                                                    <span className="font-mono text-white text-sm font-bold">{item.stats.price || '-'}</span>
+                                                    {item.type !== 'Food' && (
+                                                        <button
+                                                            onClick={() => toggleFlightItem(item)}
+                                                            className={`p-1.5 rounded-lg border transition-all ${isInFlight
+                                                                ? 'bg-primary text-black border-primary'
+                                                                : 'border-slate-700 text-slate-500 hover:border-primary hover:text-primary'
+                                                                }`}
+                                                        >
+                                                            <Beer size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
@@ -858,6 +990,121 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     </div>
                 )}
             </div>
+
+            {/* [PHASE 1] Flight Builder Dock & Modal */}
+            {flightItems.length > 0 && (
+                <>
+                    {/* Fixed Dock */}
+                    <div className="fixed bottom-24 left-4 right-4 z-40 animate-in slide-in-from-bottom duration-300 md:bottom-6 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-md">
+                        <div className="bg-slate-900/90 backdrop-blur-md border border-primary/30 p-4 rounded-2xl shadow-2xl flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-primary text-black font-black w-8 h-8 rounded-lg flex items-center justify-center text-sm shadow-lg shadow-primary/20">
+                                    {flightItems.length}
+                                </div>
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Building Flight</span>
+                                        <button onClick={(e) => { e.stopPropagation(); navigate('/flight-school'); }} className="text-primary hover:text-white transition-colors">
+                                            <HelpCircle size={10} />
+                                        </button>
+                                    </div>
+                                    <span className="text-xs font-bold text-white uppercase">{4 - flightItems.length} slots remaining</span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsFlightModalOpen(true)}
+                                className="bg-primary text-black px-6 py-2 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-yellow-400 transition-colors shadow-lg shadow-primary/10"
+                            >
+                                View Stats
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Flight Modal */}
+                    {isFlightModalOpen && (
+                        <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+                            <div className="bg-slate-900 border border-white/10 w-full max-w-sm rounded-3xl overflow-hidden relative shadow-2xl">
+                                <button
+                                    onClick={() => setIsFlightModalOpen(false)}
+                                    className="absolute top-4 right-4 text-slate-500 hover:text-white"
+                                >
+                                    <X size={24} />
+                                </button>
+
+                                <div className="p-8 text-center bg-slate-800/50">
+                                    <Trophy className="w-12 h-12 text-primary mx-auto mb-4" />
+                                    <h3 className="text-2xl font-black text-white uppercase font-league tracking-tighter mb-1">Your Flight Deck</h3>
+                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Calculated Experience</p>
+                                </div>
+
+                                <div className="p-6 space-y-6">
+                                    {/* Stats Grid */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-black/40 p-4 rounded-2xl border border-white/5 text-center">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Avg ABV</p>
+                                            <p className={`text-3xl font-black font-league ${parseFloat(flightStats.abv as string) > 8.0 ? 'text-red-500' : 'text-white'}`}>
+                                                {flightStats.abv}%
+                                            </p>
+                                        </div>
+                                        <div className="bg-black/40 p-4 rounded-2xl border border-white/5 text-center">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Est. Cost</p>
+                                            <p className="text-3xl font-black text-white font-league">$$</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Warnings */}
+                                    {parseFloat(flightStats.abv as string) > 8.0 && (
+                                        <div className="bg-red-900/20 border border-red-500/30 p-4 rounded-xl flex items-start gap-3">
+                                            <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+                                            <div>
+                                                <p className="text-xs font-black text-red-400 uppercase tracking-wide mb-1">High Gravity Alert</p>
+                                                <p className="text-[10px] text-red-300 leading-relaxed">
+                                                    This flight packs a punch. Please drink responsibly and arrange a safe ride home.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Items List */}
+                                    <div className="space-y-2">
+                                        {flightItems.map((item, idx) => (
+                                            <div key={idx} className="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/5">
+                                                <span className="text-xs font-bold text-white">{item.name}</span>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-[10px] font-mono text-slate-400">{item.stats.abv}%</span>
+                                                    <button onClick={() => toggleFlightItem(item)} className="text-slate-600 hover:text-red-500">
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Actions */}
+                                    <button
+                                        onClick={() => {
+                                            if (!userProfile) {
+                                                showToast("Please log in to save your flight!", "error");
+
+                                                // Ideally, trigger login modal here if available
+                                                return;
+                                            }
+                                            // TODO: Actual save logic to Firestore users/{uid}/flights
+                                            showToast("Flight Saved to Profile! (Coming Soon: View Flights)", "success");
+                                            setIsFlightModalOpen(false);
+                                            setFlightItems([]);
+                                        }}
+                                        className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20"
+                                    >
+                                        Confirm Selection
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
+
             {/* Distance Warning Modal */}
             {venue && venue.location && (
                 <ArtieDistanceWarningModal

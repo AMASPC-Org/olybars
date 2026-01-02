@@ -37,6 +37,7 @@ import { ArtieChatModal } from '../../features/venues/components/ArtieChatModal'
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
 import { CookieBanner } from '../ui/CookieBanner';
 import { Footer } from './Footer';
+import { Sidebar } from './Sidebar';
 import { BuzzClock } from '../ui/BuzzClock';
 import logoIcon from '../../assets/OlyBars.com Emblem Logo PNG Transparent (512px by 512px).png';
 
@@ -87,6 +88,9 @@ export const AppShell: React.FC<AppShellProps> = ({
   const location = useLocation();
   const [showMenu, setShowMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [forceShowGrid, setForceShowGrid] = useState(false);
+
+  const isMapPage = location.pathname === '/map';
 
   // Scroll listener for compact header
   useEffect(() => {
@@ -129,6 +133,16 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   const activeTab = getActiveTab();
 
+  // --- VIEW MODE STATE ---
+  const [viewMode, setViewMode] = useState<'player' | 'owner'>(() => {
+    return (localStorage.getItem('olybars_view_mode') as 'player' | 'owner') || 'player';
+  });
+
+  // Persist viewMode changes
+  useEffect(() => {
+    localStorage.setItem('olybars_view_mode', viewMode);
+  }, [viewMode]);
+
   /* Floating Buttons style with individual borders and gaps */
   const navItems = [
     { id: 'pulse', label: 'PULSE', icon: Flame, path: '/' },
@@ -154,6 +168,7 @@ export const AppShell: React.FC<AppShellProps> = ({
     : 'Join the Olympia Bar League for local events & prizes.';
 
   const isFullWidthPage = [
+    '/map',
     '/league-membership',
     '/admin',
     '/owner',
@@ -198,6 +213,14 @@ export const AppShell: React.FC<AppShellProps> = ({
             </div>
 
             <div className="flex items-center gap-4">
+              {isMapPage && (
+                <button
+                  onClick={() => setForceShowGrid(!forceShowGrid)}
+                  className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 border-2 transition-all ${forceShowGrid ? 'bg-primary text-black border-black' : 'bg-black text-primary border-primary'}`}
+                >
+                  {forceShowGrid ? 'Hide Hub' : 'Show Hub'}
+                </button>
+              )}
               <button
                 onClick={() => setShowMenu(true)}
                 className="text-white hover:text-primary transition-all active:scale-95"
@@ -208,11 +231,11 @@ export const AppShell: React.FC<AppShellProps> = ({
           </div>
         </div>
 
-        {/* The Buzz Clock Component */}
-        <BuzzClock venues={venues} />
+        {/* The Buzz Clock Component - Hidden on Map */}
+        {!isMapPage && <BuzzClock venues={venues} />}
 
         {/* Navigation Grid: "Floating Buttons" Style */}
-        <div className={`bg-black border-b border-[#333] backdrop-blur-sm transition-all duration-500 overflow-hidden ${isScrolled ? 'max-h-0 invisible scale-y-0 opacity-0' : 'max-h-[200px] visible scale-y-100 opacity-100'}`}>
+        <div className={`bg-black border-b border-[#333] backdrop-blur-sm transition-all duration-500 overflow-hidden ${(isScrolled || (isMapPage && !forceShowGrid)) ? 'max-h-0 invisible scale-y-0 opacity-0' : 'max-h-[200px] visible scale-y-100 opacity-100'}`}>
           <div className={`${isFullWidthPage ? 'max-w-[1600px] mx-auto' : ''} p-1.5 grid ${isFullWidthPage ? 'grid-cols-4 md:grid-cols-6' : 'grid-cols-3'} gap-1.5 bg-black`}>
             {navItems.map((tab) => (
               <button
@@ -306,258 +329,20 @@ export const AppShell: React.FC<AppShellProps> = ({
         </div>
       </div>
 
-      {/* Hamburger Menu Overlay */}
-      {
-        showMenu && (
-          <div
-            className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm"
-            onClick={() => setShowMenu(false)}
-          >
-            <div
-              className="absolute top-0 right-0 w-[85%] max-w-sm bg-[#0f172a] h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* 1. TOP SECTION: PROFILE & CLOSE */}
-              <div className="bg-primary p-6 flex justify-between items-start border-b border-black/20">
-                <div
-                  className="flex items-center gap-3 cursor-pointer group"
-                  onClick={() => {
-                    if (userRole === 'guest') {
-                      onMemberLoginClick?.('login');
-                    } else {
-                      onProfileClick?.();
-                    }
-                    setShowMenu(false);
-                  }}
-                >
-                  <div className="w-12 h-12 bg-black rounded-full border-2 border-white flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <User className="w-6 h-6 text-primary" strokeWidth={3} />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xl font-black text-black leading-none uppercase font-league">
-                      {userHandle || "PLAYER LOGIN"}
-                    </span>
-                    <span className="text-[10px] font-black text-black/60 uppercase tracking-widest mt-0.5">
-                      {userRole === 'guest' ? "TAP TO SIGN IN" : userRole?.toUpperCase() || "PLAYER"}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowMenu(false)}
-                  className="text-black hover:rotate-90 transition-all p-1"
-                >
-                  <X className="w-8 h-8" strokeWidth={4} />
-                </button>
-              </div>
 
-              <div className="flex-1 overflow-y-auto p-5 space-y-8">
 
-                {/* --- CLUSTER 1: THE LEAGUE --- */}
-                <div className="space-y-3">
-                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">The League</h3>
-
-                  {/* LEAGUE HQ */}
-                  <button
-                    onClick={() => handleMenuNavigation('/league')}
-                    className="w-full bg-gradient-to-r from-primary to-yellow-500 p-4 rounded-xl flex items-center justify-between group shadow-lg active:scale-95 transition-all"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="bg-black/20 p-2 rounded-lg">
-                        <Crown className="w-6 h-6 text-black" strokeWidth={3} />
-                      </div>
-                      <div className="text-left">
-                        <span className="block text-black font-black text-sm uppercase tracking-tighter">LEAGUE HQ</span>
-                        <span className="block text-black/60 text-[8px] font-bold uppercase tracking-widest">Rankings & Rewards</span>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-black/40 group-hover:text-black transition-colors" />
-                  </button>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* MERCH STAND */}
-                    <button
-                      onClick={() => handleMenuNavigation('/merch')}
-                      className="bg-slate-900 border border-white/10 p-3 rounded-xl flex flex-col justify-between group hover:border-blue-500/50 transition-all shadow-sm h-full"
-                    >
-                      <ShoppingBag className="w-5 h-5 text-blue-400 mb-2" strokeWidth={2.5} />
-                      <div>
-                        <span className="block text-white font-black text-[10px] uppercase tracking-tight group-hover:text-blue-400">MERCH STAND</span>
-                        <span className="block text-slate-500 text-[7px] font-bold uppercase tracking-widest">Gears & Apparel</span>
-                      </div>
-                    </button>
-
-                    {/* PLAYBOOK */}
-                    <button
-                      onClick={() => handleMenuNavigation('/faq')}
-                      className="bg-slate-900 border border-white/10 p-3 rounded-xl flex flex-col justify-between group hover:border-primary/50 transition-all h-full"
-                    >
-                      <Brain className="w-5 h-5 text-primary mb-2" strokeWidth={2} />
-                      <div>
-                        <span className="block text-white font-black text-[10px] uppercase tracking-tight">THE PLAYBOOK</span>
-                        <span className="block text-slate-500 text-[7px] font-bold uppercase tracking-widest">Rules & FAQ</span>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-
-                {/* --- CLUSTER 2: SYSTEM ADMINISTRATION (SUPER ADMIN / ADMIN) --- */}
-                {isSystemAdmin(userProfile) && (
-                  <div className="pt-2">
-                    <h3 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em] px-1 mb-3">System Administration</h3>
-                    <button
-                      onClick={() => handleMenuNavigation('/admin')}
-                      className="w-full bg-red-500/10 border border-red-500/30 p-4 rounded-xl flex items-center justify-between group shadow-lg active:scale-95 transition-all"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="bg-red-500/20 p-2 rounded-lg text-red-500">
-                          <Shield className="w-6 h-6" strokeWidth={3} />
-                        </div>
-                        <div className="text-left">
-                          <span className="block text-red-500 font-black text-sm uppercase tracking-tighter">System Dashboard</span>
-                          <span className="block text-red-500/60 text-[8px] font-bold uppercase tracking-widest">Global Ops & Moderation</span>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-red-500/40 group-hover:text-red-500 transition-colors" />
-                    </button>
-                  </div>
-                )}
-
-                {/* --- CLUSTER 3: DISCOVERY --- */}
-                <div className="space-y-4">
-                  <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Discovery</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { label: 'Map', icon: MapIcon, path: '/map' },
-                      { label: 'Events', icon: Ticket, path: '/events' },
-                      { label: 'Play', icon: Brain, path: '/play' },
-                      { label: 'Makers', icon: Hammer, path: '/makers' },
-                      { label: 'Live Music', icon: Music, path: '/live' },
-                      { label: 'Bars', icon: Search, path: '/bars' },
-                    ].map((item) => (
-                      <button
-                        key={item.label}
-                        onClick={() => handleMenuNavigation(item.path)}
-                        className="bg-white/5 border border-white/5 py-3 px-4 rounded-xl flex items-center gap-3 hover:bg-white/10 transition-all group"
-                      >
-                        <item.icon className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
-                        <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest">{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* ABOUT & ARTIE SUB-LINKS */}
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    <button onClick={() => handleMenuNavigation('/about')} className="text-[9px] text-slate-500 font-bold uppercase hover:text-white border border-white/5 bg-slate-900/50 rounded-lg py-2">About Us</button>
-                    <button onClick={() => handleMenuNavigation('/meet-artie')} className="text-[9px] text-slate-500 font-bold uppercase hover:text-white border border-white/5 bg-slate-900/50 rounded-lg py-2">Meet Artie</button>
-                  </div>
-                </div>
-
-                {/* --- CLUSTER 4: PARTNER ACCESS --- */}
-                <div className="pt-6 relative">
-                  <div className="absolute top-0 inset-x-0 flex items-center gap-4">
-                    <div className="h-[1px] bg-gold-500/30 flex-1"></div>
-                    <Crown className="w-4 h-4 text-gold-500" />
-                    <div className="h-[1px] bg-gold-500/30 flex-1"></div>
-                  </div>
-
-                  <h3 className="text-[10px] font-black text-gold-500 uppercase tracking-[0.2em] px-1 mt-4 mb-3 text-center">
-                    {userRole === 'owner' || userRole === 'manager' || isSystemAdmin(userProfile) ? 'Partner Administration' : 'Partner Access'}
-                  </h3>
-
-                  <div className="space-y-3">
-                    {/* THE BREW HOUSE (If Logged In as Owner/Admin) */}
-                    {(userRole === 'owner' || userRole === 'manager' || isSystemAdmin(userProfile)) && (
-                      <button
-                        onClick={() => {
-                          onVenueDashboardClick?.();
-                          setShowMenu(false);
-                        }}
-                        className="w-full bg-primary/20 border border-primary/30 p-3 flex items-center justify-between group rounded-md hover:bg-primary/30 transition-all shadow-[0_0_15px_-5px_rgba(251,191,36,0.4)]"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Hammer className="w-4 h-4 text-primary" />
-                          <span className="text-primary font-black text-[10px] uppercase tracking-widest font-league">
-                            THE BREW HOUSE
-                          </span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-primary" />
-                      </button>
-                    )}
-
-                    {/* NEW LEAGUE MEMBERSHIP LINK */}
-                    <button
-                      onClick={() => handleMenuNavigation('/league-membership')}
-                      className="w-full bg-gradient-to-r from-slate-900 to-black border border-gold-500/30 p-3 flex items-center justify-between group rounded-md hover:border-gold-500 transition-all"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Crown className="w-4 h-4 text-gold-500" />
-                        <div className="flex flex-col text-left">
-                          <span className="text-gold-500 font-black text-[10px] uppercase tracking-widest font-league group-hover:text-white transition-colors">
-                            LEAGUE MEMBERSHIP
-                          </span>
-                          <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wide">Status & Upgrades</span>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-gold-600" />
-                    </button>
-
-                    {/* Default Login/Portal Link if not logged in */}
-                    {(!userRole || userRole === 'guest' || userRole === 'member') && !isSystemAdmin(userProfile) && (
-                      <button
-                        onClick={() => {
-                          onOwnerLoginClick?.();
-                          setShowMenu(false);
-                        }}
-                        className="w-full bg-surface border border-white/10 p-3 flex items-center justify-between group rounded-md hover:border-slate-500 transition-all"
-                      >
-                        <span className="text-slate-500 font-bold text-[10px] uppercase tracking-widest font-league group-hover:text-white">
-                          PARTNER LOGIN
-                        </span>
-                        <LogIn className="w-4 h-4 text-slate-700 group-hover:text-white" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* --- YOUR ACCOUNT --- */}
-                {userRole !== 'guest' && (
-                  <div className="pt-4 border-t border-white/10 space-y-3">
-                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Player Profile</h3>
-
-                    <button
-                      onClick={() => {
-                        onProfileClick?.();
-                        setShowMenu(false);
-                      }}
-                      className="w-full bg-white/5 border border-white/10 p-3 rounded-xl flex items-center justify-between group hover:border-white/30 transition-all"
-                    >
-                      <span className="text-white font-black text-xs uppercase tracking-tight">MY PLAYER CARD</span>
-                      <ChevronRight className="w-4 h-4 text-slate-600" />
-                    </button>
-
-                    {/* LOGOUT */}
-                    <button
-                      onClick={() => {
-                        onLogout?.();
-                        setShowMenu(false);
-                      }}
-                      className="w-full p-2 text-left text-red-500 font-bold text-[10px] uppercase tracking-widest hover:text-red-400"
-                    >
-                      LOGOUT
-                    </button>
-                  </div>
-                )}
-
-                <div className="flex justify-center gap-4 py-2 opacity-50">
-                  <button onClick={() => handleMenuNavigation('/terms')} className="text-[8px] text-slate-600 font-bold uppercase hover:text-primary">TERMS</button>
-                  <button onClick={() => handleMenuNavigation('/privacy')} className="text-[8px] text-slate-600 font-bold uppercase hover:text-primary">PRIVACY</button>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        )
-      }
+      {/* Sidebar Component */}
+      <Sidebar
+        isOpen={showMenu}
+        onClose={() => setShowMenu(false)}
+        userProfile={userProfile}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        onLogout={onLogout || (() => { })}
+        onLogin={onMemberLoginClick || (() => { })}
+        onProfileClick={onProfileClick || (() => { })}
+        userPoints={userPoints}
+      />
 
       {/* Artie Floating Action Button */}
       <ArtieHoverIcon onClick={() => setShowArtie?.(true)} />
@@ -566,6 +351,6 @@ export const AppShell: React.FC<AppShellProps> = ({
       <ArtieChatModal isOpen={showArtie} onClose={() => setShowArtie?.(false)} userProfile={userProfile} />
 
       <CookieBanner />
-    </div>
+    </div >
   );
 };

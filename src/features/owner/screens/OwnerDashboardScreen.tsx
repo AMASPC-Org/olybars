@@ -19,6 +19,7 @@ import { ArtieManagerBriefing } from '../components/ArtieManagerBriefing';
 import { VenueInsight } from '../../../types';
 import { PhotoApprovalCard } from '../../admin/components/PhotoApprovalCard';
 import { Camera } from 'lucide-react';
+import { MenuManagementTab } from '../components/MenuManagementTab';
 
 interface OwnerDashboardProps {
     isOpen: boolean;
@@ -77,7 +78,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const [dealDescription, setDealDescription] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
     const [showArtieCommands, setShowArtieCommands] = useState(false);
-    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports'>(initialView as any); // Added 'reports'
+    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'menu' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports'>(initialView as any); // Added 'menu'
     const [hourlyReport, setHourlyReport] = useState<any>(null);
     const [selectedReportDate, setSelectedReportDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [statsPeriod, setStatsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
@@ -455,6 +456,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                     className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'listing' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
                 >
                     Listing
+                </button>
+                <button
+                    onClick={() => setDashboardView('menu')}
+                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'menu' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                >
+                    THE MENU
                 </button>
                 <button
                     onClick={() => setDashboardView('events')}
@@ -865,6 +872,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         venue={myVenue}
                         venues={venues}
                         onUpdate={updateVenue}
+                        userProfile={userProfile}
                     />
                 )}
 
@@ -874,6 +882,14 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
                 {myVenue && dashboardView === 'host' && isVenueOwner(userProfile, myVenue.id) && (
                     <LeagueHostManagementTab venue={myVenue} onUpdate={updateVenue} />
+                )}
+
+                {myVenue && dashboardView === 'menu' && (
+                    <MenuManagementTab
+                        venue={myVenue}
+                        onUpdate={(id, updates) => updateVenue(id, updates)}
+                        userId={userProfile.uid}
+                    />
                 )}
 
                 {myVenue && dashboardView === 'events' && (

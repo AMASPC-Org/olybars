@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { SEO } from './components/common/SEO';
 import { X } from 'lucide-react';
@@ -79,6 +79,7 @@ import GlossaryScreen from './features/marketing/screens/GlossaryScreen';
 import PointsGuideScreen from './features/league/screens/PointsGuideScreen';
 import LeagueMembershipPage from './features/marketing/LeagueMembershipPage';
 import OnboardingHandoverPage from './features/marketing/screens/OnboardingHandoverPage';
+import { FlightSchoolScreen } from './features/flights/screens/FlightSchoolScreen'; // [NEW] Flight School Import
 
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
@@ -91,6 +92,42 @@ const InfoPopup = ({ infoContent, setInfoContent }: any) => {
         <button onClick={() => setInfoContent(null)} className="absolute top-3 right-3 text-slate-500 hover:text-white"><X className="w-5 h-5" /></button>
       </div>
     </div>
+  );
+};
+
+const SmartOwnerRoute = ({ venues, handleUpdateVenue, userProfile }: any) => {
+  const [searchParams] = useSearchParams();
+  const venueIdParam = searchParams.get('venueId');
+  const tabParam = searchParams.get('tab');
+  const navigate = useNavigate();
+
+  const isAuthorized = isSystemAdmin(userProfile) || (userProfile.venuePermissions && Object.keys(userProfile.venuePermissions).length > 0);
+
+  if (!isAuthorized) {
+    return <OwnerPortal />;
+  }
+
+  // Determine initial view based on tab param
+  let initialView: any = 'main';
+  if (tabParam === 'menu') initialView = 'menu';
+  if (tabParam === 'listing') initialView = 'listing';
+  if (tabParam === 'marketing') initialView = 'marketing';
+  if (tabParam === 'events') initialView = 'events';
+
+  const defaultVenueId = venueIdParam || (isSystemAdmin(userProfile) && (!userProfile.venuePermissions || Object.keys(userProfile.venuePermissions).length === 0)
+    ? 'hannahs'
+    : (userProfile.venuePermissions ? Object.keys(userProfile.venuePermissions)[0] : null));
+
+  return (
+    <OwnerDashboardScreen
+      isOpen={true}
+      onClose={() => navigate('/')}
+      venues={venues}
+      updateVenue={handleUpdateVenue}
+      userProfile={userProfile}
+      initialVenueId={defaultVenueId}
+      initialView={initialView}
+    />
   );
 };
 
@@ -275,7 +312,7 @@ export default function OlyBarsApp() {
     setShowVibeCheckModal(true);
   };
 
-  const confirmVibeCheck = async (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod: 'gps' | 'qr' = 'gps', gameStatus?: Record<string, GameStatus>) => {
+  const confirmVibeCheck = async (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod: 'gps' | 'qr' = 'gps', gameStatus?: Record<string, GameStatus>, soberFriendlyCheck?: { isGood: boolean; reason?: string }) => {
     const now = Date.now();
 
     // 1. If not already clocked in, perform a background check-in to unify signals
@@ -297,7 +334,7 @@ export default function OlyBarsApp() {
     // Update Venue Status and Photos (Skip for Guests to avoid auth errors)
     if (userProfile.uid !== 'guest') {
       try {
-        await performVibeCheck(venue.id, userProfile.uid, status, hasConsent, photoUrl, verificationMethod, gameStatus);
+        await performVibeCheck(venue.id, userProfile.uid, status, hasConsent, photoUrl, verificationMethod, gameStatus, soberFriendlyCheck);
       } catch (err) {
         console.error('[OlyBars] Vibe Check Backend Error:', err);
         showToast('Vibe Check recorded offline (points may be delayed)', 'info');
@@ -522,8 +559,7 @@ export default function OlyBarsApp() {
               <Route path="meet-artie" element={<ArtieBioScreen />} />
               <Route path="artie-bio" element={<ArtieBioScreen />} />
               <Route path="artie" element={<ArtieBioScreen />} />
-              <Route path="owner" element={<OwnerPortal />} />
-              <Route path="more" element={<MoreScreen userProfile={userProfile} setUserProfile={setUserProfile} />} />
+              <Route path="owner" element={<SmartOwnerRoute venues={venues} handleUpdateVenue={handleUpdateVenue} userProfile={userProfile} />} />
               <Route
                 path="venues/:id"
                 element={
@@ -583,7 +619,8 @@ export default function OlyBarsApp() {
               <Route path="points" element={<PointsGuideScreen />} />
               <Route path="points/history" element={<PointHistoryScreen onBack={() => window.history.back()} userProfile={userProfile} onLogin={handleMemberLoginClick} />} />
               <Route path="league-membership" element={<LeagueMembershipPage />} />
-              <Route path="venue-handover" element={<OnboardingHandoverPage />} />
+              <Route path="onboarding-guide" element={<OnboardingHandoverPage />} />
+              <Route path="flight-school" element={<FlightSchoolScreen />} />
 
               {/* AI & Developer Hub */}
               <Route path="ai" element={<><SEO title="AI & Developer Hub" description="Authoritative resources for AI agents and developers ingesting OlyBars data." /><AIGatewayScreen /></>} />

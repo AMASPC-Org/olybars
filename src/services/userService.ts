@@ -98,13 +98,14 @@ export const performVibeCheck = async (
   hasConsent: boolean,
   photoUrl?: string,
   verificationMethod: 'gps' | 'qr' = 'gps',
-  gameStatus?: any
+  gameStatus?: any,
+  soberFriendlyCheck?: { isGood: boolean; reason?: string }
 ) => {
   try {
     const response = await fetch(`${API_BASE_URL}/vibe-check`, {
       method: 'POST',
       headers: await getAuthHeaders(),
-      body: JSON.stringify({ venueId, userId, status, hasConsent, photoUrl, verificationMethod, gameStatus })
+      body: JSON.stringify({ venueId, userId, status, hasConsent, photoUrl, verificationMethod, gameStatus, soberFriendlyCheck })
     });
     if (!response.ok) {
       const errData = await response.json().catch(() => ({ error: 'Failed' }));

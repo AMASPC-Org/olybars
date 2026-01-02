@@ -23,7 +23,11 @@ export const VibeCheckSchema = z.object({
         timestamp: z.number().optional(),
         reportedBy: z.string().optional(),
         expiresAt: z.number().optional()
-    })).optional()
+    })).optional(),
+    soberFriendlyCheck: z.object({
+        isGood: z.boolean(),
+        reason: z.string().optional()
+    }).optional()
 });
 
 export const AdminRequestSchema = z.object({
@@ -91,7 +95,7 @@ export const VenueUpdateSchema = z.object({
     assets: z.record(z.string(), z.boolean()).optional(),
     originStory: z.string().optional(),
     insiderVibe: z.string().optional(),
-    geoLoop: z.enum(['Downtown_Walkable', 'Warehouse_Tumwater', 'Destination_Quest']).optional(),
+    geoLoop: z.enum(['Downtown_Walkable', 'Warehouse_Tumwater', 'Destination_Quest']).optional().or(z.literal('')),
     isLowCapacity: z.boolean().optional(),
     isSoberFriendly: z.boolean().optional(),
     venueType: z.enum(['bar_pub', 'restaurant_bar', 'brewery_taproom', 'lounge_club', 'arcade_bar', 'brewpub']).optional(),
@@ -105,7 +109,7 @@ export const VenueUpdateSchema = z.object({
     openingTime: z.string().optional(),
     services: z.array(z.string()).optional(),
     weekly_schedule: z.record(z.string(), z.array(z.string())).optional(),
-    makerType: z.enum(['Brewery', 'Distillery', 'Cidery', 'Winery']).optional(),
+    makerType: z.enum(['Brewery', 'Distillery', 'Cidery', 'Winery', 'Other']).optional().or(z.literal('')),
     physicalRoom: z.boolean().optional(),
     carryingMakers: z.array(z.string()).optional(),
     isLocalMaker: z.boolean().optional(),
@@ -120,6 +124,12 @@ export const VenueUpdateSchema = z.object({
     triviaHowItWorks: z.array(z.string()).optional(),
     deal: z.string().optional(),
     dealEndsIn: z.number().optional(),
+    vibeTags: z.array(z.string()).optional(),
+    tier_config: z.object({
+        is_directory_listed: z.boolean().optional(),
+        is_league_eligible: z.boolean().optional()
+    }).optional(),
+    hasGameVibeCheckEnabled: z.boolean().optional(),
     happyHourMenu: z.array(z.object({
         id: z.string(),
         name: z.string(),
@@ -127,6 +137,25 @@ export const VenueUpdateSchema = z.object({
         price: z.string(),
         category: z.enum(['food', 'drink'])
     })).optional(),
+
+    // [PHASE 1] Full Menu Validation
+    fullMenu: z.array(z.object({
+        id: z.string().uuid().or(z.string()), // Accept UUID or legacy string IDs if needed
+        name: z.string().min(1),
+        type: z.enum(['Crisp', 'Hoppy', 'Malty', 'Dark', 'Sour', 'Cider', 'Seltzer', 'Cocktail', 'Wine', 'Food', 'Other']),
+        description: z.string().max(140).optional(),
+        stats: z.object({
+            abv: z.number().optional(),
+            ibu: z.number().optional(),
+            price: z.string().optional(),
+        }),
+        margin_tier: z.enum(['High', 'Medium', 'Low', 'LossLeader']),
+        ai_tags: z.array(z.string()).optional(),
+        source: z.enum(['Manual', 'Untappd', 'Internal_Library']),
+        status: z.enum(['Live', 'Library', 'Archived']),
+        last_toggled_at: z.number().optional()
+    })).optional(),
+
     checkIns: z.number().optional(),
     isVisible: z.boolean().optional(),
     isActive: z.boolean().optional(),

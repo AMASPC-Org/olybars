@@ -6,7 +6,6 @@ const navItems = [
   { to: '/', text: 'Buzz', icon: Zap },
   { to: '/map', text: 'Map', icon: Map },
   { to: '/league', text: 'League', icon: Trophy },
-  { to: '/more', text: 'More', icon: Menu },
 ];
 
 const BottomNav = () => {
