@@ -5,7 +5,7 @@ export const ConfigSchema = z.object({
     PORT: z.string().default('3001'),
 
     // Auth & Project
-    GOOGLE_CLOUD_PROJECT: z.string().default('ama-ecosystem-prod'),
+    GOOGLE_CLOUD_PROJECT: z.string().min(1, 'GOOGLE_CLOUD_PROJECT is required'),
 
     // Internal Communication (Secured via Secret Manager in Prod)
     INTERNAL_HEALTH_TOKEN: z.string().min(1, 'INTERNAL_HEALTH_TOKEN is required for diagnostic endpoints'),

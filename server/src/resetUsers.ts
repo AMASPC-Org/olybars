@@ -1,4 +1,14 @@
 import { auth, db } from './firebaseAdmin';
+import { config } from './config';
+import readline from 'readline';
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+const question = (query: string) => new Promise<string>(resolve => rl.question(query, resolve));
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function clearCollection(collectionName: string) {
     console.log(`Clearing collection: ${collectionName}...`);
@@ -10,6 +20,40 @@ async function clearCollection(collectionName: string) {
 }
 
 async function resetUsers() {
+    const isProd = config.NODE_ENV === 'production';
+    const isLocal = !process.env.K_SERVICE;
+    const forceProd = process.argv.includes('--force-prod');
+
+    console.log(`\n🚀 [RESET] Environment: ${config.NODE_ENV.toUpperCase()}`);
+
+    if (isProd) {
+        if (!forceProd) {
+            console.error('❌ [ERROR] You are attempting to RESET USERS in PRODUCTION without the --force-prod flag.');
+            process.exit(1);
+        }
+
+        console.warn('⚠️  [WARNING] YOU ARE ABOUT TO DELETE ALL USERS AND LOGS IN THE PRODUCTION DATABASE.');
+        console.warn('⚠️  [WARNING] THIS ACTION IS DESTRUCTIVE AND IRREVERSIBLE.');
+
+        for (let i = 5; i > 0; i--) {
+            console.warn(`Countdown: ${i}...`);
+            await sleep(1000);
+        }
+
+        const answer = await question('Are you absolutely sure you want to proceed? (Y/N): ');
+        if (answer.toLowerCase() !== 'y') {
+            console.log('Reset aborted by user. 🍻');
+            process.exit(0);
+        }
+    } else if (isLocal) {
+        if (!process.env.FIRESTORE_EMULATOR_HOST) {
+            console.error('❌ [ERROR] NO EMULATOR DETECTED. The "Safety Switch" in firebaseAdmin.ts should have caught this.');
+            console.error('❌ [FATAL] Aborting to protect Production.');
+            process.exit(1);
+        }
+        console.log('📡 [LOCAL] Connected to Emulator. Proceeding with safe reset.');
+    }
+
     console.log('--- STARTING USER RESET ---');
 
     try {
@@ -125,6 +169,8 @@ async function resetUsers() {
     } catch (error) {
         console.error('❌ Reset failed:', error);
         process.exit(1);
+    } finally {
+        rl.close();
     }
 }
 

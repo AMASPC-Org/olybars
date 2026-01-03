@@ -1,14 +1,18 @@
 import admin from 'firebase-admin';
 
-// Initialize Firebase Admin with explicit projectId to resolve authentication issues in Cloud Run
-if (!admin.apps.length) {
-    admin.initializeApp({
-        projectId: 'ama-ecosystem-prod'
-    });
+import { config } from './config';
+
+// Safety Switch: Ensure we don't accidentally target Production from Local
+if (process.env.NODE_ENV === 'development' && !process.env.FIRESTORE_EMULATOR_HOST) {
+    console.error('❌ [FATAL] Attempting to connect to Production DB from Local Environment without Emulator. Aborting.');
+    process.exit(1);
 }
 
-if (process.env.FIRESTORE_EMULATOR_HOST) {
-    console.log(`📡 [SERVER] Using Emulator: ${process.env.FIRESTORE_EMULATOR_HOST}`);
+// Initialize Firebase Admin with data-driven projectId from validated config
+if (!admin.apps.length) {
+    admin.initializeApp({
+        projectId: config.GOOGLE_CLOUD_PROJECT
+    });
 }
 
 export const db = admin.firestore();

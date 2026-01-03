@@ -384,6 +384,11 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                                         <Facebook className="w-4 h-4" />
                                     </a>
                                 )}
+                                {venue.email && (
+                                    <a href={`mailto:${venue.email}`} className="text-slate-400 hover:text-orange-400 transition-colors">
+                                        <Mail className="w-4 h-4" />
+                                    </a>
+                                )}
                                 {venue.phone && (
                                     <a href={`tel:${venue.phone}`} className="text-slate-400 hover:text-green-400 transition-colors">
                                         <Phone className="w-4 h-4" />
