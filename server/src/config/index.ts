@@ -9,9 +9,15 @@ function initializeConfig(): Config {
     // 1. Load local environment files if not in production
     loadLocalEnv();
 
-    // 2. Validate process.env against schema
+    // 2. Map GCP_PROJECT to GOOGLE_CLOUD_PROJECT for Cloud Run compatibility
+    const rawEnv = {
+        ...process.env,
+        GOOGLE_CLOUD_PROJECT: process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT
+    };
+
+    // 3. Validate process.env against schema
     try {
-        const config = ConfigSchema.parse(process.env);
+        const config = ConfigSchema.parse(rawEnv);
         console.log('✅ [CONFIG] Configuration validated successfully.');
         return config;
     } catch (error: any) {

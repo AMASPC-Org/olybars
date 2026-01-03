@@ -14,7 +14,7 @@ export const ConfigSchema = z.object({
     GOOGLE_GENAI_API_KEY: z.string().optional(), // Optional in prod (uses ADC)
 
     // Maps (Private Secrets - for server-side services)
-    GOOGLE_BACKEND_KEY: z.string().min(1, 'GOOGLE_BACKEND_KEY is required for server-side Maps services'),
+    GOOGLE_BACKEND_KEY: z.string().optional(),
 
     // Frontend Assets (Public - these MUST follow VITE_ naming convention)
     VITE_GOOGLE_BROWSER_KEY: z.string().min(1, 'VITE_GOOGLE_BROWSER_KEY is required for frontend Maps display'),
