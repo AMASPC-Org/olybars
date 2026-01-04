@@ -28,7 +28,7 @@ export const VenueGallery: React.FC<VenueGalleryProps> = ({ photos }) => {
                     />
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
                         <p className="text-[8px] text-primary font-black uppercase tracking-tighter">
-                            {new Date(photo.timestamp).toLocaleDateString()}
+                            {new Date(photo.timestamp || 0).toLocaleDateString()}
                         </p>
                     </div>
                 </div>

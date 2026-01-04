@@ -31,18 +31,21 @@ export const PULSE_CONFIG = {
 
     // Status Thresholds
     THRESHOLDS: {
-        BUZZING: 60, // > 60 = Buzzing
-        LIVELY: 20,  // > 20 = Lively
+        PACKED: 100,   // > 100 = Packed
+        BUZZING: 40,   // > 40 = Buzzing
+        CHILL: 10,     // > 10 = Chill
+        DEAD: 0,       // > 0 = Dead (Base state)
         FLASH_DEAL: 180, // < 180 mins remaining = Flash Deal
         BUZZ_CLOCK_PRIORITY: 240 // < 240 mins = High priority in list
     },
 
     // Display Strings (User/Owner Facing)
     DESCRIPTIONS: {
-        LIVE_MEANING: "Unique people checked in within the last 90 minutes.",
-        BUZZING_MEANING: "High activity! Approx. 6+ recent people.",
-        LIVELY_MEANING: "Steady flow. Approx. 2-3 recent people.",
-        CHILL_MEANING: "Relaxed atmosphere. Count is low.",
+        LIVE_MEANING: "Unique people checked in within the last 60 minutes.",
+        PACKED_MEANING: "Max energy! Extremely high attendance.",
+        BUZZING_MEANING: "High activity! The venue is lively.",
+        CHILL_MEANING: "Steady flow. Plenty of room to hang out.",
+        DEAD_MEANING: "Minimal activity. Quiet vibes.",
         FLASH_DEAL_MEANING: "Ending soon! High urgency."
     }
 };

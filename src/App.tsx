@@ -49,10 +49,12 @@ import { calculateDistance, metersToMiles } from './utils/geoUtils';
 
 // --- RELOCATED SCREENS ---
 import MapScreen from './features/venues/screens/MapScreen';
-import MoreScreen from './features/profile/screens/MoreScreen';
+
 import { LeagueHQScreen } from './features/league/screens/LeagueHQScreen';
 import TermsScreen from './features/marketing/screens/TermsScreen';
 import PrivacyScreen from './features/marketing/screens/PrivacyScreen';
+import CookiePolicyScreen from './features/marketing/screens/CookiePolicyScreen';
+import PartnerSecurityScreen from './features/marketing/screens/PartnerSecurityScreen';
 import FAQScreen from './features/marketing/screens/FAQScreen';
 import { AdminDashboardScreen } from './features/admin/screens/AdminDashboardScreen';
 import UserProfileScreen from './features/profile/screens/UserProfileScreen';
@@ -535,7 +537,7 @@ export default function OlyBarsApp() {
                 path="league"
                 element={
                   <>
-                    <SEO title="Bar League HQ" description="Join the official Olympia Bar League. Track your points, rankings, and rewards." />
+                    <SEO title="Bar League HQ" description="Join the official Artesian Bar League. Track your points, rankings, and rewards." />
                     <LeagueHQScreen
                       venues={venues}
                       isLeagueMember={userProfile.role !== 'guest'}
@@ -600,6 +602,8 @@ export default function OlyBarsApp() {
               />
               <Route path="terms" element={<><SEO title="Terms of Service" /><TermsScreen /></>} />
               <Route path="privacy" element={<><SEO title="Privacy Policy" /><PrivacyScreen /></>} />
+              <Route path="cookies" element={<><SEO title="Cookie Policy" /><CookiePolicyScreen /></>} />
+              <Route path="security" element={<><SEO title="Security & Data Protection" /><PartnerSecurityScreen /></>} />
               <Route path="faq" element={<><SEO title="The Playbook (FAQ)" description="Everything you need to know about the OlyBars league, pins, and etiquette." /><FAQScreen /></>} />
               <Route path="about" element={<><SEO title="Welcome to the League (98501)" description="The mission and story behind Olympia's nightlife operating system." /><AboutPage /></>} />
               <Route

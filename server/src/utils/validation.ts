@@ -207,3 +207,73 @@ export const AppEventSchema = z.object({
     howItWorks: z.array(z.string()).optional(),
     cluesUrl: z.string().url().optional().or(z.literal('')),
 });
+
+export const VenueSchema = z.object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    venueType: z.enum(['bar_pub', 'restaurant_bar', 'brewery_taproom', 'lounge_club', 'arcade_bar', 'brewpub', 'private_club', 'winery_tasting']).optional(),
+    vibeTags: z.array(z.string()).optional(),
+    foodService: z.enum(['full_kitchen', 'limited_kitchen', 'snacks', 'none_byof']).optional(),
+    status: z.enum(['dead', 'chill', 'lively', 'buzzing', 'packed']).optional(),
+    checkIns: z.number().optional(),
+    isPaidLeagueMember: z.boolean().optional(),
+    vibe: z.string().optional(),
+    insiderVibe: z.string().optional(),
+    instagram: z.string().optional(),
+    facebook: z.string().optional(),
+    originStory: z.string().optional(),
+    geoLoop: z.string().optional(),
+    isVerifiedMaker: z.boolean().optional(),
+    isLocalMaker: z.boolean().optional(),
+    physicalRoom: z.boolean().optional(),
+    coordinates: z.object({
+        x: z.number(),
+        y: z.number()
+    }).optional(),
+    location: z.object({
+        lat: z.number(),
+        lng: z.number()
+    }),
+    address: z.string().optional(),
+    isActive: z.boolean().optional(),
+    isVisible: z.boolean().optional(),
+    isHistoricalAnchor: z.boolean().optional(),
+    historySnippet: z.string().optional(),
+    flashDeals: z.array(z.any()).optional(),
+    activeFlashDealId: z.string().optional(),
+    deal: z.string().optional(),
+    dealEndsIn: z.number().optional(),
+    vibeDefault: z.string().optional(),
+    happyHourSpecials: z.string().optional(),
+    happyHour: z.object({
+        startTime: z.string(),
+        endTime: z.string(),
+        description: z.string(),
+        days: z.array(z.string()).optional()
+    }).optional(),
+    gameFeatures: z.array(z.any()).optional(),
+    ownerId: z.string().optional(),
+    managerIds: z.array(z.string()).optional(),
+    tier_config: z.object({
+        is_directory_listed: z.boolean().optional(),
+        is_league_eligible: z.boolean().optional()
+    }).optional(),
+    attributes: z.record(z.string(), z.any()).optional(),
+    fullMenu: z.array(z.any()).optional(),
+    currentBuzz: z.object({
+        score: z.number(),
+        lastUpdated: z.number()
+    }).optional(),
+    website: z.string().optional(),
+    phone: z.string().optional(),
+    isAllAges: z.boolean().optional(),
+    isDogFriendly: z.boolean().optional(),
+    isSoberFriendly: z.boolean().optional(),
+    hasOutdoorSeating: z.boolean().optional(),
+    weekly_schedule: z.record(z.string(), z.array(z.string())).optional(),
+    happyHourRules: z.array(z.any()).optional(),
+    happyHourMenu: z.array(z.any()).optional(),
+    isBoutique: z.boolean().optional(),
+    isLbgtq: z.boolean().optional(),
+    isLowCapacity: z.boolean().optional()
+});

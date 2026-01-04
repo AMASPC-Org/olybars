@@ -155,7 +155,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Current Streak</p>
                             <div className="flex items-center justify-center gap-2">
                                 <div className="text-2xl font-black text-white font-mono">
-                                    {setCheckInHistory ? '🔥 2-DAY STREAK' : '🔥 1-DAY STREAK'}
+                                    🔥 2-DAY STREAK
                                 </div>
                             </div>
                             <p className="text-[9px] text-primary font-bold uppercase mt-1 italic">Keep it up for a Bonus Badge!</p>

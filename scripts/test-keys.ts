@@ -10,7 +10,7 @@ const keys = {
     BROWSER_KEY: process.env.VITE_GOOGLE_BROWSER_KEY || process.env.GOOGLE_BROWSER_KEY
 };
 
-async function testKey(name, key) {
+async function testKey(name: string, key?: string) {
     if (!key) {
         console.log(`[${name}] Missing`);
         return;

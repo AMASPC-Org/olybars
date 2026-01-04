@@ -15,7 +15,7 @@ export const MOCK_VENUES: Venue[] = [
     isHQ: true,
     happyHour: { startTime: "16:00", endTime: "18:00", description: "$4 Well Drinks & Pints" },
     alertTags: ['pool', 'food', 'sports'],
-    description: "The beating heart of the Olympia Bar League. Known for heavy pours, the best breakfast in town, and being the official meetup spot for league champions. Two pool tables, pull tabs, and no pretension.",
+    description: "The beating heart of the Artesian Bar League. Known for heavy pours, the best breakfast in town, and being the official meetup spot for league champions. Two pool tables, pull tabs, and no pretension.",
     address: "123 5th Ave SW, Olympia, WA",
     hours: "7AM - 2AM Daily",
     phone: "(360) 555-0100"

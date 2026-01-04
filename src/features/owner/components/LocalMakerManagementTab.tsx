@@ -192,7 +192,7 @@ export const LocalMakerManagementTab: React.FC<LocalMakerManagementTabProps> = (
                             className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-widest text-lg shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
                         >
                             <Save className="w-5 h-5" strokeWidth={3} />
-                            Save Maker Profile
+                            Save Local Maker Profile
                         </button>
                     </div>
                 </>
@@ -208,7 +208,7 @@ export const LocalMakerManagementTab: React.FC<LocalMakerManagementTabProps> = (
                         className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-widest text-lg shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
                     >
                         <Save className="w-5 h-5" strokeWidth={3} />
-                        Save Maker Profile
+                        Save Local Maker Profile
                     </button>
                 </div>
             )}

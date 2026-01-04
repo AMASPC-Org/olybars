@@ -49,7 +49,7 @@ export const OwnerMarketingPromotions: React.FC = () => {
           Marketing &amp; Promotions
         </h1>
         <p className="text-sm text-slate-300 font-['Roboto_Condensed'] font-bold">
-          Plan and promote your Olympia Bar League nights with AI-drafted posts,
+          Plan and promote your Artesian Bar League nights with AI-drafted posts,
           ready-to-use assets, and simple best practices.
         </p>
 
@@ -66,10 +66,9 @@ export const OwnerMarketingPromotions: React.FC = () => {
               type="button"
               onClick={() => scrollToSection(tab.id)}
               className={`px-3 py-1.5 text-xs font-['Bangers'] tracking-wider border-2 transition uppercase
-                ${
-                  activeSection === tab.id
-                    ? "bg-primary text-black border-black shadow-[2px_2px_0px_0px_#000]"
-                    : "bg-slate-800 text-slate-200 border-slate-600 hover:border-primary"
+                ${activeSection === tab.id
+                  ? "bg-primary text-black border-black shadow-[2px_2px_0px_0px_#000]"
+                  : "bg-slate-800 text-slate-200 border-slate-600 hover:border-primary"
                 }`}
             >
               {tab.label}
@@ -87,7 +86,7 @@ export const OwnerMarketingPromotions: React.FC = () => {
           Overview: Why this exists
         </h2>
         <p className="text-sm text-slate-200 font-['Roboto_Condensed'] font-bold">
-          The Olympia Bar League is player-first, but it only works when{" "}
+          The Artesian Bar League is player-first, but it only works when{" "}
           <span className="text-primary">your bar talks about it</span>. This
           hub gives you three things:
         </p>
@@ -212,22 +211,12 @@ export const OwnerMarketingPromotions: React.FC = () => {
           Assets &amp; Templates
         </h2>
         <p className="text-sm text-slate-200 font-['Roboto_Condensed'] font-bold">
-          Download ready-made Olympia Bar League visuals for your bar.
+          Download ready-made Artesian Bar League visuals for your bar.
         </p>
 
         <div className="grid gap-3 md:grid-cols-2 text-sm font-['Roboto_Condensed']">
           <AssetTile
-            title="Venue-branded poster (PDF)"
-            description="Print and hang near the entrance or bathroom doors."
-            href="#TODO-poster"
-          />
-          <AssetTile
-            title="Table tent template (PDF)"
-            description="Drop on bar tops and high-tops during league nights."
-            href="#TODO-table-tent"
-          />
-          <AssetTile
-            title="Olympia Bar League logo pack (PNG/SVG)"
+            title="Artesian Bar League logo pack (PNG/SVG)"
             description="Use in your own graphics or on your website."
             href="#TODO-logo-pack"
           />
@@ -272,7 +261,7 @@ export const OwnerMarketingPromotions: React.FC = () => {
               <li>
                 Use consistent hashtags like{" "}
                 <span className="font-mono text-xs text-primary">
-                  #OlympiaBarLeague
+                  #ArtesianBarLeague
                 </span>
                 .
               </li>

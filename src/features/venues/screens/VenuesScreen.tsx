@@ -3,7 +3,7 @@ import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
     Beer, Bot, ChevronRight, Clock, Crown, Filter, Flame, MapPin, Music, Navigation, Search, Sparkles, Star, Trophy, Users
 } from 'lucide-react';
-import { Venue, VenueType, VibeTag } from '../../../types';
+import { Venue, VenueType, VibeTag, VenueStatus } from '../../../types';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
 import { isVenueOpen, getVenueStatus } from '../../../utils/venueUtils';
@@ -115,7 +115,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                 return distA - distB;
             }
             if (activeSort === 'energy') {
-                const order = { buzzing: 0, lively: 1, chill: 2 };
+                const order: Record<VenueStatus, number> = { packed: 0, buzzing: 1, lively: 2, chill: 3, dead: 4 };
                 return order[a.status] - order[b.status];
             }
             if (activeSort === 'buzz') {
@@ -143,7 +143,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                 }
 
                 // If neither has deal, fallback to energy/buzz score logic (implied by status) or just alpha
-                const order = { buzzing: 0, lively: 1, chill: 2 };
+                const order: Record<VenueStatus, number> = { packed: 0, buzzing: 1, lively: 2, chill: 3, dead: 4 };
                 return order[a.status] - order[b.status];
             }
             return 0;

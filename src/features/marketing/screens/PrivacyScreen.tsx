@@ -52,7 +52,7 @@ const PrivacyScreen: React.FC = () => {
                 <section className="space-y-4">
                     <h2 className="text-xl font-black uppercase tracking-wide font-league text-primary">3. Cookies and Storage</h2>
                     <p className="text-slate-300 leading-relaxed text-sm">
-                        We use essential cookies and <strong>local storage</strong> to keep you logged in, save your notification preferences, and persist "Anti-Gaming" cooldown timers across sessions. These storage mechanisms are critical for maintaining the integrity of the Olympia Bar League leaderboard.
+                        We use essential cookies and <strong>local storage</strong> to keep you logged in, save your notification preferences, and persist "Anti-Gaming" cooldown timers across sessions. These storage mechanisms are critical for maintaining the integrity of the Artesian Bar League leaderboard.
                     </p>
                 </section>
 

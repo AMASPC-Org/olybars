@@ -1,4 +1,6 @@
-import { auth, db } from './firebaseAdmin';
+
+import { auth, db } from '../firebaseAdmin';
+import { config } from '../config';
 
 const USERS = [
     {
@@ -54,7 +56,7 @@ async function ensureUsers() {
                         foundBy = 'email';
                         // IMPORTANT: Update our local UID to match the existing one
                         user.uid = userRecord.uid;
-                        console.log(`User ${user.email} found by EMAIL (UID: ${user.uid}). Using existing UID.`);
+                        console.log(`User ${user.email} found by EMAIL(UID: ${user.uid}).Using existing UID.`);
                     } catch (e2: any) {
                         if (e2.code !== 'auth/user-not-found') throw e2;
                     }
@@ -64,7 +66,7 @@ async function ensureUsers() {
             }
 
             if (userRecord) {
-                console.log(`User ${user.email} existing (UID: ${user.uid}). Updating...`);
+                console.log(`User ${user.email} existing(UID: ${user.uid}).Updating...`);
                 await auth.updateUser(user.uid, {
                     email: user.email,
                     password: user.password,
@@ -72,7 +74,7 @@ async function ensureUsers() {
                     emailVerified: true
                 });
             } else {
-                console.log(`User ${user.email} not found. Creating...`);
+                console.log(`User ${user.email} not found.Creating...`);
                 userRecord = await auth.createUser({
                     uid: user.uid,
                     email: user.email,
@@ -88,7 +90,7 @@ async function ensureUsers() {
                 ...(user.homeBase ? { venueId: user.homeBase } : {})
             };
             await auth.setCustomUserClaims(user.uid, claims);
-            console.log(`Claims set for ${user.email}:`, claims);
+            console.log(`Claims set for ${user.email}: `, claims);
 
             // 3. Create/Update Firestore Profile
             await db.collection('users').doc(user.uid).set({
@@ -106,7 +108,7 @@ async function ensureUsers() {
             console.log(`Firestore profile updated for ${user.email}`);
 
         } catch (error) {
-            console.error(`Error processing user ${user.email}:`, error);
+            console.error(`Error processing user ${user.email}: `, error);
         }
     }
 

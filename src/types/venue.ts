@@ -1,4 +1,4 @@
-export type VenueStatus = 'dead' | 'chill' | 'lively' | 'buzzing' | 'packed';
+export type VenueStatus = 'dead' | 'chill' | 'buzzing' | 'packed';
 
 export enum PartnerTier {
     FREE = 'FREE',    // 1 Token/mo
@@ -142,7 +142,7 @@ export type GameFeatureStatus = 'active' | 'out_of_order';
 
 export interface GameFeature {
     id: string; // e.g. "pinball_godzilla" or just "pool_table_1"
-    type: 'arcade_game' | 'pinball_machine' | 'pool_table' | 'darts' | 'skeeball' | 'shuffleboard' | 'foosball' | 'cornhole' | 'beer_pong' | 'trivia' | 'karaoke' | 'giant_jenga' | 'unknown';
+    type: 'arcade_game' | 'pinball_machine' | 'pool_table' | 'darts' | 'skeeball' | 'shuffleboard' | 'foosball' | 'cornhole' | 'beer_pong' | 'trivia' | 'karaoke' | 'giant_jenga' | 'console_gaming' | 'unknown';
     name: string; // Display name e.g. "Godzilla Pinball"
     status: GameFeatureStatus;
     count: number;

@@ -843,7 +843,7 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         isAdmin = userData?.role === 'super-admin' || userData?.role === 'admin' || userData?.email === 'ryan@amaspc.com';
 
         isOwner = venueData.ownerId === requestingUserId;
-        isManager = venueData.managerIds?.includes(requestingUserId);
+        isManager = !!venueData.managerIds?.includes(requestingUserId);
     } else {
         // If no user ID is provided, we strictly deny unless it's a known internal call (none yet)
         throw new Error('Unauthorized: Authentication required for venue updates.');
@@ -1263,7 +1263,7 @@ export const removeVenueMember = async (venueId: string, memberId: string, reque
     if (!userDoc.exists) throw new Error('User not found');
     const userData = userDoc.data();
 
-    const venuePermissions = userData.venuePermissions || {};
+    const venuePermissions = userData!.venuePermissions || {};
     delete venuePermissions[venueId];
 
     await userRef.update({ venuePermissions });

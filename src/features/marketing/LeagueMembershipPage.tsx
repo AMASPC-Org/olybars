@@ -64,7 +64,7 @@ const Tiers = [
         price: '$799',
         priceSuffix: '/mo',
         vibe: 'LEGENDARY ITEM',
-        description: 'The Olympia Premier Partnership',
+        description: 'The Artesian Premier Partnership',
         icon: Crown,
         color: 'gold',
         features: [
@@ -240,13 +240,13 @@ export const LeagueMembershipPage = () => {
                         className="w-12 h-12 mx-auto grayscale opacity-50 mb-4"
                     />
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em]">
-                        Official Olympia Bar League Membership
+                        Official Artesian Bar League Membership
                     </p>
 
                     <div className="mt-8 pt-8 border-t border-white/5">
                         <p className="text-slate-400 text-sm mb-4">Don't have time to set this up?</p>
                         <button
-                            onClick={() => navigate('/venue-handover')}
+                            onClick={() => navigate('/onboarding-guide')}
                             className="text-gold-400 hover:text-white text-xs font-black uppercase tracking-widest border-b border-gold-500/30 hover:border-white pb-1 transition-all"
                         >
                             Review the 60-Second Handover Process

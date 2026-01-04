@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, X, MapPin, Sparkles, Loader2 } from 'lucide-react';
 import { usePlacesAutocomplete } from '../../hooks/usePlacesAutocomplete';
+import { Venue } from '../../types';
 
 interface PlaceAutocompleteProps {
     onPlaceSelect: (place: google.maps.places.PlaceResult) => void;

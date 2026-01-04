@@ -432,7 +432,7 @@ export default function ClaimVenuePage() {
                             <div className="space-y-4">
                                 <h2 className="text-4xl font-black uppercase font-league text-white">Venue Inducted into the League!</h2>
                                 <p className="text-slate-400 font-medium max-w-lg mx-auto">
-                                    Congratulations! <span className="text-primary font-bold">{venueData?.name}</span> is now an official Member of the Olympia Bar League.
+                                    Congratulations! <span className="text-primary font-bold">{venueData?.name}</span> is now an official Member of the Artesian Bar League.
                                 </p>
                             </div>
 

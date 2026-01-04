@@ -165,7 +165,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   const leaguePromoText = leagueEventVenue
     ? `${(leagueEventVenue.leagueEvent || '').toUpperCase()} tonight at ${leagueEventVenue.name
     }`
-    : 'Join the Olympia Bar League for local events & prizes.';
+    : 'Join the Artesian Bar League for local events & prizes.';
 
   const isFullWidthPage = [
     '/map',
@@ -312,7 +312,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             <div className="flex justify-between items-center gap-3">
               <div>
                 <p className="text-[9px] text-slate-400 font-bold uppercase">
-                  Olympia Bar League
+                  Artesian Bar League
                 </p>
                 <p className="text-sm font-black text-white leading-snug">
                   {leaguePromoText}
@@ -348,7 +348,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       <ArtieHoverIcon onClick={() => setShowArtie?.(true)} />
 
       {/* Artie Chat Modal */}
-      <ArtieChatModal isOpen={showArtie} onClose={() => setShowArtie?.(false)} userProfile={userProfile} />
+      <ArtieChatModal isOpen={!!showArtie} onClose={() => setShowArtie?.(false)} userProfile={userProfile} />
 
       <CookieBanner />
     </div >

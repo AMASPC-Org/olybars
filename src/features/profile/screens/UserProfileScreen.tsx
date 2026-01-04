@@ -183,7 +183,10 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
 
                 const updates = {
                     stats: {
-                        ...userProfile.stats,
+                        seasonPoints: userProfile.stats?.seasonPoints || 0,
+                        lifetimeCheckins: userProfile.stats?.lifetimeCheckins || 0,
+                        currentStreak: userProfile.stats?.currentStreak || 0,
+                        vibeCheckCount: userProfile.stats?.vibeCheckCount || 0,
                         competitionPoints: newPoints
                     }
                 };

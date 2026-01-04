@@ -216,7 +216,7 @@ v1Router.get('/health/artie', async (req, res) => {
     }
 
     try {
-        const { GeminiService } = await import('../../functions/src/services/geminiService');
+        const { GeminiService } = await import('./services/geminiService');
         const gemini = new GeminiService();
         // Minimal ping call (triage is cheap)
         const triage = await gemini.getTriage('Health Check Ping');
@@ -442,7 +442,7 @@ v1Router.patch('/venues/:id', verifyToken, requireVenueAccess('manager'), async 
     if (!validation.success) {
         return res.status(400).json({ error: 'Invalid updates data', details: validation.error.format() });
     }
-    const updates = validation.data;
+    const updates = validation.data as any;
     const requestingUserId = (req as any).user.uid;
 
     try {
@@ -1072,7 +1072,7 @@ v1Router.get('/venues/:id/semantic', async (req, res) => {
         if (!venueDoc.exists) {
             return res.status(404).json({ error: 'Venue not found' });
         }
-        const venue = venueDoc.data();
+        const venue = venueDoc.data()!;
 
         // Dynamically import Gemini Service
         const { GeminiService } = await import('../../functions/src/services/geminiService');
@@ -1125,7 +1125,7 @@ v1Router.post('/ai/generate-description', async (req, res) => {
         if (!venueDoc.exists) {
             return res.status(404).json({ error: 'Venue not found' });
         }
-        const venue = venueDoc.data();
+        const venue = venueDoc.data()!;
 
         // 2. Fetch Relevant Deals (Happy Hour/Flash Deals)
         // For simplicity, we'll just check if the venue has registered deals

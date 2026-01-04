@@ -191,13 +191,17 @@ export const GameFeatureManager: React.FC<GameFeatureManagerProps> = ({ venue, o
                                         className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-xs font-bold text-white uppercase outline-none focus:border-primary"
                                     >
                                         <option value="arcade_game">Arcade Game</option>
-                                        <option value="pool_table">Pool Table</option>
-                                        <option value="dart_board">Dart Board</option>
                                         <option value="pinball_machine">Pinball</option>
+                                        <option value="pool_table">Pool Table</option>
+                                        <option value="darts">Darts</option>
                                         <option value="skeeball">Skee-Ball</option>
                                         <option value="shuffleboard">Shuffleboard</option>
+                                        <option value="foosball">Foosball</option>
+                                        <option value="cornhole">Cornhole</option>
+                                        <option value="giant_jenga">Giant Jenga</option>
                                         <option value="karaoke">Karaoke</option>
-                                        <option value="active_play">Active Play (Cornhole, etc)</option>
+                                        <option value="trivia">Trivia</option>
+                                        <option value="console_gaming">Console Gaming</option>
                                     </select>
                                 </div>
                                 <div className="col-span-2 space-y-1.5">

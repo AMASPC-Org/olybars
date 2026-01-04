@@ -6,7 +6,7 @@ const MOCK_VENUES: Venue[] = [
     name: 'The Brotherhood Lounge',
     type: 'dive',
     location: { distance: '0.2 mi' },
-    current_buzz: { status: 'lively' },
+    current_buzz: { status: 'chill' },
     vibes: ['pool', 'dark', 'cash only'],
   },
   {

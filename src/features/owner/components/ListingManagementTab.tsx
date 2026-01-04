@@ -333,7 +333,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                             <div className="flex justify-between items-center mb-4">
                                 <div className="flex items-center gap-2">
                                     <Feather className="w-4 h-4 text-primary" />
-                                    <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Maker Identity Logic</h4>
+                                    <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Local Maker Identity Logic</h4>
                                 </div>
                                 {isSystemAdmin(userProfile) && (
                                     <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-lg border border-primary/20">
@@ -350,7 +350,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Maker Category</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Local Maker Category</label>
                                     <div className="relative group">
                                         <Info className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4" />
                                         <select
@@ -851,14 +851,14 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                 </div>
 
                 <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6 space-y-4">
-                    {formData.happyHourMenu.map((item: any, index: number) => (
+                    {(formData.happyHourMenu || []).map((item: any, index: number) => (
                         <div key={item.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-black/40 rounded-xl border border-white/5 relative group">
                             <div className="md:col-span-1">
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Category</label>
                                 <select
                                     value={item.category}
                                     onChange={(e) => {
-                                        const newMenu = [...formData.happyHourMenu];
+                                        const newMenu = [...(formData.happyHourMenu || [])];
                                         newMenu[index].category = e.target.value as 'food' | 'drink';
                                         setFormData({ ...formData, happyHourMenu: newMenu });
                                     }}
@@ -874,7 +874,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                     type="text"
                                     value={item.name}
                                     onChange={(e) => {
-                                        const newMenu = [...formData.happyHourMenu];
+                                        const newMenu = [...(formData.happyHourMenu || [])];
                                         newMenu[index].name = e.target.value;
                                         setFormData({ ...formData, happyHourMenu: newMenu });
                                     }}
@@ -888,7 +888,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                     type="text"
                                     value={item.price}
                                     onChange={(e) => {
-                                        const newMenu = [...formData.happyHourMenu];
+                                        const newMenu = [...(formData.happyHourMenu || [])];
                                         newMenu[index].price = e.target.value;
                                         setFormData({ ...formData, happyHourMenu: newMenu });
                                     }}
@@ -903,7 +903,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                         type="text"
                                         value={item.description || ''}
                                         onChange={(e) => {
-                                            const newMenu = [...formData.happyHourMenu];
+                                            const newMenu = [...(formData.happyHourMenu || [])];
                                             newMenu[index].description = e.target.value;
                                             setFormData({ ...formData, happyHourMenu: newMenu });
                                         }}
@@ -914,7 +914,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        const newMenu = formData.happyHourMenu.filter((_: any, i: number) => i !== index);
+                                        const newMenu = (formData.happyHourMenu || []).filter((_: any, i: number) => i !== index);
                                         setFormData({ ...formData, happyHourMenu: newMenu });
                                     }}
                                     className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors"
@@ -929,7 +929,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                         type="button"
                         onClick={() => {
                             const newItem = { id: Math.random().toString(36).substr(2, 9), name: '', price: '', category: 'food' as 'food' | 'drink' };
-                            setFormData({ ...formData, happyHourMenu: [...formData.happyHourMenu, newItem] });
+                            setFormData({ ...formData, happyHourMenu: [...(formData.happyHourMenu || []), newItem] });
                         }}
                         className="w-full py-4 bg-white/5 border border-dashed border-white/10 rounded-xl text-xs font-black uppercase text-slate-400 hover:bg-white/10 hover:border-primary/30 hover:text-primary transition-all flex items-center justify-center gap-2"
                     >

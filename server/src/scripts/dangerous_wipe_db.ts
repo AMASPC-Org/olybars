@@ -1,5 +1,5 @@
-import { auth, db } from './firebaseAdmin';
-import { config } from './config';
+import { auth, db } from '../firebaseAdmin';
+import { config } from '../config';
 import readline from 'readline';
 
 const rl = readline.createInterface({

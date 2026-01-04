@@ -70,6 +70,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
         const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getDay()];
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
+        if (!venue) return null;
+
         const rules = [...(venue.happyHourRules || [])];
         if (venue.happyHour?.startTime) {
             rules.push({
@@ -162,7 +164,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     "address": venue.address
                 },
                 "description": "Artesian Bar League Sanctioned Event",
-                "keywords": "League Play, Trivia, Olympia Bar League"
+                "keywords": "League Play, Trivia, Artesian Bar League"
             });
         }
 

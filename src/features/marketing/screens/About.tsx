@@ -299,19 +299,19 @@ const AboutPage = () => {
                     </div>
                 </section>
 
-                {/* The Olympia Bar League Mission */}
+                {/* The Artesian Bar League Mission */}
                 <section className="relative">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="h-[2px] w-8 bg-primary/30" />
                         <h2 className="text-primary font-black text-xs uppercase tracking-[0.3em] flex items-center gap-2">
-                            <Anchor size={12} /> THE OLYMPIA BAR LEAGUE
+                            <Anchor size={12} /> THE ARTESIAN BAR LEAGUE
                         </h2>
                     </div>
                     <div className="bg-surface/40 backdrop-blur-sm border border-white/5 p-8 rounded-[2.5rem] relative overflow-hidden group">
                         <h3 className="text-white font-black text-2xl uppercase tracking-tight mb-4 font-league italic">REVITALIZING THROUGH COMMUNITY</h3>
                         <div className="space-y-4 text-slate-300 leading-relaxed text-sm font-body">
                             <p>
-                                The <strong>Olympia Bar League</strong> was born from a simple realization: when our local venues thrive, our city comes alive. We are a community-first organization dedicated to supporting the bars, restaurants, and makers that define Olympia.
+                                The <strong>Artesian Bar League</strong> was born from a simple realization: when our local venues thrive, our city comes alive. We are a community-first organization dedicated to supporting the bars, restaurants, and makers that define Olympia.
                             </p>
                             <p className="font-bold text-white italic bg-primary/10 border-l-2 border-primary px-3 py-2">
                                 We believe in the "Artesian Energy" of the 98501.

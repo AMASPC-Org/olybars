@@ -12,7 +12,7 @@ const PointsGuideScreen: React.FC = () => {
                 {
                     name: 'Clock In',
                     points: '10 pts',
-                    desc: 'Clock in when you arrive. Maker venues (Well 80, Matchless, etc.) pay double points!',
+                    desc: 'Clock in when you arrive. Local Maker venues (Well 80, Matchless, etc.) pay double points!',
                     icon: Target,
                     color: 'bg-blue-500/20 text-blue-400'
                 },

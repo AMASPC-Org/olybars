@@ -155,22 +155,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <button onClick={() => handleNavigation('/playbook')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-yellow-400/50 transition-all active:scale-[0.98] group">
                         <div className="flex items-center gap-4">
                             <BookOpen className="w-5 h-5 text-yellow-400" />
-                            <span className="text-sm font-black uppercase text-white tracking-wide">Playbook</span>
+                            <span className="text-sm font-black uppercase text-white tracking-wide">The Pulse Playbook</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-yellow-400" />
-                    </button>
-
-                    <button onClick={() => handleNavigation('/about')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
-                        <div className="flex items-center gap-4">
-                            <Info className="w-5 h-5 text-slate-400" />
-                            <span className="text-sm font-black uppercase text-white tracking-wide">About OlyBars</span>
-                        </div>
                     </button>
 
                     <button onClick={() => handleNavigation('/faq')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
                         <div className="flex items-center gap-4">
                             <HelpCircle className="w-5 h-5 text-slate-400" />
-                            <span className="text-sm font-black uppercase text-white tracking-wide">Help & FAQ</span>
+                            <span className="text-sm font-black uppercase text-white tracking-wide">The Manual (FAQ)</span>
                         </div>
                     </button>
 
@@ -212,7 +205,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <LogOut className="w-4 h-4" />
                         Sign Out
                     </button>
-                    <p className="text-center text-[10px] text-slate-700 font-mono">v1.2.0 | OlyBars Protocol</p>
+                    <p className="text-center text-[10px] text-slate-700 font-mono">v1.2.0 | Manual Protocol</p>
                 </div>
             </div>
 

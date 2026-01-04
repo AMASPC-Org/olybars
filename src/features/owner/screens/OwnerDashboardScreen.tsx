@@ -477,7 +477,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 onClick={() => setDashboardView('maker')}
                                 className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'maker' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
                             >
-                                Maker
+                                Local Maker
                             </button>
                         )}
                         <button
@@ -757,6 +757,19 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 </div>
                             )}
                         </div>
+
+                        <div className="mt-8 pt-8 border-t border-white/5 flex justify-center pb-8">
+                            <button
+                                onClick={() => {
+                                    onClose();
+                                    navigate('/security');
+                                }}
+                                className="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors group"
+                            >
+                                <Shield className="w-4 h-4 group-hover:text-primary transition-colors" />
+                                <span className="text-[10px] font-black uppercase tracking-widest font-league group-hover:text-primary transition-colors">Partner Security & Data Protection</span>
+                            </button>
+                        </div>
                     </>
                 )}
 
@@ -849,7 +862,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                         </div>
                                         <div className="p-2">
                                             <button
-                                                onClick={() => handlePhotoTierReject(myVenue.id, photo.id)}
+                                                onClick={() => handlePhotoTierReject(myVenue.id, photo.id!)}
                                                 className="w-full py-1.5 text-[8px] font-black text-slate-500 hover:text-red-500 uppercase tracking-widest transition-colors"
                                             >
                                                 Remove from Gallery

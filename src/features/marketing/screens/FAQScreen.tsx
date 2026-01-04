@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { HelpCircle, ChevronDown, ChevronUp, MessageCircle, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import kb from '../../../../server/src/knowledgeBase.json';
+import kb from '../../../../server/src/data/knowledgeBase.json';
 
 const FAQScreen: React.FC = () => {
     const navigate = useNavigate();
@@ -45,9 +45,9 @@ const FAQScreen: React.FC = () => {
                         <HelpCircle className="w-8 h-8 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black uppercase tracking-tighter font-league text-white leading-none">THE BAR LEAGUE <span className="text-primary block">PLAYBOOK</span></h1>
+                        <h1 className="text-4xl font-black uppercase tracking-tighter font-league text-white leading-none">THE ARTESIAN <span className="text-primary block">MANUAL</span></h1>
                         <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">
-                            Artie's Guide to the PNW Nightlife OS • <button onClick={() => navigate('/glossary')} className="text-primary hover:underline">Glossary</button> • <button onClick={() => navigate('/points')} className="text-primary hover:underline">Points Guide</button>
+                            Manual Protocol v1.2.0 • <button onClick={() => navigate('/glossary')} className="text-primary hover:underline">Glossary</button> • <button onClick={() => navigate('/playbook')} className="text-primary hover:underline">Pulse Logic</button>
                         </p>
                     </div>
                 </header>

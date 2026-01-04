@@ -49,7 +49,7 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
           date: evt.date,
           time: evt.startTime,
           description: evt.description || '',
-          type: evt.type === 'music' ? 'live' : 'event', // Map music -> live
+          type: (evt.type === 'music' ? 'live' : 'event') as UnifiedEvent['type'], // Map music -> live
           is_featured: evt.is_featured,
           score: evt.is_featured ? 100 : 10,
           is_ritual: false

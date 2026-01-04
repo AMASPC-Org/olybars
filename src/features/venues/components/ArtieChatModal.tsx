@@ -318,6 +318,14 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
     const activeIsLoading = isOpsMode ? (opsArtie.isLoading || guestArtie.isLoading) : guestArtie.isLoading;
     const activeError = isOpsMode ? guestArtie.error : guestArtie.error;
 
+    const handleContactSupport = (e: React.MouseEvent) => {
+        // We do NOT preventDefault here. We let the native mailto: link fire.
+        // We just opportunistically copy the email to clipboard as a fallback.
+        navigator.clipboard.writeText('support@olybars.com')
+            .then(() => showToast('Email copied to clipboard!', 'success'))
+            .catch((err) => console.error('Clipboard failed', err));
+    };
+
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <div
@@ -512,6 +520,22 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                             <Send className="w-4 h-4" />
                         </button>
                     </div>
+                </div>
+
+                {/* AI Disclaimer Footer */}
+                <div className="px-4 pb-2 bg-surface text-center">
+                    <p className="text-[9px] text-slate-600 font-medium leading-tight">
+                        Artie is an AI powered by the Artesian Well. He may make mistakes.
+                        <br />
+                        <span className="opacity-80">Verify critical info. Needs help? </span>
+                        <a
+                            href="mailto:support@olybars.com?subject=OlyBars%20Support&body=Describe%20issue%20here..."
+                            onClick={handleContactSupport}
+                            className="text-slate-500 hover:text-primary underline decoration-slate-600 underline-offset-2 transition-colors cursor-pointer"
+                        >
+                            Contact HQ
+                        </a>.
+                    </p>
                 </div>
             </div>
         </div>

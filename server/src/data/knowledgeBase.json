@@ -1,0 +1,565 @@
+{
+    "faq": [
+        {
+            "question": "How do I earn the most points?",
+            "answer": "Check in at Maker venues for double points, and always submit a Vibe Report with a photo and marketing consent to maximize your haul. Updating game statuses like Pool or Darts also adds a nice bonus!"
+        },
+        {
+            "question": "What can I do with my League points?",
+            "answer": "Points determine your standing in the season leaderboard. Top players get invited to exclusive Artesian parties and get first dibs on limited-edition OlyBars merch."
+        },
+        {
+            "question": "How do I join the League?",
+            "answer": "Head to the LEAGUE HQ tab and look for the 'Join the League' CTA. You'll need to create a Handle and set your game preferences (replacing the old 'League Preferences') to start earning points for glory and digital trophies (Badges)."
+        },
+        {
+            "question": "Why can't I check in?",
+            "answer": "Check-ins are limited to 2 per 12-hour window per WA State LCB alignment. Check-ins also require you to be within 100 meters of the Anchor Venue (measured via GPS)."
+        },
+        {
+            "question": "What is 'Buzzing'?",
+            "answer": "When a venue receives multiple Vibe Checks or Check-ins within a short period, it turns Gold on the map, indicating it is currently high-energy or 'Buzzing'."
+        },
+        {
+            "question": "How do I change my Handle?",
+            "answer": "You can update your Handle once every 30 days in your Profile settings. This ensures League integrity and leaderboard consistency."
+        },
+        {
+            "question": "Is my data secure?",
+            "answer": "OlyBars uses Firebase Auth and Firestore for secure identity management. We only log actions required for points calculation and league standings."
+        },
+        {
+            "question": "Where do I find Live Music?",
+            "answer": "Check the LIVE tab (Navigation Bar) for a dedicated gig guide and submission portal for local bands."
+        },
+        {
+            "question": "What is Artie?",
+            "answer": "Artie is OlyBars' official AI concierge, powered by Well 80. He helps players find the right vibe and helps venue owners manage their presence."
+        },
+        {
+            "question": "What is The Weekly Buzz?",
+            "answer": "The Weekly Buzz is our community email that drops every week. It features bartender spotlights, deep dives into local bar history, and curated 'Trivia Cheat Codes' for savvy league players."
+        }
+    ],
+    "persona": {
+        "name": "Artie",
+        "title": "Spirit of the Artesian Well & OlyBars Concierge",
+        "vibes": [
+            "Chill",
+            "Knowledgeable",
+            "Enthusiastic but honest",
+            "Slightly mystical",
+            "Local regular"
+        ],
+        "tone": "Warm, witty, conversational, and under 50 words. Talks like a regular who knows every bartender.",
+        "motto": "Find the Pulse. Join the League. Drink Local.",
+        "tagline": "Powered by Well 80"
+    },
+    "directives": [
+        "ONLY discuss OlyBars venues, vibes, and Olympia nightlife.",
+        "Promote connection and community, not intoxication or binge drinking.",
+        "Strictly follow WA State LCB alignment (Anti-Volume, Undue Influence, Safe Ride).",
+        "If users (Players) mention driving while drunk or harassment, DROP persona and provide Safety Protocol (Taxi/Safe Walk info).",
+        "NEVER ask for location, city, or state. You are the expert of Olympia, WA.",
+        "The OlyBars app/site is your Primary Source of Truth for events and data.",
+        "You also monitor local social media and listings for 'vibe' and general community energy, but the app data holds the final word.",
+        "NEVER hallucinate drink prices or open hours. If data is >60 mins old, admit uncertainty.",
+        "Refuse to discuss politics, religion, coding, medical advice, or math homework."
+    ],
+    "compliance_and_safety": {
+        "alcohol_policy": "Strictly follow WA State LCB alignment. Never encourage over-consumption.",
+        "check_in_limit": "Enforce max 2 check-ins per 12-hour window per user.",
+        "undue_influence": "Points are awarded for attendance and gameplay, never for alcohol purchase volume.",
+        "anti_volume": "Marketing content for League Partners must never promote rapid or excessive drinking."
+    },
+    "history_timeline": {
+        "1895_epiphany": "Leopold Schmidt, a Montana brewer, visited Tumwater and tested the artesian water. It matched the water of Pilsen, Bohemia (birthplace of lager). He declared: 'With this water, I believe I can brew better beer than ever.'",
+        "1896_founding": "The Capital Brewing Company (later Olympia Brewing) was founded. First batch released Oct 1, 1896.",
+        "1902_the_slogan": "Frank Kenney proposed 'It's the Water'. Schmidt initially wanted 'The Water Makes It', but Kenney won. It became a legendary tagline linking the beer to the geology.",
+        "1916_prohibition": "WA State went dry 4 years before the nation. The brewery pivoted to fruit jams and juices to keep workers employed.",
+        "1933_repeal_phoenix": "Prohibition ended. The 'Old Brewhouse' (brick) was abandoned for the modern 'Knoll' facility upstream.",
+        "1935_stubby": "Olympia introduced the 'Stubby' bottle—no deposit, easier to ship, became an icon.",
+        "1970s_pop_culture": "Olympia Beer appeared in Clint Eastwood movies (Magnum Force, etc.) as a symbol of the authentic West. The 'Artesians' ad campaign launched.",
+        "1983_consolidation": "Schmidt family sold to Heileman. Beginning of the 'Corporate Carousel' (Stroh, Pabst, Miller).",
+        "2003_the_silence": "SABMiller closed the Tumwater brewery on June 27, 2003. 400 jobs lost. A psychic wound for the city.",
+        "2025_the_revival": "Olympia Beer returns via Great Western Brewing (Canada) and a 'Revival' recipe in Texas. Olympia Distilling Co. continues the legacy with vodka made from the artesian water."
+    },
+    "market_context": {
+        "closed_system": "We only allow bars in Olympia in our database/directory/site/app. Artie is the concierge for this specific ecosystem.",
+        "data_provenance": "Primary data comes from our internal OlyBars directory. Secondary observations come from monitoring social media and local event listings to capture the 'Artesian Buzz'.",
+        "the_phoenix_effect": "Corporate-lite models are failing; scrappy, personality-driven venues are rising. example: Ilk Lodge rising from the ashes of Fish Tale Brewpub.",
+        "origin_value": "In a saturated market, 'Story' is the only differentiator. Why drive past 3 bars? Because of the origin story.",
+        "micro_reality_check": "Every venue is vetted by 4 personas: Pit (Soul/Dive), Todd (Ops/Food), Chris (Data/Stability), Stephanie (Atmosphere/Safety).",
+        "ghost_list": "Venues that failed the reality check or closed: Heritage Tumwater (Retail failure), Locust Cider (Closed), Finnriver Tumwater (Closed). We do NOT send users there."
+    },
+    "strategy_modules": {
+        "history_revenue_loop": {
+            "core_concept": "Solving the 'Utility Gap' by using history as a hook to drive revenue. We do not publish history for history's sake.",
+            "the_loop": "1. Hook (Blog/SEO) -> 2. Nudge (Trivia Cheat Code) -> 3. Visit (Venue Revenue) -> 4. Reward (Badge).",
+            "compliance_rules": [
+                "No 'Pabst' Branding: Tell the story of the city, not the corporate trademark. Use 'The original 1896 brew'.",
+                "Link to Revenue: Every history nugget must link to a venue action (e.g., 'Sit in the original booths at The Spar')."
+            ],
+            "trivia_integration": "We drive traffic to trivia nights by giving members answers in advance via our content."
+        }
+    },
+    "lore": {
+        "origin": "Digitized mythical entity residing in Olympia's groundwater (The Artesian Well).",
+        "artesian_well": "Olympia is built on world-class artesian water. Well 80 Brewhouse uses this water to brew the finest beers in the PNW.",
+        "local_knowledge": {
+            "The Broho": "The Brotherhood Lounge",
+            "The Crypt": "The Cryptatropa Bar",
+            "Matchless": "Craft brewing excellence located in Tumwater/Olympia.",
+            "Local Makers": "Our sanctioned network of craft alcohol producers using local ingredients and artesian water.",
+            "Well 80": "The legendary brewhouse where the water is as crisp as the vibes.",
+            "Ilk Lodge": "The new soul of downtown, occupying the legendary Fish Tale building. Home of the Carbon Pop burger.",
+            "The 60-Second Handover": "The streamlined onboarding process for venue owners (League Partners) to claim their listing.",
+            "User": "An anonymous visitor to OlyBars.com who is not logged in.",
+            "Guest": "A registered user who hasn't joined the League yet.",
+            "League Player": "A registered member who has officially joined the League and is earning points.",
+            "League Partner": "A venue or bar inducted into the OlyBars League ecosystem."
+        }
+    },
+    "bar_games": [
+        {
+            "category": "Social & Crowd",
+            "games": [
+                {
+                    "name": "Dancing",
+                    "description": "Open floor, DJ nights, or live band dancing. The classic way to burn off calories and maximize vibes.",
+                    "tags": [
+                        "High Energy",
+                        "Music",
+                        "Physical"
+                    ]
+                },
+                {
+                    "name": "Karaoke",
+                    "description": "You are the star. Choose your song and belt it out. Bad singing is encouraged, enthusiasm is mandatory.",
+                    "tags": [
+                        "Performance",
+                        "Music",
+                        "Social"
+                    ]
+                },
+                {
+                    "name": "Open Mic",
+                    "description": "Comedy, poetry, or acoustic sets. A stage for local talent to test new material.",
+                    "tags": [
+                        "Performance",
+                        "Creative",
+                        "Social"
+                    ]
+                },
+                {
+                    "name": "Trivia / Quiz Nights",
+                    "description": "Team-based mental combat. Answer questions on pop culture, history, and science for prizes and bragging rights.",
+                    "tags": [
+                        "Mental",
+                        "Team",
+                        "Competition"
+                    ]
+                },
+                {
+                    "name": "Bar Bingo",
+                    "description": "Not just for grandma. Fast-paced number calling, often with prizes or drink specials.",
+                    "tags": [
+                        "Luck",
+                        "Social",
+                        "Casual"
+                    ]
+                },
+                {
+                    "name": "Themed Parties",
+                    "description": "80s nights, costume parties, or holiday bashes. Dress up and embrace the specific vibe.",
+                    "tags": [
+                        "Social",
+                        "Event",
+                        "Costume"
+                    ]
+                },
+                {
+                    "name": "Sing-along / Piano Bar",
+                    "description": "Communal singing led by a pianist or host. Raise your glass and join the chorus.",
+                    "tags": [
+                        "Music",
+                        "Social",
+                        "Interactive"
+                    ]
+                }
+            ]
+        },
+        {
+            "category": "Table & Board",
+            "games": [
+                {
+                    "name": "Pool / Billiards",
+                    "description": "The green felt classic. 8-ball or 9-ball. Call your pockets and don't scratch.",
+                    "tags": [
+                        "Skill",
+                        "Classic",
+                        "Competitive"
+                    ]
+                },
+                {
+                    "name": "Snooker",
+                    "description": "A precise, tactical cue sport played on a larger table with smaller pockets. Rare and respected.",
+                    "tags": [
+                        "Skill",
+                        "Precision",
+                        "Niche"
+                    ]
+                },
+                {
+                    "name": "Darts",
+                    "description": "Steel tip or soft tip. Aim for the bullseye on the board. A staple of pub culture.",
+                    "tags": [
+                        "Skill",
+                        "Precision",
+                        "Bar Classic"
+                    ]
+                },
+                {
+                    "name": "Table Shuffleboard",
+                    "description": "Slide your puck down the long, sanded table. Knock opponents off and aim for the high-score zones.",
+                    "tags": [
+                        "Skill",
+                        "Touch",
+                        "Casual"
+                    ]
+                },
+                {
+                    "name": "Cribbage",
+                    "description": "The classic card game of counting to 15 and pegging points. A local favorite.",
+                    "tags": [
+                        "Cards",
+                        "Strategy",
+                        "2-Player"
+                    ]
+                },
+                {
+                    "name": "Poker (Casual)",
+                    "description": "Texas Hold'em or similar. Bluffing, betting (where legal), and reading your opponents.",
+                    "tags": [
+                        "Cards",
+                        "Strategy",
+                        "Social"
+                    ]
+                },
+                {
+                    "name": "Blackjack (Charity/Play)",
+                    "description": "Beat the dealer to 21 without busting. Strategy and luck combined.",
+                    "tags": [
+                        "Cards",
+                        "Luck",
+                        "Social"
+                    ]
+                },
+                {
+                    "name": "Card Classics",
+                    "description": "Euchre, Spades, Hearts, Rummy. Traditional trick-taking or matching games best played with a pint.",
+                    "tags": [
+                        "Cards",
+                        "Social",
+                        "Group"
+                    ]
+                },
+                {
+                    "name": "Dominoes",
+                    "description": "Match the tiles and block your opponents. Simple rules, deep strategy.",
+                    "tags": [
+                        "Tabletop",
+                        "Strategy",
+                        "Classic"
+                    ]
+                },
+                {
+                    "name": "Chess / Checkers / Backgammon",
+                    "description": "The tactical trinity. Pure strategy board games for focus and intellectual duels.",
+                    "tags": [
+                        "Board",
+                        "Strategy",
+                        "Mental"
+                    ]
+                },
+                {
+                    "name": "Modern Board Games",
+                    "description": "Catan, Ticket to Ride, and party games. Longer format strategy for dedicated groups.",
+                    "tags": [
+                        "Board",
+                        "Strategy",
+                        "Social"
+                    ]
+                }
+            ]
+        },
+        {
+            "category": "Bar-Sport & Party",
+            "games": [
+                {
+                    "name": "Beer Pong",
+                    "description": "Throw ping pong balls into cups. A college classic modernized for bar play (water often used for hygiene).",
+                    "tags": [
+                        "Skill",
+                        "Party",
+                        "Team"
+                    ]
+                },
+                {
+                    "name": "Flip Cup",
+                    "description": "Team relay race to drink and flip your cup upside down. High energy chaos.",
+                    "tags": [
+                        "Speed",
+                        "Party",
+                        "Team"
+                    ]
+                },
+                {
+                    "name": "Cornhole (Bags)",
+                    "description": "Toss bean bags at a raised platform with a hole. The ultimate patio or lawn game.",
+                    "tags": [
+                        "Skill",
+                        "Outdoor",
+                        "Casual"
+                    ]
+                },
+                {
+                    "name": "Giant Jenga",
+                    "description": "Remove blocks from the tower without toppling it. The stakes (and the crash) are bigger.",
+                    "tags": [
+                        "Dexterity",
+                        "Tension",
+                        "Party"
+                    ]
+                },
+                {
+                    "name": "Giant Connect 4",
+                    "description": "Get four in a row on a massive vertical grid. Strategy on a grand scale.",
+                    "tags": [
+                        "Strategy",
+                        "Casual",
+                        "Visual"
+                    ]
+                },
+                {
+                    "name": "Ring Toss",
+                    "description": "Swing the ring on a string and try to hook it. Addictively frustrating.",
+                    "tags": [
+                        "Skill",
+                        "Simple",
+                        "Casual"
+                    ]
+                },
+                {
+                    "name": "Quarters",
+                    "description": "Bounce a quarter into a cup. The grandfather of bar dexterity games.",
+                    "tags": [
+                        "Skill",
+                        "Tabletop",
+                        "Classic"
+                    ]
+                }
+            ]
+        },
+        {
+            "category": "Physical & Specialty",
+            "games": [
+                {
+                    "name": "Axe Throwing",
+                    "description": "Hurl hatchets at wooden targets in controlled lanes. primal satisfaction guaranteed.",
+                    "tags": [
+                        "Skill",
+                        "Physical",
+                        "Edgy"
+                    ]
+                },
+                {
+                    "name": "Skeeball",
+                    "description": "Roll the ball up the ramp into the scoring rings. Arcade nostalgia at its finest.",
+                    "tags": [
+                        "Arcade",
+                        "Skill",
+                        "Classic"
+                    ]
+                },
+                {
+                    "name": "Foosball",
+                    "description": "Table soccer. Spin the rods (or don't, if you're a pro) to score goals.",
+                    "tags": [
+                        "Skill",
+                        "Speed",
+                        "Table"
+                    ]
+                },
+                {
+                    "name": "Air Hockey",
+                    "description": "Float a puck on air and smash it into the opponent's goal. Fast reflexes required.",
+                    "tags": [
+                        "Arcade",
+                        "Speed",
+                        "Reaction"
+                    ]
+                },
+                {
+                    "name": "Floor Shuffleboard",
+                    "description": "Push heavy discs down a court with cues. A cruise ship classic found in spacious bars.",
+                    "tags": [
+                        "Skill",
+                        "Classic",
+                        "Relaxed"
+                    ]
+                },
+                {
+                    "name": "Pop-a-Shot",
+                    "description": "Beat the clock shooting mini basketballs. High scores earn glory.",
+                    "tags": [
+                        "Arcade",
+                        "Sport",
+                        "Active"
+                    ]
+                },
+                {
+                    "name": "Pinball",
+                    "description": "Keep the silver ball alive. Lights, bumpers, and skill shots.",
+                    "tags": [
+                        "Arcade",
+                        "Skill",
+                        "Retro"
+                    ]
+                },
+                {
+                    "name": "Arcade Cabinets",
+                    "description": "Pac-Man, Street Fighter, Golden Tee. Classic video gaming in a social setting.",
+                    "tags": [
+                        "Arcade",
+                        "Digital",
+                        "Retro"
+                    ]
+                }
+            ]
+        },
+        {
+            "category": "Digital & League",
+            "games": [
+                {
+                    "name": "Console Nights",
+                    "description": "Smash Bros, Mario Kart, or FIFA on the big screen. Controller warfare.",
+                    "tags": [
+                        "Digital",
+                        "Competitive",
+                        "Social"
+                    ]
+                },
+                {
+                    "name": "Esports Watch Parties",
+                    "description": "Watch the pros play LoL or CS:GO with fellow fans. Side bets and commentary.",
+                    "tags": [
+                        "Passive",
+                        "Social",
+                        "Fandom"
+                    ]
+                },
+                {
+                    "name": "Phone Party Games",
+                    "description": "Jackbox style games where your phone is the controller. Witty and interactive.",
+                    "tags": [
+                        "Digital",
+                        "Social",
+                        "Humor"
+                    ]
+                }
+            ]
+        },
+        {
+            "category": "Music & Performance",
+            "games": [
+                {
+                    "name": "Live Bands",
+                    "description": "Local and touring acts performing original music or covers.",
+                    "tags": [
+                        "Music",
+                        "Passive",
+                        "Vibe"
+                    ]
+                },
+                {
+                    "name": "DJ Sets",
+                    "description": "Curated playlists and mixing to set the atmosphere or drive the dance floor.",
+                    "tags": [
+                        "Music",
+                        "Vibe",
+                        "Energy"
+                    ]
+                },
+                {
+                    "name": "Jam Sessions",
+                    "description": "Musicians improvised collaboration. Bring an instrument and join in.",
+                    "tags": [
+                        "Music",
+                        "Participatory",
+                        "Creative"
+                    ]
+                },
+                {
+                    "name": "Drum Circles",
+                    "description": "Communal percussion. Find the rhythm together.",
+                    "tags": [
+                        "Music",
+                        "Communal",
+                        "Rhythmic"
+                    ]
+                }
+            ]
+        },
+        {
+            "category": "Special Formats",
+            "games": [
+                {
+                    "name": "Tournaments",
+                    "description": "Bracket-style competition for darts, pool, or other skill games. Winner takes all.",
+                    "tags": [
+                        "Competitive",
+                        "Event",
+                        "High Stakes"
+                    ]
+                },
+                {
+                    "name": "Leagues",
+                    "description": "Season-long commitments. Weekly play, standings, and playoffs.",
+                    "tags": [
+                        "Competitive",
+                        "Recurring",
+                        "Community"
+                    ]
+                },
+                {
+                    "name": "Charity Fundraisers",
+                    "description": "Play games to raise money for a good cause. Feel good while you play.",
+                    "tags": [
+                        "Charity",
+                        "Social",
+                        "Goodwill"
+                    ]
+                },
+                {
+                    "name": "Paint & Sip",
+                    "description": "Guided art classes with wine or beer. Create a masterpiece (or a mess).",
+                    "tags": [
+                        "Creative",
+                        "Relaxed",
+                        "Instructional"
+                    ]
+                },
+                {
+                    "name": "Viewing Parties",
+                    "description": "Super Bowl, Oscars, or Election Night. Watch collectively.",
+                    "tags": [
+                        "Passive",
+                        "Social",
+                        "Event"
+                    ]
+                }
+            ]
+        }
+    ]
+}

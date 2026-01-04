@@ -23,9 +23,9 @@ export const PulsePlaybookScreen: React.FC = () => {
                         <BookOpen className="w-8 h-8 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black uppercase tracking-tighter font-league text-white leading-none">THE PULSE <span className="text-primary block">PLAYBOOK</span></h1>
+                        <h1 className="text-4xl font-black uppercase tracking-tighter font-league text-white leading-none">THE ARTESIAN <span className="text-primary block">MANUAL</span></h1>
                         <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">
-                            The math behind the vibe • <button onClick={() => navigate('/glossary')} className="text-primary hover:underline">Definitions</button>
+                            The official PNW Nightlife OS • <button onClick={() => navigate('/glossary')} className="text-primary hover:underline">Glossary</button>
                         </p>
                     </div>
                 </header>

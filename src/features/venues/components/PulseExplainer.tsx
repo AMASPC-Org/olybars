@@ -88,9 +88,10 @@ export const PulseExplainer: React.FC = () => {
                 <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-600 pl-1">Thresholds</h3>
                 <div className="space-y-3">
                     {[
+                        { label: 'Packed', icon: Zap, color: 'text-pink-500', score: `> ${PULSE_CONFIG.THRESHOLDS.PACKED}`, meaning: PULSE_CONFIG.DESCRIPTIONS.PACKED_MEANING },
                         { label: 'Buzzing', icon: Flame, color: 'text-orange-500', score: `> ${PULSE_CONFIG.THRESHOLDS.BUZZING}`, meaning: PULSE_CONFIG.DESCRIPTIONS.BUZZING_MEANING },
-                        { label: 'Lively', icon: Users, color: 'text-yellow-500', score: `> ${PULSE_CONFIG.THRESHOLDS.LIVELY}`, meaning: PULSE_CONFIG.DESCRIPTIONS.LIVELY_MEANING },
-                        { label: 'Chill', icon: Star, color: 'text-blue-500', score: `Chill Zone`, meaning: PULSE_CONFIG.DESCRIPTIONS.CHILL_MEANING },
+                        { label: 'Chill', icon: Users, color: 'text-blue-500', score: `> ${PULSE_CONFIG.THRESHOLDS.CHILL}`, meaning: PULSE_CONFIG.DESCRIPTIONS.CHILL_MEANING },
+                        { label: 'Dead', icon: Clock, color: 'text-slate-500', score: `Base State`, meaning: PULSE_CONFIG.DESCRIPTIONS.DEAD_MEANING },
                     ].map((status) => (
                         <div key={status.label} className="flex items-center justify-between p-4 bg-surface border border-white/10 rounded-2xl group hover:border-primary/20 transition-all">
                             <div className="flex items-center gap-3">

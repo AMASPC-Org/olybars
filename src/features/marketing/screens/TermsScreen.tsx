@@ -41,9 +41,9 @@ const TermsScreen: React.FC = () => {
                 </section>
 
                 <section className="space-y-4">
-                    <h2 className="text-xl font-black uppercase tracking-wide font-league text-primary">3. The Olympia Bar League & Verified Patrons</h2>
+                    <h2 className="text-xl font-black uppercase tracking-wide font-league text-primary">3. The Artesian Bar League & Verified Patrons</h2>
                     <p className="text-slate-300 leading-relaxed text-sm">
-                        Membership in the Olympia Bar League (OBL) is a privilege for <strong>Verified Patrons</strong>. A Verified Patron is a user whose physical presence at a venue has been confirmed via real-time GPS verification. Points are earned by "Clocking In" or performing a "Vibe Check" at participating venues.
+                        Membership in the Artesian Bar League (ABL) is a privilege for <strong>Verified Patrons</strong>. A Verified Patron is a user whose physical presence at a venue has been confirmed via real-time GPS verification. Points are earned by "Clocking In" or performing a "Vibe Check" at participating venues.
                     </p>
                     <div className="bg-slate-900/50 border border-slate-700 p-4 rounded-xl">
                         <p className="text-slate-300 text-xs italic">

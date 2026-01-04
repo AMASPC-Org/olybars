@@ -12,6 +12,7 @@ import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
 import { isVenueOpen, getVenueStatus } from '../../../utils/venueUtils';
 import { PULSE_CONFIG } from '../../../config/pulse';
 import { barGames } from '../../../data/barGames';
+import { TAXONOMY_PLAY, TAXONOMY_FEATURES, TAXONOMY_EVENTS } from '../../../data/taxonomy';
 
 const SkeletonCard = () => (
   <div className="bg-surface rounded-xl border border-slate-800 p-4 shadow-lg animate-pulse">
@@ -63,14 +64,13 @@ const PulseMeter = ({ status }: { status: VenueStatus }) => {
   );
 };
 
-type FilterKind = 'status' | 'deals' | 'league' | 'tonight' | 'near' | 'games' | 'all';
+type FilterKind = 'status' | 'deals' | 'league' | 'tonight' | 'near' | 'games' | 'play' | 'features' | 'events' | 'all';
 
 const STATUS_ORDER: Record<VenueStatus, number> = {
   packed: 0,
   buzzing: 1,
-  lively: 2,
-  chill: 3,
-  dead: 4,
+  chill: 2,
+  dead: 3,
 };
 
 // Main Screen
@@ -157,6 +157,35 @@ export const BuzzScreen: React.FC<{
       const hasFeature = v.gameFeatures?.some(f => f.name.toLowerCase().includes(g) || f.type.toLowerCase().includes(g));
       const hasEvent = v.leagueEvent?.toLowerCase().includes(g) || v.venueType.replace(/_/g, ' ').toLowerCase().includes(g);
       return !!(hasFeature || hasEvent);
+    }
+
+    // [NEW] Taxonomy Filters
+    if (filterKind === 'play') {
+      return v.gameFeatures?.some(gf =>
+        TAXONOMY_PLAY.some(t =>
+          gf.name.toLowerCase().includes(t.toLowerCase()) ||
+          gf.type.toLowerCase().includes(t.toLowerCase())
+        )
+      ) ?? false;
+    }
+
+    if (filterKind === 'features') {
+      const hasAmenity = v.amenities?.some(a =>
+        TAXONOMY_FEATURES.some(t => a.toLowerCase().includes(t.toLowerCase()))
+      );
+      // Also check gameFeatures in case some "features" are stored there
+      const hasFeature = v.gameFeatures?.some(gf =>
+        TAXONOMY_FEATURES.some(t => gf.name.toLowerCase().includes(t.toLowerCase()))
+      );
+      return !!(hasAmenity || hasFeature);
+    }
+
+    if (filterKind === 'events') {
+      const hasLeagueEvent = v.leagueEvent && TAXONOMY_EVENTS.some(t => v.leagueEvent?.toLowerCase().includes(t.toLowerCase()));
+      const hasScheduleMatch = v.weekly_schedule && Object.values(v.weekly_schedule).flat().some(event =>
+        TAXONOMY_EVENTS.some(t => event.toLowerCase().includes(t.toLowerCase()))
+      );
+      return !!(hasLeagueEvent || hasScheduleMatch);
     }
 
     // Global Visibility Check
@@ -419,6 +448,24 @@ export const BuzzScreen: React.FC<{
               className={`${baseChipClasses} ${tonightActive ? 'bg-primary text-black border-primary' : 'bg-surface text-slate-300 border-slate-700 hover:border-slate-500'}`}
             >
               🌙 Tonight
+            </button>
+            <button
+              onClick={() => { setShowStatusMenu(false); setFilterKind((prev) => (prev === 'play' ? 'all' : 'play')); }}
+              className={`${baseChipClasses} ${filterKind === 'play' ? 'bg-primary text-black border-primary' : 'bg-surface text-slate-300 border-slate-700 hover:border-slate-500'}`}
+            >
+              🎮 Play
+            </button>
+            <button
+              onClick={() => { setShowStatusMenu(false); setFilterKind((prev) => (prev === 'features' ? 'all' : 'features')); }}
+              className={`${baseChipClasses} ${filterKind === 'features' ? 'bg-primary text-black border-primary' : 'bg-surface text-slate-300 border-slate-700 hover:border-slate-500'}`}
+            >
+              🎱 Features
+            </button>
+            <button
+              onClick={() => { setShowStatusMenu(false); setFilterKind((prev) => (prev === 'events' ? 'all' : 'events')); }}
+              className={`${baseChipClasses} ${filterKind === 'events' ? 'bg-primary text-black border-primary' : 'bg-surface text-slate-300 border-slate-700 hover:border-slate-500'}`}
+            >
+              📅 Events
             </button>
           </div>
         </div>

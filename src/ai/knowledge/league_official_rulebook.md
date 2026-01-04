@@ -1,4 +1,4 @@
-# Official Olympia Bar League Rulebook (2025 Season)
+# Official Artesian Bar League Rulebook (2025 Season)
 
 ## 1. Scoring Mechanics
 * **Clock In:** 10 Points. Requires geolocation verification within 100ft of the venue.

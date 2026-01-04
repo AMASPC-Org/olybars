@@ -10,7 +10,7 @@ const OwnerPortal: React.FC = () => {
         <div className="min-h-screen bg-slate-950 text-white overflow-y-auto pb-20">
             <SEO
                 title="Owner Portal | OlyBars"
-                description="Manage your venue, track real-time buzz, and engage with the Olympia Bar League community."
+                description="Manage your venue, track real-time buzz, and engage with the Artesian Bar League community."
             />
 
             {/* Hero Section */}
