@@ -98,12 +98,11 @@ export const BuzzScreen: React.FC<{
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const { coords } = useGeolocation();
 
-  // Rotation Logic (shifts every 5 minutes)
+  // Rotation Logic (shifts every 5 minutes) ensures global fairness
   const rotationOffset = React.useMemo(() => {
-    const now = new Date();
-    const totalMinutes = now.getHours() * 60 + now.getMinutes();
-    return Math.floor(totalMinutes / 5) % Math.max(1, venues.length);
-  }, [venues.length]);
+    const rotationInterval = 5 * 60 * 1000;
+    return Math.floor(Date.now() / rotationInterval);
+  }, []);
 
   const applyFilter = useCallback((v: Venue): boolean => {
     // Search Filter (Applies globally)
@@ -191,9 +190,9 @@ export const BuzzScreen: React.FC<{
     // Global Visibility Check
     if (v.tier_config?.is_directory_listed === false || v.isActive === false) return false;
 
-    // Home Pulse Specific: Hide closed bars unless featured
+    // Home Pulse Specific: Hide closed bars unless part of the league
     const open = isVenueOpen(v);
-    if (!open && !v.isFeatured) return false;
+    if (!open && !v.isPaidLeagueMember) return false;
 
     return true;
   }, [searchQuery, filterKind, statusFilter, selectedGame]);
@@ -208,13 +207,21 @@ export const BuzzScreen: React.FC<{
   const filteredVenues = React.useMemo(() => [...venuesWithDistance]
     .filter(applyFilter)
     .sort((a, b) => {
-      // 1. Featured Weighting (Primary Sort for Pulse)
-      if (a.isFeatured && !b.isFeatured) return -1;
-      if (!a.isFeatured && b.isFeatured) return 1;
-      if (a.isFeatured && b.isFeatured) {
-        if ((a.featureWeight || 0) !== (b.featureWeight || 0)) {
-          return (b.featureWeight || 0) - (a.featureWeight || 0);
-        }
+      // 1. Partner Priority (League Members) with Rotating Order
+      // This allows partners to be at the top but prevents fixed ordering ("anti-drowning")
+      const isAPartner = a.isPaidLeagueMember;
+      const isBPartner = b.isPaidLeagueMember;
+
+      if (isAPartner !== isBPartner) return isAPartner ? -1 : 1;
+
+      // If both are partners OR both are non-partners, we could optionally rotate them
+      // but the main requirement is that they don't drown each other out.
+      // We'll use the rotationOffset to shuffle the order of partners among themselves.
+      if (isAPartner && isBPartner) {
+        // We use a pseudo-random but consistent shift for sorting
+        const aHash = a.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const bHash = b.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        return ((aHash + rotationOffset) % 100) - ((bHash + rotationOffset) % 100);
       }
 
       // 2. Open Status (Open > Last Call > Closed)
@@ -289,14 +296,17 @@ export const BuzzScreen: React.FC<{
   const isFallbackActive = filteredVenues.length === 0 && venuesWithDistance.length > 0;
 
   const displayVenues = isFallbackActive
-    ? [...venuesWithDistance].sort((a, b) => {
-      if (a.isFeatured && !b.isFeatured) return -1;
-      if (!a.isFeatured && b.isFeatured) return 1;
-      return 0;
-    }).map((v, i, arr) => {
-      const shiftedIndex = (i + rotationOffset) % arr.length;
-      return arr[shiftedIndex];
-    })
+    ? [...venuesWithDistance]
+      .filter(v => v.tier_config?.is_directory_listed !== false && v.isActive !== false)
+      .sort((a, b) => {
+        // Priority 1: Partners (League Members)
+        if (a.isPaidLeagueMember && !b.isPaidLeagueMember) return -1;
+        if (!a.isPaidLeagueMember && b.isPaidLeagueMember) return 1;
+        return 0;
+      }).map((v, i, arr) => {
+        const shiftedIndex = (i + (rotationOffset % (arr.length || 1))) % (arr.length || 1);
+        return arr[shiftedIndex];
+      })
     : filteredVenues;
 
   const onClockIn = (venue: Venue) => {
@@ -575,93 +585,46 @@ export const BuzzScreen: React.FC<{
               </div>
             )}
 
-            {/* 1. Paid Position: League Spotlight (Featured) */}
-            {!isLoading && !isFallbackActive && venuesWithDistance.filter(v => v.isFeatured && v.isOpen).slice(0, 1).map(spotlight => (
-              <div key={`spotlight-${spotlight.id}`} className="bg-gradient-to-br from-slate-900 to-black rounded-2xl border-2 border-primary p-1 shadow-[0_0_30px_rgba(251,191,36,0.2)] relative overflow-hidden group/spotlight active:scale-[0.99] transition-all">
-                <div className="absolute top-0 right-0 px-4 py-1.5 bg-primary text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-bl-2xl z-20 shadow-xl font-league">
-                  Spotlight
-                </div>
-                <div className="bg-surface/40 backdrop-blur-sm rounded-xl p-5 relative overflow-hidden">
-                  {/* Background Glow */}
-                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover/spotlight:bg-primary/20 transition-all duration-700" />
-
-                  <div className="flex justify-between items-start mb-4 relative z-10">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <Link to={`/venues/${spotlight.id}`} className="hover:text-primary transition-colors">
-                          <h4 className="font-black text-2xl text-white font-league uppercase tracking-tight">{spotlight.name}</h4>
-                        </Link>
-                        <Crown className="w-5 h-5 text-primary fill-current animate-pulse" />
-                      </div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                        {spotlight.venueType.replace(/_/g, ' ')}
-                        <span className="w-1 h-1 bg-slate-700 rounded-full" />
-                        <span className="text-primary italic">"{spotlight.vibe}"</span>
-                      </p>
-                    </div>
-                    <PulseMeter status={spotlight.status} />
-                  </div>
-
-                  <div className="bg-black/30 border border-white/5 rounded-xl p-3 mb-5 relative z-10">
-                    <p className="text-xs text-slate-300 font-medium leading-relaxed italic">
-                      "{spotlight.activeFlashDeal?.title || spotlight.deal || spotlight.description || "Olympia's premier nightlife destination."}"
-                    </p>
-                  </div>
-
-                  <div className="flex gap-3 relative z-10">
-                    <button
-                      onClick={() => navigate(`/venues/${spotlight.id}`)}
-                      className="flex-2 py-3.5 bg-primary text-black rounded-xl font-black text-xs uppercase tracking-widest hover:bg-white hover:scale-[1.02] transition-all shadow-xl shadow-primary/10"
-                    >
-                      EXPLORE SPOT
-                    </button>
-                    <button
-                      onClick={() => onClockIn(spotlight)}
-                      disabled={clockedInVenue === spotlight.id}
-                      className="flex-1 py-3.5 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest border-2 border-slate-800 disabled:opacity-50 hover:border-slate-600 transition-all"
-                    >
-                      {clockedInVenue === spotlight.id ? 'JOINED' : 'CLOCK IN'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+            {/* 1. Partner Priority in Pulse List is handled via sorting logic */}
 
             {!isLoading && isFallbackActive && (
               <div className="flex flex-col items-center justify-center p-6 bg-primary/5 border border-primary/20 rounded-2xl mb-6 text-center">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-4">
                   <Trophy className="w-5 h-5 text-primary" />
-                  <h4 className="text-sm font-black text-primary uppercase tracking-widest font-league">League Spotlight</h4>
+                  <h4 className="text-sm font-black text-primary uppercase tracking-widest font-league">League Partners</h4>
                 </div>
-                {/* Spotlight Placeholder: Hannah's */}
-                <div className="w-full bg-slate-900/50 border border-primary/20 rounded-xl p-4 flex justify-between items-center group/hannah hover:bg-slate-900 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-primary/20 p-2 rounded-lg">
-                      <Star className="w-5 h-5 text-primary fill-primary" />
-                    </div>
-                    <div className="text-left">
-                      <h5 className="text-sm font-black text-white uppercase italic tracking-wide">Hannah's Bar & Grill</h5>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase">Featured 98501 Original</p>
-                    </div>
-                  </div>
-                  {(() => {
-                    const hannahs = venues.find(v => v.name.toLowerCase().includes("hannah"));
-                    return (
+
+                <div className="w-full space-y-3">
+                  {displayVenues.slice(0, 3).map(v => (
+                    <div key={`fallback-${v.id}`} className="w-full bg-slate-900/50 border border-primary/10 rounded-xl p-4 flex justify-between items-center group/item hover:bg-slate-900 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-primary/20 p-2 rounded-lg group-hover/item:scale-110 transition-transform">
+                          <Star className="w-4 h-4 text-primary fill-primary" />
+                        </div>
+                        <div className="text-left">
+                          <h5 className="text-sm font-black text-white uppercase italic tracking-wide">{v.name}</h5>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase">{v.vibe}</p>
+                        </div>
+                      </div>
                       <Link
-                        to={`/venues/${hannahs?.id || 'hannahs'}`}
+                        to={`/venues/${v.id}`}
                         className="text-[10px] font-black text-primary uppercase border-b-2 border-primary/50 hover:border-primary transition-all pb-0.5"
                       >
                         Explore
                       </Link>
-                    );
-                  })()}
+                    </div>
+                  ))}
                 </div>
+
+                <p className="mt-6 text-[10px] text-slate-600 font-bold uppercase tracking-widest italic">
+                  Showing rotating partners to keep the vibe fresh
+                </p>
               </div>
             )}
 
             {/* 2. Main Pulse List */}
             {!isLoading && displayVenues
-              .filter(v => !(!isFallbackActive && v.isFeatured && v.isOpen))
+              .filter(v => !(!isFallbackActive && v.isPaidLeagueMember && v.isOpen))
               .map((venue) => (
                 <div
                   key={venue.id}

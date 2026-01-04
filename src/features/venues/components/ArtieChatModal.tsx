@@ -263,12 +263,43 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                     opsArtie.processAction('confirm_post');
                     break;
 
-                // ... (Other cases from original file can remain or be re-implemented as needed)
+                case 'add_menu_item':
+                    await VenueOpsService.addMenuItem(venueId, {
+                        category: pendingAction.params.category,
+                        name: pendingAction.params.name,
+                        description: pendingAction.params.description,
+                        price: pendingAction.params.price
+                    });
+                    successMessage = "Menu Item Added!";
+                    break;
+
+                case 'promote_menu_item':
+                    await VenueOpsService.saveDraft(venueId, {
+                        topic: `Promoting ${pendingAction.params.item_name}`,
+                        copy: pendingAction.params.copy,
+                        type: 'SOCIAL_PROMO'
+                    });
+                    successMessage = "Social Post Drafted!";
+                    break;
+
+                case 'emergency_closure':
+                    await VenueOpsService.emergencyClosure(venueId, {
+                        reason: pendingAction.params.reason,
+                        duration: pendingAction.params.duration
+                    });
+                    successMessage = "Venue Closed & Buzz Clock Cleared!";
+                    break;
+
+                case 'update_order_url':
+                    await VenueOpsService.updateOrderUrl(venueId, pendingAction.params.url);
+                    successMessage = "Order URL Updated!";
+                    break;
+
                 default:
-                    // Fallback check against original Logic if valid
-                    // For MVP only Flash Deal is implemented fully in Ops Mode
-                    if (!isOpsMode) {
-                        // ... Original execution logic for Guest
+                    // Fallback to updateVenue for simple field updates if LLM generates them
+                    if (pendingAction.skill.startsWith('update_')) {
+                        await VenueOpsService.updateVenue(venueId, pendingAction.params);
+                        successMessage = "Listing Updated!";
                     }
                     break;
             }

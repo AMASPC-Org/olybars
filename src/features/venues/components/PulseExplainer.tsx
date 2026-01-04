@@ -75,7 +75,7 @@ export const PulseExplainer: React.FC = () => {
 
                 <div className="space-y-4 relative z-10">
                     <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                        This is a literal count of unique League Members physically at the venue.
+                        This is a literal count of unique League Players physically at the venue.
                     </p>
                     <div className="p-4 bg-slate-950 rounded-xl border border-white/5 italic text-[11px] text-slate-400">
                         "{PULSE_CONFIG.DESCRIPTIONS.LIVE_MEANING}"

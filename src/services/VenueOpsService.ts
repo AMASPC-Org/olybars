@@ -2,6 +2,7 @@ import { db } from '../lib/firebase';
 import {
     doc,
     updateDoc,
+    setDoc,
     serverTimestamp,
     collection,
     collectionGroup,
@@ -13,8 +14,34 @@ import {
 } from 'firebase/firestore';
 import { differenceInHours } from 'date-fns';
 import { Venue, FlashDeal, ScheduledDeal, TIER_LIMITS, PartnerTier } from '../types';
+import { getAuthHeaders } from './apiUtils';
+import { API_ENDPOINTS } from '../lib/api-config';
 
 export class VenueOpsService {
+    /**
+     * [SECURITY] Zero-Trust Private Data Fetch
+     */
+    static async getPrivateData(venueId: string) {
+        const headers = await getAuthHeaders();
+        const response = await fetch(API_ENDPOINTS.VENUES.PRIVATE(venueId), { headers });
+        if (!response.ok) throw new Error('Failed to fetch private data');
+        return response.json();
+    }
+
+    /**
+     * [SECURITY] Zero-Trust Private Data Update
+     */
+    static async updatePrivateData(venueId: string, updates: any) {
+        const headers = await getAuthHeaders();
+        const response = await fetch(API_ENDPOINTS.VENUES.PRIVATE(venueId), {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify(updates)
+        });
+        if (!response.ok) throw new Error('Failed to update private data');
+        return response.json();
+    }
+
     /**
      * Update an active flash deal for a venue.
      */
@@ -277,6 +304,77 @@ export class VenueOpsService {
         } catch (error: any) {
             console.error('Error updating venue:', error);
             throw new Error(`Failed to update venue: ${error.message}`);
+        }
+    }
+
+    /**
+     * Skill: add_menu_item
+     */
+    static async addMenuItem(venueId: string, item: { category: string, name: string, description: string, price?: string }) {
+        if (!venueId) throw new Error("Venue ID is required.");
+
+        try {
+            const venueRef = doc(db, 'venues', venueId);
+            const itemRef = doc(collection(venueRef, 'menuItems'));
+            await setDoc(itemRef, {
+                ...item,
+                createdAt: serverTimestamp(),
+                status: 'active'
+            });
+            // We also update the timestamp on the main venue doc
+            await updateDoc(venueRef, { menuUpdatedAt: serverTimestamp() });
+            return { success: true };
+        } catch (error: any) {
+            console.error('Error adding menu item:', error);
+            throw new Error(`Failed to add menu item: ${error.message}`);
+        }
+    }
+
+    /**
+     * Skill: emergency_closure
+     */
+    static async emergencyClosure(venueId: string, closure: { reason: string, duration: string }) {
+        if (!venueId) throw new Error("Venue ID is required.");
+
+        try {
+            const venueRef = doc(db, 'venues', venueId);
+            await updateDoc(venueRef, {
+                'status': 'CLOSED',
+                'closureReason': closure.reason,
+                'closureDuration': closure.duration,
+                'closureUpdatedAt': serverTimestamp(),
+                // CLEAR Buzz Signals for the duration
+                'activeFlashDeal': null,
+                'deal': null,
+                'dealEndsIn': 0,
+                'leagueEvent': 'Closed',
+                'vibe': 'Dead', // Real-time reflection
+                'headcount': 0
+            });
+            return { success: true };
+        } catch (error: any) {
+            console.error('Error enforcing emergency closure:', error);
+            throw new Error(`Failed to close venue: ${error.message}`);
+        }
+    }
+
+    /**
+     * Skill: update_order_url
+     */
+    static async updateOrderUrl(venueId: string, url: string) {
+        if (!venueId) throw new Error("Venue ID is required.");
+
+        try {
+            const venueRef = doc(db, 'venues', venueId);
+            await updateDoc(venueRef, {
+                'orderUrl': url,
+                'directMenuUrl': url,
+                'profileUpdatedAt': serverTimestamp()
+            });
+            return { success: true };
+        } catch (error: any) {
+            console.error('Error updating order URL:', error);
+            throw new Error(`Failed to update order URL: ${error.message}`);
         }
     }
 }

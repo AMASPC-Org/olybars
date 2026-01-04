@@ -121,7 +121,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       .filter(v => v.diff > 0 && v.diff < 180)
       .sort((a, b) => a.diff - b.diff)[0];
 
-    return nextHH ? 'lively' : 'quiet';
+    return nextHH ? 'chill' : 'quiet';
   };
 
   const pulseStatus = getPulseStatus();
@@ -248,7 +248,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                     : 'bg-[#1A1D21] border-[#333] text-[#888] hover:border-[#666] hover:text-[#ccc]'
                   } active:scale-95 active:border-[#FFD700] active:text-[#FFD700]`}
               >
-                {tab.id === 'pulse' && (pulseStatus === 'buzzing' || pulseStatus === 'lively') && (
+                {tab.id === 'pulse' && (pulseStatus === 'buzzing' || pulseStatus === 'chill') && (
                   <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${pulseStatus === 'buzzing' ? 'bg-primary animate-ping' : 'bg-blue-400'}`} />
                 )}
 

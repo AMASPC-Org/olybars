@@ -78,7 +78,8 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         happyHourRules: venue.happyHourRules || [],
         reservationUrl: venue.reservationUrl || '',
         orderUrl: venue.orderUrl || '',
-        directMenuUrl: venue.directMenuUrl || ''
+        directMenuUrl: venue.directMenuUrl || '',
+        capacity: venue.capacity
     });
 
     // [FIX] Synchronize formData when venue prop changes (e.g. switching in dropdown)
@@ -121,6 +122,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
             happyHourRules: venue.happyHourRules || [],
             orderUrl: venue.orderUrl || '',
             directMenuUrl: venue.directMenuUrl || '',
+            capacity: venue.capacity,
         });
 
         // [MIGRATION] If legacy happyHour exists but rules don't, create initial rule
@@ -559,6 +561,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                     <InputField label="Public Email" name="email" value={formData.email} icon={Mail} placeholder="info@yourvenue.com" />
                     <InputField label="Website" name="website" value={formData.website} icon={Globe} placeholder="www.yourvenue.com" />
                     <InputField label="Hours of Operation" name="hours" value={formData.hours} icon={Clock} placeholder="Daily 11:30 AM - Midnight" />
+                    <InputField label="Venue Capacity (Occupancy)" name="capacity" value={formData.capacity || ''} icon={Users} type="number" placeholder="Ex: 50" />
                 </div>
             </section>
 

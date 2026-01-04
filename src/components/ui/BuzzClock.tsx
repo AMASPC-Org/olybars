@@ -117,27 +117,20 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
 
     const totalPotentialItems = [...liveHH, ...allUpcomingItems];
 
-    // Implement Rotation: Pick a random starting point if more than 3 items
-    const [startIndex, setStartIndex] = React.useState(0);
-
-    React.useEffect(() => {
-        if (totalPotentialItems.length > 3) {
-            // Pick a random offset that allows showing 3 items
-            const possibleOffsets = totalPotentialItems.length; // We can use modulo to wrap around
-            const randomOffset = Math.floor(Math.random() * possibleOffsets);
-            setStartIndex(randomOffset);
-        }
-    }, [totalPotentialItems.length]);
-
-    // Use modulo for true wraparound rotation if desired, or just slice
+    // Implement Rotation: 5-minute shift ensures global fairness
     const displayItems = React.useMemo(() => {
         if (totalPotentialItems.length <= 3) return totalPotentialItems;
+
+        // Calculate offset based on 5-minute intervals since epoch
+        const rotationInterval = 5 * 60 * 1000;
+        const offset = Math.floor(Date.now() / rotationInterval) % totalPotentialItems.length;
+
         const items = [];
         for (let i = 0; i < 3; i++) {
-            items.push(totalPotentialItems[(startIndex + i) % totalPotentialItems.length]);
+            items.push(totalPotentialItems[(offset + i) % totalPotentialItems.length]);
         }
         return items;
-    }, [totalPotentialItems, startIndex]);
+    }, [totalPotentialItems]);
 
     const remainingCount = Math.max(0, totalPotentialItems.length - 3);
 

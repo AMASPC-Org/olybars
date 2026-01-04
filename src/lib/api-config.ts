@@ -44,6 +44,7 @@ export const API_ENDPOINTS = {
         SYNC: (id: string) => `${API_BASE_URL}/venues/${id}/sync-google`,
         PULSE: (id: string) => `${API_BASE_URL}/venues/${id}/pulse`,
         CHECK_CLAIM: `${API_BASE_URL}/venues/check-claim`,
+        PRIVATE: (id: string) => `${API_BASE_URL}/venues/${id}/private`,
     },
     PARTNERS: {
         ONBOARD: `${API_BASE_URL}/partners/onboard`,

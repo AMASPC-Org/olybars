@@ -79,7 +79,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
         // Guest Path
         if (userRole === 'guest') {
             switch (s) {
-                case 1: return { title: "Find the Vibe", text: "The Oly Pulse shows you where the crowd is real-time. Navigate by 'Chill', 'Lively', or 'Buzzing'." };
+                case 1: return { title: "Find the Vibe", text: "The Oly Pulse shows you where the crowd is real-time. Navigate by 'Chill', 'Buzzing', or 'Packed'." };
                 case 2: return { title: "Happy Hour Tracker", text: "Never miss a deal. We track every special in Olympia and sort them by 'Ending Soonest'." };
                 case 3: return { title: "Curated Events", text: "From Karaoke to Trivia to Live Bands. Filter the map to find your scene tonight." };
                 case 4: return { title: "Artie the Concierge", text: "Not sure where to go? Ask Artie. He knows every tap list and food special in town." };
@@ -93,7 +93,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
             case 2: return { title: "Earn Points", text: "Clock In at venues (10pts), Post Vibe Checks (20pts), and hold the 'Mayor' title at your favorite bar." };
             case 3: return { title: "Win Prizes", text: "Top ranked players at the end of the season win cash, gift cards, and exclusive OlyBars swag." };
             case 4: return { title: "Verification", text: "We use GPS to verify you're actually at the bar. No cheating allowed—we keep the playing field fair." };
-            case 5: return { title: "Claim Your Bonus", text: "Join as a League Member today and start with a 500pt Signing Bonus. Your glory awaits." };
+            case 5: return { title: "Claim Your Bonus", text: "Join as a League Player today and start with a 500pt Signing Bonus. Your glory awaits." };
             default: return { title: "", text: "" };
         }
     };

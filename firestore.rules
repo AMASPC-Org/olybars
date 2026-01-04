@@ -48,6 +48,14 @@ service cloud.firestore {
     match /venues/{venueId} {
       allow read: if true;
       allow write: if isAdmin() || isOwner(resource.data) || isManager(resource.data);
+
+      // Private Data Sub-collection: Restricted to authorized personnel only.
+      // We look up the parent venue document to check ownership/management roles.
+      match /private_data/{docId} {
+        allow read, write: if isAdmin() || 
+                           isOwner(get(/databases/$(database)/documents/venues/$(venueId)).data) || 
+                           isManager(get(/databases/$(database)/documents/venues/$(venueId)).data);
+      }
     }
 
     // Signals: Users can read their own signals. Admins can read all. 

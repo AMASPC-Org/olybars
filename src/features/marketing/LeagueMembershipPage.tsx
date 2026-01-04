@@ -85,7 +85,7 @@ export const LeagueMembershipPage = () => {
 
     return (
         <div className="min-h-screen bg-[#0A1E2D] relative overflow-hidden font-sans text-cream-50 selection:bg-gold-500 selection:text-black">
-            <SEO title="Venue Member Status - OlyBars" description="Upgrade your venue's standing in the League." />
+            <SEO title="Venue Partner Status - OlyBars" description="Upgrade your venue's standing in the League." />
 
             {/* Vintage Hero Overlay */}
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none" />
@@ -112,7 +112,7 @@ export const LeagueMembershipPage = () => {
                     </div>
 
                     <h1 className="text-4xl md:text-7xl font-black text-gold-400 uppercase font-league tracking-tighter mb-6 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
-                        Select Venue Tier
+                        Select Partner Tier
                     </h1>
                     <p className="text-lg md:text-2xl text-slate-300 font-bold max-w-3xl mx-auto leading-tight italic opacity-90">
                         Upgrade your Venue's standing in the League. <br className="hidden md:block" />
@@ -240,7 +240,7 @@ export const LeagueMembershipPage = () => {
                         className="w-12 h-12 mx-auto grayscale opacity-50 mb-4"
                     />
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em]">
-                        Official Artesian Bar League Membership
+                        Official Artesian Bar League Partnership
                     </p>
 
                     <div className="mt-8 pt-8 border-t border-white/5">

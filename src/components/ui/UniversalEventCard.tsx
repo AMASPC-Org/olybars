@@ -11,7 +11,7 @@ interface UniversalEventCardProps {
     category?: 'play' | 'live' | 'event' | 'karaoke';
     onCheckIn?: () => void;
     onShare?: () => void;
-    onVibeChange?: (vibe: 'buzzing' | 'lively' | 'chill') => void;
+    onVibeChange?: (vibe: 'dead' | 'chill' | 'buzzing' | 'packed') => void;
     contextSlot?: React.ReactNode;
     points?: number;
 }

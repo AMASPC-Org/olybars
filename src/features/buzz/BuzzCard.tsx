@@ -10,7 +10,7 @@ export interface Venue {
     distance: string;
   };
   current_buzz: {
-    status: 'chill' | 'lively' | 'buzzing';
+    status: 'dead' | 'chill' | 'buzzing' | 'packed';
   };
   vibes: string[];
 }

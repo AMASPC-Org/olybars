@@ -105,7 +105,7 @@ const VoucherRedemptionScreen: React.FC<VoucherRedemptionScreenProps> = ({ userP
                             <div>
                                 <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Purchased By</p>
                                 <p className="text-sm font-black uppercase font-league tracking-wide">
-                                    {userProfile.handle || "League Member"}
+                                    {userProfile.handle || "League Player"}
                                 </p>
                             </div>
                             <div>

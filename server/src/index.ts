@@ -507,6 +507,42 @@ v1Router.get('/venues/:id/insights', verifyToken, requireVenueAccess('manager'),
 });
 
 /**
+ * [SECURITY] Zero-Trust Private Data Endpoints
+ */
+
+/**
+ * @route GET /api/venues/:id/private
+ * @desc Fetch sensitive partner data (Margins, Strategy)
+ */
+v1Router.get('/venues/:id/private', verifyToken, requireVenueAccess('manager'), async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { getVenuePrivateData } = await import('./venueService');
+        const data = await getVenuePrivateData(id);
+        res.json(data);
+    } catch (error: any) {
+        log('ERROR', 'Failed to fetch venue private data', { venueId: id, error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route PATCH /api/venues/:id/private
+ * @desc Update sensitive partner data
+ */
+v1Router.patch('/venues/:id/private', verifyToken, requireVenueAccess('manager'), async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { updateVenuePrivateData } = await import('./venueService');
+        const result = await updateVenuePrivateData(id, req.body);
+        res.json(result);
+    } catch (error: any) {
+        log('ERROR', 'Failed to update venue private data', { venueId: id, error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
  * @route GET /api/venues/check-claim
  * @desc Check if a venue is already claimed by Google Place ID
  */

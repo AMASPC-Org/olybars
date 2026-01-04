@@ -141,5 +141,71 @@ Confirm the specific changes before generating the action.`,
             { name: 'concepts', description: 'The brainstormed ideas', required: true }
         ],
         actionTemplate: '[ACTION]: {"skill": "ideate_event", "params": {"concepts": "{{concepts}}"}}'
+    },
+    add_menu_item: {
+        id: 'add_menu_item',
+        name: 'Add Menu Item',
+        description: 'Add a new food or drink item to the venue menu.',
+        category: 'PROFILE',
+        protocol: `
+Collect and confirm:
+1. Category (Drink / Food)
+2. Name (e.g., "Artesian IPA")
+3. Description (e.g., "Local citrus-forward hop bomb")
+4. Price (Optional, e.g., "$7")
+Confirm the details before saving.`,
+        params: [
+            { name: 'category', description: 'Drink or Food', required: true },
+            { name: 'name', description: 'Name of the item', required: true },
+            { name: 'description', description: 'Details/Ingredients', required: true },
+            { name: 'price', description: 'Price string', required: false }
+        ],
+        actionTemplate: '[ACTION]: {"skill": "add_menu_item", "params": {"category": "{{category}}", "name": "{{name}}", "description": "{{description}}", "price": "{{price}}"}}'
+    },
+    promote_menu_item: {
+        id: 'promote_menu_item',
+        name: 'Promote Menu Item',
+        description: 'Create a social post focusing on a specific menu item.',
+        category: 'CONTENT_ENGINE',
+        protocol: `
+1. Identify the item to promote.
+2. Draft a social post that highlights the flavor and vibe.
+3. COMPLIANCE: Must adhere to LCB rules (Safe ride mention, no chugging).
+4. Present for "Save to Drafts".`,
+        params: [
+            { name: 'item_name', description: 'The name of the item being promoted', required: true },
+            { name: 'copy', description: 'The generated caption text', required: true }
+        ],
+        actionTemplate: '[ACTION]: {"skill": "promote_menu_item", "params": {"item_name": "{{item_name}}", "copy": "{{copy}}"}}'
+    },
+    emergency_closure: {
+        id: 'emergency_closure',
+        name: 'Emergency Closure',
+        description: 'Temporarily close the venue for the rest of the day or a specific duration.',
+        category: 'PROFILE',
+        protocol: `
+1. Confirm the reason for closure (e.g., "Snow day", "Private event").
+2. Confirm the duration (e.g., "Rest of today", "Until tomorrow morning").
+3. WARNING: This will remove the venue from the Buzz Clock and search results for today.
+4. Future events scheduled after this window will remain visible.`,
+        params: [
+            { name: 'reason', description: 'Reason for closure', required: true },
+            { name: 'duration', description: 'How long (e.g. 1 day, rest of today)', required: true }
+        ],
+        actionTemplate: '[ACTION]: {"skill": "emergency_closure", "params": {"reason": "{{reason}}", "duration": "{{duration}}"}}'
+    },
+    update_order_url: {
+        id: 'update_order_url',
+        name: 'Update Order URL',
+        description: 'Change the online ordering or direct menu link.',
+        category: 'PROFILE',
+        protocol: `
+1. Collect the new URL.
+2. Confirm it starts with http:// or https://.
+3. Update the venue profile link.`,
+        params: [
+            { name: 'url', description: 'The new ordering/menu URL', required: true }
+        ],
+        actionTemplate: '[ACTION]: {"skill": "update_order_url", "params": {"url": "{{url}}"}}'
     }
 };

@@ -604,7 +604,7 @@ export default function OlyBarsApp() {
               <Route path="privacy" element={<><SEO title="Privacy Policy" /><PrivacyScreen /></>} />
               <Route path="cookies" element={<><SEO title="Cookie Policy" /><CookiePolicyScreen /></>} />
               <Route path="security" element={<><SEO title="Security & Data Protection" /><PartnerSecurityScreen /></>} />
-              <Route path="faq" element={<><SEO title="The Playbook (FAQ)" description="Everything you need to know about the OlyBars league, pins, and etiquette." /><FAQScreen /></>} />
+              <Route path="faq" element={<><SEO title="The Manual (FAQ)" description="Everything you need to know about the OlyBars league, pins, and etiquette." /><FAQScreen /></>} />
               <Route path="about" element={<><SEO title="Welcome to the League (98501)" description="The mission and story behind Olympia's nightlife operating system." /><AboutPage /></>} />
               <Route
                 path="admin"

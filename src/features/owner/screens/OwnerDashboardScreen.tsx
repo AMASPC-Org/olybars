@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { db } from '../../../lib/firebase';
 import { useNavigate } from 'react-router-dom';
-import { Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info, QrCode, Download, Printer, Calendar, Crown, Clock } from 'lucide-react';
+import { db, auth } from '../../../lib/firebase';
+import { multiFactor } from 'firebase/auth';
+import { doc, updateDoc } from 'firebase/firestore';
+import { Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info, QrCode, Download, Printer, Calendar, Crown, Clock, Lock, AlertTriangle } from 'lucide-react';
 import { Venue, UserProfile, GameStatus, PartnerTier, TIER_LIMITS, ScheduledDeal } from '../../../types';
 import { format, addHours, parseISO } from 'date-fns';
 import { OwnerMarketingPromotions } from '../../../components/OwnerMarketingPromotions';
@@ -20,6 +22,8 @@ import { VenueInsight } from '../../../types';
 import { PhotoApprovalCard } from '../../admin/components/PhotoApprovalCard';
 import { Camera } from 'lucide-react';
 import { MenuManagementTab } from '../components/MenuManagementTab';
+import { PartnerManualTab } from '../components/PartnerManualTab';
+import { Book } from 'lucide-react';
 
 interface OwnerDashboardProps {
     isOpen: boolean;
@@ -78,7 +82,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const [dealDescription, setDealDescription] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
     const [showArtieCommands, setShowArtieCommands] = useState(false);
-    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'menu' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports'>(initialView as any); // Added 'menu'
+    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'menu' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports' | 'manual'>(initialView as any); // Added 'menu' and 'manual'
     const [hourlyReport, setHourlyReport] = useState<any>(null);
     const [selectedReportDate, setSelectedReportDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [statsPeriod, setStatsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
@@ -88,7 +92,50 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const [targetDate, setTargetDate] = useState(format(addHours(new Date(), 3), 'yyyy-MM-dd'));
     const [targetTime, setTargetTime] = useState(format(addHours(new Date(), 3), 'HH:00'));
     const [staffConfirmed, setStaffConfirmed] = useState(false);
+    const [privateData, setPrivateData] = useState<any>(null);
+    const [isLoadingPrivate, setIsLoadingPrivate] = useState(false);
     const { showToast } = useToast();
+
+    // [SECURITY] MFA Enforcement Check for Partners
+    const isMfaEnrolled = auth.currentUser && multiFactor(auth.currentUser).enrolledFactors.length > 0;
+    const isSuperAdmin = userProfile.systemRole === 'admin' || userProfile.role === 'super-admin';
+
+    if (!isMfaEnrolled && !isSuperAdmin) {
+        return (
+            <div className="fixed inset-0 bg-background z-[100] flex items-center justify-center p-6">
+                <div className="w-full max-w-md bg-surface border-2 border-primary/20 rounded-3xl p-8 text-center space-y-6">
+                    <div className="bg-primary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto border border-primary/30">
+                        <Lock className="w-10 h-10 text-primary" />
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-black text-white uppercase font-league">MFA Required</h2>
+                        <p className="text-slate-400 text-sm font-medium leading-relaxed">
+                            To protect venue data and maintain the "Zero-Trust" mandate, all venue partners must enable Multi-Factor Authentication.
+                        </p>
+                    </div>
+                    <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl text-left">
+                        <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1 flex items-center gap-2">
+                            <Shield className="w-3 h-3" />
+                            Security Protocol
+                        </p>
+                        <p className="text-[10px] text-slate-300 font-medium">Please visit your Profile Settings to enroll a hardware key or phone number.</p>
+                    </div>
+                    <button
+                        onClick={() => window.location.href = '/profile'}
+                        className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform"
+                    >
+                        Go to Settings
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="text-[10px] text-slate-500 hover:text-white font-bold uppercase tracking-widest"
+                    >
+                        Exit Dashboard
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     React.useEffect(() => {
         if (isOpen) {
@@ -148,8 +195,23 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     React.useEffect(() => {
         if (selectedVenueId && isOpen) {
             fetchScheduledDeals();
+            fetchPrivateData();
         }
     }, [selectedVenueId, isOpen]);
+
+    const fetchPrivateData = async () => {
+        if (!selectedVenueId) return;
+        setIsLoadingPrivate(true);
+        try {
+            const data = await VenueOpsService.getPrivateData(selectedVenueId);
+            setPrivateData(data);
+        } catch (e) {
+            console.error("Failed to fetch private data:", e);
+            // Non-blocking error for UI
+        } finally {
+            setIsLoadingPrivate(false);
+        }
+    };
 
     const handlePhotoTierApprove = async (venueId: string, photoId: string) => {
         const venue = venues.find(v => v.id === venueId);
@@ -388,12 +450,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                     <div className="ml-8 hidden md:flex items-center gap-3">
                         <div className="px-3 py-1 bg-slate-800 rounded-md border border-white/10 flex flex-col items-center">
                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest font-league">
-                                {myVenue.partnerConfig?.tier || PartnerTier.FREE} TIER
+                                {(privateData?.partnerConfig?.tier || myVenue.partnerConfig?.tier || PartnerTier.FREE)} TIER
                             </span>
                             <div className="flex items-center gap-1">
                                 <Zap className="w-2.5 h-2.5 text-primary fill-current" />
                                 <span className="text-[10px] font-black text-primary font-league">
-                                    {TIER_LIMITS[myVenue.partnerConfig?.tier || PartnerTier.FREE] - (myVenue.partnerConfig?.flashDealsUsed || 0)} TOKENS
+                                    {TIER_LIMITS[(privateData?.partnerConfig?.tier || myVenue.partnerConfig?.tier || PartnerTier.FREE) as PartnerTier] - (privateData?.partnerConfig?.flashDealsUsed || myVenue.partnerConfig?.flashDealsUsed || 0)} TOKENS
                                 </span>
                             </div>
                         </div>
@@ -508,6 +570,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 People
                             </button>
                         )}
+                        <button
+                            onClick={() => setDashboardView('manual')}
+                            className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'manual' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                        >
+                            THE MANUAL
+                        </button>
                     </>
                 )}
             </div>
@@ -1063,6 +1131,10 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             </div>
                         </div>
                     </div>
+                )}
+
+                {myVenue && dashboardView === 'manual' && (
+                    <PartnerManualTab />
                 )}
             </div>
 

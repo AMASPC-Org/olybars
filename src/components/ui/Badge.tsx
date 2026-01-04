@@ -2,16 +2,17 @@ import { twMerge } from 'tailwind-merge';
 
 interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   label: string;
-  variant?: 'default' | 'outline' | 'lively' | 'buzzing' | 'chill';
+  variant?: 'default' | 'outline' | 'buzzing' | 'chill' | 'dead' | 'packed';
 }
 
 function Badge({ className, variant = 'default', label, ...props }: BadgeProps) {
   const variantClasses = {
     default: 'bg-slate-700 text-slate-100',
     outline: 'border border-slate-600 text-slate-300',
-    lively: 'bg-amber-500/20 text-amber-300 border border-amber-500/40',
-    buzzing: 'bg-rose-500/20 text-rose-300 border border-rose-500/40',
-    chill: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40',
+    buzzing: 'bg-red-500/20 text-red-300 border border-red-500/40',
+    chill: 'bg-blue-500/20 text-blue-300 border border-blue-500/40',
+    dead: 'bg-slate-700/20 text-slate-400 border border-slate-700/40',
+    packed: 'bg-pink-500/20 text-pink-300 border border-pink-500/40',
   };
 
   const classes = twMerge(

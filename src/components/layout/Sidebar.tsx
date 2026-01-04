@@ -221,8 +221,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 <Zap className="w-4 h-4 text-primary" />
                             </div>
                             <div className="text-left">
-                                <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Owner Access</span>
-                                <span className="block text-sm font-black uppercase text-white group-hover:text-primary transition-colors">Switch To Owner Mode</span>
+                                <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Partner Access</span>
+                                <span className="block text-sm font-black uppercase text-white group-hover:text-primary transition-colors">Switch To Partner Mode</span>
                             </div>
                         </div>
                         <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-white" />
@@ -309,6 +309,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <button onClick={() => handleNavigation(`/owner${isSuperAdmin ? '?venueId=hannahs' : ''}`)} className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl flex items-center gap-4 hover:border-primary/50 transition-all active:scale-[0.98]">
                         <Store className="w-5 h-5 text-slate-400" />
                         <span className="text-sm font-black uppercase text-white tracking-wide">The Brew House</span>
+                    </button>
+
+                    <button onClick={() => handleNavigation('/faq')} className="w-full bg-black/40 border border-white/5 p-4 rounded-xl flex items-center gap-4 hover:border-primary/50 transition-all active:scale-[0.98]">
+                        <HelpCircle className="w-5 h-5 text-slate-500" />
+                        <span className="text-xs font-black uppercase text-slate-400 tracking-wide">The Manual (Help)</span>
                     </button>
                 </div>
 

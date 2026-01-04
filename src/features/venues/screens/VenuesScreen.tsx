@@ -30,6 +30,12 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
     const [activeType, setActiveType] = useState<VenueType | 'all'>('all');
     const [activeTag, setActiveTag] = useState<string | null>(searchParams.get('filter') === 'makers' ? 'Makers' : null);
 
+    // Rotation Logic (shifts every 5 minutes) ensures global fairness
+    const rotationOffset = useMemo(() => {
+        const rotationInterval = 5 * 60 * 1000;
+        return Math.floor(Date.now() / rotationInterval);
+    }, []);
+
     // Filter and Sort Logic
     const processedVenues = useMemo(() => {
         let result = venues.map(v => ({
@@ -115,10 +121,15 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                 return distA - distB;
             }
             if (activeSort === 'energy') {
-                const order: Record<VenueStatus, number> = { packed: 0, buzzing: 1, lively: 2, chill: 3, dead: 4 };
+                const order: Record<VenueStatus, number> = { packed: 0, buzzing: 1, chill: 2, dead: 3 };
                 return order[a.status] - order[b.status];
             }
             if (activeSort === 'buzz') {
+                // Priority 0: Partner Exposure Equity (League Members)
+                const isAPartner = a.isPaidLeagueMember;
+                const isBPartner = b.isPaidLeagueMember;
+                if (isAPartner !== isBPartner) return isAPartner ? -1 : 1;
+
                 // Priority 1: Has Deal?
                 const aHasDeal = !!(a.deal || (a.flashDeals && a.flashDeals.length > 0));
                 const bHasDeal = !!(b.deal || (b.flashDeals && b.flashDeals.length > 0));
@@ -126,24 +137,15 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                 if (aHasDeal && !bHasDeal) return -1;
                 if (!aHasDeal && bHasDeal) return 1;
 
-                // Priority 2: Time Remaining (Urgency)
-                // If both have deals, sort by dealEndsIn (shortest first)
-                if (aHasDeal && bHasDeal) {
-                    const aTime = a.dealEndsIn ?? Infinity;
-                    const bTime = b.dealEndsIn ?? Infinity;
-
-                    // "Buzz Clock Priority": Deals > 4 hours (240 mins) go to bottom of deal list
-                    const aIsLong = aTime > 240;
-                    const bIsLong = bTime > 240;
-
-                    if (aIsLong && !bIsLong) return 1;
-                    if (!aIsLong && bIsLong) return -1;
-
-                    return aTime - bTime;
+                // Priority 2: Tie-Break with Rotation
+                if (isAPartner && isBPartner) {
+                    const aHash = a.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                    const bHash = b.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                    return ((aHash + rotationOffset) % 100) - ((bHash + rotationOffset) % 100);
                 }
 
-                // If neither has deal, fallback to energy/buzz score logic (implied by status) or just alpha
-                const order: Record<VenueStatus, number> = { packed: 0, buzzing: 1, lively: 2, chill: 3, dead: 4 };
+                // Fallback to Status
+                const order: Record<VenueStatus, number> = { packed: 0, buzzing: 1, chill: 2, dead: 3 };
                 return order[a.status] - order[b.status];
             }
             return 0;
@@ -253,9 +255,51 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
             {/* Results */}
             <div className="px-6 space-y-4">
                 {processedVenues.length === 0 ? (
-                    <div className="text-center py-20 bg-surface/30 rounded-3xl border-2 border-dashed border-slate-800">
-                        <Sparkles className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                        <p className="text-slate-500 font-bold uppercase tracking-widest font-league italic">No spots found in this vibe</p>
+                    <div className="space-y-6">
+                        <div className="text-center py-20 bg-surface/30 rounded-3xl border-2 border-dashed border-slate-800">
+                            <Sparkles className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+                            <p className="text-slate-500 font-bold uppercase tracking-widest font-league italic">No spots found in this vibe</p>
+                        </div>
+
+                        {/* Exposure Equity: Rotating Partner Fallback */}
+                        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6">
+                            <div className="flex items-center gap-2 mb-4 justify-center">
+                                <Trophy className="w-5 h-5 text-primary" />
+                                <h4 className="text-sm font-black text-primary uppercase tracking-widest font-league">League Partners</h4>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-3">
+                                {[...venues]
+                                    .filter(v => v.isPaidLeagueMember && v.isActive !== false)
+                                    .map((v, i, arr) => {
+                                        const shiftedIndex = (i + (rotationOffset % (arr.length || 1))) % (arr.length || 1);
+                                        return arr[shiftedIndex];
+                                    })
+                                    .slice(0, 3)
+                                    .map(v => (
+                                        <Link
+                                            key={`fallback-${v.id}`}
+                                            to={`/venues/${v.id}`}
+                                            className="w-full bg-slate-900/50 border border-white/5 rounded-xl p-4 flex justify-between items-center group/item hover:bg-slate-900 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-primary/20 p-2 rounded-lg group-hover/item:scale-110 transition-transform">
+                                                    <Star className="w-4 h-4 text-primary fill-primary" />
+                                                </div>
+                                                <div className="text-left">
+                                                    <h5 className="text-sm font-black text-white uppercase italic tracking-wide">{v.name}</h5>
+                                                    <p className="text-[10px] text-slate-500 font-bold uppercase">{v.vibe}</p>
+                                                </div>
+                                            </div>
+                                            <ChevronRight className="w-4 h-4 text-slate-600 group-hover/item:text-primary transition-all" />
+                                        </Link>
+                                    ))
+                                }
+                            </div>
+                            <p className="mt-4 text-[9px] text-slate-600 font-bold uppercase tracking-[0.2em] text-center italic">
+                                Rotating exposure for OlyBars partners
+                            </p>
+                        </div>
                     </div>
                 ) : (
                     processedVenues.map(venue => (
@@ -272,9 +316,9 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                                     {venue.name}
                                                 </h3>
                                             </Link>
-                                            {venue.isFeatured && (
+                                            {venue.isPaidLeagueMember && (
                                                 <div className="bg-primary px-2 py-0.5 rounded transform -skew-x-12">
-                                                    <span className="text-black text-[8px] font-black uppercase italic">FEATURED</span>
+                                                    <span className="text-black text-[8px] font-black uppercase italic">PARTNER</span>
                                                 </div>
                                             )}
                                         </div>

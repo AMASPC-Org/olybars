@@ -11,6 +11,29 @@ let venueCache: { data: Venue[], lastFetched: number } | null = null;
 const CACHE_TTL = 60 * 1000;
 
 /**
+ * [SECURITY] Zero-Trust Striping
+ * Removes sensitive partner data from public objects.
+ */
+const stripSensitiveVenueData = (venue: Venue): Venue => {
+    const stripped = { ...venue };
+
+    // 1. Root level sensitive fields
+    const sensitiveFields: (keyof Venue)[] = ['partnerConfig', 'pointBank', 'pointBankLastReset'];
+    sensitiveFields.forEach(field => delete (stripped as any)[field]);
+
+    // 2. Menu level metadata (Margin Tiers)
+    if (stripped.fullMenu) {
+        stripped.fullMenu = stripped.fullMenu.map(item => {
+            const safeItem = { ...item };
+            delete (safeItem as any).margin_tier;
+            return safeItem as any;
+        });
+    }
+
+    return stripped;
+};
+
+/**
  * Buzz Clock Sorting Logic:
  * 1. Sort by dealEndsIn (shortest duration first).
  * 2. Push any venues with dealEndsIn > 240 minutes to the bottom.
@@ -200,12 +223,12 @@ export const fetchVenues = async (): Promise<Venue[]> => {
             // Background refresh
             refreshVenueCache().catch(err => console.error('[Backend] Background cache update failed:', err));
         }
-        return venueCache.data.map(applyVirtualDecay);
+        return venueCache.data.map(applyVirtualDecay).map(stripSensitiveVenueData);
     }
 
     // 2. No cache: Initial load
     const data = await refreshVenueCache();
-    return data.map(applyVirtualDecay);
+    return data.map(applyVirtualDecay).map(stripSensitiveVenueData);
 };
 
 
@@ -1436,3 +1459,42 @@ export const getUserPointHistory = async (userId: string, limit: number = 50) =>
         ...doc.data()
     }));
 };
+
+/**
+ * [SECURITY] Secure Private Data Access (Zero-Trust)
+ */
+export const getVenuePrivateData = async (venueId: string) => {
+    const privateRef = db.collection('venues').doc(venueId).collection('private_data').doc('main');
+    const privateDoc = await privateRef.get();
+
+    if (!privateDoc.exists) {
+        // Fallback for legacy venues: retrieve from parent document if present
+        const venueDoc = await db.collection('venues').doc(venueId).get();
+        if (!venueDoc.exists) return null;
+
+        const venueData = venueDoc.data() as Venue;
+
+        const legacyData = {
+            partnerConfig: venueData.partnerConfig || null,
+            menuStrategies: venueData.fullMenu?.reduce((acc, item) => {
+                acc[item.id] = (item as any).margin_tier;
+                return acc;
+            }, {} as Record<string, string>) || {}
+        };
+        return legacyData;
+    }
+
+    return privateDoc.data();
+};
+
+export const updateVenuePrivateData = async (venueId: string, updates: any) => {
+    const privateRef = db.collection('venues').doc(venueId).collection('private_data').doc('main');
+
+    await privateRef.set({
+        ...updates,
+        updatedAt: Date.now()
+    }, { merge: true });
+
+    return { success: true };
+};
+```

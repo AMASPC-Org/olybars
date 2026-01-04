@@ -40,6 +40,29 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
 
     // Initialize Menu Items
     const [menuItems, setMenuItems] = useState<MenuItem[]>(venue.fullMenu || []);
+    const [isLoadingPrivate, setIsLoadingPrivate] = useState(true);
+
+    // Fetch Private Data (Margins)
+    React.useEffect(() => {
+        const loadPrivate = async () => {
+            try {
+                const privateData = await VenueOpsService.getPrivateData(venue.id);
+                if (privateData && privateData.menuStrategies) {
+                    // Merge margin tiers back into menu items
+                    const mergedItems = (venue.fullMenu || []).map(item => ({
+                        ...item,
+                        margin_tier: privateData.menuStrategies[item.id] || MarginTier.Medium
+                    }));
+                    setMenuItems(mergedItems);
+                }
+            } catch (err) {
+                console.error('Failed to load private data:', err);
+            } finally {
+                setIsLoadingPrivate(false);
+            }
+        };
+        loadPrivate();
+    }, [venue.id, venue.fullMenu]);
 
     // Form State for New Item
     const [newItem, setNewItem] = useState<Partial<MenuItem>>({
@@ -68,6 +91,8 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
         try {
             await VenueOpsService.updateVenue(venue.id, { fullMenu: updatedItems }, userId);
             onUpdate(venue.id, { fullMenu: updatedItems });
+
+            // Note: status is public, so no need to update private_data here
         } catch (error) {
             console.error('Failed to toggle item status', error);
             // Revert on failure
@@ -95,7 +120,17 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
         const updatedItems = [...menuItems, itemToAdd];
 
         try {
-            await VenueOpsService.updateVenue(venue.id, { fullMenu: updatedItems }, userId);
+            // 1. Update public venue (menu structure)
+            const publicItemsForDb = updatedItems.map(({ margin_tier, ...rest }) => rest);
+            await VenueOpsService.updateVenue(venue.id, { fullMenu: publicItemsForDb as any }, userId);
+
+            // 2. Update private venue data (margin tiers)
+            const menuStrategies: Record<string, string> = {};
+            updatedItems.forEach(item => {
+                menuStrategies[item.id] = item.margin_tier;
+            });
+            await VenueOpsService.updatePrivateData(venue.id, { menuStrategies });
+
             setMenuItems(updatedItems);
             onUpdate(venue.id, { fullMenu: updatedItems });
             setIsAddModalOpen(false);

@@ -166,6 +166,7 @@ export interface Venue {
 
     status: VenueStatus;
     checkIns: number;
+    capacity?: number; // [NEW] Total venue capacity for busyness calculations
     isPaidLeagueMember?: boolean;
     nicknames?: string[];
 
@@ -300,7 +301,7 @@ export interface Venue {
     }[];
     establishmentType?: 'Bar Only' | 'Bar & Restaurant' | 'Restaurant with Bar' | 'Brewpub'; // Likely deprecated by venueType
     googlePlaceId?: string;
-    vibeDefault?: 'CHILL' | 'LIVELY' | 'BUZZING';
+    vibeDefault?: 'DEAD' | 'CHILL' | 'BUZZING' | 'PACKED';
 
     hasGameVibeCheckEnabled?: boolean;
     liveGameStatus?: Record<string, GameStatus>;

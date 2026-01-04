@@ -165,6 +165,7 @@ export const VenueUpdateSchema = z.object({
     })).optional(),
 
     checkIns: z.number().optional(),
+    capacity: z.number().optional(),
     isVisible: z.boolean().optional(),
     isActive: z.boolean().optional(),
     location: z.object({
@@ -216,6 +217,7 @@ export const VenueSchema = z.object({
     foodService: z.enum(['full_kitchen', 'limited_kitchen', 'snacks', 'none_byof']).optional(),
     status: z.enum(['dead', 'chill', 'lively', 'buzzing', 'packed']).optional(),
     checkIns: z.number().optional(),
+    capacity: z.number().optional(),
     isPaidLeagueMember: z.boolean().optional(),
     vibe: z.string().optional(),
     insiderVibe: z.string().optional(),
