@@ -56,5 +56,8 @@ export const API_ENDPOINTS = {
         LIST: `${API_BASE_URL}/events`,
         SUBMIT: `${API_BASE_URL}/events`,
         MANAGE: (id: string) => `${API_BASE_URL}/events/${id}`,
+    },
+    META: {
+        EXCHANGE: `${API_BASE_URL}/venue/auth/meta/exchange`,
     }
 };

@@ -58,7 +58,7 @@ const FAQScreen: React.FC = () => {
                         { title: 'League HQ', desc: 'Sync standings, prizes, and official rules.', status: 'Member Access' },
                         { title: 'The Wire', desc: 'Chronological citywide event feed.', status: 'Active' },
                         { title: 'Vibe Map', desc: 'Real-time visual crowd tracking.', status: 'GPS Required' },
-                        { title: 'League ID', desc: 'Manage handles and drink preferences.', status: 'Authorized' },
+                        { title: 'Pulse Alerts', desc: 'Star a venue to get texted when it hits "Packed" status.', status: 'SMS Req' },
                     ].map((feature) => (
                         <div key={feature.title} className="bg-slate-900 border border-white/5 p-5 rounded-2xl group hover:border-primary/30 transition-all">
                             <div className="flex justify-between items-start mb-2">

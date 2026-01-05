@@ -582,6 +582,31 @@ v1Router.post('/partners/onboard', verifyToken, async (req: any, res) => {
 });
 
 /**
+ * @route POST /api/venue/auth/meta/exchange
+ * @desc Exchange Meta OAuth code for long-lived tokens
+ */
+v1Router.post('/venue/auth/meta/exchange', verifyToken, (req, res, next) => {
+    // Map venueId from body to params for requireVenueAccess middleware
+    if (req.body.venueId) req.params.id = req.body.venueId;
+    next();
+}, requireVenueAccess('owner'), async (req, res) => {
+    const { code, venueId } = req.body;
+
+    if (!code || !venueId) {
+        return res.status(400).json({ error: 'Code and venueId are required.' });
+    }
+
+    try {
+        const { MetaAuthService } = await import('./services/MetaAuthService');
+        const result = await MetaAuthService.exchangeCode(code, venueId);
+        res.json(result);
+    } catch (error: any) {
+        log('ERROR', 'Meta OAuth Exchange Failed', { error: error.message, venueId });
+        res.status(500).json({ error: error.message || 'Internal Server Error' });
+    }
+});
+
+/**
  * @route PATCH /api/venues/:id/photos/:photoId
  * @desc Update photo approval status
  */

@@ -2,6 +2,13 @@ import { SystemRole, VenueRole } from './auth_schema';
 
 export type UserRole = 'guest' | 'user' | 'manager' | 'owner' | 'admin' | 'super-admin' | 'PLAYER';
 
+export interface NotificationSettings {
+    allow_league_intel: boolean;   // Master toggle for gameplay hints/events
+    allow_pulse_alerts: boolean;   // Master toggle for "Packed" alerts
+    quiet_hours_start: string;     // Default "23:00"
+    quiet_hours_end: string;       // Default "08:00"
+}
+
 export interface UserAlertPreferences {
     nightlyDigest: boolean;
     weeklyDigest: boolean;
@@ -80,6 +87,9 @@ export interface UserProfile {
     playerGamePreferences?: string[];
     favorites?: string[];
     weeklyBuzz?: boolean;
+    sms_opt_in?: boolean;
+    notificationSettings?: NotificationSettings;
+    last_notified_at?: Record<string, number>; // venueId -> timestamp
     showMemberSince?: boolean;
     createdAt?: number;
     updatedAt?: number;

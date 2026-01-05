@@ -1,5 +1,5 @@
 import React from 'react';
-import { Book, Zap, Layout, Clock, Calendar, Users, Globe, ExternalLink, Smartphone, ChevronRight, CheckCircle2, X } from 'lucide-react';
+import { Book, Zap, Layout, Clock, Calendar, Users, Globe, ExternalLink, Smartphone, ChevronRight, CheckCircle2, X, AlertTriangle } from 'lucide-react';
 import { ARTIE_SKILLS } from '../../../config/artieSkills';
 
 export const PartnerManualTab: React.FC = () => {
@@ -25,7 +25,7 @@ export const PartnerManualTab: React.FC = () => {
             manual: "Manual: Use the 'Events' tab to create, edit, or remove calendar listings."
         },
         {
-            title: "Flash Bounties (Bat Signals)",
+            title: "Flash Bounties",
             icon: Zap,
             artie: "Ask Artie: \"Artie, run a $5 Burger Flash Bounty for the next 90 minutes.\"",
             manual: "Manual: Use the 'Operations' tab to instantly broadcast or schedule a Flash Bounty."
@@ -37,10 +37,22 @@ export const PartnerManualTab: React.FC = () => {
             manual: "Manual: Use the 'Listing' tab for website, social links, and venue descriptions."
         },
         {
-            title: "Occupancy & Capacity",
-            icon: Users,
-            artie: "Ask Artie: \"Artie, set our maximum occupancy to 75.\"",
-            manual: "Manual: Go to the 'Listing' tab and update the 'Venue Capacity' field."
+            "title": "Occupancy & Capacity",
+            "icon": Users,
+            "artie": "Ask Artie: \"Artie, set our maximum occupancy to 75.\"",
+            "manual": "Manual: Go to the 'Listing' tab and update the 'Venue Capacity' field."
+        },
+        {
+            "title": "Status Integrity (Crowdsourced)",
+            "icon": AlertTriangle,
+            "artie": "Ask Artie: \"Artie, tell everyone we are PACKED!\"",
+            "manual": "NEW: 'Packed' status alerts are now Crowdsourced. While you can mark your status as 'Packed' in the dashboard, the official Pulse Alert (SMS to followers) only triggers when 3 unique users check in or 2 users report 'Packed' via Vibe Check within 15 minutes. Your dashboard control acts as your 'suggested' status."
+        },
+        {
+            title: "Instagram & Content Sync",
+            icon: Globe,
+            artie: "Ask Artie: \"Artie, sync my latest Instagram posts.\"",
+            manual: "Manual: In the 'Listing' tab, click 'Connect Instagram Business' to link your account. Once connected, Artie will automatically scan your feed for events and drafts them for your approval."
         }
     ];
 

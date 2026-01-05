@@ -74,6 +74,14 @@
       "is_directory_listed": true,
       "is_league_eligible": true
     },
+    "partnerConfig": {
+      "tier": "PREM_PARTNER",
+      "billingCycleStart": 1704067200000,
+      "flashBountiesUsed": 0,
+      "metaSync": {
+        "autoPublishEnabled": false
+      }
+    },
     "attributes": {
       "has_manned_bar": true,
       "minors_allowed": true,

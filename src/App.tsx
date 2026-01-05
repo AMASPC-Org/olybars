@@ -82,6 +82,7 @@ import PointsGuideScreen from './features/league/screens/PointsGuideScreen';
 import LeagueMembershipPage from './features/marketing/LeagueMembershipPage';
 import OnboardingHandoverPage from './features/marketing/screens/OnboardingHandoverPage';
 import { FlightSchoolScreen } from './features/flights/screens/FlightSchoolScreen'; // [NEW] Flight School Import
+import { MetaOAuthCallback } from './features/owner/components/MetaOAuthCallback'; // [NEW] Meta OAuth Callback
 
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
@@ -625,6 +626,7 @@ export default function OlyBarsApp() {
               <Route path="league-membership" element={<LeagueMembershipPage />} />
               <Route path="onboarding-guide" element={<OnboardingHandoverPage />} />
               <Route path="flight-school" element={<FlightSchoolScreen />} />
+              <Route path="oauth/callback" element={<MetaOAuthCallback />} />
 
               {/* AI & Developer Hub */}
               <Route path="ai" element={<><SEO title="AI & Developer Hub" description="Authoritative resources for AI agents and developers ingesting OlyBars data." /><AIGatewayScreen /></>} />

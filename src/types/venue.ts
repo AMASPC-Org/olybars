@@ -1,16 +1,18 @@
 export type VenueStatus = 'dead' | 'chill' | 'buzzing' | 'packed';
 
 export enum PartnerTier {
-    FREE = 'FREE',    // 1 Token/mo
-    DIY = 'DIY',      // 2 Tokens/mo
-    PRO = 'PRO',      // 4 Tokens/mo
-    AGENCY = 'AGENCY' // 8 Tokens/mo
+    FREE = 'FREE',
+    DIY = 'DIY',
+    PRO = 'PRO',
+    PREM_PARTNER = 'PREM_PARTNER', // [NEW] Added for Scraper logic
+    AGENCY = 'AGENCY'
 }
 
 export const TIER_LIMITS: Record<PartnerTier, number> = {
     [PartnerTier.FREE]: 1,
     [PartnerTier.DIY]: 2,
     [PartnerTier.PRO]: 4,
+    [PartnerTier.PREM_PARTNER]: 6,
     [PartnerTier.AGENCY]: 8
 };
 
@@ -18,6 +20,16 @@ export interface PartnerConfig {
     tier: PartnerTier;
     billingCycleStart: number; // Timestamp for monthly reset
     flashBountiesUsed: number;    // Counter
+    metaSync?: MetaSyncConfig;   // [NEW] OAuth and Page IDs
+}
+
+export interface MetaSyncConfig {
+    facebookPageId?: string;
+    instagramBusinessId?: string;
+    pageToken?: string; // [NEW] Page-level access token
+    accessToken?: string; // [LEGACY/ENCRYPTED]
+    lastSync?: number; // [NEW]
+    autoPublishEnabled: boolean;
 }
 
 export interface FlashBounty {
@@ -156,6 +168,19 @@ export interface GameStatus {
     timestamp: number;
     reportedBy?: string;
     expiresAt?: number;
+}
+
+export interface LeagueEvent {
+    id: string;
+    venueId: string;
+    title: string;
+    description?: string;
+    type: 'trivia' | 'karaoke' | 'live_music' | 'dj' | 'bingo' | 'other';
+    startTime: number; // UTC timestamp
+    pointsAwarded: number; // Default 25
+    sourceUrl?: string;
+    sourceConfidence: number; // 0.0 - 1.0 (from AI)
+    lastScraped?: number;
 }
 
 export interface Venue {
@@ -348,6 +373,17 @@ export interface Venue {
     reservationUrl?: string;
     openingTime?: string;
     services?: string[];
+
+    // [BETA BATTALION] Scraper & Consensus Metadata
+    partner_tier: PartnerTier;
+    scrape_source_url?: string;
+    last_scrape_timestamp?: number;
+    is_scraping_enabled: boolean;
+    isConsensusPacked?: boolean; // Tracked internally for alert debouncing
+
+    // [NEW] Social Engine
+    social_auto_sync: boolean;
+    auto_sync_sources?: ('facebook' | 'instagram' | 'website')[];
 }
 
 export interface AmenityDetail {

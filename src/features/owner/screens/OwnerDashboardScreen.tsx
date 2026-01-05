@@ -594,10 +594,13 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             </div>
                             <div className="bg-surface p-4 border border-white/10 rounded-lg shadow-xl">
                                 <div className="flex justify-between items-center mb-2">
-                                    <p className="text-[10px] uppercase font-black text-slate-500 font-league">Manual Vibe Override</p>
+                                    <div className="flex flex-col">
+                                        <p className="text-[10px] uppercase font-black text-slate-500 font-league">Vibe Override (Suggested)</p>
+                                        <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest">SMS Alerts trigger on user consensus only</p>
+                                    </div>
                                     {myVenue.manualStatusExpiresAt && Date.now() < myVenue.manualStatusExpiresAt && (
                                         <span className="text-[8px] font-black text-primary uppercase animate-pulse">
-                                            Expires in {Math.ceil((myVenue.manualStatusExpiresAt - Date.now()) / 60000)}m
+                                            Active {Math.ceil((myVenue.manualStatusExpiresAt - Date.now()) / 60000)}m
                                         </span>
                                     )}
                                 </div>

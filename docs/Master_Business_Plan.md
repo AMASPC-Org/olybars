@@ -73,12 +73,13 @@ Role: The friendly, witty, slightly mystical "Spirit of the Well."
 #### A. OlyBars.com (The Client)
 *   **Buzz Clock**: The real-time happy hour scheduler (Upcoming, Current, Soon-to-End).
 *   **Vibe Signal**: Real-time energy status (Dead, Chill, Buzzing, Packed).
+*   **Star Alerts**: Users "Star" a venue to subscribe to "Packed" pulse alerts (Double-opt-in).
 *   **League Passport**: Geolocation clock-ins as attendance signals.
 *   **Artie Chat**: Conversational AI for local discovery and "The Manual" (FAQ).
 
 #### B. The Brew House (The Dashboard)
 *   **Venue Profile (SSOT)**: Single source of truth for hours, menus, and local maker rules.
-*   **Marketing Center**: Artie-generated social copy and **Flash Bounty** (Bat Signal) activations.
+*   **Marketing Center**: Artie-generated social copy and **Flash Bounty** activations.
 
 ---
 
@@ -86,12 +87,14 @@ Role: The friendly, witty, slightly mystical "Spirit of the Well."
 
 OlyBars.com is the lighthouse site of **The AMA Network** (American Marketing Alliance SPC). As a **Social Purpose Corporation**, our mission is to solve the "Marketing Burn"—the phenomenon where local businesses waste thousands on ineffective ads simply because they lack the time to manage complex marketing funnels.
 
-### 3.1 Submit Once, Distribute Everywhere
+### 3.1 Submit Once, Distribute Everywhere (The Artie Social Engine)
 When a Partner updates an event in The Brew House:
 *   **Instant Update**: OlyBars.com Calendar & Buzz Clock.
 *   **Newsletter**: Auto-inclusion in "**The Weekly Pulse**."
 *   **External Sync**: Artie formats and emails details to: **ODA**, **Experience Olympia (VCB)**, and **Thurston Talk**.
-*   **Social**: Artie generates copy for the venue’s own Facebook/Instagram.
+*   **Artie Social Engine**: Using the Meta Graph API, Artie performs a "White Hat" sync of the venue's Instagram and Facebook feeds. 
+    *   **Auto-Sync**: Artie identifies flyers and posts, uses AI Vision to extract details, and drafts them for one-tap owner approval.
+    *   **Multi-Platform Publishing**: Owners "Submit Once" to Artie, and Artie publishes the branded content back to the venue's connected social platforms.
 
 ### 3.2 Automated Compliance (Legal Moat)
 Legal compliance is our primary competitive advantage. By enforcing "Law-as-Code," we eliminate human error.
@@ -192,6 +195,7 @@ Artie is the "Spirit of the Artesian Well," serving as the LLM-powered engine fo
 *   **📅 Event Secretary**: Converts simple prompts or links into structured calendar events with AI-generated descriptions.
 *   **🛡️ Compliance Guardian**: Automatically pivots non-compliant marketing language (e.g., "Flash Deal" -> "Flash Bounty").
 *   **🔍 Local RAG**: Real-time awareness of Olympia venues, maker culture, and the Artesian Bar League rulebook.
+*   **🔗 Meta Social Engine**: Bi-directional sync for Instagram/Facebook posts and events. [LIVE]
 
 #### Skill Architecture
 Artie operates using a **"Skills & Protocols"** framework. Every action (skill) is governed by a protocol that requires specific data validation (params) before an `[ACTION]` tag is produced for the frontend to execute.
@@ -212,6 +216,7 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 *   ✅ **Geofencing**: Backend-verified check-ins.
 *   ✅ **Artie Intelligence**: Level 1 RAG (Persona responses).
 *   ✅ **Security Framework**: MFA, RBAC, and Policy Docs.
+*   ✅ **Meta Integration**: Dual-track venue sync & Facebook auth.
 
 ### 8.3 Imminent Objectives (Artie V2.0 Roadmap)
 1.  **Phase 6: The League Season 1**: Finalize points-to-prizes logic.
@@ -245,7 +250,11 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 
 ### 9.3 Key Concepts
 *   **Artie**: The spirit of the Artesian Well. A permission-gated AI agent that acts as a concierge for Players and a drafter/co-pilot for Partners.
-*   **Current State**: The real-time energy level of a venue (Dead, Chill, Buzzing, Packed). Calculated via the three primary signals: Clock-ins, Vibe Checks, and Venue Capacity.
+*   **Current State**: The real-time energy level of a venue (Dead, Chill, Buzzing, Packed).
+    *   **Dead**: < 20% Capacity. Quiet, quick service.
+    *   **Chill**: 20-60% Capacity. Conversational, date vibes.
+    *   **Buzzing**: 60-90% Capacity. Tables full, high energy.
+    *   **Packed**: > 90% Capacity. Standing room only. [Triggers SMS to Starred Users].
 *   **The Weekly Pulse**: The official Artesian Bar League newsletter.
 *   **The Brew House**: The Partner Portal. The dashboard where Venue Owners manage their profile, listings, events, and **Flash Bounty** activations.
 *   **Venue Capacity**: A static data point representing the legal or practical occupancy of a venue. This serves as the baseline for determining density and busyness levels.
@@ -303,11 +312,19 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 * **Vibe Hardware**: Dance Floor, Stage, DJ Booth, Jukebox, Piano.
 * **Comfort**: Patio / Beer Garden, Fireplace, Photo Booth, TV Walls.
 
-### 3. EVENTS (Calendar)
-*Definition*: Activities linked to specific times on the League Calendar.
-* **Competition**: Trivia Night, Bar Bingo, League Night, Tournaments.
-* **Performance**: Karaoke, Open Mic, Live Band, DJ Set, Theme Night.
-* **Official Events**: "**The Sync**" - Official monthly OlyBars-operated event at Anchor venues.
+### 3.V2 The Intelligence of Points (Taxonomy Pillars)
+To ensure system integrity, Artie enforces a strict classification between "Activities" (Check-ins) and "Offers" (Incentives).
+
+| Pillar | Definition | Points | Display |
+| :--- | :--- | :--- | :--- |
+| **League Event** | Point-awarding activity (Trivia, Music). | +25 Bonus Pts | Global Calendar |
+| **Non-League Event** | Activity that does not award points. | 0 Base Pts | Global Calendar |
+| **Happy Hour** | Time-bound window for multi-item deals. | 0 Base Pts | Venue Card |
+| **Venue Special** | Recurring theme/item deal (Taco Tuesday). | 0 - 10 Base Pts | Venue Card |
+| **Flash Bounty** | Urgent, one-off high-impact offer. | 2x / Bonus Pts | Buzz Clock Focus |
+
+> [!IMPORTANT]
+> **Happy Hour vs Special**: Artie distinguishes between *Windows* (price changes across many items) and *Themes* (specific focused deals).
 
 ---
 

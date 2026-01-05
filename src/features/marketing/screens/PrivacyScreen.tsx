@@ -22,7 +22,7 @@ const PrivacyScreen: React.FC = () => {
                     </div>
                     <div>
                         <h1 className="text-4xl font-black uppercase tracking-tighter font-league">PRIVACY <span className="text-primary">POLICY</span></h1>
-                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Last Updated: Dec 21, 2025</p>
+                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Last Updated: Jan 5, 2026</p>
                     </div>
                 </header>
 
@@ -32,7 +32,7 @@ const PrivacyScreen: React.FC = () => {
                         To provide the Pulse and League features, we collect:
                     </p>
                     <ul className="list-disc list-inside text-slate-400 text-sm space-y-2 ml-4">
-                        <li>Location data (verified locally only at the moment of "Clock In")</li>
+                        <li>Location data (Verified via GPS Check-In and active Region Monitoring/Geofencing)</li>
                         <li>Account information (Handle and points are stored locally for guests; synced to Cloud only upon profile creation)</li>
                         <li>Activity data (Vibe reports and check-in frequency for the Pulse algorithm)</li>
                         <li>Photos (Optional "Vibe Photos" provided with or without marketing consent)</li>
@@ -40,12 +40,15 @@ const PrivacyScreen: React.FC = () => {
                 </section>
 
                 <section className="space-y-4">
-                    <h2 className="text-xl font-black uppercase tracking-wide font-league text-primary">2. GPS, Geofencing & Photo Retention</h2>
+                    <h2 className="text-xl font-black uppercase tracking-wide font-league text-primary">2. GPS, Geofencing & Region Monitoring</h2>
                     <p className="text-slate-300 leading-relaxed text-sm">
-                        OlyBars utilizes real-time GPS verification to ensure League integrity. To "Clock In," users must be physically present within a 100-foot radius of the participating venue. This location data is used solely for point verification and is not stored or shared for advertising purposes.
+                        OlyBars utilizes real-time GPS verification and Geofencing (Region Monitoring) to ensure League integrity and provide the Pulse. To "Clock In" or receive proximity prompts, users must be physically present within a 75-foot radius of the participating venue.
                     </p>
                     <p className="text-slate-300 leading-relaxed text-sm">
-                        When you select "Clock In" with the "Marketing Consent" toggle active, users grant OlyBars a non-exclusive right to display the photo on the specific venue's listing page. In exchange, users receive a Premium Point Reward (+25 pts). A standard "Clock In" (+10 pts) will signal your presence on the map/feed, but photos are not stored for public gallery use.
+                        We use Background Location permissions specifically to detect when you enter a venue's "Action Zone." We do not track your movement between venues or store a persistent history of your exact coordinates. We only ask: "Are you here?" to facilitate verified reporting.
+                    </p>
+                    <p className="text-slate-300 leading-relaxed text-sm">
+                        When you select "Clock In" with "Marketing Consent," you grant OlyBars a non-exclusive right to display your Vibe Photo on the venue's listing. In exchange, you receive a Premium Point Reward (+25 pts).
                     </p>
                 </section>
 

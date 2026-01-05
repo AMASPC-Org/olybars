@@ -22,6 +22,11 @@ export const ConfigSchema = z.object({
 
     // URLs
     FRONTEND_URL: z.string().default('http://localhost:3000'),
+
+    // Meta Integration (Track A: Venue Sync)
+    META_APP_ID: z.string().optional(),
+    META_APP_SECRET: z.string().optional(),
+    META_REDIRECT_URI: z.string().optional(),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

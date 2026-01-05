@@ -220,5 +220,20 @@ Confirm the details before saving.`,
             { name: 'capacity', description: 'The maximum occupancy number', required: true }
         ],
         actionTemplate: '[ACTION]: {"skill": "update_capacity", "params": {"capacity": {{capacity}}}}'
+    },
+    confirm_social_draft: {
+        id: 'confirm_social_draft',
+        name: 'Confirm Social Draft',
+        description: 'Approve or reject a drafted social media post for publishing.',
+        category: 'CONTENT_ENGINE',
+        protocol: `
+1. Present the draft details (caption, platform).
+2. Ask for a final "Confirm" or "Revise".
+3. Once confirmed, Artie schedules the post for immediate distribution.`,
+        params: [
+            { name: 'draftId', description: 'ID of the social draft', required: true },
+            { name: 'status', description: 'APPROVED or REJECTED', required: true }
+        ],
+        actionTemplate: '[ACTION]: {"skill": "confirm_social_draft", "params": {"draftId": "{{draftId}}", "status": "{{status}}"}}'
     }
 };

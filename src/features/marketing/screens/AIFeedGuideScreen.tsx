@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, MapPin, Calendar, Trophy, Terminal } from 'lucide-react';
+import { Layers, MapPin, Calendar, Trophy, Terminal, Zap } from 'lucide-react';
 
 export default function AIFeedGuideScreen() {
     return (
@@ -45,14 +45,15 @@ export default function AIFeedGuideScreen() {
                             <div className="flex items-start gap-4">
                                 <Calendar className="w-8 h-8 text-green-400 mt-1" />
                                 <div className="space-y-2">
-                                    <h3 className="text-xl font-bold font-league text-white uppercase">Tier 2: Events</h3>
+                                    <h3 className="text-xl font-bold font-league text-white uppercase">Tier 2: The Trinity of Offers</h3>
                                     <p className="text-slate-300 text-sm">
-                                        Temporal activities taking place at a Venue. Includes Happy Hours,
-                                        Guest Taps, and Live Gigs.
+                                        Artie identifies three distinct pillars of timing and intent:
                                     </p>
-                                    <div className="bg-slate-950 p-4 rounded-lg font-mono text-xs text-amber-500/80 border border-white/5">
-                                        {`"event": { "title": "Guest Tap Night", "venueId": "well-80", "start": "2025-12-25T19:00:00Z" }`}
-                                    </div>
+                                    <ul className="text-xs text-slate-400 space-y-2 list-disc ml-4">
+                                        <li><span className="text-white font-bold">Happy Hours</span>: Time-bound windows for multi-item deals (e.g. 4-6pm).</li>
+                                        <li><span className="text-white font-bold">Venue Specials</span>: Recurring themed days or item-focused deals (e.g. Taco Tuesday).</li>
+                                        <li><span className="text-white font-bold">Non-League Events</span>: Activities like Live Gigs or Open Mics that don't award points.</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -62,15 +63,31 @@ export default function AIFeedGuideScreen() {
                             <div className="flex items-start gap-4">
                                 <Trophy className="w-8 h-8 text-amber-500 mt-1" />
                                 <div className="space-y-2">
-                                    <h3 className="text-xl font-bold font-league text-white uppercase">Tier 3: League Play</h3>
+                                    <h3 className="text-xl font-bold font-league text-white uppercase">Tier 3: League Sanctioned</h3>
                                     <p className="text-slate-300 text-sm italic">
-                                        "All League Play activities are events, but not all events are league play."
+                                        "All League Play activities are events, but they award +25 Bonus Points."
                                     </p>
                                     <p className="text-slate-400 text-xs">
-                                        These are formal events that contribute to user rankings and global standings.
+                                        Includes Trivia, Karaoke, and official tournaments that contribute to global standings.
                                     </p>
                                     <div className="bg-slate-950 p-4 rounded-lg font-mono text-xs text-amber-500 border border-amber-500/20">
-                                        {`"leaguePlay": { "type": "Trivia", "venueId": "well-80", "isLeagueSanctioned": true }`}
+                                        {`"leagueEvent": { "type": "Trivia", "venueId": "well-80", "isLeagueSanctioned": true, "points": 25 }`}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Tier 4: Flash Bounties */}
+                        <div className="bg-slate-800/40 border border-white/5 rounded-2xl p-6 ml-12 md:ml-36 border-l-2 border-l-red-500">
+                            <div className="flex items-start gap-4">
+                                <Zap className="w-8 h-8 text-red-500 mt-1" />
+                                <div className="space-y-2">
+                                    <h3 className="text-xl font-bold font-league text-white uppercase">Tier 4: Flash Bounties</h3>
+                                    <p className="text-slate-300 text-sm">
+                                        One-off, high-urgency triggers powered by the social engine.
+                                    </p>
+                                    <div className="bg-slate-950 p-4 rounded-lg font-mono text-xs text-red-500/80 border border-red-500/20">
+                                        {`"flashBounty": { "id": "burger-rush", "title": "$5 Burgers", "expires": "60m" }`}
                                     </div>
                                 </div>
                             </div>

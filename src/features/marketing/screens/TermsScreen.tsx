@@ -22,7 +22,7 @@ const TermsScreen: React.FC = () => {
                     </div>
                     <div>
                         <h1 className="text-4xl font-black uppercase tracking-tighter font-league">TERMS OF <span className="text-primary">SERVICE</span></h1>
-                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Last Updated: Dec 21, 2025</p>
+                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Last Updated: Jan 5, 2026</p>
                     </div>
                 </header>
 
@@ -47,7 +47,7 @@ const TermsScreen: React.FC = () => {
                     </p>
                     <div className="bg-slate-900/50 border border-slate-700 p-4 rounded-xl">
                         <p className="text-slate-300 text-xs italic">
-                            <strong>GPS & Geofencing Disclosure:</strong> OlyBars utilizes real-time GPS verification to ensure League integrity. To "Clock In," users must be physically present within a 100-foot radius of the participating venue. This location data is used solely for point verification and is not stored or shared for advertising purposes.
+                            <strong>GPS & Geofencing Disclosure:</strong> OlyBars utilizes real-time GPS verification and Region Monitoring to ensure League integrity. To "Clock In," users must be physically present within a 75-foot radius (approx. 22 meters) of the participating venue. This ensures accurate reporting in dense venue blocks (e.g., 4th Ave).
                         </p>
                     </div>
                 </section>

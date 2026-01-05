@@ -4,7 +4,7 @@ import {
     Save, Clock, MapPin, Mail, ChevronRight, Beer,
     Sparkles, Users, Shield, Gamepad2, Trophy, Zap, Utensils, X, Feather, Plus, Trash2, ShoppingBag
 } from 'lucide-react';
-import { Venue, VenueType, VibeTag, UserProfile, HappyHourRule } from '../../../types';
+import { Venue, VenueType, VibeTag, UserProfile, HappyHourRule, PartnerTier } from '../../../types';
 import { isSystemAdmin } from '../../../types/auth_schema';
 import { syncVenueWithGoogle } from '../../../services/venueService';
 import { useToast } from '../../../components/ui/BrandedToast';
@@ -14,6 +14,7 @@ import { GameFeatureManager } from './GameFeatureManager';
 import { SoberPledgeModal } from './SoberPledgeModal';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { normalizeTo24h } from '../../../utils/timeUtils';
+import { format } from 'date-fns';
 
 interface ListingManagementTabProps {
     venue: Venue;
@@ -79,7 +80,17 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         reservationUrl: venue.reservationUrl || '',
         orderUrl: venue.orderUrl || '',
         directMenuUrl: venue.directMenuUrl || '',
-        capacity: venue.capacity
+        capacity: venue.capacity,
+        // Scraper Metadata
+        partner_tier: venue.partner_tier || 'FREE',
+        scrape_source_url: venue.scrape_source_url || '',
+        is_scraping_enabled: venue.is_scraping_enabled || false,
+        // Meta Sync
+        partnerConfig: venue.partnerConfig || {
+            tier: venue.partner_tier || PartnerTier.FREE,
+            billingCycleStart: Date.now(),
+            flashBountiesUsed: 0
+        }
     });
 
     // [FIX] Synchronize formData when venue prop changes (e.g. switching in dropdown)
@@ -123,6 +134,14 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
             orderUrl: venue.orderUrl || '',
             directMenuUrl: venue.directMenuUrl || '',
             capacity: venue.capacity,
+            partner_tier: venue.partner_tier || 'FREE',
+            scrape_source_url: venue.scrape_source_url || '',
+            is_scraping_enabled: venue.is_scraping_enabled || false,
+            partnerConfig: venue.partnerConfig || {
+                tier: venue.partner_tier || PartnerTier.FREE,
+                billingCycleStart: Date.now(),
+                flashBountiesUsed: 0
+            }
         });
 
         // [MIGRATION] If legacy happyHour exists but rules don't, create initial rule
@@ -320,7 +339,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                         className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${(formData.vibeTags || []).includes(tag.value)
                                             ? 'bg-primary text-black border-primary'
                                             : 'bg-black/40 text-slate-500 border-white/10 hover:border-white/30'
-                                            }`}
+                                            } `}
                                     >
                                         {tag.label}
                                     </button>
@@ -343,9 +362,9 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                         <button
                                             type="button"
                                             onClick={() => setFormData(prev => ({ ...prev, isLocalMaker: !(formData as any).isLocalMaker }))}
-                                            className={`p-1 rounded flex items-center justify-center transition-all ${(formData as any).isLocalMaker ? 'text-primary' : 'text-slate-700'}`}
+                                            className={`p-1 rounded flex items-center justify-center transition-all ${(formData as any).isLocalMaker ? 'text-primary' : 'text-slate-700'} `}
                                         >
-                                            <Zap className={`w-3.5 h-3.5 ${(formData as any).isLocalMaker ? 'fill-primary' : ''}`} />
+                                            <Zap className={`w-3.5 h-3.5 ${(formData as any).isLocalMaker ? 'fill-primary' : ''} `} />
                                         </button>
                                     </div>
                                 )}
@@ -371,7 +390,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
 
                                 <div className="flex flex-col gap-4 justify-end pb-2">
                                     <label className="flex items-center gap-3 cursor-pointer group">
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${(formData as any).physicalRoom !== false ? 'bg-primary border-primary' : 'border-slate-600 bg-transparent'}`}>
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${(formData as any).physicalRoom !== false ? 'bg-primary border-primary' : 'border-slate-600 bg-transparent'} `}>
                                             {(formData as any).physicalRoom !== false && <ChevronRight className="w-3 h-3 text-black font-bold" />}
                                         </div>
                                         <input
@@ -417,7 +436,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
 
                         <div className="flex flex-col gap-4 justify-end pb-2">
                             <label className="flex items-center gap-3 cursor-pointer group">
-                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${(formData as any).isLowCapacity ? 'bg-primary border-primary' : 'border-slate-600 bg-transparent'}`}>
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${(formData as any).isLowCapacity ? 'bg-primary border-primary' : 'border-slate-600 bg-transparent'} `}>
                                     {(formData as any).isLowCapacity && <ChevronRight className="w-3 h-3 text-black font-bold" />}
                                 </div>
                                 <input type="checkbox" name="isLowCapacity" checked={(formData as any).isLowCapacity || false} onChange={e => setFormData(prev => ({ ...prev, isLowCapacity: e.target.checked }))} className="hidden" />
@@ -441,10 +460,10 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className={`p-6 rounded-3xl border transition-all ${formData.isSoberFriendly ? 'bg-blue-600/10 border-blue-500/30' : 'bg-slate-900/50 border-white/5'}`}>
+                    <div className={`p-6 rounded-3xl border transition-all ${formData.isSoberFriendly ? 'bg-blue-600/10 border-blue-500/30' : 'bg-slate-900/50 border-white/5'} `}>
                         <div className="flex justify-between items-start mb-6">
                             <div className="flex items-center gap-3">
-                                <div className={`p-3 rounded-2xl ${formData.isSoberFriendly ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-500'}`}>
+                                <div className={`p-3 rounded-2xl ${formData.isSoberFriendly ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-500'} `}>
                                     <Shield className="w-6 h-6" />
                                 </div>
                                 <div>
@@ -459,7 +478,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.isSoberFriendly
                                     ? 'bg-blue-500 text-white shadow-lg'
                                     : 'bg-slate-800 text-slate-500 hover:text-white'
-                                    }`}
+                                    } `}
                             >
                                 {formData.isSoberFriendly ? 'ACTIVE' : 'ACTIVATE'}
                             </button>
@@ -563,6 +582,57 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                     <InputField label="Hours of Operation" name="hours" value={formData.hours} icon={Clock} placeholder="Daily 11:30 AM - Midnight" />
                     <InputField label="Venue Capacity (Occupancy)" name="capacity" value={formData.capacity || ''} icon={Users} type="number" placeholder="Ex: 50" />
                 </div>
+
+                {/* [BETA BATTALION] League Night Scraper Configuration */}
+                {(formData.partner_tier === 'PREM_PARTNER' || isSystemAdmin(userProfile)) && (
+                    <div className="mt-8 bg-primary/5 border border-primary/20 rounded-3xl p-6 space-y-6 animate-in fade-in duration-500">
+                        <div>
+                            <div className="flex justify-between items-center mb-1">
+                                <h4 className="text-sm font-black text-primary uppercase font-league leading-none">League Night Event Scraper</h4>
+                                <div className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${formData.is_scraping_enabled ? 'bg-green-500 text-black' : 'bg-slate-800 text-slate-500'} `}>
+                                    {formData.is_scraping_enabled ? 'ACTIVE' : 'DISABLED'}
+                                </div>
+                            </div>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">Automated ingestion for Partner events (Instagram, Website)</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <InputField
+                                label="Scrape Source URL (Public IG or Web)"
+                                name="scrape_source_url"
+                                value={formData.scrape_source_url}
+                                icon={Globe}
+                                placeholder="https://instagram.com/yourvenue"
+                            />
+
+                            <div className="flex flex-col justify-end pb-2">
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${formData.is_scraping_enabled ? 'bg-primary border-primary' : 'border-slate-600 bg-transparent'} `}>
+                                        {formData.is_scraping_enabled && <ChevronRight className="w-3 h-3 text-black font-bold" />}
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        name="is_scraping_enabled"
+                                        checked={formData.is_scraping_enabled || false}
+                                        onChange={e => setFormData(prev => ({ ...prev, is_scraping_enabled: e.target.checked }))}
+                                        className="hidden"
+                                    />
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">Enable Autopilot Scraping</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-2">
+                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Scraper History</p>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[10px] text-slate-400 font-medium">Last synced:</span>
+                                <span className="text-[10px] text-white font-black uppercase tracking-widest">
+                                    {venue.last_scrape_timestamp ? format(venue.last_scrape_timestamp, 'MMM d, h:mm a') : 'NEVER'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </section>
 
             {/* Happy Hour & Specials Section */}
@@ -634,7 +704,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${rule.days.includes(day)
                                                         ? 'bg-primary text-black border-primary'
                                                         : 'bg-black/40 text-slate-500 border-white/10 hover:border-white/30'
-                                                        }`}
+                                                        } `}
                                                 >
                                                     {day}
                                                 </button>
@@ -726,6 +796,88 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                     <InputField label="Instagram Handle" name="instagram" value={formData.instagram} icon={Instagram} placeholder="@handle" />
                     <InputField label="Facebook Page" name="facebook" value={formData.facebook} icon={Facebook} placeholder="facebook.com/yourvenue" />
                     <InputField label="Twitter / X" name="twitter" value={formData.twitter} icon={Twitter} placeholder="@handle" />
+                </div>
+
+                {/* Meta Sync (Artie Social Engine) [NEW] */}
+                <div className="mt-6 bg-gradient-to-br from-purple-900/10 to-blue-900/10 border border-purple-500/20 rounded-2xl p-6 space-y-4">
+                    <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-xl text-white shadow-lg shadow-purple-500/20">
+                                <Instagram className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-black text-white uppercase tracking-tight leading-none mb-1">Artie Social Engine</h4>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic">Auto-sync events & photos from Instagram</p>
+                            </div>
+                        </div>
+
+                        {formData.partnerConfig?.metaSync?.instagramBusinessId ? (
+                            <div className="flex items-center gap-2 bg-green-500/20 border border-green-500/30 px-3 py-1.5 rounded-lg text-green-400 text-[10px] font-black uppercase tracking-widest animate-in fade-in">
+                                <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                                Connected
+                            </div>
+                        ) : (
+                            <div className="bg-slate-800/50 border border-white/5 px-3 py-1.5 rounded-lg text-slate-500 text-[10px] font-black uppercase tracking-widest italic">
+                                Not Connected
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="space-y-4">
+                        <p className="text-[11px] text-slate-400 leading-relaxed font-medium">
+                            Connect your Instagram Business account to let Artie automatically classification your posts as <strong>League Events</strong> (+25 pts) or <strong>Venue Specials</strong>.
+                        </p>
+
+                        {!formData.partnerConfig?.metaSync?.instagramBusinessId ? (
+                            <button
+                                onClick={() => {
+                                    const appId = import.meta.env.VITE_META_APP_ID;
+                                    const redirectUri = `${window.location.origin}/oauth/callback`;
+                                    const scopes = [
+                                        'public_profile',
+                                        'pages_show_list',
+                                        'pages_read_engagement',
+                                        'pages_manage_posts',
+                                        'instagram_basic',
+                                        'instagram_content_publish'
+                                    ].join(',');
+
+                                    const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${venue.id}&scope=${scopes}&response_type=code`;
+
+                                    window.location.href = authUrl;
+                                }}
+                                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-black py-4 rounded-xl uppercase tracking-[0.15em] text-xs shadow-xl shadow-purple-900/30 transition-all active:scale-[0.98] flex items-center justify-center gap-3 group"
+                            >
+                                <Instagram className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                                Connect Instagram Business
+                            </button>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-bottom-2">
+                                <div className="bg-black/40 border border-white/5 rounded-xl p-4 flex justify-between items-center">
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase">IG Business ID:</span>
+                                    <span className="text-[10px] text-white font-black tracking-widest">{formData.partnerConfig.metaSync.instagramBusinessId}</span>
+                                </div>
+                                <div className="bg-black/40 border border-white/5 rounded-xl p-4 flex justify-between items-center">
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase">Auto-Publish:</span>
+                                    <button
+                                        onClick={() => setFormData(prev => ({
+                                            ...prev,
+                                            partnerConfig: {
+                                                ...prev.partnerConfig!,
+                                                metaSync: {
+                                                    ...prev.partnerConfig!.metaSync!,
+                                                    autoPublishEnabled: !prev.partnerConfig!.metaSync!.autoPublishEnabled
+                                                }
+                                            }
+                                        }))}
+                                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${formData.partnerConfig.metaSync.autoPublishEnabled ? 'bg-primary text-black' : 'bg-slate-800 text-slate-500'}`}
+                                    >
+                                        {formData.partnerConfig.metaSync.autoPublishEnabled ? 'ENABLED' : 'DISABLED'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div >
                 </div>
             </section>
 

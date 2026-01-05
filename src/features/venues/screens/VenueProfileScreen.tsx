@@ -59,6 +59,14 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
     const [distanceInfo, setDistanceInfo] = useState({ miles: 0, mins: 0 });
     const [zones, setZones] = useState({ user: '', destination: '' });
 
+    const onToggleFavorite = (venueId: string) => {
+        const isCurrentlyFavorite = userProfile.favorites?.includes(venueId);
+        handleToggleFavorite(venueId);
+        if (!isCurrentlyFavorite) {
+            showToast("You'll now get alerts for this spot! 🌟", "success");
+        }
+    };
+
     const timeToMinutes = (timeStr: string) => {
         if (!timeStr) return 0;
         const [h, m] = timeStr.split(':').map(Number);
@@ -318,7 +326,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
 
                 <div className="absolute top-6 right-6 flex gap-2 z-10">
                     <button
-                        onClick={() => handleToggleFavorite(venue.id)}
+                        onClick={() => onToggleFavorite(venue.id)}
                         className={`p-2 bg-black/50 backdrop-blur-md rounded-full border transition-colors ${userProfile.favorites?.includes(venue.id)
                             ? 'border-primary text-primary'
                             : 'border-white/10 text-white hover:bg-black'

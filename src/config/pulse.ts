@@ -1,7 +1,4 @@
-/**
- * OlyBars Pulse Logic Configuration
- * Single Source of Truth for "Buzz" calculations.
- */
+export type VibeLevel = 'dead' | 'chill' | 'buzzing' | 'packed';
 
 export const PULSE_CONFIG = {
     // Scoring Weights
@@ -26,26 +23,34 @@ export const PULSE_CONFIG = {
 
     // Spatial Thresholds
     SPATIAL: {
-        GEOFENCE_RADIUS: 100 // 100 Meters for valid check-in
+        GEOFENCE_RADIUS: 22 // 22 Meters (approx. 75ft) to prevent crosstalk
     },
 
     // Status Thresholds
     THRESHOLDS: {
-        PACKED: 100,   // > 100 = Packed
-        BUZZING: 40,   // > 40 = Buzzing
-        CHILL: 10,     // > 10 = Chill
+        PACKED: 90,    // > 90 = Packed (Triggers SMS)
+        BUZZING: 60,   // > 60 = Buzzing (Busy but no SMS)
+        CHILL: 20,     // > 20 = Chill
         DEAD: 0,       // > 0 = Dead (Base state)
         FLASH_BOUNTY: 180, // < 180 mins remaining = Flash Bounty
         BUZZ_CLOCK_PRIORITY: 240 // < 240 mins = High priority in list
     },
 
+    // Consensus Algorithm (User-Generated Pulse)
+    CONSENSUS: {
+        CHECKINS_REQUIRED: 3,      // 3 Unique users
+        CHECKIN_WINDOW: 15 * 60 * 1000, // 15 Minutes
+        VIBE_REPORTS_REQUIRED: 2,   // 2 Unique users reporting 'Packed'
+        VIBE_WINDOW: 10 * 60 * 1000     // 10 Minutes
+    },
+
     // Display Strings (User/Owner Facing)
     DESCRIPTIONS: {
         LIVE_MEANING: "Unique people checked in within the last 60 minutes.",
-        PACKED_MEANING: "Max energy! Extremely high attendance.",
-        BUZZING_MEANING: "High activity! The venue is energetic.",
-        CHILL_MEANING: "Steady flow. Plenty of room to hang out.",
-        DEAD_MEANING: "Minimal activity. Quiet vibes.",
+        DEAD_MEANING: "Quiet. Quick service. < 20% cap.",
+        CHILL_MEANING: "Easy conversation. Date night vibes.",
+        BUZZING_MEANING: "High energy. Tables full.",
+        PACKED_MEANING: "Standing room only. The party is here.",
         FLASH_BOUNTY_MEANING: "Ending soon! High urgency."
     }
 };

@@ -118,16 +118,37 @@ export const updateVenueBuzz = async (venueId: string) => {
     const venueDoc = await db.collection('venues').doc(venueId).get();
     const venueData = venueDoc.data();
 
-    let status: VenueStatus = 'dead';
-    if (score > PULSE_CONFIG.THRESHOLDS.PACKED) status = 'packed';
-    else if (score > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
-    else if (score > PULSE_CONFIG.THRESHOLDS.CHILL) status = 'chill';
-    else status = 'dead';
+    const oldStatus = venueData?.status;
 
-    // Manual Overrides (Owner/Admin Control)
+    // 4. Consensus Algorithm Logic (Rule 05-X - Beta Battalion Pivot)
+    const consensusCheckinWindow = now - PULSE_CONFIG.CONSENSUS.CHECKIN_WINDOW;
+    const consensusVibeWindow = now - PULSE_CONFIG.CONSENSUS.VIBE_WINDOW;
+
+    const consensusCheckins = new Set<string>();
+    const consensusVibeReports = new Set<string>();
+
+    signalsSnapshot.forEach(doc => {
+        const data = doc.data() as Signal;
+        if (data.timestamp > consensusCheckinWindow && data.type === 'check_in') {
+            consensusCheckins.add(data.userId);
+        }
+        if (data.timestamp > consensusVibeWindow && data.type === 'vibe_report' && data.value?.status === 'packed') {
+            consensusVibeReports.add(data.userId);
+        }
+    });
+
+    const isConsensusPacked =
+        consensusCheckins.size >= PULSE_CONFIG.CONSENSUS.CHECKINS_REQUIRED ||
+        consensusVibeReports.size >= PULSE_CONFIG.CONSENSUS.VIBE_REPORTS_REQUIRED;
+
+    // If consensus is met, force 'packed'. Otherwise follow score-based status.
+    let calibratedStatus = status;
+    if (isConsensusPacked) calibratedStatus = 'packed';
+
+    // Manual Overrides (Owner/Admin Control) - Still respected for UI, but SMS trigger is consensus-only
     const finalStatus = (venueData?.manualStatus && venueData?.manualStatusExpiresAt > now)
         ? venueData.manualStatus
-        : status;
+        : calibratedStatus;
 
     const finalCheckIns = (venueData?.manualCheckIns !== undefined && venueData?.manualCheckInsExpiresAt > now)
         ? venueData.manualCheckIns
@@ -139,6 +160,26 @@ export const updateVenueBuzz = async (venueId: string) => {
         'status': finalStatus,
         'checkIns': finalCheckIns
     });
+
+    // 5. Trigger Pulse Alert (ONLY ON CONSENSUS TRANSITION)
+    // We only trigger SMS if the consensus itself flips to packed, regardless of manual override.
+    // This protects from 'Andy the Owner' over-promoting.
+    const wasConsensusPacked = (venueData as any)?.isConsensusPacked || false;
+
+    if (isConsensusPacked && !wasConsensusPacked) {
+        const { NotificationService } = await import('./services/NotificationService');
+        await NotificationService.dispatchPulseAlert(venueId, venueData?.name || 'A venue');
+
+        // Persist consensus state to avoid duplicate alerts
+        await db.collection('venues').doc(venueId).update({
+            isConsensusPacked: true
+        });
+    } else if (!isConsensusPacked && wasConsensusPacked) {
+        // Reset consensus state when it drops below threshold
+        await db.collection('venues').doc(venueId).update({
+            isConsensusPacked: false
+        });
+    }
 
     // Invalidate cache
     venueCache = null;
@@ -253,12 +294,34 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
         }
     }
 
-    // 1. Conflict of Interest Check (Rule 03-B)
+    // [BETA BATTALION] Add Signal BEFORE point checks to ensure consensus accuracy
+    // even if the user is point-capped or throttled.
+    const timestamp = Date.now();
+    const signal: Partial<Signal> = {
+        venueId,
+        userId,
+        type: 'check_in',
+        timestamp,
+        verificationMethod
+    };
+
+    // Check for recent signal from this user to prevent double-counting/spam (5 min window)
+    const recentDuplicate = await db.collection('signals')
+        .where('userId', '==', userId)
+        .where('venueId', '==', venueId)
+        .where('type', '==', 'check_in')
+        .where('timestamp', '>', timestamp - (5 * 60 * 1000))
+        .limit(1)
+        .get();
+
+    if (recentDuplicate.empty) {
+        await db.collection('signals').add(signal);
+    }
     if (venueData.ownerId === userId || venueData.managerIds?.includes(userId)) {
         throw new Error('Conflict of Interest: Venue staff and management are not eligible for League points at their own establishment.');
     }
 
-    const timestamp = Date.now();
+    // 1. Conflict of Interest Check (Rule 03-B)
 
     // 2. LCB Compliance Check (Rule 03-A) & Nightly Cap
     // WA State law limits users to 2 League check-ins per 12-hour window.
@@ -329,15 +392,7 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
         }
     }
 
-    const signal: Partial<Signal> = {
-        venueId,
-        userId,
-        type: 'check_in',
-        timestamp,
-        verificationMethod
-    };
-
-    await db.collection('signals').add(signal);
+    // [REMOVED] Signal added earlier above
     await db.collection('venues').doc(venueId).update({
         checkIns: (venueData.checkIns || 0) + 1
     });

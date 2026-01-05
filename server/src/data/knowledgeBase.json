@@ -17,8 +17,12 @@
             "answer": "Check-ins are limited to 2 per 12-hour window per WA State LCB alignment. Check-ins also require you to be within 100 meters of the Anchor Venue (measured via GPS)."
         },
         {
-            "question": "What is 'Buzzing'?",
-            "answer": "When a venue receives multiple Vibe Checks or Check-ins within a short period, it turns Gold on the map, indicating it is currently high-energy or 'Buzzing'."
+            "question": "What do the Vibes mean?",
+            "answer": "We use a 4-tier scale: Dead (Quiet, <20% cap), Chill (Easy conversation), Buzzing (High energy, table full), and Packed (Standing room only, party peaking!)."
+        },
+        {
+            "question": "How do Pulse Alerts work?",
+            "answer": "Pulse Alerts keep you in the loop without the spam. Star a venue to 'Subscribe'. We'll text you specifically when that spot hits 'Packed' status so you don't miss the peak!"
         },
         {
             "question": "How do I change my Handle?",

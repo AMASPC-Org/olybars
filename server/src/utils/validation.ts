@@ -46,6 +46,13 @@ export const UserUpdateSchema = z.object({
     homeBase: z.string().optional(),
     playerGamePreferences: z.array(z.string()).optional(),
     hasCompletedMakerSurvey: z.boolean().optional(),
+    sms_opt_in: z.boolean().optional(),
+    notificationSettings: z.object({
+        allow_league_intel: z.boolean(),
+        allow_pulse_alerts: z.boolean(),
+        quiet_hours_start: z.string(),
+        quiet_hours_end: z.string(),
+    }).optional(),
     role: z.string().optional(), // We will gate this in the logic
 });
 
@@ -186,6 +193,7 @@ export const VenueUpdateSchema = z.object({
         timestamp: z.number().optional(),
         userId: z.string().optional(),
     })).optional(),
+    social_auto_sync: z.boolean().optional(),
 });
 
 export const VenueOnboardSchema = z.object({
@@ -279,8 +287,17 @@ export const VenueSchema = z.object({
     isLgbtq: z.boolean().optional(),
     isLowCapacity: z.boolean().optional(),
     partnerConfig: z.object({
-        tier: z.enum(['FREE', 'DIY', 'PRO', 'AGENCY']),
+        tier: z.enum(['FREE', 'DIY', 'PRO', 'AGENCY', 'PREM_PARTNER']),
         billingCycleStart: z.number(),
-        flashBountiesUsed: z.number()
-    }).optional()
+        flashBountiesUsed: z.number(),
+        metaSync: z.object({
+            facebookPageId: z.string().optional(),
+            instagramBusinessId: z.string().optional(),
+            pageToken: z.string().optional(),
+            accessToken: z.string().optional(),
+            lastSync: z.number().optional(),
+            autoPublishEnabled: z.boolean().optional(),
+        }).optional()
+    }).optional(),
+    social_auto_sync: z.boolean().optional()
 });

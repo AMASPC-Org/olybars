@@ -1,6 +1,6 @@
 import { signInWithPopup, User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { auth, googleProvider, db } from '../lib/firebase';
+import { auth, googleProvider, facebookProvider, db } from '../lib/firebase';
 import { UserProfile } from '../types';
 
 export const AuthService = {
@@ -16,6 +16,22 @@ export const AuthService = {
             return await this.syncUserProfile(user);
         } catch (error) {
             console.error('Google Sign-In Error:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Sign in with Facebook and sync profile to Firestore
+     */
+    async signInWithFacebook(): Promise<UserProfile> {
+        try {
+            const result = await signInWithPopup(auth, facebookProvider);
+            const user = result.user;
+
+            // Sync or Create Profile
+            return await this.syncUserProfile(user);
+        } catch (error) {
+            console.error('Facebook Sign-In Error:', error);
             throw error;
         }
     },
