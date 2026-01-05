@@ -7,7 +7,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { PlaceAutocomplete } from '../../../components/ui/PlaceAutocomplete';
 import { AssetToggleGrid } from '../../../components/partners/AssetToggleGrid';
-import { Venue } from '../../../types';
+import { Venue, VenueStatus } from '../../../types';
 import { syncVenueWithGoogle, updateVenueDetails, checkVenueClaim, onboardVenue } from '../../../services/venueService';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { SEO } from '../../../components/common/SEO';
@@ -22,7 +22,7 @@ export default function ClaimVenuePage() {
     const [venueData, setVenueData] = useState<Partial<Venue> | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [assets, setAssets] = useState<Record<string, boolean>>({});
-    const [vibe, setVibe] = useState<'CHILL' | 'LIVELY' | 'BUZZING'>('LIVELY');
+    const [vibe, setVibe] = useState<VenueStatus>('chill');
     const [managerEmail, setManagerEmail] = useState('');
     const navigate = useNavigate();
 
@@ -312,10 +312,11 @@ export default function ClaimVenuePage() {
                                             <h3 className="text-lg font-black uppercase font-league text-primary leading-none">DEFAULT ATMOSPHERE</h3>
                                             <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">Help users find the right mood</p>
                                         </div>
-                                        <span className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-lg ${vibe === 'CHILL' ? 'text-blue-400 bg-blue-400/10' :
-                                            vibe === 'LIVELY' ? 'text-primary bg-primary/10' : 'text-red-400 bg-red-400/10'
+                                        <span className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-lg ${vibe === 'dead' ? 'text-slate-500 bg-slate-500/10' :
+                                            vibe === 'chill' ? 'text-blue-400 bg-blue-400/10' :
+                                                vibe === 'buzzing' ? 'text-primary bg-primary/10' : 'text-red-400 bg-red-400/10'
                                             }`}>
-                                            {vibe}
+                                            {vibe.toUpperCase()}
                                         </span>
                                     </div>
 
@@ -323,19 +324,20 @@ export default function ClaimVenuePage() {
                                         <input
                                             type="range"
                                             min="0"
-                                            max="2"
+                                            max="3"
                                             step="1"
-                                            value={vibe === 'CHILL' ? 0 : vibe === 'LIVELY' ? 1 : 2}
+                                            value={vibe === 'dead' ? 0 : vibe === 'chill' ? 1 : vibe === 'buzzing' ? 2 : 3}
                                             onChange={(e) => {
                                                 const val = parseInt(e.target.value);
-                                                setVibe(val === 0 ? 'CHILL' : val === 1 ? 'LIVELY' : 'BUZZING');
+                                                setVibe(val === 0 ? 'dead' : val === 1 ? 'chill' : val === 2 ? 'buzzing' : 'packed');
                                             }}
                                             className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-primary"
                                         />
                                         <div className="flex justify-between mt-4 text-[9px] font-black uppercase tracking-widest text-slate-600">
-                                            <span className={vibe === 'CHILL' ? 'text-primary' : ''}>CHILL (Conversational)</span>
-                                            <span className={vibe === 'LIVELY' ? 'text-primary' : ''}>LIVELY (Social)</span>
-                                            <span className={vibe === 'BUZZING' ? 'text-primary' : ''}>HIGH ENERGY (Party)</span>
+                                            <span className={vibe === 'dead' ? 'text-primary' : ''}>DEAD (Quiet)</span>
+                                            <span className={vibe === 'chill' ? 'text-primary' : ''}>CHILL (Conversational)</span>
+                                            <span className={vibe === 'buzzing' ? 'text-primary' : ''}>BUZZING (Social)</span>
+                                            <span className={vibe === 'packed' ? 'text-primary' : ''}>PACKED (Party)</span>
                                         </div>
                                     </div>
                                 </div>

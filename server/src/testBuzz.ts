@@ -31,7 +31,7 @@ async function testBuzz() {
     console.log(`Current Status: ${data?.status}`);
     console.log(`Current Score: ${data?.currentBuzz?.score}`);
 
-    if (data?.status === 'buzzing' && data?.currentBuzz?.score >= 61) {
+    if (data?.status === 'buzzing' && data?.currentBuzz?.score >= 40) {
         console.log('✅ Buzz Algorithm Verified!');
     } else {
         console.error('❌ Buzz Algorithm Verification Failed.');

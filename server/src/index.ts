@@ -1117,7 +1117,7 @@ v1Router.get('/venues/:id/semantic', async (req, res) => {
         const prompt = `You are an SEO & AI Authority specialist for OlyBars.
         Analyze this venue and produce a structured semantic profile for AI agents.
         Venue: ${venue.name}
-        Type: ${venue.type}
+        Type: ${venue.venueType}
         Vibe: ${venue.vibe}
         Lore: ${venue.originStory}
         Insider: ${venue.insiderVibe}
@@ -1163,20 +1163,20 @@ v1Router.post('/ai/generate-description', async (req, res) => {
         }
         const venue = venueDoc.data()!;
 
-        // 2. Fetch Relevant Deals (Happy Hour/Flash Deals)
+        // 2. Fetch Relevant Deals (Happy Hour/Flash Bountys)
         // For simplicity, we'll just check if the venue has registered deals
         // In a real scenario, we might filter by time, but for now we provide the list to Artie.
-        const deals = venue?.deals || [];
+        const deals = venue?.flashBounties || [];
 
         // 3. Get Knowledge Context (Holidays/Weather)
         const context = KnowledgeService.getEventContext(date);
-        const foodAlignment = KnowledgeService.getFoodOrHolidayAlignment(venue.type || '', date);
+        const foodAlignment = KnowledgeService.getFoodOrHolidayAlignment(venue.venueType || '', date);
 
         // 4. Generate with Artie
         const gemini = new GeminiService();
         const description = await gemini.generateEventDescription({
             venueName: venue.name,
-            venueType: venue.type,
+            venueType: venue.venueType,
             eventType: type,
             date,
             time,
@@ -1221,13 +1221,13 @@ app.use('/api/v2', v2Router);
 app.use('/api', v1Router); // Fallback for legacy frontend
 
 
-// Flash Deal Activator (Lazy Cron)
+// Flash Bounty Activator (Lazy Cron)
 setInterval(async () => {
     try {
-        const { syncFlashDeals } = await import('./venueService');
-        await syncFlashDeals();
+        const { syncFlashBounties } = await import('./venueService.js');
+        await syncFlashBounties();
     } catch (e) {
-        console.error('[ACTIVATOR] Failed to sync flash deals:', e);
+        console.error('[ACTIVATOR] Failed to sync Flash Bountys:', e);
     }
 }, 60000); // Check every minute
 

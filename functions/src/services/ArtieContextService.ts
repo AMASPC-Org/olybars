@@ -20,7 +20,7 @@ export class ArtieContextService {
 
             const buzzing = venuesSnapshot.docs
                 .map(doc => doc.data())
-                .filter(v => v.status === 'lively' || v.status === 'buzzing')
+                .filter(v => v.status === 'buzzing' || v.status === 'packed')
                 .slice(0, 3)
                 .map(v => v.name);
 
@@ -28,17 +28,17 @@ export class ArtieContextService {
             const settingsDoc = await db.collection('settings').doc('platform').get();
             const settings = settingsDoc.exists ? settingsDoc.data() : {};
 
-            // 3. FLASH DEALS: Fetch active deals directly from venues
+            // 3. Flash Bounties: Fetch active deals directly from venues
             const now = Date.now();
             const dealsSnapshot = await db.collection('venues')
-                .where('activeFlashDeal.isActive', '==', true)
-                .where('activeFlashDeal.endTime', '>', now)
+                .where('activeflashBounty.isActive', '==', true)
+                .where('activeflashBounty.endTime', '>', now)
                 .get();
 
             const activeDeals = dealsSnapshot.docs.map(doc => ({
                 venueId: doc.id,
                 venueName: doc.data().name,
-                ...doc.data().activeFlashDeal
+                ...doc.data().activeflashBounty
             }));
 
             const deals = activeDeals.map(data => {
@@ -90,7 +90,7 @@ export class ArtieContextService {
 [REAL-TIME SITE CONTEXT]
 Timestamp: ${pulse.timestamp}
 Buzzing Venues: ${pulse.buzzingVenues.length > 0 ? pulse.buzzingVenues.join(', ') : 'All quiet on the waterfront.'}
-Flash Deals Active: ${pulse.activeDealsCount} ${pulse.activeDeals.length > 0 ? `(${pulse.activeDeals.join('; ')})` : ''}
+Flash Bounties Active: ${pulse.activeDealsCount} ${pulse.activeDeals.length > 0 ? `(${pulse.activeDeals.join('; ')})` : ''}
 Happy Hour Specials: ${pulse.happyHours.length > 0 ? pulse.happyHours.join(' | ') : 'No specific HH intel right now.'}
 Upcoming Events: ${pulse.upcomingEvents.length > 0 ? pulse.upcomingEvents.join(', ') : 'No sanctioned events on the wire.'}
 Status: ${pulse.platformMessage}

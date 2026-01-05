@@ -46,7 +46,7 @@ const AboutPage = () => {
         [venues]);
 
     const activeHappyHours = useMemo(() =>
-        venues.filter(v => (v.deal || (v.flashDeals && v.flashDeals.length > 0)) && isVenueOpen(v)).slice(0, 3),
+        venues.filter(v => (v.deal || (v.flashBounties && v.flashBounties.length > 0)) && isVenueOpen(v)).slice(0, 3),
         [venues]);
 
     const handleSend = async () => {

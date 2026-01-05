@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../lib/firebase';
-import { MessageCircle, X, Send, Sparkles } from 'lucide-react';
+import { MessageCircle, X, Send, Sparkles, Mic, MicOff, Loader2 } from 'lucide-react';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 
 interface Message {
     role: 'user' | 'model';
@@ -16,6 +17,13 @@ export const ArtieChatWidget: React.FC = () => {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const { isListening, transcript, startListening, stopListening, isSupported } = useSpeechRecognition();
+
+    useEffect(() => {
+        if (transcript) {
+            setInput(prev => prev + (prev ? ' ' : '') + transcript);
+        }
+    }, [transcript]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -114,19 +122,31 @@ export const ArtieChatWidget: React.FC = () => {
 
                     {/* Input */}
                     <div className="p-4 bg-surface border-t border-slate-700 flex gap-2">
-                        <input
-                            className="flex-1 bg-slate-900/50 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-oly-gold border border-slate-600 placeholder-slate-500 transition-all"
-                            placeholder="Ask about cheap beer or vibes..."
-                            value={input}
-                            onChange={e => setInput(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && sendMessage()}
-                        />
+                        <div className="relative flex-1">
+                            <input
+                                className={`w-full bg-slate-900/50 text-white rounded-xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-oly-gold border border-slate-600 placeholder-slate-500 transition-all ${isListening ? 'ring-2 ring-primary animate-pulse' : ''}`}
+                                placeholder={isListening ? "Listening..." : "Ask about cheap beer or vibes..."}
+                                value={input}
+                                onChange={e => setInput(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                            />
+                            {isSupported && (
+                                <button
+                                    onClick={isListening ? stopListening : startListening}
+                                    className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all ${isListening ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-white hover:bg-white/5'
+                                        }`}
+                                    title={isListening ? "Stop Listening" : "Start Voice Input"}
+                                >
+                                    {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                                </button>
+                            )}
+                        </div>
                         <button
                             onClick={sendMessage}
-                            disabled={isLoading || !input.trim()}
-                            className="bg-oly-gold text-oly-navy p-3 rounded-xl hover:bg-yellow-400 disabled:opacity-50 disabled:scale-95 transition-all shadow-lg shadow-yellow-900/20"
+                            disabled={isLoading || !input.trim() || isListening}
+                            className="bg-oly-gold text-oly-navy p-3 rounded-xl hover:bg-yellow-400 disabled:opacity-50 disabled:scale-95 transition-all shadow-lg shadow-yellow-900/20 flex items-center justify-center shrink-0 w-12 h-12"
                         >
-                            <Send size={20} />
+                            {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
                         </button>
                     </div>
                 </div>

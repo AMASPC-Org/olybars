@@ -210,7 +210,7 @@ WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
 
         STRATEGY:
         1. Identify the consistently slow time/day.
-        2. Suggest a "Flash Deal" or "Vibe Boost".
+        2. Suggest a "Flash Bounty" or "Vibe Boost".
         3. Allocate a Point Bank spend (usually 500-1000 points).
         4. Pitch it as "I'm working for you while you sleep".
 
@@ -221,7 +221,7 @@ WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
         {
            "type": "YIELD_BOOST",
            "message": "Artie-style pitch (e.g. 'Hey Chris, last Wednesday was slow...')",
-           "actionLabel": "Approve Flash Deal",
+           "actionLabel": "Approve Flash Bounty",
            "actionSkill": "update_flash_deal",
            "actionParams": {
               "summary": "Title of deal",

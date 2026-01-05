@@ -287,7 +287,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                     <button onClick={() => handleNavigation(`/owner?tab=deals${isSuperAdmin ? '&venueId=hannahs' : ''}`)} className="w-full bg-slate-900 border border-white/10 p-4 rounded-xl flex items-center gap-4 hover:border-primary/50 transition-all active:scale-[0.98]">
                         <Percent className="w-5 h-5 text-green-400" />
-                        <span className="text-sm font-black uppercase text-white tracking-wide">Flash Deals</span>
+                        <span className="text-sm font-black uppercase text-white tracking-wide">Flash Bounties</span>
                     </button>
 
                     <button

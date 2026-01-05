@@ -1,11 +1,12 @@
-import * as admin from 'firebase-admin';
+import { initializeApp, getApps } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 /**
  * Migration Script: Venue Confidentiality (Server-Side)
  * Moves sensitive fields from public venue documents to the private_data/main sub-collection.
  * Uses firebase-admin for full access and reliable execution.
  */
-export async function migratePartnerData(db: admin.firestore.Firestore) {
+export async function migratePartnerData(db: any) {
     console.log('--- [ADMIN] STARTING PARTNER DATA MIGRATION ---');
     const venuesRef = db.collection('venues');
     const snapshot = await venuesRef.get();
@@ -50,8 +51,8 @@ export async function migratePartnerData(db: admin.firestore.Firestore) {
             const privateDocRef = db.collection('venues').doc(venueId).collection('private_data').doc('main');
             batch.set(privateDocRef, {
                 ...privateData,
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                migratedAt: admin.firestore.FieldValue.serverTimestamp()
+                updatedAt: FieldValue.serverTimestamp(),
+                migratedAt: FieldValue.serverTimestamp()
             }, { merge: true });
             migratedCount++;
         }

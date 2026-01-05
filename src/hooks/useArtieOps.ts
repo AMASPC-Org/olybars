@@ -62,7 +62,7 @@ export const useArtieOps = () => {
     // 4. Time/Schedule Validator
     const validateSchedule = useCallback(async (timeISO: string, duration: number) => {
         // Mock venue for check - in real app would get from context
-        const mockVenue = { partnerConfig: { tier: 'FREE', flashDealsUsed: 0 } } as any;
+        const mockVenue = { partnerConfig: { tier: 'FREE', flashBountiesUsed: 0 } } as any;
         const check = await VenueOpsService.validateSlot(mockVenue, new Date(timeISO).getTime(), duration);
         return check;
     }, []);
@@ -88,15 +88,15 @@ export const useArtieOps = () => {
                 newMessage.text = "Welcome back! I'm ready to help. What's the mission?";
                 setMessages([newMessage]);
                 setCurrentBubbles([
-                    { id: '1', label: '⚡ Flash Deal', value: 'skill_flash_deal', icon: '⚡' },
+                    { id: '1', label: '⚡ Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
                     { id: '2', label: '📅 Add Event', value: 'skill_add_event', icon: '📅' },
                     // { id: '3', label: '🎱 Update Play', value: 'skill_update_play', icon: '🎱' } // Hidden for now per user focus
                 ]);
                 break;
 
-            // --- SKILL: FLASH DEAL INTRO ---
+            // --- SKILL: Flash Bounty INTRO ---
             case 'skill_flash_deal':
-                addUserMessage('Flash Deal');
+                addUserMessage('Flash Bounty');
                 setOpsState('flash_deal_init_method');
                 newMessage.text = "Let's fill some seats. Do you have a deal in mind, or want some ideas?";
                 setMessages(prev => [...prev, newMessage]);
@@ -149,32 +149,37 @@ export const useArtieOps = () => {
                     const startTimeISO = now.toISOString();
                     const duration = 60;
 
-                    // 4. Traffic Check (Simulated)
-                    // In real flow this would wait for await validateSchedule(startTimeISO, duration);
-                    // For now assume OPEN
+                    // 4. Traffic Check
+                    const trafficCheck = await validateSchedule(startTimeISO, duration);
+                    if (!trafficCheck.valid) {
+                        setIsLoading(false);
+                        newMessage.text = `⚠️ I can't schedule that. ${trafficCheck.reason}`;
+                        setMessages(prev => [...prev, newMessage]);
+                        // Stay in input mode
+                    } else {
+                        setDraftData({
+                            skill: 'schedule_flash_deal',
+                            params: {
+                                summary: payload,
+                                details: "Limited time offer. See bartender for details.",
+                                startTimeISO: startTimeISO,
+                                duration: duration,
+                                staffBriefingConfirmed: true, // Auto-assume for MVP flow speed, or ask in next step
+                                price: "See details"
+                            }
+                        });
 
-                    setDraftData({
-                        skill: 'schedule_flash_deal',
-                        params: {
-                            summary: payload,
-                            details: "Limited time offer. See bartender for details.",
-                            startTimeISO: startTimeISO,
-                            duration: duration,
-                            staffBriefingConfirmed: true, // Auto-assume for MVP flow speed, or ask in next step
-                            price: "See details"
-                        }
-                    });
+                        setIsLoading(false);
+                        setOpsState('confirm_action');
 
-                    setIsLoading(false);
-                    setOpsState('confirm_action');
-
-                    newMessage.text = `Looks valid. I've drafted this:\n\n"${payload}"\n\nStarting: NOW\nDuration: 1 Hour\n\nPost to the Buzz Clock?`;
-                    setMessages(prev => [...prev, newMessage]);
-                    setCurrentBubbles([
-                        { id: 'confirm', label: '🚀 Post It', value: 'confirm_post' },
-                        { id: 'edit', label: '✏️ Edit', value: 'skill_flash_deal' }, // Loop back
-                        { id: 'cancel', label: '❌ Cancel', value: 'cancel' }
-                    ]);
+                        newMessage.text = `Looks valid. I've drafted this:\n\n"${payload}"\n\nStarting: NOW\nDuration: 1 Hour\n\nPost to the Buzz Clock?`;
+                        setMessages(prev => [...prev, newMessage]);
+                        setCurrentBubbles([
+                            { id: 'confirm', label: '🚀 Post It', value: 'confirm_post' },
+                            { id: 'edit', label: '✏️ Edit', value: 'skill_flash_deal' }, // Loop back
+                            { id: 'cancel', label: '❌ Cancel', value: 'cancel' }
+                        ]);
+                    }
                 }
                 break;
 
@@ -201,7 +206,7 @@ export const useArtieOps = () => {
                 newMessage.text = "Cancelled. What else?";
                 setMessages(prev => [...prev, newMessage]);
                 setCurrentBubbles([
-                    { id: '1', label: '⚡ Flash Deal', value: 'skill_flash_deal', icon: '⚡' },
+                    { id: '1', label: '⚡ Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
                     { id: '2', label: '📅 Add Event', value: 'skill_add_event', icon: '📅' },
                 ]);
                 break;

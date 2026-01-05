@@ -61,7 +61,7 @@ const PartnerSecurityScreen: React.FC = () => {
                     </p>
                     <ul className="list-disc list-inside text-slate-400 text-sm space-y-2 ml-4">
                         <li><strong>Public Data:</strong> Venue name, address, valid events, public photos.</li>
-                        <li><strong>Partner-Private Data:</strong> <code>margin_tier</code>, <code>PartnerConfig</code> (tokens), draft <code>FlashDeals</code>, internal notes, and manager lists. <strong>Not readable by players.</strong></li>
+                        <li><strong>Partner-Private Data:</strong> <code>margin_tier</code>, <code>PartnerConfig</code> (tokens), draft <code>flashBounties</code>, internal notes, and manager lists. <strong>Not readable by players.</strong></li>
                         <li><strong>User-Private Data:</strong> Login emails and profile metadata.</li>
                     </ul>
                 </section>

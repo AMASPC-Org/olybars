@@ -14,7 +14,7 @@ export const PlayCheckInSchema = z.object({
 
 export const VibeCheckSchema = z.object({
     venueId: z.string().min(1),
-    status: z.enum(['dead', 'chill', 'lively', 'buzzing', 'packed']),
+    status: z.enum(['dead', 'chill', 'buzzing', 'packed']),
     hasConsent: z.boolean(),
     photoUrl: z.string().optional(),
     verificationMethod: z.enum(['gps', 'qr']).optional(),
@@ -91,7 +91,7 @@ export const VenueUpdateSchema = z.object({
         isLeaguePartner: z.boolean().optional(),
     })).optional(),
     vibe: z.string().optional(),
-    vibeDefault: z.enum(['CHILL', 'LIVELY', 'BUZZING']).optional(),
+    vibeDefault: z.enum(['CHILL', 'BUZZING', 'PACKED']).optional(),
     assets: z.record(z.string(), z.boolean()).optional(),
     originStory: z.string().optional(),
     insiderVibe: z.string().optional(),
@@ -215,7 +215,7 @@ export const VenueSchema = z.object({
     venueType: z.enum(['bar_pub', 'restaurant_bar', 'brewery_taproom', 'lounge_club', 'arcade_bar', 'brewpub', 'private_club', 'winery_tasting']).optional(),
     vibeTags: z.array(z.string()).optional(),
     foodService: z.enum(['full_kitchen', 'limited_kitchen', 'snacks', 'none_byof']).optional(),
-    status: z.enum(['dead', 'chill', 'lively', 'buzzing', 'packed']).optional(),
+    status: z.enum(['dead', 'chill', 'buzzing', 'packed']).optional(),
     checkIns: z.number().optional(),
     capacity: z.number().optional(),
     isPaidLeagueMember: z.boolean().optional(),
@@ -241,8 +241,8 @@ export const VenueSchema = z.object({
     isVisible: z.boolean().optional(),
     isHistoricalAnchor: z.boolean().optional(),
     historySnippet: z.string().optional(),
-    flashDeals: z.array(z.any()).optional(),
-    activeFlashDealId: z.string().optional(),
+    flashBounties: z.array(z.any()).optional(),
+    activeFlashBountyId: z.string().optional(),
     deal: z.string().optional(),
     dealEndsIn: z.number().optional(),
     vibeDefault: z.string().optional(),
@@ -276,6 +276,6 @@ export const VenueSchema = z.object({
     happyHourRules: z.array(z.any()).optional(),
     happyHourMenu: z.array(z.any()).optional(),
     isBoutique: z.boolean().optional(),
-    isLbgtq: z.boolean().optional(),
+    isLgbtq: z.boolean().optional(),
     isLowCapacity: z.boolean().optional()
 });

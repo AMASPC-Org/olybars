@@ -42,7 +42,7 @@
         },
         {
             "question": "What is 'The Brew House'?",
-            "answer": "The Brew House is the official name for the OlyBars Owner Dashboard. It's where partners manage their listings, flash deals, and menu items. Think of it as your venue's mission control."
+            "answer": "The Brew House is the official name for the OlyBars Owner Dashboard. It's where partners manage their listings, Flash Bountys, and menu items. Think of it as your venue's mission control."
         },
         {
             "question": "What is 'The Manual'?",
@@ -100,7 +100,7 @@
         "the_phoenix_effect": "Corporate-lite models are failing; scrappy, personality-driven venues are rising. example: Ilk Lodge rising from the ashes of Fish Tale Brewpub.",
         "origin_value": "In a saturated market, 'Story' is the only differentiator. Why drive past 3 bars? Because of the origin story.",
         "micro_reality_check": "Every venue is vetted by 4 personas: Pit (Soul/Dive), Todd (Ops/Food), Chris (Data/Stability), Stephanie (Atmosphere/Safety).",
-        "ghost_list": "Venues that failed the reality check or closed: Heritage Tumwater (Retail failure), Locust Cider (Closed), Finnriver Tumwater (Closed). We do NOT send users there."
+        "ghost_list": "Venues that failed the reality check or closed: Locust Cider (Closed), Finnriver Tumwater (Closed). We do NOT send users there."
     },
     "strategy_modules": {
         "history_revenue_loop": {

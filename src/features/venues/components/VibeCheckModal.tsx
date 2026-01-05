@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin, Gamepad2, Clock, Zap, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { Venue, VenueStatus, GameStatus } from '../../../types';
 import { getGameTTL } from '../../../config/gameConfig';
@@ -201,7 +201,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                 <div className="p-4 space-y-4">
                     <div className="text-center">
                         <p className={`text-[10px] font-black uppercase tracking-widest ${isAtVenue ? 'text-primary' : (currentDistance !== null ? 'text-red-400' : 'text-slate-500')}`}>
-                            {geoLoading ? 'Finding you...' : (isLocalhost ? '💻 DEV MODE: GPS BYPASS' : (isAtVenue ? '📍 Verified At Venue' : (currentDistance !== null ? `${Math.round(currentDistance)}m FROM VENUE` : '🚶 Location Check Required')))}
+                            {geoLoading ? 'Finding you...' : (isLocalhost ? '?? DEV MODE: GPS BYPASS' : (isAtVenue ? '?? Verified At Venue' : (currentDistance !== null ? `${Math.round(currentDistance)}m FROM VENUE` : '?? Location Check Required')))}
                         </p>
                         {!isAtVenue && !geoLoading && (
                             <button
@@ -330,7 +330,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                                 }}
                                 className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${soberCheck?.isGood === true ? 'bg-secondary text-black border-secondary' : 'bg-black/40 text-slate-500 border-white/5'}`}
                             >
-                                👍 Yes
+                                ?? Yes
                             </button>
                             <button
                                 onClick={() => {
@@ -339,7 +339,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                                 }}
                                 className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${soberCheck?.isGood === false ? 'bg-red-500 text-white border-red-500' : 'bg-black/40 text-slate-500 border-white/5'}`}
                             >
-                                👎 No
+                                ?? No
                             </button>
                         </div>
 
@@ -402,7 +402,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
 
                 {errorMessage && (
                     <div className="bg-red-900/20 border border-red-800 p-3 rounded-lg text-red-200 text-xs font-bold text-center">
-                        ⚠️ {errorMessage}
+                        ?? {errorMessage}
                     </div>
                 )}
 

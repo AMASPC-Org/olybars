@@ -27,7 +27,7 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
     const navigate = useNavigate();
     const { coords } = useGeolocation();
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeFilter, setActiveFilter] = useState<'all' | 'buzzing' | 'lively' | 'chill' | 'favorites'>('all');
+    const [activeFilter, setActiveFilter] = useState<'all' | 'packed' | 'buzzing' | 'chill' | 'favorites'>('all');
 
     // Logic for sorting and filtering
     const filteredVenues = useMemo(() => {
@@ -66,12 +66,12 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
         }
 
         // 2. Category filter
-        if (activeFilter === 'buzzing') {
+        if (activeFilter === 'packed') {
+            result = result.filter(v => v.status === 'packed');
+        } else if (activeFilter === 'buzzing') {
             result = result.filter(v =>
                 v.status === 'buzzing' || (v.currentBuzz?.score || 0) > 70
             );
-        } else if (activeFilter === 'lively') {
-            result = result.filter(v => v.status === 'lively');
         } else if (activeFilter === 'chill') {
             result = result.filter(v => v.status === 'chill');
         } else if (activeFilter === 'favorites') {
@@ -129,8 +129,8 @@ const TheSpotsScreen: React.FC<TheSpotsScreenProps> = ({ venues, userProfile, ha
             <div className="flex gap-2 mb-8 overflow-x-auto pb-4 scrollbar-hide no-scrollbar -mx-6 px-6">
                 {[
                     { id: 'all', label: 'ALL', icon: Filter },
+                    { id: 'packed', label: 'PACKED', icon: Zap },
                     { id: 'buzzing', label: 'BUZZING', icon: Flame },
-                    { id: 'lively', label: 'LIVELY', icon: Zap },
                     { id: 'chill', label: 'CHILL', icon: Clock },
                     { id: 'favorites', label: 'FAVORITES', icon: Star },
                 ].map((item) => (

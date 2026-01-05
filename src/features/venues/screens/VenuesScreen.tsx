@@ -76,7 +76,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
 
         // 4. Tag Filter (Vibe Tags & Functional Tags)
         if (activeTag) {
-            if (activeTag === 'Deals') result = result.filter(v => !!v.deal || (v.flashDeals && v.flashDeals.length > 0));
+            if (activeTag === 'Deals') result = result.filter(v => !!v.deal || (v.flashBounties && v.flashBounties.length > 0));
             else if (activeTag === 'Makers') {
                 result = result.filter(v =>
                     v.isHQ ||
@@ -131,8 +131,8 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                 if (isAPartner !== isBPartner) return isAPartner ? -1 : 1;
 
                 // Priority 1: Has Deal?
-                const aHasDeal = !!(a.deal || (a.flashDeals && a.flashDeals.length > 0));
-                const bHasDeal = !!(b.deal || (b.flashDeals && b.flashDeals.length > 0));
+                const aHasDeal = !!(a.deal || (a.flashBounties && a.flashBounties.length > 0));
+                const bHasDeal = !!(b.deal || (b.flashBounties && b.flashBounties.length > 0));
 
                 if (aHasDeal && !bHasDeal) return -1;
                 if (!aHasDeal && bHasDeal) return 1;

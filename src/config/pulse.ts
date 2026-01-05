@@ -35,7 +35,7 @@ export const PULSE_CONFIG = {
         BUZZING: 40,   // > 40 = Buzzing
         CHILL: 10,     // > 10 = Chill
         DEAD: 0,       // > 0 = Dead (Base state)
-        FLASH_DEAL: 180, // < 180 mins remaining = Flash Deal
+        FLASH_BOUNTY: 180, // < 180 mins remaining = Flash Bounty
         BUZZ_CLOCK_PRIORITY: 240 // < 240 mins = High priority in list
     },
 
@@ -43,9 +43,9 @@ export const PULSE_CONFIG = {
     DESCRIPTIONS: {
         LIVE_MEANING: "Unique people checked in within the last 60 minutes.",
         PACKED_MEANING: "Max energy! Extremely high attendance.",
-        BUZZING_MEANING: "High activity! The venue is lively.",
+        BUZZING_MEANING: "High activity! The venue is energetic.",
         CHILL_MEANING: "Steady flow. Plenty of room to hang out.",
         DEAD_MEANING: "Minimal activity. Quiet vibes.",
-        FLASH_DEAL_MEANING: "Ending soon! High urgency."
+        FLASH_BOUNTY_MEANING: "Ending soon! High urgency."
     }
 };

@@ -52,6 +52,13 @@ This document serves as the single source of truth for the OlyBars system archit
 *   **Identity Service**: Handles session management and RBAC.
 *   **Age Verification**: Signup requires 21+ attestation. Bars remain responsible for physical ID checks.
 
+### 4.3 Partner Security: Zero-Trust & MFA
+To protect sensitive B2B data (margins, config), OlyBars enforces a strict security model for venue partners.
+*   **Data Segregation**: Sensitive fields are physically removed from the main `venues` collection and stored in a non-public sub-collection: `venues/{id}/private_data/main`.
+*   **Backend Filtering**: The public `/api/venues` endpoint uses `stripSensitiveVenueData` to ensure no private fields (e.g., `margin_tier`) ever reach the client-side for unauthorized users.
+*   **MFA Mandate**: The `OwnerDashboardScreen` implements a middleware-style check. Users with the `owner` or `manager` role are blocked from the dashboard unless `auth.currentUser.multiFactor.enrolledFactors` contains at least one active phone factor.
+*   **Secure API Access**: Private data is accessed through `/api/venues/:id/private`, which iterates through the sub-collection and is protected by `requireVenueAccess('manager')`.
+
 ## 5. Compliance
 
 ### 5.1 WSLCB Alignment
@@ -107,7 +114,7 @@ Cell service in Olympia bars (e.g., The Brotherhood basement) is unreliable.
 Calculates real-time venue activity.
 *   **Inputs**: Hard Check-in (10.0), Vibe Report (3.0).
 *   **Decay**: Score drops by 50% every 60 mins without signals.
-*   **States**: Chill (0-20), Lively (21-60), Buzzing (61+).
+*   **States**: Dead (0-10), Chill (11-40), Buzzing (41-100), Packed (101+).
 
 ### 8.3 Anti-Cheat ("The Bouncer")
 *   **Superman Rule**: Velocity checks (distance/time) to prevent teleportation.
@@ -119,6 +126,15 @@ Calculates real-time venue activity.
 *   `current_buzz`: { score, label, last_updated }
 *   `happyHourRules`: Array of time-based rules.
 *   `tier_config`: Subscription level features.
+
+#### 9.1.1 `private_data` (Sub-collection)
+*   **Path**: `venues/{id}/private_data/main`
+*   **Security**: Gated by `requireVenueAccess('manager')` and strict Firestore rules.
+*   **Fields**:
+    *   `partnerConfig`: Subscription tier and token usage.
+    *   `menuStrategies`: Field-level margin mapping (`item_id` -> `margin_tier`).
+    *   `pointBank`: Venue-specific point pool for traffic generation.
+    *   `pointBankLastReset`: Monthly reset timestamp.
 
 ### 9.2 `signals`
 *   Immutable event stream (TTL 12h).

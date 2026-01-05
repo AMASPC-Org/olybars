@@ -28,5 +28,5 @@ This rule ensures high performance, cost-efficiency, and a personalized user exp
 - **Forbidden**: Do not introduce third-party observability vendors without approval.
 
 ## 5. Map Visual Standards
-- **Radar Beacons**: Use gold (#fbbf24) for "Buzzing" venues and blue (#60a5fa) for "Lively" venues.
+- **Radar Beacons**: Use gold (#fbbf24) for "Buzzing" venues and pink/magenta (#ec4899) for "Packed" venues.
 - **Cleanup**: Clear all animation intervals on component unmount.

@@ -140,7 +140,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
         const s = status.toLowerCase();
         if (s === 'dead') return { text: 'DEAD', color: 'text-slate-500', bg: 'bg-slate-500' };
         if (s === 'chill') return { text: 'CHILL', color: 'text-blue-300', bg: 'bg-blue-400' };
-        if (s === 'buzzing' || s === 'lively') return { text: 'BUZZING', color: 'text-[#FFD700]', bg: 'bg-[#FFD700]' };
+        if (s === 'buzzing') return { text: 'BUZZING', color: 'text-[#FFD700]', bg: 'bg-[#FFD700]' };
         if (s === 'packed') return { text: 'PACKED', color: 'text-red-400', bg: 'bg-red-500' };
         return null;
     };

@@ -54,7 +54,7 @@ async function seedVenues() {
             const validation = VenueSchema.safeParse(venueData);
             if (!validation.success) {
                 console.error(`❌ Validation Failed for ${venueData.name} (${venueData.id}):`);
-                // console.error(JSON.stringify(validation.error.format(), null, 2));
+                console.error(JSON.stringify(validation.error.format(), null, 2));
                 console.error("Skipping venue due to validation errors.");
                 failCount++;
                 continue;

@@ -118,8 +118,11 @@ export const updateVenueBuzz = async (venueId: string) => {
     const venueDoc = await db.collection('venues').doc(venueId).get();
     const venueData = venueDoc.data();
 
-    let status: string = 'chill';
-    if (score > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
+    let status: VenueStatus = 'dead';
+    if (score > PULSE_CONFIG.THRESHOLDS.PACKED) status = 'packed';
+    else if (score > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
+    else if (score > PULSE_CONFIG.THRESHOLDS.CHILL) status = 'chill';
+    else status = 'dead';
 
     // Manual Overrides (Owner/Admin Control)
     const finalStatus = (venueData?.manualStatus && venueData?.manualStatusExpiresAt > now)
@@ -160,8 +163,11 @@ const applyVirtualDecay = (venue: Venue): Venue => {
     // 2. Determine Status (Respect Manual Override)
     let status = venue.status;
     if (!(venue.manualStatus && venue.manualStatusExpiresAt && venue.manualStatusExpiresAt > now)) {
-        status = 'chill';
-        if (decayedScore > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
+        status = 'dead';
+        if (decayedScore > PULSE_CONFIG.THRESHOLDS.PACKED) status = 'packed';
+        else if (decayedScore > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
+        else if (decayedScore > PULSE_CONFIG.THRESHOLDS.CHILL) status = 'chill';
+        else status = 'dead';
     }
 
     // 3. Determine Check-ins (Respect Manual Override)
@@ -1339,10 +1345,10 @@ export const generateVenueInsights = async (venueId: string) => {
 
 
 /**
- * Flash Deal Activator (Lazy Cron Logic)
+ * Flash Bounty Activator (Lazy Cron Logic)
  * Scans for scheduled deals that need to go live.
  */
-export const syncFlashDeals = async () => {
+export const syncFlashBounties = async () => {
     const now = Date.now();
     console.log(`[FLASH_SYNC] starting scan at ${new Date(now).toISOString()}`);
 
@@ -1375,7 +1381,7 @@ export const syncFlashDeals = async () => {
             // 2. Update Venue with active deal
             const venueRef = db.collection('venues').doc(venueId);
             batch.update(venueRef, {
-                'activeFlashDeal': {
+                'activeFlashBounty': {
                     id: dealId,
                     title: deal.title,
                     description: deal.description,
@@ -1396,7 +1402,7 @@ export const syncFlashDeals = async () => {
         // Invalidate cache
         venueCache = null;
 
-        console.log(`[FLASH_SYNC] Activated ${processed} deals.`);
+        console.log(`[FLASH_SYNC] Activated ${processed} bounties.`);
         return { processed };
     } catch (error) {
         console.error('[FLASH_SYNC] error:', error);
@@ -1497,4 +1503,3 @@ export const updateVenuePrivateData = async (venueId: string, updates: any) => {
 
     return { success: true };
 };
-```

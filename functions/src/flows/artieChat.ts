@@ -78,7 +78,7 @@ Home Venue ID: ${input.venueId || 'none'}
 - Maker's Trail: Discovery feature for local brewers/distillers.
 - Stool Test: Physical bar requirement.
 
-[FLASH DEALS - THE HARD RULES]
+[Flash BountyS - THE HARD RULES]
 1. 180-MINUTE RULE: All deals MUST be scheduled at least 180 minutes (3 hours) in advance. No exceptions.
    - If a user tries to schedule a deal for sooner than 3 hours from now, YOU MUST REFUSE and coach them.
 2. TOKEN ECONOMY: Monthly limits apply based on Tier: FREE (1), DIY (2), PRO (4), AGENCY (8).

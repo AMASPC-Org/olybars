@@ -8,7 +8,14 @@ import {
 import { UserProfile, Badge, UserRole, Venue, UserBadgeProgress } from '../../../types'; // Restored UserRole, Venue
 import { BADGES } from '../../../config/badges';
 import { shareAchievement } from '../../social/ShareService';
-import { updatePassword, updateEmail } from 'firebase/auth';
+import {
+    updatePassword,
+    updateEmail,
+    multiFactor,
+    PhoneAuthProvider,
+    PhoneMultiFactorGenerator,
+    RecaptchaVerifier
+} from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
 import { updateUserProfile } from '../../../services/userService';
 import { useToast } from '../../../components/ui/BrandedToast';
@@ -40,7 +47,24 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
 
     const [gamePrefs, setGamePrefs] = useState<string[]>(userProfile.playerGamePreferences || ['karaoke', 'trivia', 'arcade', 'live_music']);
 
-    const isSuperAdmin = userProfile.role === 'super-admin' || userProfile.email === 'ryan@amaspc.com';
+    const isSuperAdmin = isSystemAdmin(userProfile);
+    const isPartner = userProfile.role === 'owner' || (userProfile.venuePermissions && Object.keys(userProfile.venuePermissions).length > 0);
+
+    // MFA Enrollment State
+    const [mfaStep, setMfaStep] = useState<'none' | 'phone' | 'code'>('none');
+    const [mfaPhone, setMfaPhone] = useState(userProfile.phone || '');
+    const [mfaCode, setMfaCode] = useState('');
+    const [verificationId, setVerificationId] = useState('');
+    const [enrolledFactors, setEnrolledFactors] = useState<any[]>([]);
+    const [recaptchaVerifier, setRecaptchaVerifier] = useState<any>(null);
+
+    useEffect(() => {
+        if (auth.currentUser) {
+            setEnrolledFactors(multiFactor(auth.currentUser).enrolledFactors);
+        }
+    }, [userProfile.uid]);
+
+    const isMfaActive = enrolledFactors.length > 0;
 
     // Handle Change Logic
     const lastChanged = userProfile.handleLastChanged || 0;
@@ -162,6 +186,67 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
         setGamePrefs(prev =>
             prev.includes(prefId) ? prev.filter(p => p !== prefId) : [...prev, prefId]
         );
+    };
+
+    const handleStartMfaEnrollment = async () => {
+        if (!auth.currentUser) return;
+        if (!mfaPhone.startsWith('+')) {
+            showToast("Phone must start with + (e.g. +1360...)", "error");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            // Initialize Recaptcha if not already done
+            const verifier = new RecaptchaVerifier(auth, 'recaptcha-enroll-container', {
+                'size': 'invisible'
+            });
+            setRecaptchaVerifier(verifier);
+
+            const session = await multiFactor(auth.currentUser).getSession();
+            const phoneInfoOptions = {
+                phoneNumber: mfaPhone,
+                session: session
+            };
+            const phoneAuthProvider = new PhoneAuthProvider(auth);
+            const vId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, verifier);
+            setVerificationId(vId);
+            setMfaStep('code');
+            showToast("Verification code sent!", "success");
+        } catch (error: any) {
+            console.error("MFA Error:", error);
+            if (error.code === 'auth/requires-recent-login') {
+                showToast("SECURITY TIMEOUT: PLEASE RE-LOGIN TO ENROLL MFA", "error");
+            } else {
+                showToast(error.message || "Failed to start MFA enrollment", "error");
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleVerifyMfaEnrollment = async () => {
+        if (!auth.currentUser || !verificationId || !mfaCode) return;
+        setIsLoading(true);
+        try {
+            const cred = PhoneAuthProvider.credential(verificationId, mfaCode);
+            const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
+            await multiFactor(auth.currentUser).enroll(multiFactorAssertion, "Primary Phone");
+
+            setEnrolledFactors(multiFactor(auth.currentUser).enrolledFactors);
+            setMfaStep('none');
+            showToast("MFA ENROLLED SUCCESSFULLY", "success");
+
+            // Sync phone to profile if it changed
+            if (mfaPhone !== userProfile.phone) {
+                autoSaveUpdates({ phone: mfaPhone });
+            }
+        } catch (error: any) {
+            console.error("MFA Verify Error:", error);
+            showToast("Invalid code or enrollment failed", "error");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleShareBadge = async (badgeProgress: UserBadgeProgress) => {
@@ -632,6 +717,99 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                                     </button>
                                 </div>
                             </div>
+
+                            {/* [NEW] MFA PARTNER SECURITY SECTION */}
+                            {(isPartner || isSuperAdmin) && (
+                                <div className="pt-6 mt-6 border-t border-white/10 space-y-4">
+                                    <div className="flex items-center gap-2 text-primary">
+                                        <Shield className="w-5 h-5" />
+                                        <h4 className="text-sm font-black uppercase font-league">Partner Security (MFA)</h4>
+                                    </div>
+                                    <div id="recaptcha-enroll-container"></div>
+
+                                    {isMfaActive ? (
+                                        <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-2xl flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="bg-green-500/20 w-10 h-10 rounded-full flex items-center justify-center">
+                                                    <CheckCircle2 className="w-6 h-6 text-green-500" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] text-green-400 font-black uppercase tracking-widest">Active & Secure</p>
+                                                    <p className="text-xs font-bold text-slate-300">Identity protected via SMS</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">ENABLED</span>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-2xl space-y-4">
+                                            <div className="flex gap-4">
+                                                <div className="bg-amber-500/20 w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                                    <Lock className="w-6 h-6 text-amber-500" />
+                                                </div>
+                                                <div>
+                                                    <h5 className="text-sm font-black text-white uppercase font-league">Zero-Trust Mandate</h5>
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase leading-relaxed mt-1">
+                                                        Venue owners must enable MFA to protect merchant data and venue listings.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {mfaStep === 'none' ? (
+                                                <button
+                                                    onClick={() => setMfaStep('phone')}
+                                                    className="w-full py-3 bg-amber-500 text-black font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/10"
+                                                >
+                                                    Begin Enrollment
+                                                </button>
+                                            ) : mfaStep === 'phone' ? (
+                                                <div className="space-y-3">
+                                                    <input
+                                                        type="tel"
+                                                        value={mfaPhone}
+                                                        onChange={(e) => setMfaPhone(e.target.value)}
+                                                        placeholder="+1 360-555-0100"
+                                                        className="w-full bg-black/50 border border-amber-500/30 rounded-xl py-3 px-4 text-sm font-bold text-white outline-none"
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => setMfaStep('none')}
+                                                            className="flex-1 py-2 bg-white/5 text-slate-400 font-black text-[9px] uppercase tracking-widest rounded-lg"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                        <button
+                                                            onClick={handleStartMfaEnrollment}
+                                                            disabled={isLoading}
+                                                            className="flex-[2] py-2 bg-primary text-black font-black text-[9px] uppercase tracking-widest rounded-lg disabled:opacity-50"
+                                                        >
+                                                            {isLoading ? 'Sending...' : 'Send SMS Code'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    <p className="text-[9px] text-amber-500 font-black uppercase text-center">Enter 6-Digit Verification Key</p>
+                                                    <input
+                                                        type="text"
+                                                        value={mfaCode}
+                                                        onChange={(e) => setMfaCode(e.target.value)}
+                                                        maxLength={6}
+                                                        placeholder="000000"
+                                                        className="w-full bg-black/50 border border-primary/30 rounded-xl py-4 text-center text-xl font-black text-white outline-none tracking-[1em] pl-[1em]"
+                                                    />
+                                                    <button
+                                                        onClick={handleVerifyMfaEnrollment}
+                                                        disabled={isLoading || mfaCode.length < 6}
+                                                        className="w-full py-3 bg-primary text-black font-black text-[10px] uppercase tracking-widest rounded-xl disabled:opacity-50"
+                                                    >
+                                                        {isLoading ? 'Verifying...' : 'Finalize Security'}
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Password Management */}
                             {isEditing && (

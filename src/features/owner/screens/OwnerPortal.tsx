@@ -89,7 +89,7 @@ const OwnerPortal: React.FC = () => {
                     Marketing on <span className="text-primary italic underline decoration-2 underline-offset-8">Autopilot</span>
                 </h2>
                 <p className="text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed font-body">
-                    Artie isn't just a mascot. He's your 24/7 digital concierge that drafts social posts, suggests flash deals during slow hours, and keeps your venue at the top of the feed.
+                    Artie isn't just a mascot. He's your 24/7 digital concierge that drafts social posts, suggests Flash Bounties during slow hours, and keeps your venue at the top of the feed.
                 </p>
                 <div className="mt-12 p-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent rounded-full" />
             </section>

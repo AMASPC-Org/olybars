@@ -1,4 +1,4 @@
-﻿import { initializeApp } from 'firebase/app';
+import { initializeApp } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAuth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
@@ -26,7 +26,7 @@ export const functions = getFunctions(app, 'us-west1');
 // --- EMULATOR WIRING ---
 // If we are on localhost, connect to the local emulators instead of the cloud.
 if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-  console.log('🔧 Connecting to Local Firebase Emulators...');
+  console.log('?? Connecting to Local Firebase Emulators...');
   
   // Connect Firestore (Database)
   // connectFirestoreEmulator(db, 'localhost', 8080);
@@ -40,7 +40,7 @@ if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' |
   // Enable a dummy App Check token so local requests don't get blocked
   // @ts-ignore
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-  console.log('🛡� [AppCheck] Local Debug Token Enabled');
+  console.log('??? [AppCheck] Local Debug Token Enabled');
 } else {
   // --- PRODUCTION APP CHECK ---
   // Only run standard App Check in production/staging

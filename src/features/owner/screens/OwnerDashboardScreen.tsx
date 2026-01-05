@@ -98,7 +98,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
     // [SECURITY] MFA Enforcement Check for Partners
     const isMfaEnrolled = auth.currentUser && multiFactor(auth.currentUser).enrolledFactors.length > 0;
-    const isSuperAdmin = userProfile.systemRole === 'admin' || userProfile.role === 'super-admin';
+    const isSuperAdmin = isSystemAdmin(userProfile);
 
     if (!isMfaEnrolled && !isSuperAdmin) {
         return (
@@ -273,7 +273,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const handlePublishDeal = async () => {
         if (!dealText || !myVenue) return;
         try {
-            await VenueOpsService.updateFlashDeal(myVenue.id, {
+            await VenueOpsService.updateFlashBounty(myVenue.id, {
                 title: dealText,
                 description: dealDescription,
                 duration: dealDuration,
@@ -281,9 +281,9 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
             });
             setDealText('');
             setDealDescription('');
-            showToast('FLASH DEAL BROADCASTED TO NETWORK', 'success');
+            showToast('FLASH BOUNTY BROADCASTED TO NETWORK', 'success');
         } catch (e) {
-            showToast('FAILED TO PUBLISH DEAL', 'error');
+            showToast('FAILED TO PUBLISH BOUNTY', 'error');
         }
     };
 
@@ -305,7 +305,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
             }
 
             // 2. Schedule
-            await VenueOpsService.scheduleFlashDeal(myVenue.id, {
+            await VenueOpsService.scheduleFlashBounty(myVenue.id, {
                 venueId: myVenue.id,
                 title: dealText,
                 description: dealDescription,
@@ -318,13 +318,13 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                 createdAt: Date.now()
             });
 
-            showToast('FLASH DEAL SCHEDULED SUCCESSFULLY', 'success');
+            showToast('FLASH BOUNTY SCHEDULED SUCCESSFULLY', 'success');
             setDealText('');
             setDealDescription('');
             setStaffConfirmed(false);
             fetchScheduledDeals();
         } catch (e: any) {
-            showToast(e.message || 'FAILED TO SCHEDULE DEAL', 'error');
+            showToast(e.message || 'FAILED TO SCHEDULE BOUNTY', 'error');
         }
     };
 
@@ -350,10 +350,10 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const clearDeal = async () => {
         if (!myVenue) return;
         try {
-            await VenueOpsService.updateFlashDeal(myVenue.id, { isActive: false });
-            showToast('FLASH DEAL TERMINATED', 'success');
+            await VenueOpsService.updateFlashBounty(myVenue.id, { isActive: false });
+            showToast('FLASH BOUNTY TERMINATED', 'success');
         } catch (e) {
-            showToast('FAILED TO CLEAR DEAL', 'error');
+            showToast('FAILED TO CLEAR BOUNTY', 'error');
         }
     };
 
@@ -381,7 +381,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
         try {
             // 1. Execute the skill
             if (insight.actionSkill === 'update_flash_deal') {
-                await VenueOpsService.updateFlashDeal(myVenue.id, {
+                await VenueOpsService.updateFlashBounty(myVenue.id, {
                     title: insight.actionParams.summary,
                     description: insight.actionParams.details,
                     duration: parseInt(insight.actionParams.duration) || 60,
@@ -389,14 +389,18 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                 });
             }
 
-            // 2. Deduct points from Bank
-            const currentBank = myVenue.pointBank || 5000;
+            // 2. Deduct points from Bank (Zero-Trust source)
+            const currentBank = (privateData?.pointBank !== undefined) ? privateData.pointBank : (myVenue.pointBank || 5000);
             const deduction = insight.pointCost || 500;
             const newBank = Math.max(0, currentBank - deduction);
 
-            await updateVenue(myVenue.id, {
+            // 3. Update secure private data
+            await VenueOpsService.updatePrivateData(myVenue.id, {
                 pointBank: newBank
             });
+
+            // Local state update for immediate UI feedback
+            setPrivateData((prev: any) => prev ? { ...prev, pointBank: newBank } : { pointBank: newBank });
 
             showToast(`${insight.actionLabel.toUpperCase()} - BANK UPDATED`, 'success');
         } catch (e) {
@@ -455,7 +459,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             <div className="flex items-center gap-1">
                                 <Zap className="w-2.5 h-2.5 text-primary fill-current" />
                                 <span className="text-[10px] font-black text-primary font-league">
-                                    {TIER_LIMITS[(privateData?.partnerConfig?.tier || myVenue.partnerConfig?.tier || PartnerTier.FREE) as PartnerTier] - (privateData?.partnerConfig?.flashDealsUsed || myVenue.partnerConfig?.flashDealsUsed || 0)} TOKENS
+                                    {TIER_LIMITS[(privateData?.partnerConfig?.tier || myVenue.partnerConfig?.tier || PartnerTier.FREE) as PartnerTier] - (privateData?.partnerConfig?.flashBountiesUsed || myVenue.partnerConfig?.flashBountiesUsed || 0)} TOKENS
                                 </span>
                             </div>
                         </div>
@@ -711,13 +715,13 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             </div>
                         </div>
 
-                        {/* Flash Deal Management Section */}
+                        {/* Flash Bounty Management Section */}
                         <div className="space-y-6">
                             {/* Schedule New Deal Widget */}
                             <div className="bg-surface p-6 border border-white/10 border-dashed rounded-lg shadow-2xl relative">
                                 <div className="absolute -top-4 left-6 bg-[#0f172a] border border-primary px-3 py-1 flex items-center gap-2 rounded-md">
                                     <Zap className="w-4 h-4 text-primary fill-current" />
-                                    <span className="text-primary text-[10px] font-black uppercase tracking-widest font-league">SCHEDULE FLASH DEAL</span>
+                                    <span className="text-primary text-[10px] font-black uppercase tracking-widest font-league">SCHEDULE FLASH BOUNTY</span>
                                 </div>
 
                                 <div className="space-y-4 pt-4">
@@ -884,7 +888,9 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                         <Zap className="w-12 h-12 text-primary" />
                                     </div>
                                     <p className="text-[9px] font-black text-primary uppercase font-league mb-1">Point Bank</p>
-                                    <p className="text-2xl font-black text-primary font-league">{(myVenue.pointBank || 5000).toLocaleString()}</p>
+                                    <p className="text-2xl font-black text-primary font-league">
+                                        {((privateData?.pointBank !== undefined) ? privateData.pointBank : (myVenue.pointBank || 5000)).toLocaleString()}
+                                    </p>
                                 </div>
                             </div>
                         </section>

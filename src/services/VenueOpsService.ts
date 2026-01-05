@@ -13,7 +13,7 @@ import {
     writeBatch
 } from 'firebase/firestore';
 import { differenceInHours } from 'date-fns';
-import { Venue, FlashDeal, ScheduledDeal, TIER_LIMITS, PartnerTier } from '../types';
+import { Venue, FlashBounty, ScheduledDeal, TIER_LIMITS, PartnerTier } from '../types';
 import { getAuthHeaders } from './apiUtils';
 import { API_ENDPOINTS } from '../lib/api-config';
 
@@ -43,25 +43,25 @@ export class VenueOpsService {
     }
 
     /**
-     * Update an active flash deal for a venue.
+     * Update an active flash bounty for a venue.
      */
-    static async updateFlashDeal(venueId: string, deal: Partial<FlashDeal> & { duration?: string | number }) {
-        if (!venueId) throw new Error("Venue ID is required for flash deal update.");
+    static async updateFlashBounty(venueId: string, bounty: Partial<FlashBounty> & { duration?: string | number }) {
+        if (!venueId) throw new Error("Venue ID is required for flash bounty update.");
 
         try {
             const venueRef = doc(db, 'venues', venueId);
             const now = Date.now();
             let durationMinutes = 60; // Default
 
-            if (deal.duration) {
-                if (typeof deal.duration === 'number') {
-                    durationMinutes = deal.duration;
+            if (bounty.duration) {
+                if (typeof bounty.duration === 'number') {
+                    durationMinutes = bounty.duration;
                 } else {
                     // Simple parse: "45 minutes", "1 hour", "30m"
-                    const match = deal.duration.match(/(\d+)/);
+                    const match = bounty.duration.match(/(\d+)/);
                     if (match) {
                         const val = parseInt(match[1]);
-                        if (deal.duration.toLowerCase().includes('hour')) {
+                        if (bounty.duration.toLowerCase().includes('hour')) {
                             durationMinutes = val * 60;
                         } else {
                             durationMinutes = val;
@@ -73,10 +73,10 @@ export class VenueOpsService {
             const startTime = now;
             const endTime = now + (durationMinutes * 60 * 1000);
 
-            const dealPayload = {
-                title: deal.title || '',
-                description: deal.description || '',
-                price: deal.price || "",
+            const bountyPayload = {
+                title: bounty.title || '',
+                description: bounty.description || '',
+                price: bounty.price || "",
                 startTime: now,
                 endTime: endTime,
                 isActive: true,
@@ -85,17 +85,17 @@ export class VenueOpsService {
             };
 
             await updateDoc(venueRef, {
-                'activeFlashDeal': dealPayload,
-                'flashDealUpdatedAt': serverTimestamp(),
+                'activeFlashBounty': bountyPayload,
+                'flashBountyUpdatedAt': serverTimestamp(),
                 // Sync flat fields for Buzz Screen display
-                'deal': dealPayload.title,
+                'deal': bountyPayload.title,
                 'dealEndsIn': durationMinutes
             });
 
-            return { success: true, deal: dealPayload };
+            return { success: true, bounty: bountyPayload };
         } catch (error: any) {
-            console.error('Error updating flash deal:', error);
-            throw new Error(`Failed to update flash deal: ${error.message}`);
+            console.error('Error updating flash bounty:', error);
+            throw new Error(`Failed to update flash bounty: ${error.message}`);
         }
     }
 
@@ -137,13 +137,13 @@ export class VenueOpsService {
 
         // 2. DURATION LIMIT
         if (duration > 180) {
-            return { valid: false, reason: "Max duration for a Flash Deal is 3 hours." };
+            return { valid: false, reason: "Max duration for a Flash Bounty is 3 hours." };
         }
 
         // 3. TOKEN CHECK
         const tier = venue.partnerConfig?.tier || PartnerTier.FREE;
         const limit = TIER_LIMITS[tier];
-        const used = venue.partnerConfig?.flashDealsUsed || 0;
+        const used = venue.partnerConfig?.flashBountiesUsed || 0;
 
         if (used >= limit) {
             return {
@@ -166,19 +166,19 @@ export class VenueOpsService {
     }
 
     /**
-     * Schedule a future flash deal.
+     * Schedule a future flash bounty.
      */
-    static async scheduleFlashDeal(venueId: string, deal: ScheduledDeal) {
+    static async scheduleFlashBounty(venueId: string, bounty: ScheduledDeal) {
         if (!venueId) throw new Error("Venue ID is required.");
 
         const batch = writeBatch(db);
 
-        // 1. Create the Scheduled Deal in the sub-collection
+        // 1. Create the Scheduled Bounty in the sub-collection
         const venueRef = doc(db, 'venues', venueId);
-        const dealRef = doc(collection(venueRef, 'scheduledDeals'));
+        const bountyRef = doc(collection(venueRef, 'scheduledDeals'));
 
-        batch.set(dealRef, {
-            ...deal,
+        batch.set(bountyRef, {
+            ...bounty,
             venueId,
             status: 'PENDING',
             createdAt: serverTimestamp()
@@ -186,11 +186,11 @@ export class VenueOpsService {
 
         // 2. Deduct Token (Increment Usage)
         batch.update(venueRef, {
-            'partnerConfig.flashDealsUsed': increment(1)
+            'partnerConfig.flashBountiesUsed': increment(1)
         });
 
         await batch.commit();
-        return { success: true, id: dealRef.id };
+        return { success: true, id: bountyRef.id };
     }
 
     static async updateHours(venueId: string, hours: string) {
@@ -344,7 +344,7 @@ export class VenueOpsService {
                 'closureDuration': closure.duration,
                 'closureUpdatedAt': serverTimestamp(),
                 // CLEAR Buzz Signals for the duration
-                'activeFlashDeal': null,
+                'activeFlashBounty': null,
                 'deal': null,
                 'dealEndsIn': 0,
                 'leagueEvent': 'Closed',

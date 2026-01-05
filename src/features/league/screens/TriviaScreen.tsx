@@ -74,8 +74,8 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile 
         venueName: venue?.name || 'Local Bar',
         venueId: venueId,
         pointsEarned: result.pointsAwarded || 5,
-        vibeStatus: venue?.status || 'lively',
-        artieHook: generateArtieHook('play', 'lively'),
+        vibeStatus: venue?.status || 'chill',
+        artieHook: generateArtieHook('play', 'chill'),
         username: userProfile.displayName || userProfile.email || 'Member',
         userId: userProfile.uid,
         timestamp: new Date().toISOString()

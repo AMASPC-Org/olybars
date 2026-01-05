@@ -14,7 +14,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../../lib/firebase';
-import { UserProfile, Venue } from '../../../types';
+import { UserProfile, Venue, UserRole, SystemRole } from '../../../types';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { mapAuthErrorToMessage } from '../utils/authErrorHandler';
 import { AuthService } from '../../../services/authService';
@@ -132,7 +132,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         // Check for MFA Enrollment for Owners/Managers
         const firebaseUser = auth.currentUser;
         if (firebaseUser && multiFactor(firebaseUser).enrolledFactors.length === 0) {
-          showToast('MFA REQUIRED FOR PARTNERS. PLEASE ENROLL IN SETTINGS.', 'warning');
+          showToast('MFA REQUIRED FOR PARTNERS. PLEASE ENROLL IN SETTINGS.', 'info');
           // We might want to force enrollment here, but for now we'll just warn and let App.tsx block access if needed.
         }
       }
@@ -146,7 +146,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       }
       onClose();
     } catch (error: any) {
-      if (error.code !== 'auth/popup-closed-by-user') {
+      if (error.code === 'auth/multi-factor-auth-required') {
+        await handleMfaRequired(error);
+      } else if (error.code !== 'auth/popup-closed-by-user') {
         showToast(mapAuthErrorToMessage(error.code));
       }
     } finally {
@@ -211,33 +213,37 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       await finishLogin(userCredential.user);
     } catch (error: any) {
       if (error.code === 'auth/multi-factor-auth-required') {
-        const resolver = getMultiFactorResolver(auth, error);
-        setMfaResolver(resolver);
-
-        // Auto-trigger SMS to the first enrolled factor
-        const hints = resolver.hints;
-        if (hints[0] && hints[0].factorId === PhoneAuthProvider.PHONE_FACTOR_ID) {
-          const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            'size': 'invisible'
-          });
-          setRecaptchaVerifier(verifier);
-          const phoneInfoOptions = {
-            multiFactorHint: hints[0],
-            session: resolver.session
-          };
-          const phoneAuthProvider = new PhoneAuthProvider(auth);
-          const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, verifier);
-          setMfaId(verificationId);
-          setShowMfaStep(true);
-          showToast('MFA CODE SENT TO REGISTERED PHONE', 'success');
-        } else {
-          showToast('MFA REQUIRED: PLEASE CONTACT HQ FOR SETUP', 'error');
-        }
+        await handleMfaRequired(error);
       } else {
         showToast(mapAuthErrorToMessage(error.code));
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleMfaRequired = async (error: any) => {
+    const resolver = getMultiFactorResolver(auth, error);
+    setMfaResolver(resolver);
+
+    // Auto-trigger SMS to the first enrolled factor
+    const hints = resolver.hints;
+    if (hints[0] && hints[0].factorId === 'phone') {
+      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible'
+      });
+      setRecaptchaVerifier(verifier);
+      const phoneInfoOptions = {
+        multiFactorHint: hints[0],
+        session: resolver.session
+      };
+      const phoneAuthProvider = new PhoneAuthProvider(auth);
+      const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, verifier);
+      setMfaId(verificationId);
+      setShowMfaStep(true);
+      showToast('ONE-TIME CODE SENT TO SECURE DEVICE', 'success');
+    } else {
+      showToast('MFA REQUIRED: PLEASE CONTACT HQ FOR SETUP', 'error');
     }
   };
 
@@ -264,23 +270,26 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
       if (firebaseUser.email === 'ryan@amaspc.com') {
         // The Ryan Rule: Always force super-admin rights
-        await setDoc(doc(db, 'users', uid), {
-          role: 'super-admin', // Legacy
-          systemRole: 'admin', // RBAC Master Key
+        // Adding venuePermissions: {} to trigger the check correctly in all screens
+        const superAdminData = {
+          role: 'super-admin' as UserRole, // Legacy
+          systemRole: 'admin' as SystemRole, // RBAC Master Key
           handle: 'Ryan (Admin)',
           email: 'ryan@amaspc.com',
+          venuePermissions: profileData.venuePermissions || {}, // Keep existing if any, but systemRole: admin overrides anyway
+        };
+
+        await setDoc(doc(db, 'users', uid), {
+          ...superAdminData,
           // Fix: Reset 9999 points if present
           ...(profileData.stats?.seasonPoints === 9999 ? { stats: { ...profileData.stats, seasonPoints: 0 } } : {})
         }, { merge: true });
-        // Re-fetch the profile to ensure the new role is loaded
-        const freshSnap = await getDoc(doc(db, 'users', uid));
-        if (freshSnap.exists()) {
-          setUserProfile(freshSnap.data() as UserProfile);
-          onOwnerSuccess();
-          onClose();
-          showToast(`Logged in as SUPER-ADMIN (Golden Ticket)`, 'success');
-          return;
-        }
+
+        setUserProfile({ ...profileData, ...superAdminData });
+        onOwnerSuccess();
+        onClose();
+        showToast(`Logged in as SUPER-ADMIN (Golden Ticket)`, 'success');
+        return;
       }
 
       setUserProfile(profileData);
@@ -294,7 +303,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       if (hasAccess) {
         // Check for enrollment for partners
         if (multiFactor(firebaseUser).enrolledFactors.length === 0) {
-          showToast('MFA ENROLLMENT REQUIRED FOR PARTNER ACCESS', 'warning');
+          showToast('MFA ENROLLMENT REQUIRED FOR PARTNER ACCESS', 'info');
         }
         onOwnerSuccess();
         onClose();

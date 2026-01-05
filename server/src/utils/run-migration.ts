@@ -1,4 +1,5 @@
-import * as admin from 'firebase-admin';
+import { initializeApp, getApps } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 import { migratePartnerData } from './migrate-partner-data';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -13,14 +14,13 @@ dotenv.config();
 async function run() {
     try {
         // Initialize Firebase Admin
-        // This will use GOOGLE_APPLICATION_CREDENTIALS if set, or local default
-        if (admin.apps.length === 0) {
-            admin.initializeApp({
-                projectId: 'ama-ecosystem-prod' // Ensure this matches your project
+        if (getApps().length === 0) {
+            initializeApp({
+                projectId: 'ama-ecosystem-prod'
             });
         }
 
-        const db = admin.firestore();
+        const db = getFirestore();
         await migratePartnerData(db);
 
         process.exit(0);

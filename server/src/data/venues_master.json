@@ -35,12 +35,12 @@
     "isVisible": true,
     "isHistoricalAnchor": true,
     "historySnippet": "Taste the water (literally) from the original Artesian Well.",
-    "flashDeals": [
+    "flashBounties": [
       {
         "id": "fd-w80-01",
         "venueId": "well-80",
         "title": "$2 Pretzels & Cheese",
-        "description": "Flash Deal: $2 Pretzels valid for next 45 mins.",
+        "description": "Flash Bounty: $2 Pretzels valid for next 45 mins.",
         "startTime": 1767459386174,
         "endTime": 1767462086174,
         "isApproved": true,
@@ -48,10 +48,10 @@
         "active": true
       }
     ],
-    "activeFlashDealId": "fd-w80-01",
+    "activeFlashBountyId": "fd-w80-01",
     "deal": "$2 Pretzels & Cheese",
     "dealEndsIn": 45,
-    "vibeDefault": "LIVELY",
+    "vibeDefault": "BUZZING",
     "happyHourSpecials": "$1 OFF PINTS & LEOPOLD PRETZELS",
     "happyHour": {
       "startTime": "15:00",
@@ -77,7 +77,7 @@
     "attributes": {
       "has_manned_bar": true,
       "minors_allowed": true,
-      "noise_level": "Lively"
+      "noise_level": "Social"
     },
     "fullMenu": [
       {
@@ -170,8 +170,8 @@
     "checkIns": 0,
     "capacity": 60,
     "vibe": "Twin Peaks meets Skate Rat",
-    "insiderVibe": "Pat Jansen is a legend. He ran the brewing at Three Mags, then Matchless, now this. The vibe is 'Twin Peaks meets Skate Rat.' It's cool without trying. And the burgers? Greasy, smashy perfection. This replaces Fish Tale as the soul of downtown brewing.",
-    "originStory": "When the legendary Fish Tale Brewpub died, the former brewers of Matchless and Three Magnets didn't just mourn—they took it over. Now it's a 'lodge' serving high-technique ales and arguably the best smash burgers in the county, resurrecting the most iconic corner in Olympia nightlife.",
+    "insiderVibe": "Pat Jansen is a legend. He ran the brewing at Three Mags, then Matchless, now this. The vibe is 'Twin Peaks meets Skate Rat.' It's cool without trying. And the burgers? Greasy, smashy perfection. This is the soul of downtown brewing.",
+    "originStory": "The former brewers of Matchless and Three Magnets took over this iconic corner. Now it's a 'lodge' serving high-technique ales and arguably the best smash burgers in the county, resurrecting an iconic spot in Olympia nightlife.",
     "geoLoop": "Downtown_Walkable",
     "isVerifiedMaker": true,
     "isLocalMaker": true,
@@ -196,7 +196,7 @@
     "attributes": {
       "has_manned_bar": true,
       "minors_allowed": true,
-      "noise_level": "Lively"
+      "noise_level": "Social"
     },
     "isPaidLeagueMember": true,
     "currentBuzz": {
@@ -232,7 +232,7 @@
     "address": "600 Franklin St SE STE 105, Olympia, WA 98501, USA",
     "isActive": true,
     "isVisible": true,
-    "vibeDefault": "LIVELY",
+    "vibeDefault": "BUZZING",
     "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
@@ -241,7 +241,7 @@
     "attributes": {
       "has_manned_bar": true,
       "minors_allowed": true,
-      "noise_level": "Lively"
+      "noise_level": "Social"
     },
     "isPaidLeagueMember": true,
     "currentBuzz": {
@@ -374,7 +374,7 @@
     "attributes": {
       "has_manned_bar": true,
       "minors_allowed": true,
-      "noise_level": "Lively"
+      "noise_level": "Social"
     },
     "isPaidLeagueMember": true,
     "currentBuzz": {
@@ -673,7 +673,7 @@
     "attributes": {
       "has_manned_bar": true,
       "minors_allowed": true,
-      "noise_level": "Lively"
+      "noise_level": "Social"
     },
     "isPaidLeagueMember": true,
     "currentBuzz": {
@@ -832,6 +832,11 @@
       "x": 80,
       "y": 20
     },
+    "location": {
+      "lat": 47.0438,
+      "lng": -122.8961
+    },
+    "address": "Downtown Olympia (Ghost Brewery), WA 98501",
     "isActive": true,
     "isVisible": true,
     "scavengerHunts": [
@@ -1033,7 +1038,7 @@
     "attributes": {
       "has_manned_bar": true,
       "minors_allowed": false,
-      "noise_level": "Lively"
+      "noise_level": "Social"
     },
     "vibe": "Old school olympia. Great beer selection.",
     "status": "chill",
@@ -1132,10 +1137,10 @@
     "attributes": {
       "has_manned_bar": true,
       "minors_allowed": true,
-      "noise_level": "Lively"
+      "noise_level": "Social"
     },
-    "description": "A popular downtown spot known for its welcoming atmosphere, great food, and spacious outdoor patio. Nicole's is a go-to for sports fans and those looking for a lively vibe.",
-    "vibe": "Lively and welcoming with a great neighborhood feel.",
+    "description": "A popular downtown spot known for its welcoming atmosphere, great food, and spacious outdoor patio. Nicole's is a go-to for sports fans and those looking for a buzzing vibe.",
+    "vibe": "Active and welcoming with a great neighborhood feel.",
     "insiderVibe": "Nicole's is where the locals go. It's got that perfect balance of being a sports bar without being *just* a sports bar. The patio is one of the best in town, and the staff actually knows your name. It's unpretentious and consistently good.",
     "originStory": "Established as a cornerstone of the downtown Olympia bar scene, Nicole's has built a reputation for its inclusivity and commitment to providing a top-tier experience for every guest.",
     "status": "buzzing",
@@ -1300,7 +1305,7 @@
     "attributes": {
       "has_manned_bar": true,
       "minors_allowed": true,
-      "noise_level": "Lively"
+      "noise_level": "Social"
     },
     "vibe": "Classic bar returned to its roots.",
     "status": "buzzing",
@@ -1382,7 +1387,7 @@
     "attributes": {
       "has_manned_bar": true,
       "minors_allowed": false,
-      "noise_level": "Lively"
+      "noise_level": "Social"
     },
     "vibe": "Martinis and music.",
     "status": "chill",
@@ -1421,7 +1426,7 @@
     "attributes": {
       "has_manned_bar": true,
       "minors_allowed": true,
-      "noise_level": "Lively"
+      "noise_level": "Social"
     },
     "vibe": "Massive selection of taps by the water.",
     "status": "chill",
@@ -1767,7 +1772,7 @@
     "attributes": {
       "has_manned_bar": true,
       "minors_allowed": true,
-      "noise_level": "Lively"
+      "noise_level": "Social"
     },
     "vibe": "Local favorite.",
     "status": "chill",
@@ -2245,7 +2250,7 @@
     "attributes": {
       "has_manned_bar": true,
       "minors_allowed": true,
-      "noise_level": "Lively"
+      "noise_level": "Social"
     },
     "gameFeatures": [],
     "isPaidLeagueMember": true,
@@ -2432,36 +2437,6 @@
     }
   },
   {
-    "id": "heritage-distilling",
-    "name": "Heritage Distilling (Tumwater)",
-    "venueType": "brewery_taproom",
-    "vibeTags": [
-      "cocktail_focus"
-    ],
-    "foodService": "none_byof",
-    "status": "dead",
-    "checkIns": 0,
-    "vibe": "Ghost",
-    "location": {
-      "lat": 47.01033,
-      "lng": -122.904396
-    },
-    "address": "4200 Capitol Blvd SE Suite 104, Tumwater, WA 98501, USA",
-    "isActive": false,
-    "isVisible": false,
-    "originStory": "Closed effective Dec 31, 2025. Pivoted to wholesale/Tribal partnership model.",
-    "tier_config": {
-      "is_directory_listed": false,
-      "is_league_eligible": false
-    },
-    "attributes": {
-      "has_manned_bar": false,
-      "minors_allowed": false,
-      "noise_level": "Conversational"
-    },
-    "gameFeatures": []
-  },
-  {
     "id": "locust-cider",
     "name": "Locust Cider (Olympia)",
     "venueType": "brewery_taproom",
@@ -2506,34 +2481,6 @@
     "isActive": false,
     "isVisible": false,
     "originStory": "Permanently closed. Failed to gain traction in the Craft District.",
-    "tier_config": {
-      "is_directory_listed": false,
-      "is_league_eligible": false
-    },
-    "attributes": {
-      "has_manned_bar": false,
-      "minors_allowed": false,
-      "noise_level": "Conversational"
-    },
-    "gameFeatures": []
-  },
-  {
-    "id": "fish-tale-brewpub-legacy",
-    "name": "Fish Tale Brewpub",
-    "venueType": "brewery_taproom",
-    "vibeTags": [],
-    "foodService": "full_kitchen",
-    "status": "dead",
-    "checkIns": 0,
-    "vibe": "Ghost",
-    "location": {
-      "lat": 47.043153,
-      "lng": -122.898526
-    },
-    "address": "600 Franklin St SE STE 105, Olympia, WA 98501, USA",
-    "isActive": false,
-    "isVisible": false,
-    "originStory": "Entity is dead. Succeeded by Ilk Lodge.",
     "tier_config": {
       "is_directory_listed": false,
       "is_league_eligible": false

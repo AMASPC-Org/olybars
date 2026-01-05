@@ -11,7 +11,7 @@ async function runSecurityTests() {
     const VENUE_ID = 'well-80';
     const AUTHORIZED_OWNER_ID = 'KU9KvRYzzrZfVU7BV4gaPYAFlKS2'; // Ryan
     const UNAUTHORIZED_USER_ID = 'random-user-123';
-    const TEST_UPDATES = { deal: 'Security Test Flash Deal' };
+    const TEST_UPDATES = { deal: 'Security Test Flash Bounty' };
 
     console.log('\n[TEST 1] Authorized Owner Update');
     try {

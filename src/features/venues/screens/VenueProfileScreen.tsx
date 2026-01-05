@@ -457,8 +457,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
-                        {venue.status === 'buzzing' ? <Flame className="w-5 h-5 text-orange-500" /> :
-                            venue.status === 'lively' ? <Users className="w-5 h-5 text-yellow-400" /> :
+                        {venue.status === 'buzzing' || venue.status === 'packed' ? <Flame className="w-5 h-5 text-orange-500" /> :
+                            venue.status === 'chill' ? <Users className="w-5 h-5 text-yellow-400" /> :
                                 <Beer className="w-5 h-5 text-blue-400" />}
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Energy</span>
                         <span className="text-sm font-black text-white uppercase font-league">{venue.status}</span>
@@ -659,15 +659,15 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                         </div>
                     )}
 
-                    {venue.activeFlashDeal && (
+                    {(venue.activeFlashBounty?.title || venue.deal) && (
                         <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-4 flex gap-4 animate-in slide-in-from-right duration-500">
                             <div className="bg-orange-500 p-2.5 h-fit rounded-xl">
                                 <Zap className="w-5 h-5 text-black" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-1 italic">Flash Deal</p>
-                                <h4 className="text-md font-black text-white uppercase font-league leading-none mb-1">{venue.activeFlashDeal.title}</h4>
-                                <p className="text-xs font-bold text-orange-100 leading-tight">{venue.activeFlashDeal.description}</p>
+                                <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-1 italic">Flash Bounty</p>
+                                <h4 className="text-md font-black text-white uppercase font-league leading-none mb-1">{venue.activeFlashBounty?.title || venue.deal}</h4>
+                                <p className="text-xs font-bold text-orange-100 leading-tight">{venue.activeFlashBounty?.description || 'Limited time offer!'}</p>
                             </div>
                         </div>
                     )}

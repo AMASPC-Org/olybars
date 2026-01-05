@@ -17,10 +17,10 @@ export const TIER_LIMITS: Record<PartnerTier, number> = {
 export interface PartnerConfig {
     tier: PartnerTier;
     billingCycleStart: number; // Timestamp for monthly reset
-    flashDealsUsed: number;    // Counter
+    flashBountiesUsed: number;    // Counter
 }
 
-export interface FlashDeal {
+export interface FlashBounty {
     id?: string;
     venueId?: string;
     title: string;
@@ -175,9 +175,9 @@ export interface Venue {
     dealEndsIn?: number;
 
     // Robust Deal Data
-    flashDeals?: FlashDeal[];
-    activeFlashDealId?: string;
-    activeFlashDeal?: FlashDeal;
+    flashBounties?: FlashBounty[];
+    activeFlashBountyId?: string;
+    activeFlashBounty?: FlashBounty;
 
     vibe: string;
     coordinates: { x: number; y: number };
@@ -241,7 +241,7 @@ export interface Venue {
     googleRating?: number;
     googleReviewCount?: number;
 
-    partnerConfig?: PartnerConfig; // [NEW] Flash Deal Tiers & Tokens
+    partnerConfig?: PartnerConfig; // [NEW] Flash Bounty Tiers & Tokens
 
     ownerId?: string;
     managerIds?: string[];
@@ -301,7 +301,7 @@ export interface Venue {
     }[];
     establishmentType?: 'Bar Only' | 'Bar & Restaurant' | 'Restaurant with Bar' | 'Brewpub'; // Likely deprecated by venueType
     googlePlaceId?: string;
-    vibeDefault?: 'DEAD' | 'CHILL' | 'BUZZING' | 'PACKED';
+    vibeDefault?: VenueStatus;
 
     hasGameVibeCheckEnabled?: boolean;
     liveGameStatus?: Record<string, GameStatus>;

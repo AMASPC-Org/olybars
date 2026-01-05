@@ -1,6 +1,6 @@
 # OlyBars.com: The Nightlife Operating System
-## Master Business Plan & Verification Strategy
-**Version:** 2.0  
+## Master Business Plan & Source of Truth
+**Version:** 3.0 (Consolidated)
 **Status:** Production Live  
 **Date:** 2026-01-04
 
@@ -22,15 +22,17 @@
 13. [Appendix E: Artie Venue Action Matrix](#13-appendix-e-artie-venue-action-matrix)
 14. [Appendix F: OlyBars Sales Playbook](#14-appendix-f-olybars-sales-playbook)
 15. [Appendix G: WSLCB Sales Compliance](#15-appendix-g-wslcb-sales-compliance)
+16. [Appendix H: Prohibited Terminology](#16-appendix-h-prohibited-terminology)
 
 ---
 
 ## 1. Executive Summary
-OlyBars is the **Nightlife Operating System for Olympia, WA**, built around the **Artesian Bar League**. It serves as a dual-sided marketplace:
-*   **For Guests**: A gamified "pocket concierge" centered on real-time "Vibe" data.
-*   **For Venue Owners**: An automated intelligence layer that operationalizes promotions and compliance via **The Brew House**.
+OlyBars.com is the **Nightlife Operating System for Downtown Olympia (98501)**. We are a dual-sided marketplace designed to revitalize the post-COVID hospitality economy through gamification and automation.
 
-**Key Value Proposition**: We don't sell data; we sell *answers*. Developed by the **American Marketing Alliance SPC** (Social Purpose Corporation), OlyBars eliminates the "Marketing Burn" for small businesses by automating discovery, distribution, and compliance.
+*   **For the Public (Players & Visitors)**: We provide **Answers**. We answer "What is there to do right now?", "Where is everybody at?", and "What is the vibe?" without requiring users to scroll through stale social media feeds. We turn nightlife into a sport where participation earns status.
+*   **For Partners (Venues)**: We sell **Ease**. We eliminate "Marketing Burn" by providing an automated engine that allows them to "Submit Once, Distribute Everywhere," while using gamified incentives (Bounties) to drive traffic and margin without discounting alcohol.
+
+**The Brand Promise**: OlyBars is the digital layer over the physical world. It is not a directory; it is a live view of the city’s pulse, anchored by Artie, the AI "Spirit of the Artesian Well."
 
 ---
 
@@ -39,49 +41,44 @@ OlyBars is the **Nightlife Operating System for Olympia, WA**, built around the 
 ### 2.1 The Mission
 To differentiate between "being at a bar" and "playing a game." OlyBars creates a digital layer over the physical world that encourages social discovery without inducing irresponsible consumption.
 
-### 2.2 User Archetypes & Access Hierarchy
+### 2.2 The Audience Matrix
 OlyBars operates on a permission-gated hierarchy to ensure data integrity and compliance.
 
-| Role | Access Level | Primary Product Surface | Key Actions |
+| Persona | Type | Motivation | Product Needs |
 | :--- | :--- | :--- | :--- |
-| **Visitor** | Anonymous | Public Map / Venues | Browse vibes, view public profiles. |
-| **Guest** | Authenticated | Member Profile | Save Favorites, track basic visit history. |
-| **League Player** | Athlete | League HQ / Leaderboards | Earn Points, Claim Badges, Compete in Season. |
-| **Partner** | Venue Owner | The Brew House | Manage Listing, Activate Deals, Add Menu Items. |
-| **Super-Admin** | System Architect | Admin Dashboard | Global overrides, System health, Dispute resolution. |
+| **The Visitor** | Casual / Tourist | "What's happening right now?" "Where is a pool table?" | No Login Required. Fast load times, accurate status, "Buzz Clock". |
+| **The Player** | Local / Regular | Status, Competition, Prizes, Social Connection. | Login Required. Points accumulation, League Standings, Badges, "The Sync". |
+| **The Partner** | Venue Owner | Filling slow nights, selling high-margin food, saving time. | The Brew House. "One-Click" marketing, Point Bank management. |
+| **Super-Admin** | System Architect | Global Oversight | Admin Dashboard. System health, global overrides. |
 
 > [!NOTE]
 > **Super-Admin Access**: `ryan@amaspc.com` maintains master oversight. Use the `/api/admin/setup-super` endpoint with the `MASTER_SETUP_KEY` for manual elevation.
 
 ### 2.3 The AI Concierge: "Artie"
-Anchoring the experience is **Artie**, the "Spirit of the Artesian Well." Artie is a **Dual-Core AI Agent** designed for frictionless interaction.
+Role: The friendly, witty, slightly mystical "Spirit of the Well."
 
-#### A. Player Concierge (The Guide)
-Artie helps Guests and Players navigate the 98501:
-*   **Vibe Discovery**: "Artie, where is it chill right now?"
+#### A. For Players: The Guide
+*   **Vibe Discovery**: "Artie, where can I play pool right now?"
 *   **League Support**: "How many points do I need for the next badge?"
-*   **Compliance Guardrails**: Proactively suggests safe rides (Lyft/Red Cab) during late-night queries.
+*   **Compliance Guardrails**: Artie shifts to "Guardian Mode" if users exhibit behavior suggesting over-consumption, suggesting food or water.
 
-#### B. Partner Co-pilot (The Operational Assistant)
-Artie acts as a hands-free manager for busy Venue Owners via "The Brew House":
+#### B. For Partners: The Marketing Co-Pilot
+*   **Automation**: Drafts social copy, suggests Bounties based on weather/time, and ensures compliance.
 *   **Listing Management**: `update_hours`, `update_order_url`, `emergency_closure`.
-*   **Menu Intelligence**: `add_menu_item`, `promote_menu_item`.
-*   **Marketing Engine**: `schedule_flash_deal`, `draft_social_post`, `ideate_event`.
 *   **Pit Rule Safety**: Artie *drafts* and *confirms* operational changes but requires a human "Confirm" tap before publishing live.
 
 ---
 
 ### 2.4 Product Surfaces
-
-#### A. OlyBars Web App (The Client)
+#### A. OlyBars.com (The Client)
 *   **Buzz Clock**: The real-time happy hour scheduler (Upcoming, Current, Soon-to-End).
 *   **Vibe Signal**: Real-time energy status (Dead, Chill, Buzzing, Packed).
-*   **League Passport**: Geolocation check-ins as attendance signals.
-*   **Artie Chat**: Conversational UI for local discovery.
+*   **League Passport**: Geolocation clock-ins as attendance signals.
+*   **Artie Chat**: Conversational AI for local discovery and "The Manual" (FAQ).
 
 #### B. The Brew House (The Dashboard)
 *   **Venue Profile (SSOT)**: Single source of truth for hours, menus, and local maker rules.
-*   **Marketing Center**: Artie-generated social copy and "Flash Deal" (Bat Signal) activations.
+*   **Marketing Center**: Artie-generated social copy and **Flash Bounty** (Bat Signal) activations.
 
 ---
 
@@ -90,15 +87,16 @@ Artie acts as a hands-free manager for busy Venue Owners via "The Brew House":
 OlyBars.com is the lighthouse site of **The AMA Network** (American Marketing Alliance SPC). As a **Social Purpose Corporation**, our mission is to solve the "Marketing Burn"—the phenomenon where local businesses waste thousands on ineffective ads simply because they lack the time to manage complex marketing funnels.
 
 ### 3.1 Submit Once, Distribute Everywhere
-We leverage automation to turn a single entry into a city-wide campaign:
-*   **Artesian Bar League Calendar**: Instant visibility for events.
-*   **The Weekly Pulse**: Automated inclusion in our high-engagement newsletter.
-*   **Social Ad Copy**: Artie drafts specific ad descriptions for Facebook/Instagram based on the event vibe.
+When a Partner updates an event in The Brew House:
+*   **Instant Update**: OlyBars.com Calendar & Buzz Clock.
+*   **Newsletter**: Auto-inclusion in "**The Weekly Pulse**."
+*   **External Sync**: Artie formats and emails details to: **ODA**, **Experience Olympia (VCB)**, and **Thurston Talk**.
+*   **Social**: Artie generates copy for the venue’s own Facebook/Instagram.
 
 ### 3.2 Automated Compliance (Legal Moat)
-Legal compliance is our primary competitive advantage. By enforcing "Law-as-Code," we eliminate human error and protect our partners.
-*   **The Smart Gatekeeper**: Users are mathematically capped at **2 check-ins per 12 hours** globally, satisfying Washington LCB "Anti-Volume" regulations.
-*   **Separation of Church & State**: We maintain a strict firewall between **Venue Attendance** (compliance-heavy signals) and **League Participation** (skill-based gamification).
+Legal compliance is our primary competitive advantage. By enforcing "Law-as-Code," we eliminate human error.
+*   **The Smart Gatekeeper**: Players are capped at **2 clock-ins per 12 hours** globally (**Rule of Two**).
+*   **No Flash Deals**: The system hard-codes WA LCB rules. A venue cannot accidentally create an illegal "2-for-1" because we only allow **Flash Bounties** (Points).
 
 ### 3.3 Fairness Algorithms (Exposure Equity)
 
@@ -107,7 +105,7 @@ To maintain a healthy, competitive ecosystem and prevent "The Drowning Effect" (
 *   **Global 5-Minute Rotation**: The system applies a time-based "sliding window" to key visibility areas. Every 5 minutes, the internal priority logic for the **Buzz Clock** and the **Pulse List** shifts globally. This ensures that every active partner rotates through top-tier visibility multiple times per hour.
 *   **The "Anti-Drowning" Logic**: Within the **Pulse List**, partners are prioritized at the top, but their internal order is shuffled every 5 minutes based on the system rotation. This prevents the same few venues from permanently occupying the top fold of the screen.
 *   **Partner Fallback Visibility**: When user filters (e.g., searching for "Trivia") return no results, OlyBars does not show a blank screen. Instead, the **Pulse List** provides a rotating selection of partner venues, giving league members high-intent exposure even when they don't exactly match the current specific search.
-*   **Deal Anti-Spam (Flash Deals)**: **Flash Deals** and Happy Hour items are sorted by *urgency* and *relevance* rather than bidding. The rotation ensures that a neighborhood pub’s deal has the same visibility opportunities as a larger downtown venue.
+*   **Bounty Anti-Spam**: **Flash Bounties** and Happy Hour items are sorted by *urgency* and *relevance*. The rotation ensures all partners get high-intent exposure.
 
 ---
 
@@ -138,9 +136,12 @@ Since not everyone has location services enabled, OlyBars cross-references three
 We treat partner strategy and user privacy as sacred. Our "Fort Knox" approach is critical for B2B sales.
 
 ### 5.1 The "Venue Confidentiality" Promise (B2B)
-*   **Zero-Trust Separation**: Partner data (Margins, Strategy) is physically segregated from Public data in **The Brew House**.
-*   **MFA Mandate**: Venue Owners *must* use Multi-Factor Authentication.
-*   **RBAC**: Role-Based Access Control ensures owners only see *their* data.
+We treat partner strategy and user privacy as sacred. Our "Fort Knox" approach is critical for B2B sales.
+
+*   **Zero-Trust Data Segregation**: Sensitive data (e.g., margins, internal tokens, point banks) is physically removed from the public `venues` documents. It is stored in a private sub-collection (`venues/{id}/private_data/main`) that is inaccessible to the public API and protected by strict Firestore rules.
+*   **MFA-Enforced Management**: Access to **The Brew House** (Owner Dashboard) is strictly gated. Venue Owners *must* perform a Multi-Factor Authentication (SMS/Phone) verify before the dashboard unlocks.
+*   **Encrypted Secrets**: All partner API keys and external integration tokens are stored in **Google Secret Manager**, never in the database or source code.
+*   **RBAC Firewall**: Role-Based Access Control is enforced at both the API layer (server-side) and Database layer (Firestore Rules). Owners only ever see *their* specific venue data.
 
 ### 5.2 The Compliance Shield (B2C)
 *   **Transparent Geofencing**: GPS is used *only* for "Proof of Presence" verification.
@@ -149,7 +150,7 @@ We treat partner strategy and user privacy as sacred. Our "Fort Knox" approach i
 
 ### 5.3 Operational Resilience
 *   **Secrets Management**: All API keys in Google Secret Manager.
-*   **Audit Trails**: Immutable logs for all "Flash Deal" and "Vibe Check" events to resolve disputes.
+*   **Audit Trails**: Immutable logs for all **Flash Bounties** and **Vibe Checks** to resolve disputes.
 
 ---
 
@@ -162,7 +163,7 @@ We treat partner strategy and user privacy as sacred. Our "Fort Knox" approach i
 ### 6.2 Prize Governance
 We reward with **League Bucks** (Generic Gift Cards), not alcohol.
 *   **Legal**: Gift cards are financial instruments, not "free booze."
-*   **Brand**: Protects partners from LCB advertising violations.
+*   **Brand**: Protects partners from LCB advertising violations. Points are never traded for alcohol.
 
 ---
 
@@ -187,9 +188,9 @@ We bypass traditional server management ("DevOps") by using fully managed, serve
 Artie is the "Spirit of the Artesian Well," serving as the LLM-powered engine for RAG (Retrieval Augmented Generation) across the platform.
 
 #### Current Skills (Live)
-*   **⚡ Flash Deal Architect**: Automates deal creation with strict 180-minute lead-time enforcement and WSLCB compliance checks.
+*   **⚡ Flash Bounty Architect**: Automates bounty creation with strict 180-minute lead-time enforcement and WSLCB compliance checks.
 *   **📅 Event Secretary**: Converts simple prompts or links into structured calendar events with AI-generated descriptions.
-*   **🛡️ Compliance Guardian**: Automatically pivots non-compliant marketing language (e.g., "bottomless") to safe alternatives (e.g., "tasting flight").
+*   **🛡️ Compliance Guardian**: Automatically pivots non-compliant marketing language (e.g., "Flash Deal" -> "Flash Bounty").
 *   **🔍 Local RAG**: Real-time awareness of Olympia venues, maker culture, and the Artesian Bar League rulebook.
 
 #### Skill Architecture
@@ -218,7 +219,7 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
     *   **Holistic Listing Management**: "Artie, update my hours for tonight" or "Add a website link."
     *   **Menu Intelligence**: "Artie, add a local IPA to the drafts list" or "Promote our burgers."
     *   **Voice/Audio Pipeline**: Direct voice-to-action interface for busy bartenders/owners.
-    *   **Flash Deal Ideas**: AI suggestions based on slow nights and venue-specific data.
+    *   **Flash Bounty Ideas**: AI suggestions based on slow nights and venue-specific data.
 3.  **Phase 8: Mobile Native**: Progressive Web App (PWA) "Add to Home Screen" optimization.
 
 ---
@@ -235,11 +236,18 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 *   **Listed Venue**: A physical location (bar/pub) that appears on the OlyBars map but has not yet claimed their profile or joined the League as a Partner.
 *   **League Partner**: A venue that has claimed their profile and entered into a marketing agreement with the League. Includes all active tiers: Free, DIY, Pro, and Agency.
 
-### 9.2 Key Concepts
+### 9.2 Economy & Rankings
+*   **Player Points**: The points earned by a League Player for real-world interactions (Check-ins, Vibe Checks). Stored securely in the Player's profile (`users/{uid}/stats/seasonPoints`).
+*   **Venue Point Bank**: The dedicated pool of points owned by a League Partner. Venues "spend" these points to attract traffic by offering multipliers or bounties. Stored in the venue's private sub-collection (`venues/{id}/private_data/main/pointBank`) to ensure operational confidentiality.
+*   **League Standings**: The city-wide leaderboard showing the current rankings of all League Players based on their Season Points. Computed as a real-time query of the `users` collection.
+*   **Time Bounty**: A temporary increase in points awarded for visiting a specific venue, typically used to drive traffic during slow periods. Bounties are deducted from the Venue Point Bank.
+*   **Standings Tie-Breaker**: In the event of a point tie, the system ranks players based on: 1. Total Lifetime Check-ins, 2. Current Streak, 3. Alphabetical Handle.
+
+### 9.3 Key Concepts
 *   **Artie**: The spirit of the Artesian Well. A permission-gated AI agent that acts as a concierge for Players and a drafter/co-pilot for Partners.
 *   **Current State**: The real-time energy level of a venue (Dead, Chill, Buzzing, Packed). Calculated via the three primary signals: Clock-ins, Vibe Checks, and Venue Capacity.
 *   **The Weekly Pulse**: The official Artesian Bar League newsletter.
-*   **The Brew House**: The Partner Portal. The dashboard where Venue Owners manage their profile, listings, events, and "Flash Deal" activations.
+*   **The Brew House**: The Partner Portal. The dashboard where Venue Owners manage their profile, listings, events, and **Flash Bounty** activations.
 *   **Venue Capacity**: A static data point representing the legal or practical occupancy of a venue. This serves as the baseline for determining density and busyness levels.
 *   **Vibe Check**: A manual "Ground Truth" report submitted by a user. Essential for accurate data when GPS density is low.
 *   **The 60-Second Handover**: The streamlined onboarding process for a Venue Owner to claim a Listed Venue and convert it into a League Partner.
@@ -252,22 +260,23 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 
 ## 10. Appendix B: Annual Membership Tiers
 
-| Tier Name | Monthly | Badge | Key Features | "One-Click" Sell |
-| :--- | :--- | :--- | :--- | :--- |
-| **Tier 1: Free** | Free | "The List" | Basic Listing, Buzz Clock Inclusion | "Get listed, get found." |
-| **Tier 2: DIY** | $99 | "The Operator" | 1 Flash Deal/mo, Manual Dashboard | "Tap 'Flash Deal' and boom—you're live. No typing." |
-| **Tier 3: Pro** | $399 | "The Competitor" | 4 Flash Deals/mo, **2x Point Bank**, Content Engine | "Dominate the 98501. Double our points at your spot." |
-| **Tier 4: Agency** | $799 | "The Anchor" | Unlimited Deals, **4x Point Bank**, Auto-Sync Vibe | "Massive player incentive. Host the big events." |
+| Tier Name | Monthly Cost | Persona | Feature Set |
+| :--- | :--- | :--- | :--- |
+| **Tier 1: The Local** | $0 | "The Listed" | Basic Listing, Buzz Clock Inclusion. No Point Bank. |
+| **Tier 2: DIY Toolkit** | $99 | "The Operator" | 1 Flash Bounty/mo, Manual Dashboard, small Point Bank. |
+| **Tier 3: Pro League** | $399 | "The Competitor" | 4 Flash Bounties/mo, Content Engine, larger Point Bank. |
+| **Tier 4: Agency Legend** | $799 | "The Anchor" | Unlimited Bounties, Priority hosting for "The Sync", max Point Bank. |
 
 ---
 
 ## 11. Appendix C: Official Rulebook
 
 ### 1. Scoring Mechanics
-* **Clock In:** 10 Points. Requires geolocation verification within 100ft of the venue.
-* **Vibe Check:** 5 Points. Confirm energy levels to update the city map.
-* **Marketing Bonus:** +15 Points. Grant consent to display your vibe photo on the venue profile.
-* **Game Vibe Check:** +2 Points per game status updated (Max 10 per check).
+* **Clock-In**: 10 Points. Requires location verification + Photo Evidence. (Max 2 per 12h).
+* **Vibe Check**: 5 Points. Confirm energy levels (Dead-Packed). (Max 3 per night).
+* **Game Vibe Check**: +2 Points. Verify specific amenity status (e.g., "Table 1 is Open").
+* **Menu Bounty**: 20-50 Points. Requires photo of specific high-margin item (e.g., Wagyu Burger).
+* **Time Bounty**: Multiplier or bonus for specific time windows (e.g., "2x Points on Tuesdays").
 
 ### 2. Velocity & Safety (LCB Compliance)
 * **Nightly Cap:** You may clock into a maximum of **2 venues** per 12-hour window.
@@ -297,7 +306,8 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 ### 3. EVENTS (Calendar)
 *Definition*: Activities linked to specific times on the League Calendar.
 * **Competition**: Trivia Night, Bar Bingo, League Night, Tournaments.
-* **Performance**: Karaoke, Open Mic, Live Band, DJ Set, Theme Night, Viewing Party.
+* **Performance**: Karaoke, Open Mic, Live Band, DJ Set, Theme Night.
+* **Official Events**: "**The Sync**" - Official monthly OlyBars-operated event at Anchor venues.
 
 ---
 
@@ -322,8 +332,8 @@ This document maps the operational needs of Venue Owners to specific **Artie Cap
 
 | Owner Intention ("Hey Artie...") | System Action | Data Impact |
 | :--- | :--- | :--- |
-| "I want to do a Flash Deal." | `createFlashDeal(offer, duration)` | Creates `events` record, triggers Push Notification (if high tier) |
-| "Draft a social post about Trivia." | `generateSocialCopy(topic)` | LLM generation (No DB write, just UI return) |
+| "I want to do a Flash Bounty." | `createFlashBounty(offer, duration)` | Creates `events` record, triggers Push Notification |
+| "Draft a social post about Trivia." | `generateSocialCopy(topic)` | LLM generation |
 | "Show me this week's Weekly Buzz." | `fetchNewsletter(latest)` | Retrieves cached newsletter content |
 | "Are there any new bars in town?" | `fetchMarketIntel(new_listings)` | Queries `venues` sorted by `createdAt` |
 
@@ -345,7 +355,8 @@ To ensure accuracy, every "Active" Vibe Check has a specific TTL (Time To Live) 
 
 | Asset / Activity | Estimated Duration (TTL) | Rationale |
 | :--- | :--- | :--- |
-| **Pool Table** | **15 Minutes** | Average game time. Status resets to "Unknown" after 15m. |
+| **Vibe Signal** | **60 Minutes** | Buzz decay decreases by 50% every 60 mins. |
+| **Pool Table** | **15 Minutes** | Average game time. |
 | **Dart Board** | **15 Minutes** | Short turnover time. |
 | **Karaoke Queue** | **30 Minutes** | Queue length changes rapidly. |
 | **Live Band / Set** | **45 Minutes** | Sets usually last 45m-1h. |
@@ -369,19 +380,28 @@ To ensure accuracy, every "Active" Vibe Check has a specific TTL (Time To Live) 
 *   **IF NO: "THE TRAFFIC PLAY" (Drink/Dive Bars)**
     *   *Target Profile*: Brotherhood, McCoy's, Eastside, Legends.
     *   *The Pain Point*: "My room is empty on Tuesdays."
-    *   *The Pitch*: "We automate your door traffic. We put a 'Point Bounty' on your venue for Tuesday at 5 PM. Players show up just to collect the points."
+    *   *The Pitch*: "We automate your door traffic. We put a '**Time Bounty**' on your venue for Tuesday at 5 PM. Players show up just to collect the points."
     *   *The Result*: Filled Stools (Volume).
 
 ### 14.2 Phase 2: Selling the "One-Click" Automation
-Owners hate "marketing" because it feels like homework. We offer "Bubbles" on their dashboard: **[Flash Deal]**, **[Add Event]**, **[Boost Vibe]**.
+Owners hate "marketing" because it feels like homework. We offer "Bubbles" on their dashboard: **[Flash Bounty]**, **[Add Event]**, **[Boost Vibe]**.
 
-*   *The Script*: "I know you don't have time to write emails. That's why we built the One-Click system. You see the slow Tuesday, you tap 'Flash Deal'. Artie asks 'Food or Cover?'. You tap 'Food'. Done. Artie instantly pushes a 'Double Points on Apps' alert to everyone nearby. You didn't type a thing."
+*   *The Script*: "I know you don't have time to write emails. That's why we built the One-Click system. You see the slow Tuesday, you tap **'Flash Bounty'**. Artie asks 'Food or Time?'. You tap 'Time'. Artie instantly pushes a 'Double Points between 5-7 PM' alert to everyone. You didn't type a thing."
 
 ---
 
 ## 15. Appendix G: WSLCB Sales Compliance
 **Purpose: Keeping the sales pitch legal and protecting the brand.**
 
-1.  **THE "MARGIN PLAY" RULE**: When pitching "Menu Optimization," ALWAYS use food items as examples (Burgers, Apps, Mocktails). NEVER use "Double Points for Double Shots." *Safe Phrase*: "Increase check average through food and merch attachment."
+1.  **THE "MARGIN PLAY" RULE**: When pitching "Menu Optimization," ALWAYS use food items as examples (Burgers, Apps). NEVER use "Double Points for Double Shots." *Safe Phrase*: "Increase check average through food and merch attachment."
 2.  **THE "TRAFFIC PLAY" RULE**: Focus on "Visits" and "Dwell Time." NEVER promise "We will get them to drink more." *Safe Phrase*: "We get them in the door; your service keeps them there."
-3.  **TIED HOUSE WARNING**: We cannot pay a venue to carry specific alcohol brands. We cannot guarantee a specific volume of alcohol sales.
+3.  **NO Flash Deals**: We use **Flash Bounties** (Points). Never imply illegal price discounting on alcohol.
+
+---
+
+## 16. Appendix H: Prohibited Terminology
+**Strict compliance is mandatory to protect venue licenses.**
+
+🛑 **NEVER USE**: "Flash Deal" (implies price drop), "Free Beer," "BOGO," "Drink to Win," "Bar Crawl," "Bottomless," "Wasted," "Chug."
+
+✅ **ALWAYS USE**: "Flash Bounty" (points), "Menu Bounty" (food points), "Prizes/Swag," "The Sync," "Earn Status," "Rule of Two," "Safe Ride."

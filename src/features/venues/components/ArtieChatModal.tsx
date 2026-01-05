@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, Sparkles, Bot, CheckCircle2 } from 'lucide-react';
+import { X, Send, Sparkles, Bot, CheckCircle2, Mic, MicOff, Loader2 } from 'lucide-react';
+import { useSpeechRecognition } from '../../../hooks/useSpeechRecognition';
 import { useArtie } from '../../../hooks/useArtie';
 import { useArtieOps, ArtieMessage } from '../../../hooks/useArtieOps'; // [NEW] Import Ops Hook
 import { QuickReplyChips, QuickReplyOption } from '../../../components/artie/QuickReplyChips'; // [NEW] Import Chips
@@ -110,6 +111,13 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
     const [hpValue, setHpValue] = useState(''); // Honeypot value
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [hasInitializedOps, setHasInitializedOps] = useState(false); // Validates start of Ops Session
+    const { isListening, transcript, startListening, stopListening, isSupported } = useSpeechRecognition();
+
+    useEffect(() => {
+        if (transcript) {
+            setInput(prev => prev + (prev ? ' ' : '') + transcript);
+        }
+    }, [transcript]);
 
     // --- 3. Initialization ---
     useEffect(() => {
@@ -245,7 +253,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
             // --- EXECUTE SKILL ---
             switch (pendingAction.skill) {
                 case 'schedule_flash_deal':
-                    await VenueOpsService.scheduleFlashDeal(venueId, {
+                    await VenueOpsService.scheduleFlashBounty(venueId, {
                         title: pendingAction.params.summary,
                         description: pendingAction.params.details,
                         price: pendingAction.params.price,
@@ -258,7 +266,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                         offerDetails: pendingAction.params.summary,
                         terms: pendingAction.params.details
                     });
-                    successMessage = "Flash Deal Scheduled!";
+                    successMessage = "Flash Bounty Scheduled!";
                     // Notify Ops Hook to advance state
                     opsArtie.processAction('confirm_post');
                     break;
@@ -524,14 +532,25 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                     )}
 
                     <div className="flex gap-2 bg-black/40 border-2 border-slate-800 focus-within:border-primary/50 rounded-2xl p-1.5 transition-all">
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                            placeholder={isOpsMode ? (opsArtie.opsState === 'flash_deal_input' ? "Type deal details..." : "Ask Artie...") : "Ask Artie..."}
-                            className="flex-1 bg-transparent px-3 text-sm text-white outline-none placeholder:text-slate-600 font-medium"
-                        />
+                        <div className="flex-1 relative flex items-center">
+                            <input
+                                type="text"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                                placeholder={isListening ? "Listening..." : (isOpsMode ? (opsArtie.opsState === 'flash_deal_input' ? "Type deal details..." : "Ask Artie...") : "Ask Artie...")}
+                                className={`w-full bg-transparent px-3 text-sm text-white outline-none placeholder:text-slate-600 font-medium ${isListening ? 'animate-pulse' : ''}`}
+                            />
+                            {isSupported && (
+                                <button
+                                    onClick={isListening ? stopListening : startListening}
+                                    className={`p-2 rounded-lg transition-all ${isListening ? 'text-primary bg-primary/10' : 'text-slate-500 hover:text-white'
+                                        }`}
+                                >
+                                    {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                                </button>
+                            )}
+                        </div>
                         {/* Honeypot Field */}
                         <div style={{ display: 'none' }} aria-hidden="true">
                             <input
@@ -545,10 +564,10 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                         </div>
                         <button
                             onClick={() => handleSend()}
-                            disabled={!input.trim() || activeIsLoading}
-                            className="bg-primary hover:bg-yellow-400 text-black p-2.5 rounded-xl disabled:opacity-50 disabled:hover:bg-primary transition-all"
+                            disabled={!input.trim() || activeIsLoading || isListening}
+                            className="bg-primary hover:bg-yellow-400 text-black p-2.5 rounded-xl disabled:opacity-50 disabled:hover:bg-primary transition-all flex items-center justify-center shrink-0 w-10 h-10"
                         >
-                            <Send className="w-4 h-4" />
+                            {activeIsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         </button>
                     </div>
                 </div>

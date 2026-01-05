@@ -2,7 +2,6 @@
 import { db } from '../firebaseAdmin';
 
 const GHOST_LIST = [
-    "Heritage Distilling",
     "Locust Cider",
     "Finnriver",
     "Madsen Family Cellars",

@@ -112,7 +112,7 @@ export const BuzzScreen: React.FC<{
       const typeMatch = (v.venueType || '').replace('_', ' ').toLowerCase().includes(q);
       const vibeMatch = v.vibe?.toLowerCase().includes(q) || v.vibeTags?.some(tag => tag.replace('_', ' ').toLowerCase().includes(q));
       const addressMatch = v.address?.toLowerCase().includes(q);
-      const dealMatch = v.deal?.toLowerCase().includes(q) || v.activeFlashDeal?.title?.toLowerCase().includes(q);
+      const dealMatch = v.deal?.toLowerCase().includes(q) || v.activeFlashBounty?.title?.toLowerCase().includes(q);
       // New: Search Game Features
       const gameMatch = v.gameFeatures?.some(f => f.name.toLowerCase().includes(q) || f.type.toLowerCase().includes(q));
 
@@ -140,7 +140,7 @@ export const BuzzScreen: React.FC<{
       if (statusFilter === 'all') return true;
       return v.status === statusFilter;
     }
-    const hasDeal = !!v.deal || !!(v.activeFlashDeal?.isActive && (v.activeFlashDeal.endTime || 0) > Date.now());
+    const hasDeal = !!v.deal || !!(v.activeFlashBounty?.isActive && (v.activeFlashBounty.endTime || 0) > Date.now());
     if (filterKind === 'deals') {
       return hasDeal;
     }
@@ -246,7 +246,7 @@ export const BuzzScreen: React.FC<{
       return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
     }), [venuesWithDistance, filterKind, statusFilter, applyFilter]);
 
-  // --- NEW LOGIC: Buzz Clock (Happy Hours) & Flash Deals ---
+  // --- NEW LOGIC: Buzz Clock (Happy Hours) & Flash Bounties ---
   const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
   const now = new Date();
   const currentHm = now.getHours() * 100 + now.getMinutes();
@@ -287,9 +287,9 @@ export const BuzzScreen: React.FC<{
     if (buzzClockVenues.length > 0) isUpcomingBuzz = true;
   }
 
-  const flashDealVenues = venues.filter(v => {
+  const flashBountyVenues = venues.filter(v => {
     const hasFlatDeal = !!v.deal && (v.dealEndsIn || 0) > 0;
-    const hasStructuredDeal = v.activeFlashDeal?.isActive && (v.activeFlashDeal.endTime || 0) > Date.now();
+    const hasStructuredDeal = v.activeFlashBounty?.isActive && (v.activeFlashBounty.endTime || 0) > Date.now();
     return hasFlatDeal || hasStructuredDeal;
   });
 
@@ -479,27 +479,27 @@ export const BuzzScreen: React.FC<{
             </button>
           </div>
         </div>
-        {/* FLASH DEALS (Premium Carousel) */}
-        {/* FLASH DEALS (Premium Carousel) - Hidden when searching to show results immediately */}
-        {!searchQuery && flashDealVenues.length > 0 && (
+        {/* FLASH BOUNTIES (Premium Carousel) */}
+        {/* FLASH BOUNTIES (Premium Carousel) - Hidden when searching to show results immediately */}
+        {!searchQuery && flashBountyVenues.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <div className="bg-red-500 rounded-full p-1 animate-pulse">
                   <Zap className="w-3 h-3 text-white fill-current" />
                 </div>
-                <h4 className="text-sm font-black text-white uppercase tracking-widest font-league">Live Flash Deals</h4>
+                <h4 className="text-sm font-black text-white uppercase tracking-widest font-league">Live Flash Bounties</h4>
               </div>
               <div className="flex gap-1">
-                {flashDealVenues.map((_, i) => (
+                {flashBountyVenues.map((_, i) => (
                   <div key={i} className="w-1.5 h-1.5 rounded-full bg-slate-800" />
                 ))}
               </div>
             </div>
 
             <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
-              {flashDealVenues.slice(0, 3).map(fd => {
-                const endTime = fd.activeFlashDeal?.endTime || (Date.now() + (fd.dealEndsIn || 0) * 60000);
+              {flashBountyVenues.slice(0, 3).map(fd => {
+                const endTime = fd.activeFlashBounty?.endTime || (Date.now() + (fd.dealEndsIn || 0) * 60000);
                 const minutesLeft = Math.max(0, Math.ceil((endTime - Date.now()) / 60000));
 
                 return (
@@ -526,10 +526,10 @@ export const BuzzScreen: React.FC<{
 
                       <div className="space-y-1 relative z-10">
                         <p className="text-2xl font-black text-primary uppercase font-league leading-tight tracking-tight">
-                          {fd.activeFlashDeal?.title || fd.deal}
+                          {fd.activeFlashBounty?.title || fd.deal}
                         </p>
                         <p className="text-xs text-slate-400 font-medium line-clamp-1 italic">
-                          {fd.activeFlashDeal?.description || 'Limited time offer! Get it while it lasts.'}
+                          {fd.activeFlashBounty?.description || 'Limited time offer! Get it while it lasts.'}
                         </p>
                       </div>
 
