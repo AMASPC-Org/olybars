@@ -220,5 +220,63 @@ Confirm the details before saving.`,
             { name: 'capacity', description: 'The maximum occupancy number', required: true }
         ],
         actionTemplate: '[ACTION]: {"skill": "update_capacity", "params": {"capacity": {{capacity}}}}'
+    },
+    draft_email: {
+        id: 'draft_email',
+        name: 'Draft Email',
+        description: 'Draft a marketing email or newsletter.',
+        category: 'CONTENT_ENGINE',
+        protocol: `
+1. Identify the subject and target audience.
+2. Draft a professional email with clear CTAs.
+3. COMPLIANCE: No chugging/binge encouragement.
+4. Save to dashboard for deployment.`,
+        params: [
+            { name: 'subject', description: 'Email subject line', required: true },
+            { name: 'body', description: 'The email content', required: true }
+        ],
+        actionTemplate: '[ACTION]: {"skill": "draft_email", "params": {"subject": "{{subject}}", "body": "{{body}}"}}'
+    },
+    add_to_calendar: {
+        id: 'add_to_calendar',
+        name: 'Add to Calendar',
+        description: 'Draft an entry for the community event calendar.',
+        category: 'CONTENT_ENGINE',
+        protocol: `
+1. Collect event details (Name, Time, Vibe).
+2. Draft a structured calendar entry.
+3. Save to dashboard for final approval.`,
+        params: [
+            { name: 'summary', description: 'The event summary', required: true }
+        ],
+        actionTemplate: '[ACTION]: {"skill": "add_to_calendar", "params": {"summary": "{{summary}}"}}'
+    },
+    update_website: {
+        id: 'update_website',
+        name: 'Update Website',
+        description: 'Draft a content update for your website.',
+        category: 'CONTENT_ENGINE',
+        protocol: `
+1. Identify the section to update (About, News).
+2. Draft SEO-friendly copy.
+3. Save to dashboard for manual deployment.`,
+        params: [
+            { name: 'content', description: 'The updated web copy', required: true }
+        ],
+        actionTemplate: '[ACTION]: {"skill": "update_website", "params": {"content": "{{content}}"}}'
+    },
+    generate_image: {
+        id: 'generate_image',
+        name: 'Generate Image Prompt',
+        description: 'Create a high-quality prompt for AI image generation.',
+        category: 'CONTENT_ENGINE',
+        protocol: `
+1. Describe the desired scene (e.g. "a misty evening at the artesian well").
+2. Reference Gemini 3.0 Flash for multimodal precision.
+3. Provide the prompt for owner review.`,
+        params: [
+            { name: 'prompt', description: 'The image generation prompt', required: true }
+        ],
+        actionTemplate: '[ACTION]: {"skill": "generate_image", "params": {"prompt": "{{prompt}}"}}'
     }
 };

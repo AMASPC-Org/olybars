@@ -82,12 +82,12 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         directMenuUrl: venue.directMenuUrl || '',
         capacity: venue.capacity,
         // Scraper Metadata
-        partner_tier: venue.partner_tier || 'FREE',
+        partner_tier: venue.partner_tier || PartnerTier.LOCAL,
         scrape_source_url: venue.scrape_source_url || '',
         is_scraping_enabled: venue.is_scraping_enabled || false,
         // Meta Sync
         partnerConfig: venue.partnerConfig || {
-            tier: venue.partner_tier || PartnerTier.FREE,
+            tier: venue.partner_tier || PartnerTier.LOCAL,
             billingCycleStart: Date.now(),
             flashBountiesUsed: 0
         }
@@ -134,11 +134,11 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
             orderUrl: venue.orderUrl || '',
             directMenuUrl: venue.directMenuUrl || '',
             capacity: venue.capacity,
-            partner_tier: venue.partner_tier || 'FREE',
+            partner_tier: venue.partner_tier || 'local',
             scrape_source_url: venue.scrape_source_url || '',
             is_scraping_enabled: venue.is_scraping_enabled || false,
             partnerConfig: venue.partnerConfig || {
-                tier: venue.partner_tier || PartnerTier.FREE,
+                tier: venue.partner_tier || PartnerTier.LOCAL,
                 billingCycleStart: Date.now(),
                 flashBountiesUsed: 0
             }
@@ -584,7 +584,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                 </div>
 
                 {/* [BETA BATTALION] League Night Scraper Configuration */}
-                {(formData.partner_tier === 'PREM_PARTNER' || isSystemAdmin(userProfile)) && (
+                {(formData.partnerConfig?.tier === PartnerTier.PRO || formData.partnerConfig?.tier === PartnerTier.AGENCY || isSystemAdmin(userProfile)) && (
                     <div className="mt-8 bg-primary/5 border border-primary/20 rounded-3xl p-6 space-y-6 animate-in fade-in duration-500">
                         <div>
                             <div className="flex justify-between items-center mb-1">

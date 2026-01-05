@@ -75,7 +75,7 @@
       "is_league_eligible": true
     },
     "partnerConfig": {
-      "tier": "PREM_PARTNER",
+      "tier": "PRO",
       "billingCycleStart": 1704067200000,
       "flashBountiesUsed": 0,
       "metaSync": {

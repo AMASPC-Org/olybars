@@ -1,17 +1,53 @@
 import React, { useState } from 'react';
 import { HelpCircle, ChevronDown, ChevronUp, MessageCircle, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import kb from '../../../../server/src/data/knowledgeBase.json';
+import { db } from '../../../lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+
+interface FAQItem {
+    question: string;
+    answer: string;
+    category?: string;
+}
 
 const FAQScreen: React.FC = () => {
     const navigate = useNavigate();
     const [openIndex, setOpenIndex] = useState<number | null>(null);
+    const [faqs, setFaqs] = useState<FAQItem[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    React.useEffect(() => {
+        const fetchFaqs = async () => {
+            try {
+                const q = query(collection(db, 'knowledge'), where('type', '==', 'faq'));
+                const querySnapshot = await getDocs(q);
+                const fetchedFaqs: FAQItem[] = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    fetchedFaqs.push({
+                        question: data.question,
+                        answer: data.answer,
+                        category: data.category
+                    });
+                });
+                setFaqs(fetchedFaqs);
+            } catch (error) {
+                console.error("Error fetching FAQs:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchFaqs();
+    }, []);
 
     const generateFAQSchema = () => {
+        if (faqs.length === 0) return null;
+
         const schema = {
             "@context": "https://schema.org",
             "@type": "FAQPage",
-            "mainEntity": kb.faq.map(item => ({
+            "mainEntity": faqs.map((item: FAQItem) => ({
                 "@type": "Question",
                 "name": item.question,
                 "acceptedAnswer": {
@@ -80,28 +116,39 @@ const FAQScreen: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                    {kb.faq.map((item, idx) => (
-                        <div
-                            key={idx}
-                            className="bg-surface border border-white/10 rounded-2xl overflow-hidden transition-all duration-300"
-                        >
-                            <button
-                                onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
-                                className="w-full p-5 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
-                            >
-                                <span className="text-sm font-black uppercase tracking-tight font-league">{item.question}</span>
-                                {openIndex === idx ? <ChevronUp className="w-5 h-5 text-primary" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
-                            </button>
-
-                            {openIndex === idx && (
-                                <div className="px-5 pb-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                                    <p className="text-sm text-slate-400 leading-relaxed font-body">
-                                        {item.answer}
-                                    </p>
-                                </div>
-                            )}
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <p className="text-xs font-black uppercase tracking-widest text-slate-500">Retrieving Intelligence...</p>
                         </div>
-                    ))}
+                    ) : faqs.length > 0 ? (
+                        faqs.map((item: FAQItem, idx: number) => (
+                            <div
+                                key={idx}
+                                className="bg-surface border border-white/10 rounded-2xl overflow-hidden transition-all duration-300"
+                            >
+                                <button
+                                    onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
+                                    className="w-full p-5 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
+                                >
+                                    <span className="text-sm font-black uppercase tracking-tight font-league">{item.question}</span>
+                                    {openIndex === idx ? <ChevronUp className="w-5 h-5 text-primary" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
+                                </button>
+
+                                {openIndex === idx && (
+                                    <div className="px-5 pb-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <p className="text-sm text-slate-400 leading-relaxed font-body">
+                                            {item.answer}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-12 bg-slate-900 rounded-3xl border border-dashed border-white/10">
+                            <p className="text-xs font-black uppercase tracking-widest text-slate-500">The Artesian Manual is currently offline.</p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-12 bg-primary/10 border-2 border-primary/20 p-6 rounded-3xl text-center">

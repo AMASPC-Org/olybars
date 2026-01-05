@@ -1,8 +1,8 @@
 # OlyBars.com: The Nightlife Operating System
 ## Master Business Plan & Source of Truth
-**Version:** 3.0 (Consolidated)
+**Version:** 3.1 (Multimodal Co-Pilot)
 **Status:** Production Live  
-**Date:** 2026-01-04
+**Date:** 2026-01-05
 
 ---
 
@@ -62,10 +62,11 @@ Role: The friendly, witty, slightly mystical "Spirit of the Well."
 *   **League Support**: "How many points do I need for the next badge?"
 *   **Compliance Guardrails**: Artie shifts to "Guardian Mode" if users exhibit behavior suggesting over-consumption, suggesting food or water.
 
-#### B. For Partners: The Marketing Co-Pilot
-*   **Automation**: Drafts social copy, suggests Bounties based on weather/time, and ensures compliance.
+#### B. For Partners: The Multimodal Marketing Co-Pilot
+*   **Marketing Suite**: Drafts social copy, emails, and website updates. High-margin ideation based on menu analysis.
+*   **Visual Asset Design**: Generates high-quality image prompts for marketing content (Powered by Gemini 3.0 Flash).
+*   **Automation**: Suggests Flash Bounties based on inventory/time, and ensures compliance.
 *   **Listing Management**: `update_hours`, `update_order_url`, `emergency_closure`.
-*   **Pit Rule Safety**: Artie *drafts* and *confirms* operational changes but requires a human "Confirm" tap before publishing live.
 
 ---
 
@@ -87,19 +88,18 @@ Role: The friendly, witty, slightly mystical "Spirit of the Well."
 
 OlyBars.com is the lighthouse site of **The AMA Network** (American Marketing Alliance SPC). As a **Social Purpose Corporation**, our mission is to solve the "Marketing Burn"—the phenomenon where local businesses waste thousands on ineffective ads simply because they lack the time to manage complex marketing funnels.
 
-### 3.1 Submit Once, Distribute Everywhere (The Artie Social Engine)
-When a Partner updates an event in The Brew House:
+### 3.1 Submit Once, Distribute Everywhere (The Artie Marketing Suite)
+When a Partner updates an event or needs content in The Brew House:
 *   **Instant Update**: OlyBars.com Calendar & Buzz Clock.
-*   **Newsletter**: Auto-inclusion in "**The Weekly Pulse**."
+*   **Newsletter & Email**: Auto-inclusion in "**The Weekly Pulse**" and custom email drafting for subscribers.
 *   **External Sync**: Artie formats and emails details to: **ODA**, **Experience Olympia (VCB)**, and **Thurston Talk**.
-*   **Artie Social Engine**: Using the Meta Graph API, Artie performs a "White Hat" sync of the venue's Instagram and Facebook feeds. 
-    *   **Auto-Sync**: Artie identifies flyers and posts, uses AI Vision to extract details, and drafts them for one-tap owner approval.
-    *   **Multi-Platform Publishing**: Owners "Submit Once" to Artie, and Artie publishes the branded content back to the venue's connected social platforms.
+*   **Multimodal Content Engine**: Artie identifies flyers, generates captions, and drafts image prompts for cross-platform publishing.
+*   **Social Distribution**: Real-time sync of Instagram and Facebook feeds for one-tap owner approval.
 
 ### 3.2 Automated Compliance (Legal Moat)
 Legal compliance is our primary competitive advantage. By enforcing "Law-as-Code," we eliminate human error.
 *   **The Smart Gatekeeper**: Players are capped at **2 clock-ins per 12 hours** globally (**Rule of Two**).
-*   **No Flash Deals**: The system hard-codes WA LCB rules. A venue cannot accidentally create an illegal "2-for-1" because we only allow **Flash Bounties** (Points).
+*   **The Bounty Standard**: The system hard-codes WA LCB rules. A venue cannot accidentally create an illegal "2-for-1" because we only allow **Flash Bounties** (Points).
 
 ### 3.3 Fairness Algorithms (Exposure Equity)
 
@@ -162,6 +162,7 @@ We treat partner strategy and user privacy as sacred. Our "Fort Knox" approach i
 ### 6.1 SEO & Discoverability
 *   **Metadata Strategy**: "Know before you go." Titles include `Olympia, WA` and `98501`.
 *   **Local Maker's Trail**: Highlight venues supporting regional brewers and roasters.
+*   **Maker-Funded Bonuses**: Completion bonuses for Maker Trails are funded by the **Maker** (Brewery/Cidery/Distillery) as a direct marketing cost to drive volume at their partner venues.
 
 ### 6.2 Prize Governance
 We reward with **League Bucks** (Generic Gift Cards), not alcohol.
@@ -195,7 +196,8 @@ Artie is the "Spirit of the Artesian Well," serving as the LLM-powered engine fo
 *   **📅 Event Secretary**: Converts simple prompts or links into structured calendar events with AI-generated descriptions.
 *   **🛡️ Compliance Guardian**: Automatically pivots non-compliant marketing language (e.g., "Flash Deal" -> "Flash Bounty").
 *   **🔍 Local RAG**: Real-time awareness of Olympia venues, maker culture, and the Artesian Bar League rulebook.
-*   **🔗 Meta Social Engine**: Bi-directional sync for Instagram/Facebook posts and events. [LIVE]
+*   **📱 Marketing Co-Pilot**: Multi-channel drafting (Social, Email, Web) and Image Generation Prompts. [NEW]
+*   **🔗 Meta Social Engine**: Bi-directional sync for Instagram/Facebook posts and events.
 
 #### Skill Architecture
 Artie operates using a **"Skills & Protocols"** framework. Every action (skill) is governed by a protocol that requires specific data validation (params) before an `[ACTION]` tag is produced for the frontend to execute.
@@ -221,10 +223,10 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 ### 8.3 Imminent Objectives (Artie V2.0 Roadmap)
 1.  **Phase 6: The League Season 1**: Finalize points-to-prizes logic.
 2.  **Phase 7: Artie Pro (The Partner Co-pilot)**: 
-    *   **Holistic Listing Management**: "Artie, update my hours for tonight" or "Add a website link."
-    *   **Menu Intelligence**: "Artie, add a local IPA to the drafts list" or "Promote our burgers."
+    *   ✅ **Holistic Listing Management**: "Artie, update my hours for tonight" or "Add a website link."
+    *   ✅ **Menu Intelligence**: High-margin ideation and automated "Margin Play" suggestions.
+    *   ✅ **Marketing Suite**: Automated drafting for Email, Social, and Web.
     *   **Voice/Audio Pipeline**: Direct voice-to-action interface for busy bartenders/owners.
-    *   **Flash Bounty Ideas**: AI suggestions based on slow nights and venue-specific data.
 3.  **Phase 8: Mobile Native**: Progressive Web App (PWA) "Add to Home Screen" optimization.
 
 ---
@@ -269,12 +271,12 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 
 ## 10. Appendix B: Annual Membership Tiers
 
-| Tier Name | Monthly Cost | Persona | Feature Set |
-| :--- | :--- | :--- | :--- |
-| **Tier 1: The Local** | $0 | "The Listed" | Basic Listing, Buzz Clock Inclusion. No Point Bank. |
-| **Tier 2: DIY Toolkit** | $99 | "The Operator" | 1 Flash Bounty/mo, Manual Dashboard, small Point Bank. |
-| **Tier 3: Pro League** | $399 | "The Competitor" | 4 Flash Bounties/mo, Content Engine, larger Point Bank. |
-| **Tier 4: Agency Legend** | $799 | "The Anchor" | Unlimited Bounties, Priority hosting for "The Sync", max Point Bank. |
+| Tier Name | Monthly Cost | Point Bank | Flash Bounties | Key Feature |
+| :--- | :--- | :--- | :--- | :--- |
+| Tier 1: The Local | $0 | 250 Pts/mo | 1 per Month | Basic Listing, Buzz Clock. |
+| **Tier 2: DIY Toolkit** | $99 | 1,500 Pts/mo | 4 per Month | **Press Agent** (Automated Email Dispatch). |
+| **Tier 3: Pro League** | $399 | 10,000 Pts/mo | 12 per Month | IG/FB Read/Write Distribution. |
+| **Tier 4: Agency Legend** | $799 | UNLIMITED | UNLIMITED | Full Management & Keystone PR. |
 
 ---
 
@@ -351,6 +353,10 @@ This document maps the operational needs of Venue Owners to specific **Artie Cap
 | :--- | :--- | :--- |
 | "I want to do a Flash Bounty." | `createFlashBounty(offer, duration)` | Creates `events` record, triggers Push Notification |
 | "Draft a social post about Trivia." | `generateSocialCopy(topic)` | LLM generation |
+| "Draft an email to my regulars." | `draftEmail(venueId, email)` | Saves to `lastArtieDraft` in Firestore |
+| "Add this to the city calendar." | `addToCalendar(venueId, entry)` | Saves to `lastArtieDraft` in Firestore |
+| "Update my website content." | `updateWebsite(venueId, content)` | Saves to `lastArtieDraft` in Firestore |
+| "Generate an image for my IPA." | `generateImage(venueId, prompt)` | Saves to `lastArtieDraft` in Firestore |
 | "Show me this week's Weekly Buzz." | `fetchNewsletter(latest)` | Retrieves cached newsletter content |
 | "Are there any new bars in town?" | `fetchMarketIntel(new_listings)` | Queries `venues` sorted by `createdAt` |
 

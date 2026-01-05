@@ -53,6 +53,12 @@ export const PartnerManualTab: React.FC = () => {
             icon: Globe,
             artie: "Ask Artie: \"Artie, sync my latest Instagram posts.\"",
             manual: "Manual: In the 'Listing' tab, click 'Connect Instagram Business' to link your account. Once connected, Artie will automatically scan your feed for events and drafts them for your approval."
+        },
+        {
+            title: "Marketing & Distribution Suite",
+            icon: Smartphone,
+            artie: "Ask Artie: \"Artie, draft a newsletter email about our new mural and Saturday trivia session.\"",
+            manual: "NEW: Artie is now a Multimodal Co-Pilot. Use the chat to draft Social Posts, Emails, Community Calendar entries, and Website updates. You can even generate AI image prompts for your social assets. All drafts are saved to your dashboard for final review."
         }
     ];
 

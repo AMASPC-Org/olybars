@@ -24,11 +24,11 @@ export class ScraperService {
     }
 
     /**
-     * Get all active venues with PREM_PARTNER status and scraper enabled.
+     * Get all active venues with PRO or AGENCY status and scraper enabled.
      */
     private static async getEligibleVenues(): Promise<Venue[]> {
         const snapshot = await db.collection('venues')
-            .where('partner_tier', '==', PartnerTier.PREM_PARTNER)
+            .where('partnerConfig.tier', 'in', [PartnerTier.PRO, PartnerTier.AGENCY])
             .where('is_scraping_enabled', '==', true)
             .where('isActive', '==', true)
             .get();

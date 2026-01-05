@@ -978,6 +978,19 @@ v1Router.patch('/events/:id', verifyToken, requireRole(['admin', 'super-admin', 
 
         await eventRef.update(updates);
         log('INFO', `[EVENT_UPDATED] Event ${id} updated status: ${status}`);
+
+        // Trigger Media Distribution if status is 'approved' and it's a league event
+        if (status === 'approved' && (updates.isLeagueEvent || eventData?.isLeagueEvent) && (updates.distributeToMedia || eventData?.distributeToMedia)) {
+            try {
+                const { MediaDistributionService } = await import('./services/MediaDistributionService');
+                const fullEvent = { ...eventData, ...updates } as any;
+                await MediaDistributionService.dispatchEvent(eventData?.venueId, fullEvent);
+                log('INFO', `[MEDIA_SYNC] Triggered distribution for event ${id}`);
+            } catch (err: any) {
+                log('ERROR', '[MEDIA_SYNC_FAILED] Failed to dispatch event to media', { eventId: id, error: err.message });
+            }
+        }
+
         res.json({ success: true });
     } catch (error: any) {
         log('ERROR', 'Failed to update event', { eventId: id, error: error.message });
@@ -1237,6 +1250,80 @@ v1Router.post('/ai/analyze-event', verifyToken, async (req, res) => {
     } catch (error: any) {
         log('ERROR', 'Event Analysis Failed', { error: error.message });
         res.status(500).json({ error: 'Failed to analyze event.' });
+    }
+});
+
+/**
+ * @route POST /api/ai/generate-press-release
+ * @desc Generate a professional press release for media distribution
+ */
+v1Router.post('/ai/generate-press-release', verifyToken, async (req, res) => {
+    const { venueId, eventTitle, eventDate, eventTime, eventDescription } = req.body;
+
+    if (!venueId || !eventTitle) {
+        return res.status(400).json({ error: 'Venue information and Event Title are required.' });
+    }
+
+    try {
+        const { db } = await import('./firebaseAdmin');
+        const { GeminiService } = await import('../../functions/src/services/geminiService');
+
+        const venueDoc = await db.collection('venues').doc(venueId).get();
+        const venueData = venueDoc.data() || { name: 'Local Venue' };
+
+        const gemini = new GeminiService();
+        const prompt = `You are Artie, the Press Agent for OlyBars.
+        Draft a professional, AP-style press release for the following event:
+        Venue: ${venueData.name} (${venueData.address || 'Olympia, WA'})
+        Event: ${eventTitle}
+        Date: ${eventDate}
+        Time: ${eventTime}
+        Description: ${eventDescription}
+        
+        Guidelines:
+        - Include "FOR IMMEDIATE RELEASE" at the top.
+        - Use a compelling headline.
+        - Ensure a professional tone suitable for local news outlets.
+        - Mention OlyBars.com as the source.
+        
+        Output ONLY the text of the press release.`;
+
+        const pressRelease = await gemini.generateArtieResponse('gemini-2.0-flash', [
+            { role: 'user', parts: [{ text: prompt }] }
+        ], 0.4);
+
+        res.json({ pressRelease });
+    } catch (error: any) {
+        log('ERROR', 'Press Release Generation Failed', { error: error.message });
+        res.status(500).json({ error: 'Failed to draft press release.' });
+    }
+});
+
+/**
+ * @route POST /api/utils/send-email
+ * @desc Dispatch an email (Internal Utility)
+ */
+v1Router.post('/utils/send-email', verifyToken, async (req, res) => {
+    const { to, subject, body, fromName } = req.body;
+
+    if (!to || !subject || !body) {
+        return res.status(400).json({ error: 'Recipients, Subject, and Body are required.' });
+    }
+
+    try {
+        // Log the dispatch (Simulating real mailer)
+        console.log(`\n📨 --- BACKEND EMAIL DISPATCH ---`);
+        console.log(`From: ${fromName || 'OlyBars Admin'}`);
+        console.log(`To: ${Array.isArray(to) ? to.join(', ') : to}`);
+        console.log(`Subject: ${subject}`);
+        console.log(`Body:\n${body}`);
+        console.log(`----------------------------------\n`);
+
+        // Real implementation would use SendGrid or similar here
+        res.json({ success: true, message: 'Email dispatched successfully.' });
+    } catch (error: any) {
+        log('ERROR', 'Email Dispatch Failed', { error: error.message });
+        res.status(500).json({ error: 'Failed to send email.' });
     }
 });
 

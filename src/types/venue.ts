@@ -1,20 +1,17 @@
 export type VenueStatus = 'dead' | 'chill' | 'buzzing' | 'packed';
 
 export enum PartnerTier {
-    FREE = 'FREE',
-    DIY = 'DIY',
-    PRO = 'PRO',
-    PREM_PARTNER = 'PREM_PARTNER', // [NEW] Added for Scraper logic
-    AGENCY = 'AGENCY'
+    LOCAL = 'local',
+    DIY = 'diy',
+    PRO = 'pro',
+    AGENCY = 'agency'
 }
 
-export const TIER_LIMITS: Record<PartnerTier, number> = {
-    [PartnerTier.FREE]: 1,
-    [PartnerTier.DIY]: 2,
-    [PartnerTier.PRO]: 4,
-    [PartnerTier.PREM_PARTNER]: 6,
-    [PartnerTier.AGENCY]: 8
-};
+import { TIER_CONFIG as GLOBAL_TIER_CONFIG, TierFeatures } from '../config/tiers';
+
+export interface TierLimits extends TierFeatures { }
+
+export const TIER_CONFIG = GLOBAL_TIER_CONFIG;
 
 export interface PartnerConfig {
     tier: PartnerTier;
@@ -181,6 +178,7 @@ export interface LeagueEvent {
     sourceUrl?: string;
     sourceConfidence: number; // 0.0 - 1.0 (from AI)
     lastScraped?: number;
+    distributeToMedia?: boolean; // [NEW] For MediaDistributionService
 }
 
 export interface Venue {
@@ -400,7 +398,7 @@ export interface VenueInsight {
     message: string;
     actionLabel: string;
     actionSkill: string;
-    actionParams: any;
+    actionParams: Record<string, unknown>;
     pointCost?: number;
     potentialImpact: 'HIGH' | 'MEDIUM' | 'LOW';
 }

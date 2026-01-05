@@ -23,7 +23,7 @@ export const Footer = () => {
             </div>
 
             <p className="text-[7px] text-slate-700 font-bold uppercase tracking-widest">
-                © 2025 OlyBars | Part of the AMA Network
+                © 2026 OlyBars | Part of the AMA Network
             </p>
         </footer>
     );

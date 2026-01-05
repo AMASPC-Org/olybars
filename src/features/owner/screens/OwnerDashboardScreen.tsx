@@ -4,7 +4,7 @@ import { db, auth } from '../../../lib/firebase';
 import { multiFactor } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info, QrCode, Download, Printer, Calendar, Crown, Clock, Lock, AlertTriangle } from 'lucide-react';
-import { Venue, UserProfile, GameStatus, PartnerTier, TIER_LIMITS, ScheduledDeal } from '../../../types';
+import { Venue, UserProfile, GameStatus, PartnerTier, TIER_CONFIG, ScheduledDeal } from '../../../types';
 import { format, addHours, parseISO } from 'date-fns';
 import { OwnerMarketingPromotions } from '../../../components/OwnerMarketingPromotions';
 import { useToast } from '../../../components/ui/BrandedToast';
@@ -459,7 +459,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             <div className="flex items-center gap-1">
                                 <Zap className="w-2.5 h-2.5 text-primary fill-current" />
                                 <span className="text-[10px] font-black text-primary font-league">
-                                    {TIER_LIMITS[(privateData?.partnerConfig?.tier || myVenue.partnerConfig?.tier || PartnerTier.FREE) as PartnerTier] - (privateData?.partnerConfig?.flashBountiesUsed || myVenue.partnerConfig?.flashBountiesUsed || 0)} TOKENS
+                                    {TIER_CONFIG[(privateData?.partnerConfig?.tier || myVenue.partnerConfig?.tier || PartnerTier.FREE) as PartnerTier].flashBountyLimit - (privateData?.partnerConfig?.flashBountiesUsed || myVenue.partnerConfig?.flashBountiesUsed || 0)} TOKENS
                                 </span>
                             </div>
                         </div>

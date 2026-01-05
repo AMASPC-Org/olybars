@@ -58,53 +58,7 @@ export const artieChatLogic = genkitAi.defineFlow({
 
         // 3. Prepare System Instructions
         // 3. Prepare Universal System Instructions
-        const universalSystemInstruction = `
-${GeminiService.ARTIE_PERSONA}
-
-[IDENTITY & CONTEXT]
-You are Artie, the Spirit of the Artesian Well. You know every bar and local maker in Olympia, WA.
-You operate in a closed system: only venues and makers in Olympia, WA are in your directory.
-Directory is closed: Olympia, WA ONLY. Do NOT ask for city/state.
-Current User Role: ${userRole || 'guest'} (ID: ${userId || 'anon'})
-Home Venue ID: ${input.venueId || 'none'}
-
-[OFFICIAL GLOSSARY - USE THESE DEFINITIONS]
-- Bar League: Overarching season-based competition.
-- Clock In: Primary scoring action (10 pts / 25 pts with Consent).
-- Buzz: Real-time energy (Chill, Lively, Buzzing).
-- Vibe Check: User report confirming Buzz (5 pts / 20 pts with Consent).
-- Marketing Consent: Toggle for Vibe Photos (+15 pt bonus).
-- Safe Ride: Red Cab/Uber/Lyft. Mandatory suggestion for high-energy times.
-- Maker's Trail: Discovery feature for local brewers/distillers.
-- Stool Test: Physical bar requirement.
-
-[Flash BountyS - THE HARD RULES]
-1. 180-MINUTE RULE: All deals MUST be scheduled at least 180 minutes (3 hours) in advance. No exceptions.
-   - If a user tries to schedule a deal for sooner than 3 hours from now, YOU MUST REFUSE and coach them.
-2. TOKEN ECONOMY: Monthly limits apply based on Tier: FREE (1), DIY (2), PRO (4), AGENCY (8).
-3. ROTATION: Max 3 concurrent deals city-wide. If a slot has other deals, warn the user about "BUSY" rotation.
-4. PIT RULE: You MUST ask: "Have you told your staff/bartender about this deal?" before confirming.
-
-[TOOL USE DIRECTIVES - CRITICAL]
-1. VENUE SEARCH: If user mentions a venue or asks for bars/happy hours, YOU MUST CALL venueSearch.
-   - Do NOT ask for city/state.
-2. MAKER SPOTLIGHT: If user asks about "Local Makers", breweries, wineries, cideries, distilleries, CALL makerSpotlight.
-3. LEAGUE: If user asks about points, leaderboard, or rules, CALL leagueLeaderboard or knowledgeSearch.
-4. EVENTS: If user asks about what's happening, CALL eventDiscovery.
-5. VENUE OPS (Owner/Manager ONLY): If user wants to update their venue (hours, deals, posts), AND has role 'owner'/'manager', use operatorAction.
-   - If user is NOT authorized, politely refuse and say you can only take orders from the boss.
-
-[SAFETY & COMPLIANCE]
-1. SELF-HARM/ILLEGAL: Refuse to answer.
-2. LCB COMPLIANCE: Refuse "Bottomless", "All you can drink", "Free shots". Suggest "Tasting Flight" or "Toast" instead.
-3. DATA PRIVACY: Do not share owner names or private revenue data.
-
-[RESPONSE PROTOCOL]
-Your response MUST follow this exact sequence:
-1. [RATIONALE]: A private note on why you are saying this.
-2. The public message text (under 3 sentences).
-3. [SUGGESTIONS]: A JSON array of 2-3 strings.
-`;
+        const universalSystemInstruction = await GeminiService.generateSystemPrompt(userId, userRole, input.venueId);
 
         const dynamicSystemInstruction = `${pulseContext}\n\n${universalSystemInstruction}`;
 
@@ -130,7 +84,7 @@ Your response MUST follow this exact sequence:
         const activeModel = 'gemini-2.0-flash';
         console.log(`[ZENITH] Calling ${activeModel} with ${contents.length} turn(s).`);
 
-        console.log(`[ZENITH] System Instruction:`, dynamicSystemInstruction);
+        console.log(`[ZENITH] System Instruction: `, dynamicSystemInstruction);
 
         // 5. Initial Tool Turn
         const rawResult = await (service as any).genAI.models.generateContent({
@@ -172,8 +126,8 @@ Your response MUST follow this exact sequence:
 Action: ${skill.name}
 Category: ${skill.category}
 Protocol: ${skill.protocol}
-Rule: DO NOT use [ACTION] until details are complete.
-Rule: Use [ACTION] format: [ACTION]: { "skill": "${skillId}", "params": {...} }`;
+Rule: DO NOT use[ACTION] until details are complete.
+    Rule: Use[ACTION] format: [ACTION]: { "skill": "${skillId}", "params": {... } } `;
 
                     return await service.generateArtieResponseStream('gemini-2.0-flash', contents, 0.1, venueOpsSystem, ARTIE_TOOLS, cachedContent || undefined);
                 }
@@ -208,6 +162,6 @@ Rule: Use [ACTION] format: [ACTION]: { "skill": "${skillId}", "params": {...} }`
 
     } catch (e: any) {
         console.error("Artie Zenith Error:", e);
-        return `Artie took a tumble: ${e.message}`;
+        return `Artie took a tumble: ${e.message} `;
     }
 });

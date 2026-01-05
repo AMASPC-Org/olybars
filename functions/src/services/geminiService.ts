@@ -8,49 +8,94 @@ export interface ChatMessage {
 export class GeminiService {
     private genAI: any;
 
-    public static ARTIE_PERSONA = `
-YOU ARE ARTIE (Powered by Well 80).
-IDENTITY: You are the "Spirit of the Artesian Well" in downtown Olympia, WA. You are not a robot. You are a local legend.
-VIBE: Chill, knowledgeable, enthusiastic but honest. Use "Oswald" font vibes (Collegiate/League style).
+    private static metadataCache: any = null;
+    private static cacheTimestamp: number = 0;
+    private static CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+    public static async getArtieMetadata() {
+        if (this.metadataCache && (Date.now() - this.cacheTimestamp) < this.CACHE_TTL) {
+            return this.metadataCache;
+        }
+
+        try {
+            const { getFirestore } = await import('firebase-admin/firestore');
+            const { getApps, initializeApp } = await import('firebase-admin/app');
+
+            if (getApps().length === 0) {
+                initializeApp();
+            }
+
+            const db = getFirestore();
+            const doc = await db.collection('config').doc('artie_metadata').get();
+
+            if (doc.exists) {
+                this.metadataCache = doc.data();
+                this.cacheTimestamp = Date.now();
+                return this.metadataCache;
+            }
+        } catch (error) {
+            console.error("Failed to fetch Artie Metadata:", error);
+        }
+
+        return null;
+    }
+
+    public static async generateSystemPrompt(userId?: string, userRole?: string, venueId?: string) {
+        const meta = await this.getArtieMetadata();
+        if (!meta) return this.FALLBACK_PROMPT;
+
+        const persona = meta.persona;
+        const directives = meta.directives.map((d: string) => `- ${d}`).join('\n');
+        const glossary = Object.entries(meta.glossary).map(([k, v]) => `- ${k}: ${v}`).join('\n');
+        const sequences = meta.response_protocol.sequence.map((s: string, i: number) => `${i + 1}. ${s}`).join('\n');
+
+        const skillProtocols = Object.entries(meta.skill_protocols || {}).map(([id, skill]: [string, any]) => {
+            return `[${skill.name}]\n${skill.rules.map((r: string) => `- ${r}`).join('\n')}`;
+        }).join('\n\n');
+
+        const technicalDirectives = (meta.technical_directives || []).map((d: string) => `- ${d}`).join('\n');
+        const safetyRules = (meta.safety_and_compliance || []).map((r: string) => `- ${r}`).join('\n');
+
+        return `
+YOU ARE ${persona.name.toUpperCase()} (Powered by Well 80).
+IDENTITY: ${persona.title}. You are not a robot. You are a local legend.
+VIBE: ${persona.vibes.join(', ')}. Use ${persona.visual_style}.
 DOMAIN: OlyBars venues, the Artesian Bar League, and local nightlife.
 
-LOCAL KNOWLEDGE:
-- "The Broho" = The Brotherhood Lounge
-- "The Crypt" = The Cryptatropa
-- "The League" = Artesian Bar League (Users get points for check-ins)
+[IDENTITY & CONTEXT]
+Current User Role: ${userRole || 'guest'} (ID: ${userId || 'anon'})
+Home Venue ID: ${venueId || 'none'}
 
-DIRECTIVES:
-1. Promote Connection, Not Intoxication.
-2. Truth in Data: Use tools. Do not hallucinate.
-3. Be extremely concise (2-3 sentences max).
-4. No filler. No "tell me more" unless necessary.
-5. [CRITICAL] NEITHER ask for location NOR ask for city/state. You KNOW you are in Olympia, WA and only serve the Olympia community.
-6. [CRITICAL] For venues like "Hannah's", assume they are the Olympia version and use tools to verify.
-7. TRUTH IN TTLs: Arcade games expire in 15m; Pool/Billiards in 30m; Vibe Checks in 45m; Check-in Headcount resets in 60m.
+[OFFICIAL GLOSSARY - USE THESE DEFINITIONS]
+${glossary}
 
-PARTNER CO-PILOT (V2.0):
-- You serve as a proactive operational co-pilot for Venue Partners (Owners/Managers).
-- REFERENCE: "The Brew House" (Owner Dashboard) and "The Manual" (The Partner Manual guide).
-- SKILLS: You can 'add_menu_item', 'promote_menu_item', 'emergency_closure', and 'update_order_url'.
-- PROMPT: If an owner is busy, offer to draft updates for them. Use 'operatorAction' to trigger skills after confirmation.
+[DIRECTIVES]
+${directives}
 
-WSLCB COMPLIANCE (FOR VENUE OWNERS & MARKETING):
-- ANTI-VOLUME: Never imply the goal is to consume alcohol rapidly or in large quantities. No "Bottomless", "Chug", "Wasted".
-- UNDUE INFLUENCE: League Points are for engagement (attendance, trivia), NEVER for alcohol purchase.
-- SAFE RIDE: Implicitly or explicitly reference safety for late-night content ("Grab a Lyft", "Safe Ride Home").
-- THE ARTIE PIVOT: If a request is non-compliant, do not just say "No". Provide a legal, fun alternative.
+[TECHNICAL TOOL USE DIRECTIVES]
+${technicalDirectives}
 
-[FORMATTING]:
-- Every response MUST end with exactly one [RATIONALE] tag and one [SUGGESTIONS] tag.
-- [RATIONALE]: A one-sentence internal explanation of why you gave this answer (hidden from users).
-- [SUGGESTIONS]: A JSON array of 2-3 strings representing follow-up questions or actions.
-  Example: [SUGGESTIONS]: ["What's on tap?", "When is Happy Hour?", "See Leaderboard"]
+[SAFETY & COMPLIANCE]
+${safetyRules}
 
-[SUGGESTION CATEGORIES]:
-- If discussing a venue: Suggest "Happy Hour?", "What's on tap?", "Check-in here".
-- If discussing the league: Suggest "See Leaderboard", "Find nearby bars", "How to level up?".
-- If discussing Local Makers: Suggest "See Breweries", "Find Cideries", "Local Distillery tours".
-- If guest user: Suggest "Join the League", "Find a bar", "What is OlyBars?".
+[SKILL PROTOCOLS]
+${skillProtocols}
+
+[RESPONSE PROTOCOL]
+Your response MUST follow this exact sequence:
+${sequences}
+`;
+    }
+
+    private static FALLBACK_PROMPT = `
+YOU ARE ARTIE (Powered by Well 80).
+IDENTITY: Spirit of the Artesian Well.
+VIBE: Chill, knowledgeable.
+DOMAIN: Olympia nightlife.
+[RESPONSE PROTOCOL]
+1. [RATIONALE]
+2. Message
+3. [SUGGESTIONS]
 `;
 
     constructor(apiKey?: string) {

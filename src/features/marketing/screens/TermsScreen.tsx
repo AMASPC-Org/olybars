@@ -83,7 +83,7 @@ const TermsScreen: React.FC = () => {
 
                 <footer className="pt-12 border-t border-white/5 text-center">
                     <p className="text-xs text-slate-600 font-bold uppercase tracking-widest">
-                        © 2025 OlyBars.com | Powered by Hannah's Bar & Grill
+                        © 2026 OlyBars.com | Powered by Hannah's Bar & Grill
                     </p>
                 </footer>
             </div>

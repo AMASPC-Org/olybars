@@ -13,7 +13,7 @@ import {
     writeBatch
 } from 'firebase/firestore';
 import { differenceInHours } from 'date-fns';
-import { Venue, FlashBounty, ScheduledDeal, TIER_LIMITS, PartnerTier } from '../types';
+import { Venue, FlashBounty, ScheduledDeal, TIER_CONFIG, PartnerTier } from '../types';
 import { getAuthHeaders } from './apiUtils';
 import { API_ENDPOINTS } from '../lib/api-config';
 
@@ -141,8 +141,9 @@ export class VenueOpsService {
         }
 
         // 3. TOKEN CHECK
-        const tier = venue.partnerConfig?.tier || PartnerTier.FREE;
-        const limit = TIER_LIMITS[tier];
+        const tier = venue.partnerConfig?.tier || PartnerTier.LOCAL;
+        const config = TIER_CONFIG[tier];
+        const limit = config.flashBountyLimit;
         const used = venue.partnerConfig?.flashBountiesUsed || 0;
 
         if (used >= limit) {
@@ -376,5 +377,51 @@ export class VenueOpsService {
             console.error('Error updating order URL:', error);
             throw new Error(`Failed to update order URL: ${error.message}`);
         }
+    }
+
+    /**
+     * Skill: draft_email
+     */
+    static async draftEmail(venueId: string, email: { subject: string, body: string }) {
+        return this.saveDraft(venueId, {
+            topic: email.subject,
+            copy: email.body,
+            type: 'EMAIL_DRAFT'
+        });
+    }
+
+    /**
+     * Skill: add_to_calendar
+     */
+    static async addToCalendar(venueId: string, entry: { summary: string }) {
+        return this.saveDraft(venueId, {
+            topic: 'Calendar Entry',
+            copy: entry.summary,
+            type: 'CALENDAR_POST'
+        });
+    }
+
+    /**
+     * Skill: update_website
+     */
+    static async updateWebsite(venueId: string, update: { content: string }) {
+        return this.saveDraft(venueId, {
+            topic: 'Website Content Update',
+            copy: update.content,
+            type: 'WEBSITE_CONTENT'
+        });
+    }
+
+    /**
+     * Skill: generate_image
+     */
+    static async generateImage(venueId: string, image: { prompt: string }) {
+        // In a real implementation, this might trigger a cloud function for DALL-E/Midjourney/Gemini Image Gen
+        // For now, we save it as a pending asset
+        return this.saveDraft(venueId, {
+            topic: 'Generated Image Prompt',
+            copy: image.prompt,
+            type: 'IMAGE_PROMPT'
+        });
     }
 }

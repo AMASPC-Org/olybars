@@ -11,6 +11,11 @@ export type ArtieOpsState =
     | 'flash_deal_time_check'
     | 'event_input'
     | 'play_input'
+    | 'social_post_input'
+    | 'email_draft_input'
+    | 'calendar_post_input'
+    | 'website_content_input'
+    | 'image_gen_input'
     | 'confirm_action'
     | 'completed';
 
@@ -31,6 +36,23 @@ export const useArtieOps = () => {
     const [currentBubbles, setCurrentBubbles] = useState<QuickReplyOption[]>([]);
     const [draftData, setDraftData] = useState<any>({});
     const [isLoading, setIsLoading] = useState(false);
+    const [venue, setVenue] = useState<any>(null);
+
+    // 2. Fetch Venue Context
+    const fetchVenue = useCallback(async (venueId: string) => {
+        if (!venueId) return;
+        try {
+            const { db } = await import('../lib/firebase');
+            const { doc, getDoc } = await import('firebase/firestore');
+            const docRef = doc(db, 'venues', venueId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                setVenue({ id: docSnap.id, ...docSnap.data() });
+            }
+        } catch (err) {
+            console.error("Artie failed to load venue context:", err);
+        }
+    }, []);
 
     // 3. The Compliance Engine
     const validateLCBCompliance = useCallback((text: string): { valid: boolean; reason?: string } => {
@@ -69,7 +91,11 @@ export const useArtieOps = () => {
 
 
     // 5. The Skill State Machine
-    const processAction = useCallback(async (action: string, payload?: string) => {
+    const processAction = useCallback(async (action: string, payload?: string, venueId?: string) => {
+        // Auto-fetch if venueId provided and not loaded
+        if (venueId && !venue) {
+            await fetchVenue(venueId);
+        }
         const newMessage: ArtieMessage = {
             id: Date.now().toString(),
             role: 'artie',
@@ -90,7 +116,11 @@ export const useArtieOps = () => {
                 setCurrentBubbles([
                     { id: '1', label: '⚡ Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
                     { id: '2', label: '📅 Add Event', value: 'skill_add_event', icon: '📅' },
-                    // { id: '3', label: '🎱 Update Play', value: 'skill_update_play', icon: '🎱' } // Hidden for now per user focus
+                    { id: '3', label: '📱 Social Post', value: 'skill_social_post', icon: '📱' },
+                    { id: '4', label: '✉️ Draft Email', value: 'skill_email_draft', icon: '✉️' },
+                    { id: '5', label: '🗓️ Calendar Post', value: 'skill_calendar_post', icon: '🗓️' },
+                    { id: '6', label: '🌐 Web Content', value: 'skill_website_content', icon: '🌐' },
+                    { id: '7', label: '🎨 Gen Image', value: 'skill_generate_image', icon: '🎨' }
                 ]);
                 break;
 
@@ -109,15 +139,192 @@ export const useArtieOps = () => {
             // --- BRANCH: IDEATION (Placeholder) ---
             case 'method_ideation':
                 addUserMessage('Help me decide');
-                newMessage.text = "I'm still learning your menu! Once I have your food and drink list, I'll be able to suggest high-margin specials. \n\nFor now, please enter the deal manually.";
+                setIsLoading(true);
+
+                // Analyze high margin items
+                const highMarginItems = venue?.fullMenu?.filter((item: any) => item.margin_tier === 'High') || [];
+
+                if (highMarginItems.length > 0) {
+                    const pickedItem = highMarginItems[Math.floor(Math.random() * highMarginItems.length)];
+                    newMessage.text = `I took a look at your menu. Your **${pickedItem.name}** has a great margin. \n\nHow about a Flash Bounty like: "$2 off ${pickedItem.name} for the next hour"?`;
+                    setMessages(prev => [...prev, newMessage]);
+                    setCurrentBubbles([
+                        { id: 'accept_idea', label: 'Sounds good', value: 'accept_ideation_proposal', icon: '✅' },
+                        { id: 'manual', label: 'I have a different idea', value: 'method_manual_input', icon: '📝' }
+                    ]);
+                    // Save for the next step
+                    setDraftData({ pickedItem });
+                } else {
+                    newMessage.text = "I'm still learning your menu! Once I have your food and drink list, I'll be able to suggest high-margin specials. \n\nFor now, please enter the deal manually.";
+                    setMessages(prev => [...prev, newMessage]);
+                    setTimeout(() => {
+                        setOpsState('flash_deal_input');
+                        const manualMsg = { ...newMessage, id: Date.now() + '2', text: "So, what's the deal? (e.g., '$5 Pints until 8pm')" };
+                        setMessages(prev => [...prev, manualMsg]);
+                        setCurrentBubbles([]);
+                    }, 1500);
+                }
+                setIsLoading(false);
+                break;
+
+            case 'accept_ideation_proposal':
+                const proposal = `$2 off ${draftData.pickedItem?.name} for the next hour`;
+                addUserMessage('Sounds good');
+                await processAction('SUBMIT_DEAL_TEXT', proposal);
+                break;
+
+            // --- SKILL: Social Post ---
+            case 'skill_social_post':
+                addUserMessage('Social Post');
+                setOpsState('social_post_input');
+                newMessage.text = "I'm ready to draft. What's the post about? (e.g. 'New IPA on tap', 'Live music at 8pm')";
                 setMessages(prev => [...prev, newMessage]);
-                // Fallback to manual input
-                setTimeout(() => {
-                    setOpsState('flash_deal_input');
-                    const manualMsg = { ...newMessage, id: Date.now() + '2', text: "So, what's the deal? (e.g., '$5 Pints until 8pm')" };
-                    setMessages(prev => [...prev, manualMsg]);
-                    setCurrentBubbles([]);
-                }, 1500);
+                setCurrentBubbles([]);
+                break;
+
+            case 'SUBMIT_SOCIAL_POST_TEXT':
+                if (!payload) return;
+                addUserMessage(payload);
+                setIsLoading(true);
+
+                // Simple AI-like drafting (Client side for now)
+                const draft = `✨ OLYBARS EXCLUSIVE ✨\n\n${payload} at ${venue?.name || 'our place'}! \n\nCome down and join the vibe. 🍻\n\n#OlyBars #Olympia #Nightlife`;
+
+                setDraftData({
+                    skill: 'promote_menu_item', // Reusing this for general social drafts
+                    params: {
+                        item_name: 'Special Update',
+                        copy: draft
+                    }
+                });
+
+                setIsLoading(false);
+                setOpsState('confirm_action');
+                newMessage.text = `I've drafted this for you:\n\n"${draft}"\n\nSave to your marketing dashboard?`;
+                setMessages(prev => [...prev, newMessage]);
+                setCurrentBubbles([
+                    { id: 'confirm', label: '🚀 Save Draft', value: 'confirm_post' },
+                    { id: 'gen_img', label: '🎨 Gen Image', value: 'skill_generate_image' },
+                    { id: 'cancel', label: '❌ Cancel', value: 'cancel' }
+                ]);
+                break;
+
+            // --- SKILL: Email Draft ---
+            case 'skill_email_draft':
+                addUserMessage('Draft Email');
+                setOpsState('email_draft_input');
+                newMessage.text = "Who are we emailing, and what's the occasion? (e.g. 'Newsletter to regulars about Saturday trivia')";
+                setMessages(prev => [...prev, newMessage]);
+                setCurrentBubbles([]);
+                break;
+
+            case 'SUBMIT_EMAIL_TEXT':
+                if (!payload) return;
+                addUserMessage(payload);
+                setIsLoading(true);
+
+                const emailDraft = `Subject: Big News from ${venue?.name || 'OlyBars'}! 🍻\n\nHi everyone,\n\n${payload}\n\nWe can't wait to see you there!\n\nCheers,\nThe ${venue?.name || 'OlyBars'} Team`;
+
+                setDraftData({
+                    skill: 'draft_email',
+                    params: {
+                        subject: `Update from ${venue?.name}`,
+                        body: emailDraft
+                    }
+                });
+
+                setIsLoading(false);
+                setOpsState('confirm_action');
+                newMessage.text = `I've drafted this email:\n\n"${emailDraft}"\n\nSave to your marketing dashboard?`;
+                setMessages(prev => [...prev, newMessage]);
+                break;
+
+            // --- SKILL: Calendar Post ---
+            case 'skill_calendar_post':
+                addUserMessage('Calendar Post');
+                setOpsState('calendar_post_input');
+                newMessage.text = "What event should I add to the community calendar? (e.g. 'St Paddy's Day Bash, March 17th, 6pm')";
+                setMessages(prev => [...prev, newMessage]);
+                setCurrentBubbles([]);
+                break;
+
+            case 'SUBMIT_CALENDAR_TEXT':
+                if (!payload) return;
+                addUserMessage(payload);
+                setIsLoading(true);
+
+                // Mock parsing for now
+                setDraftData({
+                    skill: 'add_to_calendar',
+                    params: {
+                        summary: payload,
+                        venueId: venue?.id
+                    }
+                });
+
+                setIsLoading(false);
+                setOpsState('confirm_action');
+                newMessage.text = `I've prepared this calendar entry:\n\n"${payload}"\n\nPush it to the OlyBars calendar?`;
+                setMessages(prev => [...prev, newMessage]);
+                break;
+
+            // --- SKILL: Website Content ---
+            case 'skill_website_content':
+                addUserMessage('Web Content');
+                setOpsState('website_content_input');
+                newMessage.text = "What page or section are we updating? (e.g. 'About Us section on the homepage')";
+                setMessages(prev => [...prev, newMessage]);
+                setCurrentBubbles([]);
+                break;
+
+            case 'SUBMIT_WEB_TEXT':
+                if (!payload) return;
+                addUserMessage(payload);
+                setIsLoading(true);
+
+                const webDraft = `New Content for ${venue?.name}:\n\n"${payload}"\n\n(Optimized for local SEO and mobile engagement)`;
+
+                setDraftData({
+                    skill: 'update_website',
+                    params: {
+                        content: webDraft
+                    }
+                });
+
+                setIsLoading(false);
+                setOpsState('confirm_action');
+                newMessage.text = `Web content drafted:\n\n"${webDraft}"\n\nSave this for your web dev?`;
+                setMessages(prev => [...prev, newMessage]);
+                break;
+
+            // --- SKILL: Generate Image ---
+            case 'skill_generate_image':
+                addUserMessage('Gen Image');
+                setOpsState('image_gen_input');
+                newMessage.text = "Describe the image you want me to create. (e.g. 'A cozy pub interior with a roaring fire and people laughing')";
+                setMessages(prev => [...prev, newMessage]);
+                setCurrentBubbles([]);
+                break;
+
+            case 'SUBMIT_IMAGE_GEN_TEXT':
+                if (!payload) return;
+                addUserMessage(payload);
+                setIsLoading(true);
+
+                // In a real flow, we'd call a backend function. For now, we simulate the "Generated" state.
+                const imagePrompt = `High-quality, vibrant photo of ${payload} at ${venue?.name}, Olympia style.`;
+
+                setDraftData({
+                    skill: 'generate_image',
+                    params: {
+                        prompt: imagePrompt
+                    }
+                });
+
+                setIsLoading(false);
+                setOpsState('confirm_action');
+                newMessage.text = `Artie is firing up the kiln... 🎨\n\nI've generated a prompt for our image engine: \n\n"${imagePrompt}"\n\nGenerate and save to gallery?`;
+                setMessages(prev => [...prev, newMessage]);
                 break;
 
             // --- BRANCH: MANUAL INPUT ---
@@ -208,6 +415,11 @@ export const useArtieOps = () => {
                 setCurrentBubbles([
                     { id: '1', label: '⚡ Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
                     { id: '2', label: '📅 Add Event', value: 'skill_add_event', icon: '📅' },
+                    { id: '3', label: '📱 Social Post', value: 'skill_social_post', icon: '📱' },
+                    { id: '4', label: '✉️ Draft Email', value: 'skill_email_draft', icon: '✉️' },
+                    { id: '5', label: '🗓️ Calendar Post', value: 'skill_calendar_post', icon: '🗓️' },
+                    { id: '6', label: '🌐 Web Content', value: 'skill_website_content', icon: '🌐' },
+                    { id: '7', label: '🎨 Gen Image', value: 'skill_generate_image', icon: '🎨' }
                 ]);
                 break;
 

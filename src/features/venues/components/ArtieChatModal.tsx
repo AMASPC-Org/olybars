@@ -132,7 +132,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
             if (isOpsMode) {
                 // Initialize Ops Session
                 if (!hasInitializedOps) {
-                    opsArtie.processAction('START_SESSION');
+                    opsArtie.processAction('START_SESSION', undefined, userProfile.homeBase);
                     setHasInitializedOps(true);
                 }
             } else {
@@ -212,6 +212,16 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                 await opsArtie.processAction('SUBMIT_DEAL_TEXT', userText);
             } else if (opsArtie.opsState === 'event_input') {
                 await opsArtie.processAction('SUBMIT_EVENT_TEXT', userText);
+            } else if (opsArtie.opsState === 'social_post_input') {
+                await opsArtie.processAction('SUBMIT_SOCIAL_POST_TEXT', userText, userProfile?.homeBase);
+            } else if (opsArtie.opsState === 'email_draft_input') {
+                await opsArtie.processAction('SUBMIT_EMAIL_TEXT', userText, userProfile?.homeBase);
+            } else if (opsArtie.opsState === 'calendar_post_input') {
+                await opsArtie.processAction('SUBMIT_CALENDAR_TEXT', userText, userProfile?.homeBase);
+            } else if (opsArtie.opsState === 'website_content_input') {
+                await opsArtie.processAction('SUBMIT_WEB_TEXT', userText, userProfile?.homeBase);
+            } else if (opsArtie.opsState === 'image_gen_input') {
+                await opsArtie.processAction('SUBMIT_IMAGE_GEN_TEXT', userText, userProfile?.homeBase);
             } else {
                 // General chat fallback for partners
                 await guestArtie.sendMessage(userText, userProfile?.uid, userProfile?.role, hpValue);
@@ -301,6 +311,26 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                 case 'update_order_url':
                     await VenueOpsService.updateOrderUrl(venueId, pendingAction.params.url);
                     successMessage = "Order URL Updated!";
+                    break;
+
+                case 'draft_email':
+                    await VenueOpsService.draftEmail(venueId, pendingAction.params as { subject: string; body: string });
+                    successMessage = "Email Draft Saved!";
+                    break;
+
+                case 'add_to_calendar':
+                    await VenueOpsService.addToCalendar(venueId, pendingAction.params as { summary: string });
+                    successMessage = "Added to Community Calendar!";
+                    break;
+
+                case 'update_website':
+                    await VenueOpsService.updateWebsite(venueId, pendingAction.params as { content: string });
+                    successMessage = "Web Update Sent to Dev!";
+                    break;
+
+                case 'generate_image':
+                    await VenueOpsService.generateImage(venueId, pendingAction.params as { prompt: string });
+                    successMessage = "Image Prompt Drafted!";
                     break;
 
                 default:
@@ -538,7 +568,15 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                                placeholder={isListening ? "Listening..." : (isOpsMode ? (opsArtie.opsState === 'flash_deal_input' ? "Type deal details..." : "Ask Artie...") : "Ask Artie...")}
+                                placeholder={isListening ? "Listening..." : (isOpsMode ? (
+                                    opsArtie.opsState === 'flash_deal_input' ? "Type deal details..." :
+                                        opsArtie.opsState === 'social_post_input' ? "What's the post about?" :
+                                            opsArtie.opsState === 'email_draft_input' ? "Who/what is the email for?" :
+                                                opsArtie.opsState === 'calendar_post_input' ? "Event summary for calendar?" :
+                                                    opsArtie.opsState === 'website_content_input' ? "Web content update details?" :
+                                                        opsArtie.opsState === 'image_gen_input' ? "Describe the image..." :
+                                                            "Ask Artie..."
+                                ) : "Ask Artie...")}
                                 className={`w-full bg-transparent px-3 text-sm text-white outline-none placeholder:text-slate-600 font-medium ${isListening ? 'animate-pulse' : ''}`}
                             />
                             {isSupported && (

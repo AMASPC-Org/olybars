@@ -42,7 +42,7 @@ export const glossaryTerms: GlossaryCategory[] = [
             { term: 'Super-Admin', def: 'The platform lighthouse (typically ryan@amaspc.com). Has global authorization to manage any venue, override system settings, and enforce fair play standard across the entire AMA Network.' },
             { term: 'Listed Venue', def: 'A physical location (bar/pub) that appears on the OlyBars map but has not yet claimed their profile or joined the League as a Partner.' },
             { term: 'League Partner', def: 'A venue that has claimed their profile and entered into a marketing agreement with the League. Includes all active tiers: Free, DIY, Pro, and Agency.' },
-            { term: 'Artie', def: 'The spirit of the Artesian Well. A permission-gated AI agent that acts as a concierge for Players and a drafter/co-pilot for Partners.' },
+            { term: 'Artie', def: 'The spirit of the Artesian Well. A permission-gated, multimodal AI agent that acts as a concierge for Players and a Marketing Co-Pilot for Partners, capable of drafting social posts, emails, web content, and image prompts.' },
             { term: 'Local Maker', def: 'Local artisans (Brewers, Distillers, Roasters) whose products are featured on the Local Maker\'s Trail.' },
             { term: 'The AMA Network', def: 'Powered by the American Marketing Alliance SPC. A network of event-based sites designed to automate marketing for local businesses.' },
         ]

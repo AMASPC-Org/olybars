@@ -28,40 +28,76 @@ async function syncKnowledge() {
         const kbPath = path.join(__dirname, '..', 'knowledgeBase.json');
         const kb = JSON.parse(fs.readFileSync(kbPath, 'utf8'));
 
+        // 2. Sync Metadata (Persona, Directives, Protocols)
+        const metadata = {
+            persona: kb.persona,
+            directives: kb.directives,
+            skill_protocols: kb.skill_protocols,
+            response_protocol: kb.response_protocol,
+            technical_directives: kb.technical_directives || [],
+            safety_and_compliance: kb.safety_and_compliance || [],
+            glossary: kb.lore?.local_knowledge || {},
+            updatedAt: new Date().toISOString()
+        };
+
+        console.log("Syncing Artie Metadata to config/artie_metadata...");
+        await db.collection('config').doc('artie_metadata').set(metadata);
+
         const knowledgeItems: { question: string, answer: string, category: string }[] = [];
 
-        // 2. Add FAQs
+        // 3. Add FAQs
         kb.faq.forEach((f: { question: string, answer: string }) => knowledgeItems.push({ question: f.question, answer: f.answer, category: 'FAQ' }));
 
-        // 3. Add History
+        // 4. Add History
         Object.entries(kb.history_timeline).forEach(([k, v]) => {
             knowledgeItems.push({ question: `History: ${k}`, answer: v as string, category: 'History' });
         });
 
-        // 4. Add Market Context
+        // 5. Add Market Context
         Object.entries(kb.market_context).forEach(([k, v]) => {
             knowledgeItems.push({ question: `Market: ${k}`, answer: v as string, category: 'Market' });
         });
 
-        // 5. Add Local Knowledge (Glossary)
+        // 6. Add Local Knowledge (Glossary)
         if (kb.lore && kb.lore.local_knowledge) {
             Object.entries(kb.lore.local_knowledge).forEach(([k, v]) => {
                 knowledgeItems.push({ question: `Glossary: ${k}`, answer: v as string, category: 'Glossary' });
             });
         }
 
+        // 7. Add Bar Games
+        if (kb.bar_games) {
+            kb.bar_games.forEach((cat: any) => {
+                cat.games.forEach((g: any) => {
+                    knowledgeItems.push({
+                        question: `Game / Activity: ${g.name} (${cat.category})`,
+                        answer: `${g.description} Tags: ${g.tags.join(', ')}`,
+                        category: 'Games'
+                    });
+                });
+            });
+        }
+
         const batch = db.batch();
         const knowledgeCol = db.collection('knowledge');
+        const currentIds = new Set<string>();
 
-
-        // Clear old knowledge (optional, or just update)
-        // For simplicity in this script, we'll just add/overwrite
+        // Overwrite/Update knowledge items
         knowledgeItems.forEach(item => {
             const docId = generateSafeId(item.question);
+            currentIds.add(docId);
             batch.set(knowledgeCol.doc(docId), {
                 ...item,
                 updatedAt: new Date().toISOString()
             });
+        });
+
+        console.log("Cleaning up orphaned knowledge records...");
+        const existingDocs = await knowledgeCol.get();
+        existingDocs.forEach(doc => {
+            if (!currentIds.has(doc.id)) {
+                batch.delete(doc.ref);
+            }
         });
 
         console.log("Committing batch to Firestore...");
@@ -73,7 +109,7 @@ async function syncKnowledge() {
         );
 
         await Promise.race([commitPromise, timeoutPromise]);
-        console.log(`✅ Synced ${knowledgeItems.length} items to Firestore knowledge collection.`);
+        console.log(`✅ Synced metadata and ${knowledgeItems.length} items to Firestore.`);
 
     } catch (error) {
         console.error("❌ Sync Failed:", error);

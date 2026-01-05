@@ -63,6 +63,12 @@ async function seedVenues() {
             const validVenue = validation.data;
             const { id } = validVenue;
 
+            // Ensure point bank is initialized
+            if (validVenue.pointBank === undefined) {
+                validVenue.pointBank = 0;
+                validVenue.pointBankLastReset = Date.now();
+            }
+
             // 2. Fetch existing doc to decide on merge strategy
             const docRef = venuesRef.doc(id);
             const doc = await docRef.get();

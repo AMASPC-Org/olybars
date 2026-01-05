@@ -210,6 +210,7 @@ export const AppEventSchema = z.object({
     points: z.number().optional(),
     status: z.enum(['pending', 'approved', 'rejected']).optional(),
     isLeagueEvent: z.boolean().optional(),
+    distributeToMedia: z.boolean().optional(),
     host: z.string().max(100).optional(),
     prizes: z.string().max(200).optional(),
     eventSpecials: z.string().max(200).optional(),
@@ -227,6 +228,8 @@ export const VenueSchema = z.object({
     checkIns: z.number().optional(),
     capacity: z.number().optional(),
     isPaidLeagueMember: z.boolean().optional(),
+    pointBank: z.number().optional(),
+    pointBankLastReset: z.number().optional(),
     vibe: z.string().optional(),
     insiderVibe: z.string().optional(),
     instagram: z.string().optional(),
@@ -287,7 +290,7 @@ export const VenueSchema = z.object({
     isLgbtq: z.boolean().optional(),
     isLowCapacity: z.boolean().optional(),
     partnerConfig: z.object({
-        tier: z.enum(['FREE', 'DIY', 'PRO', 'AGENCY', 'PREM_PARTNER']),
+        tier: z.enum(['FREE', 'DIY', 'PRO', 'AGENCY']),
         billingCycleStart: z.number(),
         flashBountiesUsed: z.number(),
         metaSync: z.object({
