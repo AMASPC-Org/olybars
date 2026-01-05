@@ -18,7 +18,7 @@
     "artie:check": "node --import tsx scripts/verify-artie-health.ts",
     "deploy:dev": "npm run artie:sync && npm run build:dev && node scripts/check-env.js development && firebase deploy --only hosting:dev",
     "deploy:prod": "npm run artie:sync && npm run build:prod && node scripts/check-env.js production && firebase deploy --only hosting:prod",
-    "deploy:backend": "gcloud builds submit --tag us-west1-docker.pkg.dev/ama-ecosystem-prod/olybars/backend:latest . && gcloud run deploy olybars-backend --image us-west1-docker.pkg.dev/ama-ecosystem-prod/olybars/backend:latest --region us-west1 --allow-unauthenticated",
+    "dev:all": "node --import tsx scripts/dev-up.ts",
     "generate-sitemap": "tsx scripts/generate-sitemap.ts"
   },
   "dependencies": {

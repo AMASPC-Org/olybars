@@ -277,5 +277,10 @@ export const VenueSchema = z.object({
     happyHourMenu: z.array(z.any()).optional(),
     isBoutique: z.boolean().optional(),
     isLgbtq: z.boolean().optional(),
-    isLowCapacity: z.boolean().optional()
+    isLowCapacity: z.boolean().optional(),
+    partnerConfig: z.object({
+        tier: z.enum(['FREE', 'DIY', 'PRO', 'AGENCY']),
+        billingCycleStart: z.number(),
+        flashBountiesUsed: z.number()
+    }).optional()
 });
