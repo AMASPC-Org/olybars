@@ -131,7 +131,7 @@ export const VenueUpdateSchema = z.object({
     triviaHowItWorks: z.array(z.string()).optional(),
     deal: z.string().optional(),
     dealEndsIn: z.number().optional(),
-    vibeTags: z.array(z.string()).optional(),
+    sceneTags: z.array(z.string()).optional(),
     tier_config: z.object({
         is_directory_listed: z.boolean().optional(),
         is_league_eligible: z.boolean().optional()
@@ -222,7 +222,7 @@ export const VenueSchema = z.object({
     id: z.string().min(1),
     name: z.string().min(1),
     venueType: z.enum(['bar_pub', 'restaurant_bar', 'brewery_taproom', 'lounge_club', 'arcade_bar', 'brewpub', 'private_club', 'winery_tasting']).optional(),
-    vibeTags: z.array(z.string()).optional(),
+    sceneTags: z.array(z.string()).optional(),
     foodService: z.enum(['full_kitchen', 'limited_kitchen', 'snacks', 'none_byof']).optional(),
     status: z.enum(['dead', 'chill', 'buzzing', 'packed']).optional(),
     checkIns: z.number().optional(),

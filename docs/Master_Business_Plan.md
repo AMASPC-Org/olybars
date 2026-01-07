@@ -1,8 +1,8 @@
 # OlyBars.com: The Nightlife Operating System
 ## Master Business Plan & Source of Truth
-**Version:** 3.1 (Multimodal Co-Pilot)
+**Version:** 3.2 (Waze Model & Honest Gate)
 **Status:** Production Live  
-**Date:** 2026-01-05
+**Date:** 2026-01-07
 
 ---
 
@@ -48,7 +48,8 @@ OlyBars operates on a permission-gated hierarchy to ensure data integrity and co
 
 | Persona | Type | Motivation | Product Needs |
 | :--- | :--- | :--- | :--- |
-| **The Visitor** | Casual / Tourist | "What's happening right now?" "Where is a pool table?" | No Login Required. Fast load times, accurate status, "Buzz Clock". |
+| **The Visitor** | Casual / Incognito | "What's happening right now?" | Universal Search. Instant access to Map/List. Can attempt actions (Clock-In/Vibe), which trigger the "Honest Gate" conversion modal. |
+| **The Guest** | Local / Contributor | Utility & Alerts. | Local State Storage. Can "Favorite" venues (stored locally). Can submit "Shadow Signals" (held until signup). Targeted by "Points Missed" notifications. |
 | **The Player** | Local / Regular | Status, Competition, Prizes, Social Connection. | Login Required. Points accumulation, League Standings, Badges, "The Sync". |
 | **The Partner** | Venue Owner | Filling slow nights, selling high-margin food, saving time. | The Brew House. "One-Click" marketing, Point Bank management. |
 | **Super-Admin** | System Architect | Global Oversight | Admin Dashboard. System health, global overrides. |
@@ -102,6 +103,7 @@ When a Partner updates an event or needs content in The Brew House:
 Legal compliance is our primary competitive advantage. By enforcing "Law-as-Code," we eliminate human error.
 *   **The Smart Gatekeeper**: Players are capped at **2 clock-ins per 12 hours** globally (**Rule of Two**).
 *   **The Bounty Standard**: The system hard-codes WA LCB rules. A venue cannot accidentally create an illegal "2-for-1" because we only allow **Flash Bounties** (Points).
+*   **The Honest Gate (Conversion Logic)**: We do not block unauthenticated users from clicking "Clock In" or "Vibe Check." Instead, we allow the interaction to proceed on the frontend, then use the backend authentication requirement to trigger a "Signal Ready" modal. This leverages the Endowment Effect—the user feels they have already "done the work" and must sign up to "save" their contribution.
 
 ### 3.3 Fairness Algorithms (Exposure Equity)
 
@@ -170,6 +172,10 @@ We treat partner strategy and user privacy as sacred. Our "Fort Knox" approach i
 We reward with **League Bucks** (Generic Gift Cards), not alcohol.
 *   **Legal**: Gift cards are financial instruments, not "free booze."
 *   **Brand**: Protects partners from LCB advertising violations. Points are never traded for alcohol.
+
+### 6.3 The Time-State Strategy
+**Context**: Users have two distinct modes: Impulse (Where do I go now?) and Planning (Where do we go Friday?).
+**Execution**: The UI supports both via the Date Context Control. "Today" prioritizes live "Buzz" signals. Future dates prioritize "Event" data. The Business Plan acknowledges that "Buzz" is irrelevant for future dates, shifting the value proposition to "Calendar Accuracy."
 
 ---
 
@@ -319,6 +325,9 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 ### 3.V2 The Intelligence of Points (Taxonomy Pillars)
 To ensure system integrity, Artie enforces a strict classification between "Activities" (Check-ins) and "Offers" (Incentives).
 
+> [!NOTE]
+> The Universal Search treats "Play" (Games) and "Features" (Amenities) as first-class search keywords, not just filter chips.
+
 | Pillar | Definition | Points | Display |
 | :--- | :--- | :--- | :--- |
 | **League Event** | Point-awarding activity (Trivia, Music). | +25 Bonus Pts | Global Calendar |
@@ -440,16 +449,12 @@ This hierarchy defines how the OlyBars interface is organized from top to bottom
 
 | # | UI Name | Technical Name | Logic & Behavioral "Soul" |
 | :--- | :--- | :--- | :--- |
-| **1-3** | **Header & Nav Hub** | `AppShell` | The persistent identity and global module switching. |
-| **4** | **Discovery Engine** | `FilterEngine` | **The Brain-Dead Simple Search**: Houses the `GlobalSearch` input and 5 primary filter chips (Pulse, Vibe, Play, Features, Events) plus the **All** reset. |
-| **4.1** | **All** | `DefaultFilter` | Resets the Discovery Engine to show the city's baseline heartbeat. |
-| **4.2** | **Pulse** | `PulseEnergyFilter` | **Transient Energy**: Filters by live energy levels (Dead, Chill, Buzzing, Packed). |
-| **4.3** | **Vibe** | `VenueVibeFilter` | **Permanent Character**: Filters by "Vibe Tags" (Sports Bar, Dive, Speakeasy, Cocktail Lounge, etc). |
-| **4.4** | **Play** | `GameFilter` | **Hardware Interaction**: Filters for physical games (Pool, Darts, Arcade, Pinball). |
-| **4.5** | **Features** | `AmenityFilter` | **Hardware Comfort**: Filters for venue amenities (Patio, Fireplace, Fire Pits, Dog Friendly). |
-| **4.6** | **Events** | `PulseEventFilter` | **Tonight's Highlights**: Filters for live happenings (Trivia, Karaoke, Live Music). |
-| **5-7** | **The Pulse & Intel** | `PulseFeed` | **Unified Discovery**: The dynamic list of "What's happening now." It responds to the `GlobalSearch` by filtering for Venue Name, Vibe Tags, Games, Features, or Events. |
-| **8** | **Weekly Buzz CTA** | `ConversionBanner` | Guest-to-User conversion point for newsletter signups. |
-| **9** | **Ask Artie** | `ChatFAB` | Floating Action Button (FAB) for persistent AI concierge access. |
-| **10** | **League Tracking** | `UserStatusStrip` | **State-Aware UI**: Displays Points/Rank for members; converts to "Join" promo for guests. |
-| **11** | **Sticky Footer** | `GlobalTray` | **Responsive Tray**: Collapses to a compact status bar during scroll; expands to show full site links at the bottom. |
+| **1** | **Sticky Header** | `AppShell` | Contains Logo (Left) and Dynamic Profile Button (Right). The Profile button indicates status (Guest vs. Rank) and opens the League HQ drawer. |
+| **2** | **The Buzz Clock** | `BuzzHero` | **The Hook**: Answers "Is it Happy Hour right now?" instantly. High-contrast status text. |
+| **3** | **The Control Center** | `ControlHub` | **The Dashboard**: The functional core replacing navigation grids. |
+| **3.1** | **God Mode Search** | `UniversalSearch` | **Primary Nav**: Semantic search that queries Venues, Vibes, Amenities (Pool), and Events (Karaoke) simultaneously. |
+| **3.2** | **Time Context** | `DateSelector` | **Planning**: Dropdown to toggle between "Today" (Live Status) and Future Dates (Calendar Planning). |
+| **3.3** | **View Toggle** | `ViewSwitch` | **Preference**: Toggles the main feed between "List View" (Scanning) and "Map View" (Proximity). |
+| **3.4** | **Quick Filters** | `FilterChips` | **Horizontal Scroll**: Top 5 categories (Buzzing, Trivia, etc.) + "More" drawer. |
+| **4** | **The Feed** | `VenueFeed` | **The List**: Vertical scroll of venues. Flash Bounties are pinned to the top (Red Card). Every card features an exposed "Clock In" button. |
+| **5** | **Artie Chat** | `ChatWidget` | **The Concierge**: Fixed to the Bottom Right. No other UI elements (like FABs) may overlap this zone. |
