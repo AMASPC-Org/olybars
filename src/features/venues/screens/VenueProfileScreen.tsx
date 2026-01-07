@@ -21,14 +21,10 @@ import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles, estimateWalkTime, getZone } from '../../../utils/geoUtils';
 import { ArtieDistanceWarningModal } from '../components/ArtieDistanceWarningModal';
 
+import { useOutletContext } from 'react-router-dom';
+
 interface VenueProfileScreenProps {
-    venues: Venue[];
-    userProfile: UserProfile;
-    handleClockIn: (v: Venue) => void;
-    handleVibeCheck: (v: Venue, hasConsent?: boolean, photoUrl?: string) => void;
-    clockedInVenue?: string | null;
-    handleToggleFavorite: (venueId: string) => void;
-    onEdit?: (venueId: string) => void;
+    // Props are now provided via useOutletContext
 }
 
 const VENUE_TYPE_LABELS: Record<string, string> = {
@@ -40,15 +36,25 @@ const VENUE_TYPE_LABELS: Record<string, string> = {
     brewpub: 'Brewpub'
 };
 
-export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
-    venues,
-    userProfile,
-    handleClockIn,
-    handleVibeCheck,
-    clockedInVenue,
-    handleToggleFavorite,
-    onEdit
-}) => {
+export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
+    const {
+        venues,
+        userProfile,
+        onClockIn: handleClockIn,
+        onVibeCheck: handleVibeCheck,
+        clockedInVenue,
+        onToggleFavorite: handleToggleFavoriteProp,
+        onEditVenue: onEdit
+    } = useOutletContext<{
+        venues: Venue[];
+        userProfile: UserProfile;
+        onClockIn: (v: Venue) => void;
+        onVibeCheck: (v: Venue, hasConsent?: boolean, photoUrl?: string) => void;
+        clockedInVenue?: string | null;
+        onToggleFavorite: (venueId: string) => void;
+        onEditVenue?: (venueId: string) => void;
+    }>();
+
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { showToast } = useToast();
@@ -61,7 +67,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
 
     const onToggleFavorite = (venueId: string) => {
         const isCurrentlyFavorite = userProfile.favorites?.includes(venueId);
-        handleToggleFavorite(venueId);
+        handleToggleFavoriteProp(venueId);
         if (!isCurrentlyFavorite) {
             showToast("You'll now get alerts for this spot! 🌟", "success");
         }
@@ -280,7 +286,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
         return (
             <div className="p-10 text-center text-slate-500 font-bold">
                 <p>Venue Not Found</p>
-                <button onClick={() => navigate('/')} className="mt-4 text-primary hover:underline">Return Home</button>
+                <button onClick={() => navigate('/')} className="mt-4 text-primary hover:underline">Return to Discovery</button>
             </div>
         );
     }
@@ -316,13 +322,6 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                 )}
 
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-
-                <button
-                    onClick={() => navigate(-1)}
-                    className="absolute top-6 left-6 p-2 bg-black/50 backdrop-blur-md rounded-full text-white border border-white/10 hover:bg-black transition-colors z-10"
-                >
-                    <ChevronLeft className="w-6 h-6" />
-                </button>
 
                 <div className="absolute top-6 right-6 flex gap-2 z-10">
                     <button
@@ -425,6 +424,31 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
             </div>
 
             <div className="p-6 space-y-8">
+                {/* [NEW] FLASH BOUNTY (TOP PRIORITY) */}
+                {(venue.activeFlashBounty?.title || venue.deal) && (
+                    <div className="bg-red-500/10 border-2 border-red-500/50 rounded-2xl p-5 flex gap-5 animate-in zoom-in-95 duration-500 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+                        <div className="bg-red-500 p-3 h-fit rounded-xl shadow-lg shadow-red-500/40">
+                            <Zap className="w-6 h-6 text-white fill-white" />
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex justify-between items-start mb-1">
+                                <p className="text-[10px] font-black text-red-400 uppercase tracking-[0.3em] italic">Live Flash Bounty</p>
+                                {venue.activeFlashBounty?.endTime && (
+                                    <span className="text-[9px] font-mono text-red-500 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
+                                        ENDS {formatToAMPM(new Date(venue.activeFlashBounty.endTime).toTimeString().slice(0, 5))}
+                                    </span>
+                                )}
+                            </div>
+                            <h4 className="text-xl font-black text-white uppercase font-league leading-none mb-1 tracking-tight">
+                                {venue.activeFlashBounty?.title || venue.deal}
+                            </h4>
+                            <p className="text-sm font-bold text-red-100/80 leading-snug">
+                                {venue.activeFlashBounty?.description || 'Limited time offer! Get down here now to claim your bonus.'}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* LIVE GAME STATUS (PREMIUM) */}
                 {venue.hasGameVibeCheckEnabled && venue.liveGameStatus && Object.keys(venue.liveGameStatus).length > 0 && (
                     <div className="bg-slate-900/50 border border-white/5 rounded-xl p-4 animate-in fade-in slide-in-from-bottom-2 duration-500 shadow-lg">
@@ -667,18 +691,6 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                         </div>
                     )}
 
-                    {(venue.activeFlashBounty?.title || venue.deal) && (
-                        <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-4 flex gap-4 animate-in slide-in-from-right duration-500">
-                            <div className="bg-orange-500 p-2.5 h-fit rounded-xl">
-                                <Zap className="w-5 h-5 text-black" />
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-1 italic">Flash Bounty</p>
-                                <h4 className="text-md font-black text-white uppercase font-league leading-none mb-1">{venue.activeFlashBounty?.title || venue.deal}</h4>
-                                <p className="text-xs font-bold text-orange-100 leading-tight">{venue.activeFlashBounty?.description || 'Limited time offer!'}</p>
-                            </div>
-                        </div>
-                    )}
 
                     {venue.leagueEvent && (
                         <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 space-y-4 relative overflow-hidden group shadow-2xl">

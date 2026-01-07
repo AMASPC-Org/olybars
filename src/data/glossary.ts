@@ -13,8 +13,8 @@ export const glossaryTerms: GlossaryCategory[] = [
         category: 'The Game',
         terms: [
             { term: 'Artesian Bar League', def: 'The official name of the Olympia-based league, celebrating the city\'s brewing heritage.' },
-            { term: 'The Vibe', def: 'The real-time energy level of a venue. There are four distinct Vibes: Dead, Chill, Buzzing, or Packed.' },
-            { term: 'The Pulse', def: 'The algorithmic "heartbeat" score that determines a venue\'s Vibe. The Pulse is calculated by weighing multiple Signals: Clock-ins, Vibe Checks, Venue Capacity, Active Happy Hours, League Events, and active Flash Bounties.' },
+            { term: 'The Vibe', def: 'The real-time energy state of a venue (Dead, Chill, Buzzing, or Packed).' },
+            { term: 'The Pulse', def: 'The algorithmic "heartbeat" score (0-100) that determines a venue\'s Vibe. It is calculated by weighing real-time Signals: Clock-ins, Vibe Checks, and active Bounties.' },
             { term: 'Dead', def: 'The venue is extremely quiet with minimal activity. Perfect for a private conversation.' },
             { term: 'Chill', def: 'A relaxed, steady atmosphere. Plenty of seating available.' },
             { term: 'Buzzing', def: 'High energy and significant attendance. The venue is active and energetic.' },
@@ -23,8 +23,8 @@ export const glossaryTerms: GlossaryCategory[] = [
             { term: 'Vibe Check', def: 'A manual "Ground Truth" report submitted by a User or Venue Owner regarding the crowd energy. Critical for accuracy as it accounts for users without location services.' },
             { term: 'Game Vibe Check', def: 'A specific status report regarding the availability of amenities (e.g., "Pool Tables Open," "Karaoke List Full," "Pinball Tournament Starting").' },
             { term: 'Clock In', def: 'The primary scoring action. Players verify their location at an Anchor Venue. Each Clock In acts as a verified attendance signal. Limited to 2 per 12-hour window.' },
-            { term: 'The Weekly Buzz', def: 'The official League dispatch (email/newsletter). It highlights legendary bartenders, explores local bar history, and contains exclusive "Trivia Cheat Codes."' },
-            { term: 'Buzz Clock', def: 'The real-time countdown logic that prioritizes Happy Hour deals based on how much time is left to enjoy them.' },
+            { term: 'The Weekly Buzz', def: 'The official League dispatch (email/newsletter). It highlights legendary bartenders and upcoming seasonal rewards.' },
+            { term: 'The Buzz Clock', def: 'The high-contrast hero element that answers "Is it Happy Hour right now?" instantly. It uses a real-time countdown to prioritize urgency.' },
             { term: 'Streak', def: 'Consecutive days/weeks of active participation by a League Player.' },
             { term: 'Flash Bounty', def: 'A time-limited point incentive created by a Partner to drive traffic. Includes Time Bounties (multiplier windows), Menu Bounties (food), and Drink Bounties (featured beverages, compliant with LCB rules).' },
             { term: 'Badge', def: 'A digital trophy earned by completing specific sets of visits or challenges.' },
@@ -71,9 +71,9 @@ export const glossaryTerms: GlossaryCategory[] = [
     {
         category: 'App Architecture',
         terms: [
-            { term: 'Header & Nav Hub', def: 'The persistent identity and global module switching area (AppShell), housing the branding and primary app modules like Map, League, and Play.' },
-            { term: 'Pulse Feed', def: 'The live venue list sorted by "The Pulse." It ranks venues based on real-time activity, ensuring the most "Alive" places appear at the top.' },
-            { term: 'Discovery Engine', def: 'The unified search and filter layer (FilterEngine). Houses the Global Search input and 5 primary filter chips.' },
+            { term: 'The Feed', def: 'The dynamic vertical list of venues (VenueFeed). It ranks venues by "The Pulse" to show the most active locations first.' },
+            { term: 'The Control Center', def: 'The utility dashboard (ControlHub) that replaces traditional navigation grids with "God Mode" search, time selectors, and view modes.' },
+            { term: 'Discovery Engine', def: 'The semantic backend layer that allows God Mode Search to query Names, Scenes, Games, and Events simultaneously.' },
             { term: 'Conversion Banner', def: 'A high-visibility call-to-action (Weekly Buzz CTA) designed to convert Guests into email subscribers or League Players.' },
             { term: 'User Status Strip', def: 'A state-aware UI element that displays personal points and rank for Players, or a "Join the League" promotion for guests.' },
             { term: 'Global Tray', def: 'The responsive sticky footer that stays compact during active scrolling but expands at the page bottom to show full site links.' },
@@ -82,8 +82,8 @@ export const glossaryTerms: GlossaryCategory[] = [
     {
         category: 'The OlyBars Taxonomy',
         terms: [
-            { term: 'Pulse Selector', def: 'A primary filter chip that allows users to sort the city by The Vibe: Dead, Chill, Buzzing, or Packed.' },
-            { term: 'Scene Selector', def: 'A primary filter chip for static venue characteristics (Scene Tags) such as "Sports Bar," "Dive," "Speakeasy," or "LGBTQ+."' },
+            { term: 'Vibe Selector', def: 'A filter chip that allows users to sort the city by energy state (PulseEnergyFilter).' },
+            { term: 'Scene Selector', def: 'A filter chip for permanent characteristics like "Dive" or "Speakeasy" (VenueSceneFilter).' },
             { term: 'Play', def: 'A filter category for interactive games (Pool, Darts, Arcade, Pinball). Searchable via the GameFilter chip.' },
             { term: 'Features', def: 'A filter category for venue amenities and hardware (Patio, Firepits, Dog Friendly). Searchable via the AmenityFilter chip.' },
             { term: 'Events', def: 'Activities that only happen at specific times (Trivia Night, Live Music) and are pinned to the Global League Calendar (PulseEventFilter).' }

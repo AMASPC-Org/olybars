@@ -2176,45 +2176,6 @@
     }
   },
   {
-    "id": "chicory",
-    "name": "Chicory",
-    "venueType": "restaurant_bar",
-    "vibeTags": [],
-    "foodService": "full_kitchen",
-    "tier_config": {
-      "is_directory_listed": true,
-      "is_league_eligible": false
-    },
-    "attributes": {
-      "has_manned_bar": true,
-      "minors_allowed": true,
-      "noise_level": "Conversational"
-    },
-    "vibe": "Upscale dining and drinks.",
-    "status": "chill",
-    "geoLoop": "Downtown_Walkable",
-    "isActive": true,
-    "isVisible": true,
-    "checkIns": 0,
-    "coordinates": {
-      "x": 41,
-      "y": 41
-    },
-    "location": {
-      "lat": 47.046399,
-      "lng": -122.901498
-    },
-    "address": "222 Capitol Way N, Olympia, WA 98501, USA",
-    "physicalRoom": true,
-    "website": "https://www.chicoryrestaurant.com/",
-    "gameFeatures": [],
-    "isPaidLeagueMember": true,
-    "currentBuzz": {
-      "score": 0,
-      "lastUpdated": 1767436252597
-    }
-  },
-  {
     "id": "cynara",
     "name": "Cynara Restaurant & Lounge",
     "venueType": "restaurant_bar",
@@ -2375,8 +2336,8 @@
     }
   },
   {
-    "id": "altitude-15",
-    "name": "Altitude 15 / ACME",
+    "id": "double-tap-tap-house",
+    "name": "Double Tap Tap House",
     "venueType": "bar_pub",
     "vibeTags": [
       "dive"

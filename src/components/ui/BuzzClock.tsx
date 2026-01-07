@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, Users } from 'lucide-react';
 import { Venue } from '../../types/venue';
+import { useDiscovery } from '../../features/venues/contexts/DiscoveryContext';
+import { getEffectiveRules, timeToMinutes } from '../../utils/venueUtils';
 
 interface BuzzClockProps {
     venues: Venue[];
@@ -9,15 +11,10 @@ interface BuzzClockProps {
 
 export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
     const navigate = useNavigate();
+    const { setFilterKind } = useDiscovery();
     const now = new Date();
     const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getDay()];
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-    const timeToMinutes = (timeStr: string) => {
-        if (!timeStr) return 0;
-        const [h, m] = timeStr.split(':').map(Number);
-        return h * 60 + m;
-    };
 
     const formatMinutes = (minutes: number) => {
         const h = Math.floor(minutes / 60);
@@ -25,28 +22,29 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
         return `${h}h ${m}m`;
     };
 
-    // Helper to get all effective rules (legacy + new)
-    const getEffectiveRules = (v: Venue) => {
-        const rules = [...(v.happyHourRules || [])];
-        if (v.happyHour?.startTime) {
-            const isAlreadyAccounted = rules.some(r => r.startTime === v.happyHour!.startTime && r.endTime === v.happyHour!.endTime);
-            if (!isAlreadyAccounted) {
-                rules.push({
-                    id: 'legacy',
-                    startTime: v.happyHour.startTime,
-                    endTime: v.happyHour.endTime,
-                    days: v.happyHour.days || [],
-                    description: v.happyHour.description,
-                    specials: v.happyHourSpecials || v.happyHourSimple
+    // 1. Get Live Items (Happy Hour Slots + Flash Bounties)
+    const liveItems = venues
+        .flatMap(v => {
+            const items = [];
+
+            // Add active Flash Bounty if exists
+            if (v.activeFlashBounty?.isActive && (v.activeFlashBounty.endTime || 0) > Date.now()) {
+                items.push({
+                    id: v.id,
+                    name: v.name,
+                    isHQ: v.isHQ,
+                    timeLabel: formatMinutes(Math.ceil((v.activeFlashBounty.endTime - Date.now()) / 60000)),
+                    subLabel: 'BOUNTY',
+                    deal: v.activeFlashBounty.title,
+                    isLive: true,
+                    isBounty: true,
+                    urgency: 'red',
+                    checkIns: v.checkIns,
+                    status: v.status || 'buzzing', // Bounties imply buzz
+                    lastUpdated: v.currentBuzz?.lastUpdated
                 });
             }
-        }
-        return rules;
-    };
 
-    // 1. Get Live Happy Hour Slots
-    const liveHH = venues
-        .flatMap(v => {
             const rules = getEffectiveRules(v);
             const activeRule = rules.find(r => {
                 if (r.days && r.days.length > 0 && !r.days.includes(currentDay)) return false;
@@ -56,7 +54,9 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
             });
 
             if (activeRule) {
-                return [{
+                // If it's a bounty already, maybe we don't duplicate or we do both?
+                // Let's allow both but bounty wins priority in sort
+                items.push({
                     id: v.id,
                     name: v.name,
                     isHQ: v.isHQ,
@@ -64,23 +64,54 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                     subLabel: 'LEFT',
                     deal: activeRule.specials || activeRule.description,
                     isLive: true,
+                    isBounty: false,
                     urgency: (timeToMinutes(activeRule.endTime) - currentMinutes) < 60 ? 'red' : 'green',
                     checkIns: v.checkIns,
-                    status: v.status
-                }];
+                    status: v.status,
+                    lastUpdated: v.currentBuzz?.lastUpdated
+                });
             }
-            return [];
+
+            // 3. Static Deal Tag (Matches BuzzScreen Logic)
+            if (v.deal) {
+                items.push({
+                    id: v.id,
+                    name: v.name,
+                    isHQ: v.isHQ,
+                    timeLabel: 'DEAL',
+                    subLabel: 'ACTIVE',
+                    deal: v.deal,
+                    isLive: true,
+                    isBounty: false,
+                    urgency: 'green',
+                    checkIns: v.checkIns,
+                    status: v.status,
+                    lastUpdated: v.currentBuzz?.lastUpdated
+                });
+            }
+
+            return items;
         })
         .sort((a, b) => {
-            const timeA = a.timeLabel.includes('h') ? parseInt(a.timeLabel) * 60 + parseInt(a.timeLabel.split(' ')[1]) : parseInt(a.timeLabel);
-            const timeB = b.timeLabel.includes('h') ? parseInt(b.timeLabel) * 60 + parseInt(b.timeLabel.split(' ')[1]) : parseInt(b.timeLabel);
+            // Priority 1: Bounties first
+            if (a.isBounty && !b.isBounty) return -1;
+            if (!a.isBounty && b.isBounty) return 1;
+
+            // Priority 2: Urgency (Time Left)
+            // Handle 'DEAL' time label (treat as infinite/lowest urgency)
+            if (a.timeLabel === 'DEAL' && b.timeLabel !== 'DEAL') return 1;
+            if (a.timeLabel !== 'DEAL' && b.timeLabel === 'DEAL') return -1;
+            if (a.timeLabel === 'DEAL' && b.timeLabel === 'DEAL') return 0;
+
+            const timeA = a.timeLabel.includes('h') ? parseInt(a.timeLabel) * 60 + (parseInt(a.timeLabel.split(' ')[1]) || 0) : parseInt(a.timeLabel);
+            const timeB = b.timeLabel.includes('h') ? parseInt(b.timeLabel) * 60 + (parseInt(b.timeLabel.split(' ')[1]) || 0) : parseInt(b.timeLabel);
             return timeA - timeB;
         });
 
     // 2. Get Upcoming Happy Hours for Today
     const allUpcomingItems = venues
         .flatMap(v => {
-            const alreadyLive = liveHH.some(l => l.id === v.id);
+            const alreadyLive = liveItems.some(l => l.id === v.id);
             if (alreadyLive) return [];
 
             const rules = getEffectiveRules(v);
@@ -102,20 +133,30 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                     subLabel: 'STARTS',
                     deal: rule.specials || rule.description,
                     isLive: false,
+                    isBounty: false,
                     urgency: 'blue',
                     checkIns: v.checkIns,
-                    status: v.status
+                    status: v.status,
+                    lastUpdated: v.currentBuzz?.lastUpdated
                 }];
             }
             return [];
         })
         .sort((a, b) => {
-            const timeA = a.timeLabel.includes('h') ? parseInt(a.timeLabel) * 60 + parseInt(a.timeLabel.split(' ')[1]) : parseInt(a.timeLabel);
-            const timeB = b.timeLabel.includes('h') ? parseInt(b.timeLabel) * 60 + parseInt(b.timeLabel.split(' ')[1]) : parseInt(b.timeLabel);
+            const timeA = a.timeLabel.includes('h') ? parseInt(a.timeLabel) * 60 + (parseInt(a.timeLabel.split(' ')[1]) || 0) : parseInt(a.timeLabel);
+            const timeB = b.timeLabel.includes('h') ? parseInt(b.timeLabel) * 60 + (parseInt(b.timeLabel.split(' ')[1]) || 0) : parseInt(b.timeLabel);
             return timeA - timeB;
         });
 
-    const totalPotentialItems = [...liveHH, ...allUpcomingItems];
+    // Combine and Deduplicate
+    const allItems = [...liveItems, ...allUpcomingItems];
+    const uniqueItemsMap = new Map();
+    allItems.forEach(item => {
+        if (!uniqueItemsMap.has(item.id)) {
+            uniqueItemsMap.set(item.id, item);
+        }
+    });
+    const totalPotentialItems = Array.from(uniqueItemsMap.values());
 
     // Implement Rotation: 5-minute shift ensures global fairness
     const displayItems = React.useMemo(() => {
@@ -145,6 +186,13 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
         return null;
     };
 
+    // Helper to calculate decayed check-ins (50% decay per hour)
+    const calculateEffectiveCheckIns = (rawCheckIns: number = 0, lastUpdated: number = Date.now()) => {
+        const hoursDiff = (Date.now() - lastUpdated) / (1000 * 60 * 60);
+        const decayFactor = Math.pow(0.5, hoursDiff);
+        return Math.max(1, Math.round(rawCheckIns * decayFactor));
+    };
+
     return (
         <div className="bg-black/95 backdrop-blur-md border-b border-[#FFD700]/50 shadow-2xl overflow-hidden">
             {/* Header Row - Extra Compact */}
@@ -155,7 +203,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                         The Buzz Clock
                     </h2>
                 </div>
-                {liveHH.length > 0 && (
+                {liveItems.length > 0 && (
                     <div className="flex items-center gap-1.5">
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -171,6 +219,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                 {displayItems.length > 0 ? displayItems.map((item) => {
                     const statusConfig = getStatusDisplay(item.status);
                     const timeValue = item.timeLabel.split(' ');
+                    const effectiveCheckIns = calculateEffectiveCheckIns(item.checkIns, item.lastUpdated || Date.now());
 
                     return (
                         <div
@@ -180,7 +229,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                         >
                             {/* Left: Two-Line Vibe + Deal */}
                             <div className="flex-1 min-w-0 pr-4">
-                                <div className="flex items-center gap-1.5 mb-0.5">
+                                <div className="flex items-center gap-1.5 mb-1.5">
                                     <h3 className="text-sm font-black text-white uppercase tracking-tight truncate group-hover:text-[#FFD700] transition-colors font-league">
                                         {item.name}
                                     </h3>
@@ -188,9 +237,16 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                                         <span className="text-[8px] bg-primary text-black font-black px-1 rounded-[2px] transform -skew-x-12">HQ</span>
                                     )}
                                 </div>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide truncate">
-                                    {item.deal}
-                                </p>
+                                <div className="flex items-center gap-2">
+                                    {statusConfig && (
+                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded ${statusConfig.bg} bg-opacity-20 ${statusConfig.color} border border-white/5 uppercase tracking-wider`}>
+                                            {statusConfig.text}
+                                        </span>
+                                    )}
+                                    <span className="flex items-center gap-1 text-[9px] font-bold text-slate-400">
+                                        <Users className="w-3 h-3" /> {effectiveCheckIns}
+                                    </span>
+                                </div>
                             </div>
 
                             {/* Right: Urgent Time */}
@@ -217,11 +273,14 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
             {/* Footer View All - Conditional */}
             {remainingCount > 0 && (
                 <button
-                    onClick={() => navigate('/bars')}
+                    onClick={() => {
+                        setFilterKind('deals');
+                        navigate('/');
+                    }}
                     className="w-full py-2 bg-white/5 border-t border-white/5 hover:bg-white/10 transition-all flex items-center justify-center gap-2 group"
                 >
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-primary transition-colors">
-                        + {remainingCount} More Buzzing (View All)
+                        + {remainingCount} More (View All)
                     </span>
                 </button>
             )}

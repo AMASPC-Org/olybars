@@ -454,12 +454,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                     <div className="ml-8 hidden md:flex items-center gap-3">
                         <div className="px-3 py-1 bg-slate-800 rounded-md border border-white/10 flex flex-col items-center">
                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest font-league">
-                                {(privateData?.partnerConfig?.tier || myVenue.partnerConfig?.tier || PartnerTier.FREE)} TIER
+                                {(privateData?.partnerConfig?.tier || myVenue.partnerConfig?.tier || PartnerTier.LOCAL)} TIER
                             </span>
                             <div className="flex items-center gap-1">
                                 <Zap className="w-2.5 h-2.5 text-primary fill-current" />
                                 <span className="text-[10px] font-black text-primary font-league">
-                                    {TIER_CONFIG[(privateData?.partnerConfig?.tier || myVenue.partnerConfig?.tier || PartnerTier.FREE) as PartnerTier].flashBountyLimit - (privateData?.partnerConfig?.flashBountiesUsed || myVenue.partnerConfig?.flashBountiesUsed || 0)} TOKENS
+                                    {(TIER_CONFIG[(privateData?.partnerConfig?.tier || myVenue.partnerConfig?.tier || PartnerTier.LOCAL) as PartnerTier]?.flashBountyLimit || 0) - (privateData?.partnerConfig?.flashBountiesUsed || myVenue.partnerConfig?.flashBountiesUsed || 0)} TOKENS
                                 </span>
                             </div>
                         </div>

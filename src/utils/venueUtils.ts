@@ -6,10 +6,9 @@ export type HoursStatus = 'open' | 'last_call' | 'closed';
  * Determines the current status of a venue based on its hours metadata.
  * Accounts for "Last Call" (30 minutes before closing).
  */
-export const getVenueStatus = (venue: Venue): HoursStatus => {
+export const getVenueStatus = (venue: Venue, now: Date = new Date()): HoursStatus => {
     if (!venue.hours) return 'open';
 
-    const now = new Date();
     const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const currentTime = now.getHours() * 60 + now.getMinutes();
 
@@ -71,6 +70,31 @@ export const getVenueStatus = (venue: Venue): HoursStatus => {
 /**
  * Legacy wrapper for boolean check
  */
-export const isVenueOpen = (venue: Venue): boolean => {
-    return getVenueStatus(venue) !== 'closed';
+export const isVenueOpen = (venue: Venue, now: Date = new Date()): boolean => {
+    return getVenueStatus(venue, now) !== 'closed';
+};
+
+// Helper for time calculations
+export const timeToMinutes = (timeStr: string): number => {
+    if (!timeStr) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + (m || 0);
+};
+
+export const getEffectiveRules = (v: Venue) => {
+    const rules = [...(v.happyHourRules || [])];
+    if (v.happyHour?.startTime) {
+        const isAlreadyAccounted = rules.some(r => r.startTime === v.happyHour!.startTime && r.endTime === v.happyHour!.endTime);
+        if (!isAlreadyAccounted) {
+            rules.push({
+                id: 'legacy',
+                startTime: v.happyHour.startTime,
+                endTime: v.happyHour.endTime,
+                days: v.happyHour.days || [],
+                description: v.happyHour.description,
+                specials: v.happyHourSpecials || v.happyHourSimple
+            });
+        }
+    }
+    return rules;
 };

@@ -59,6 +59,11 @@ interface AppShellProps {
   onToggleFavorite?: (venueId: string) => void;
   onToggleWeeklyBuzz?: () => void;
   onVenueDashboardClick?: () => void;
+  onClockIn?: (venue: Venue) => void;
+  onVibeCheck?: (venue: Venue) => void;
+  clockedInVenue?: string | null;
+  onEditVenue?: (venueId: string) => void;
+  isLoading?: boolean;
   showArtie?: boolean;
   setShowArtie?: (show: boolean) => void;
 }
@@ -81,6 +86,11 @@ export const AppShell: React.FC<AppShellProps> = ({
   onToggleFavorite,
   onToggleWeeklyBuzz,
   onVenueDashboardClick,
+  onClockIn,
+  onVibeCheck,
+  clockedInVenue,
+  onEditVenue,
+  isLoading,
   showArtie,
   setShowArtie
 }) => {
@@ -188,100 +198,116 @@ export const AppShell: React.FC<AppShellProps> = ({
     '/venue-handover'
   ].includes(location.pathname);
 
+  const isDiscoveryFlow = location.pathname === '/' || location.pathname.startsWith('/venues/');
+
   return (
     <div className={`h-full bg-background text-white font-sans mx-auto relative shadow-2xl overflow-hidden flex flex-col transition-all duration-500 ${isFullWidthPage
       ? 'w-full max-w-none border-x-0'
       : 'max-w-md border-x-4 border-black'
       }`}>
-      {/* Header Area */}
-      <div className={`sticky top-0 z-40 backdrop-blur-xl transition-all duration-300 ${pulseStatus === 'buzzing' ? 'shadow-[0_4px_20px_-5px_rgba(251,191,36,0.5)]' : 'shadow-lg'
-        }`}>
-        <div className={`relative border-b-2 transition-colors duration-500 ${pulseStatus === 'buzzing' ? 'bg-black/80 border-primary' : 'bg-black/90 border-slate-800'
+      {/* Header Area - Hidden on Discovery Flow */}
+      {!isDiscoveryFlow && (
+        <div className={`sticky top-0 z-40 backdrop-blur-xl transition-all duration-300 ${pulseStatus === 'buzzing' ? 'shadow-[0_4px_20px_-5px_rgba(251,191,36,0.5)]' : 'shadow-lg'
           }`}>
-          {/* Top Glow bar for "Buzzing" status */}
-          {pulseStatus === 'buzzing' && (
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse" />
-          )}
+          <div className={`relative border-b-2 transition-colors duration-500 ${pulseStatus === 'buzzing' ? 'bg-black/80 border-primary' : 'bg-black/90 border-slate-800'
+            }`}>
+            {/* Top Glow bar for "Buzzing" status */}
+            {pulseStatus === 'buzzing' && (
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse" />
+            )}
 
-          <div className={`p-3 flex justify-between items-center mx-auto transition-all ${isFullWidthPage ? 'max-w-[1600px] px-6' : ''}`}>
-            <div
-              onClick={() => navigate('/')}
-              className="text-2xl md:text-3xl font-black tracking-tighter text-white flex items-center gap-3 drop-shadow-md cursor-pointer group"
-            >
-              <div className="relative flex-shrink-0">
-                <img
-                  src={logoIcon}
-                  alt="Logo Icon"
-                  className="w-10 h-10 md:w-12 md:h-12 object-contain group-hover:rotate-12 transition-transform duration-300"
-                />
-                {pulseStatus === 'buzzing' && (
-                  <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-black animate-ping" />
-                )}
+            <div className={`p-3 flex justify-between items-center mx-auto transition-all ${isFullWidthPage ? 'max-w-[1600px] px-6' : ''}`}>
+              <div
+                onClick={() => navigate('/')}
+                className="text-2xl md:text-3xl font-black tracking-tighter text-white flex items-center gap-3 drop-shadow-md cursor-pointer group"
+              >
+                <div className="relative flex-shrink-0">
+                  <img
+                    src={logoIcon}
+                    alt="Logo Icon"
+                    className="w-10 h-10 md:w-12 md:h-12 object-contain group-hover:rotate-12 transition-transform duration-300"
+                  />
+                  {pulseStatus === 'buzzing' && (
+                    <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-black animate-ping" />
+                  )}
+                </div>
+                <span className="font-league uppercase leading-none group-hover:text-primary transition-colors flex flex-col">
+                  <span className="flex items-center">
+                    OLYBARS<span className="text-primary">.COM</span>
+                  </span>
+                </span>
               </div>
-              <span className="font-league uppercase leading-none group-hover:text-primary transition-colors flex flex-col">
-                <span className="flex items-center">
-                  OLYBARS<span className="text-primary">.COM</span>
-                </span>
-              </span>
-            </div>
 
-            <div className="flex items-center gap-4">
-              {isMapPage && (
-                <button
-                  onClick={() => setForceShowGrid(!forceShowGrid)}
-                  className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 border-2 transition-all ${forceShowGrid ? 'bg-primary text-black border-black' : 'bg-black text-primary border-primary'}`}
-                >
-                  {forceShowGrid ? 'Hide Hub' : 'Show Hub'}
-                </button>
-              )}
-              <button
-                onClick={() => setShowMenu(true)}
-                className="text-white hover:text-primary transition-all active:scale-95"
-              >
-                <Menu className="w-8 h-8" strokeWidth={3} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* The Buzz Clock Component - Hidden on Map or during Search */}
-        {!isMapPage && !searchQuery && <BuzzClock venues={venues} />}
-
-        {/* Navigation Grid: "Floating Buttons" Style */}
-        <div className={`bg-black border-b border-[#333] backdrop-blur-sm transition-all duration-500 overflow-hidden ${(isScrolled || (isMapPage && !forceShowGrid)) ? 'max-h-0 invisible scale-y-0 opacity-0' : 'max-h-[200px] visible scale-y-100 opacity-100'}`}>
-          <div className={`${isFullWidthPage ? 'max-w-[1600px] mx-auto' : ''} p-1.5 grid ${isFullWidthPage ? 'grid-cols-4 md:grid-cols-6' : 'grid-cols-3'} gap-1.5 bg-black`}>
-            {navItems.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => navigate(tab.path)}
-                className={`flex flex-col items-center justify-center py-3 px-1 rounded-md transition-all relative overflow-hidden group/nav border ${activeTab === tab.id
-                  ? 'bg-[#FFD700] text-black border-[#FFD700] font-bold shadow-[0_0_10px_rgba(255,215,0,0.4)]'
-                  : tab.id === 'pulse' && pulseStatus === 'buzzing'
-                    ? 'bg-[#1A1D21] text-primary border-primary/50 shadow-[0_0_8px_rgba(251,191,36,0.2)]'
-                    : 'bg-[#1A1D21] border-[#333] text-[#888] hover:border-[#666] hover:text-[#ccc]'
-                  } active:scale-95 active:border-[#FFD700] active:text-[#FFD700]`}
-              >
-                {tab.id === 'pulse' && (pulseStatus === 'buzzing' || pulseStatus === 'chill') && (
-                  <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${pulseStatus === 'buzzing' ? 'bg-primary animate-ping' : 'bg-blue-400'}`} />
+              <div className="flex items-center gap-4">
+                {isMapPage && (
+                  <button
+                    onClick={() => setForceShowGrid(!forceShowGrid)}
+                    className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 border-2 transition-all ${forceShowGrid ? 'bg-primary text-black border-black' : 'bg-black text-primary border-primary'}`}
+                  >
+                    {forceShowGrid ? 'Hide Hub' : 'Show Hub'}
+                  </button>
                 )}
+                <button
+                  onClick={() => setShowMenu(true)}
+                  className="text-white hover:text-primary transition-all active:scale-95"
+                >
+                  <Menu className="w-8 h-8" strokeWidth={3} />
+                </button>
+              </div>
+            </div>
+          </div>
 
-                <tab.icon className={`w-4 h-4 mb-1 transition-transform group-hover/nav:scale-110 ${activeTab === tab.id ? 'scale-110' : ''}`} strokeWidth={activeTab === tab.id ? 4 : 3} />
+          {/* The Buzz Clock Component - Hidden on Map or during Search */}
+          {!isMapPage && !searchQuery && <BuzzClock venues={venues} />}
 
-                <span className={`text-[10px] font-black tracking-widest font-league uppercase leading-none transition-all ${activeTab === tab.id ? 'text-black' : 'group-hover/nav:tracking-[0.15em]'
-                  }`}>
-                  {tab.id === 'pulse' && pulseStatus !== 'quiet' ? pulseStatus : tab.label}
-                </span>
+          {/* Navigation Grid: "Floating Buttons" Style */}
+          <div className={`bg-black border-b border-[#333] backdrop-blur-sm transition-all duration-500 overflow-hidden ${(isScrolled || (isMapPage && !forceShowGrid)) ? 'max-h-0 invisible scale-y-0 opacity-0' : 'max-h-[200px] visible scale-y-100 opacity-100'}`}>
+            <div className={`${isFullWidthPage ? 'max-w-[1600px] mx-auto' : ''} p-1.5 grid ${isFullWidthPage ? 'grid-cols-4 md:grid-cols-6' : 'grid-cols-3'} gap-1.5 bg-black`}>
+              {navItems.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => navigate(tab.path)}
+                  className={`flex flex-col items-center justify-center py-3 px-1 rounded-md transition-all relative overflow-hidden group/nav border ${activeTab === tab.id
+                    ? 'bg-[#FFD700] text-black border-[#FFD700] font-bold shadow-[0_0_10px_rgba(255,215,0,0.4)]'
+                    : tab.id === 'pulse' && pulseStatus === 'buzzing'
+                      ? 'bg-[#1A1D21] text-primary border-primary/50 shadow-[0_0_8px_rgba(251,191,36,0.2)]'
+                      : 'bg-[#1A1D21] border-[#333] text-[#888] hover:border-[#666] hover:text-[#ccc]'
+                    } active:scale-95 active:border-[#FFD700] active:text-[#FFD700]`}
+                >
+                  {tab.id === 'pulse' && (pulseStatus === 'buzzing' || pulseStatus === 'chill') && (
+                    <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${pulseStatus === 'buzzing' ? 'bg-primary animate-ping' : 'bg-blue-400'}`} />
+                  )}
 
-              </button>
-            ))}
+                  <tab.icon className={`w-4 h-4 mb-1 transition-transform group-hover/nav:scale-110 ${activeTab === tab.id ? 'scale-110' : ''}`} strokeWidth={activeTab === tab.id ? 4 : 3} />
+
+                  <span className={`text-[10px] font-black tracking-widest font-league uppercase leading-none transition-all ${activeTab === tab.id ? 'text-black' : 'group-hover/nav:tracking-[0.15em]'
+                    }`}>
+                    {tab.id === 'pulse' && pulseStatus !== 'quiet' ? pulseStatus : tab.label}
+                  </span>
+
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Content (Outlet) */}
       <div className="flex-1 overflow-y-auto relative flex flex-col">
         <div className="flex-1">
-          <Outlet context={{ venues, onAskArtie: () => setShowArtie?.(true) }} />
+          <Outlet context={{
+            venues,
+            userProfile,
+            onAskArtie: () => setShowArtie?.(true),
+            onToggleMenu: () => setShowMenu(true),
+            onClockIn,
+            onVibeCheck,
+            clockedInVenue,
+            onToggleFavorite,
+            onEditVenue,
+            isLoading,
+            onToggleWeeklyBuzz
+          }} />
         </div>
         {location.pathname !== '/map' && <Footer />}
       </div>

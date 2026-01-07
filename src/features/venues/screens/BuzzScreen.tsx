@@ -1,17 +1,22 @@
-import React, { useState, useCallback } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import React, { useState, useCallback, useMemo } from 'react';
+import { useNavigate, Link, useSearchParams, useOutletContext } from 'react-router-dom';
 import { GlobalSearch } from '../../../components/features/search/GlobalSearch';
+import { StickyHeader } from '../../../components/layout/StickyHeader';
+import { DateContextSelector } from '../../../components/features/search/DateContextSelector';
 import {
   Flame, Beer, Star, Users, MapPin,
   Trophy, ChevronRight, Crown, Search, Filter,
-  Bot, Clock, Zap, Gamepad2, ShieldCheck
+  Bot, Clock, Zap, Gamepad2, ShieldCheck, List, Map as MapIcon
 } from 'lucide-react';
 import { Venue, VenueStatus, UserProfile } from '../../../types';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
-import { isVenueOpen, getVenueStatus } from '../../../utils/venueUtils';
+import { isVenueOpen, getVenueStatus, getEffectiveRules, timeToMinutes } from '../../../utils/venueUtils';
 import { PULSE_CONFIG } from '../../../config/pulse';
 import { TAXONOMY_PLAY, TAXONOMY_FEATURES, TAXONOMY_EVENTS } from '../../../data/taxonomy';
+import { isSameDay, format } from 'date-fns';
+import { useDiscovery } from '../contexts/DiscoveryContext';
+import { VenueMap } from '../components/VenueMap';
 
 const SkeletonCard = () => (
   <div className="bg-surface rounded-xl border border-slate-800 p-4 shadow-lg animate-pulse">
@@ -72,32 +77,87 @@ const STATUS_ORDER: Record<VenueStatus, number> = {
   dead: 3,
 };
 
+const EventCard = ({ event, onClick }: { event: any, onClick: () => void }) => {
+  return (
+    <div
+      onClick={onClick}
+      className="p-4 rounded-2xl bg-surface/50 border border-white/5 hover:bg-surface transition-all cursor-pointer group flex gap-4 animate-in fade-in slide-in-from-bottom-2"
+    >
+      <div className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 bg-slate-900 border border-white/5 flex flex-col items-center justify-center p-2 text-center">
+        <Clock className="w-8 h-8 text-primary/40 mb-1" />
+        <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter leading-none">
+          {event.startTime || (event.type === 'Weekly' ? 'ALL DAY' : 'TONIGHT')}
+        </span>
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-start">
+          <h3 className="text-lg font-black uppercase font-league leading-tight truncate group-hover:text-primary transition-colors text-white">
+            {event.title}
+          </h3>
+        </div>
+
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[10px] font-bold text-primary uppercase tracking-widest italic truncate">{event.venue.name}</span>
+          <span className="text-slate-700">•</span>
+          <span className="text-[10px] font-black text-slate-500 uppercase">{event.type || 'Special Event'}</span>
+        </div>
+
+        <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+          {event.description || `Join us at ${event.venue.name} for ${event.title}!`}
+        </p>
+
+        <div className="mt-3 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <MapPin size={10} className="text-slate-600" />
+            <span className="text-[10px] font-bold text-slate-500 uppercase truncate max-w-[150px]">{event.venue.address || 'Olympia, WA'}</span>
+          </div>
+          <ChevronRight size={14} className="text-primary opacity-0 group-hover:opacity-100 transition-all translate-x-1" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Main Screen
-export const BuzzScreen: React.FC<{
-  venues: Venue[];
-  userProfile: UserProfile;
-  userPoints: number;
-  handleClockIn?: (v: Venue) => void;
-  clockedInVenue?: string | null;
-  handleVibeCheck?: (v: Venue, hasConsent?: boolean, photoUrl?: string) => void;
-  lastVibeChecks?: Record<string, number>;
-  lastGlobalVibeCheck?: number;
-  isLoading?: boolean;
-  onToggleWeeklyBuzz?: () => void;
-}> = ({ venues, userProfile, userPoints, handleClockIn, clockedInVenue, handleVibeCheck, lastVibeChecks, lastGlobalVibeCheck, isLoading = false, onToggleWeeklyBuzz }) => {
+export const BuzzScreen: React.FC = () => {
+
+  const {
+    venues,
+    userProfile,
+    onToggleMenu,
+    onClockIn: handleClockIn,
+    clockedInVenue,
+    onVibeCheck: handleVibeCheck,
+    isLoading = false,
+    onToggleWeeklyBuzz
+  } = useOutletContext<{
+    venues: Venue[];
+    userProfile: UserProfile;
+    onToggleMenu: () => void;
+    onClockIn: (v: Venue) => void;
+    clockedInVenue?: string | null;
+    onVibeCheck: (v: Venue, hasConsent?: boolean, photoUrl?: string) => void;
+    isLoading?: boolean;
+    onToggleWeeklyBuzz?: () => void;
+  }>();
+
+  const userPoints = userProfile.stats?.seasonPoints || 0;
   const isGuest = userProfile.role === 'guest';
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const initialQuery = searchParams.get('q') || '';
+  const {
+    searchQuery,
+    filterKind, setFilterKind,
+    statusFilter, setStatusFilter,
+    sceneFilter, setSceneFilter,
+    playFilter, setPlayFilter,
+    featureFilter, setFeatureFilter,
+    eventFilter, setEventFilter,
+    selectedDate, setSelectedDate,
+    viewMode, setViewMode,
+    isToday, clearAllFilters
+  } = useDiscovery();
 
-  const [filterKind, setFilterKind] = useState<FilterKind>('all');
-  const [statusFilter, setStatusFilter] = useState<VenueStatus | 'all'>('all');
-  const [sceneFilter, setSceneFilter] = useState<string | 'all'>('all');
-  const [playFilter, setPlayFilter] = useState<string | 'all'>('all');
-  const [featureFilter, setFeatureFilter] = useState<string | 'all'>('all');
-  const [eventFilter, setEventFilter] = useState<string | 'all'>('all');
-
-  const searchQuery = initialQuery; // Sync with URL
   const [showPulseMenu, setShowPulseMenu] = useState(false);
   const [showSceneMenu, setShowSceneMenu] = useState(false);
   const [showPlayMenu, setShowPlayMenu] = useState(false);
@@ -113,41 +173,46 @@ export const BuzzScreen: React.FC<{
   }, []);
 
   const applyFilter = useCallback((v: Venue): boolean => {
-    // Search Filter (Applies globally)
+    // Search Filter ("God Mode")
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      const nameMatch = v.name.toLowerCase().includes(q);
-      const typeMatch = (v.venueType || '').replace('_', ' ').toLowerCase().includes(q);
-      const vibeMatch = (v.vibe?.toLowerCase().includes(q) ?? false) || (v.sceneTags?.some(tag => tag.replace('_', ' ').toLowerCase().includes(q)) ?? false);
-      const addressMatch = v.address?.toLowerCase().includes(q) ?? false;
-      const dealMatch = (v.deal?.toLowerCase().includes(q) ?? false) || (v.activeFlashBounty?.title?.toLowerCase().includes(q) ?? false);
-      // New: Search Game Features
-      const gameMatch = v.gameFeatures?.some(f => (f.name?.toLowerCase() || '').includes(q) || (f.type?.toLowerCase() || '').includes(q)) ?? false;
 
-      // Upgrade: Search Amenities & Rituals
+      // 1. Name & Nicknames
+      const nameMatch = v.name.toLowerCase().includes(q) || (v.nicknames?.some(n => n.toLowerCase().includes(q)) ?? false);
+
+      // 2. Events (Weekly, Special, League)
+      const eventTypeMatch = v.leagueEvent?.toLowerCase().includes(q) || (v.special_events?.some(e => e.type.toLowerCase().includes(q) || e.title.toLowerCase().includes(q)) ?? false);
+      const scheduleMatch = v.weekly_schedule && Object.values(v.weekly_schedule).flat().some(ev => (ev as string).toLowerCase().includes(q));
+      const eventMatch = eventTypeMatch || scheduleMatch;
+
+      // 3. Games & Amenities
+      const gameMatch = v.gameFeatures?.some(f => (f.name?.toLowerCase() || f.type?.toLowerCase() || '').includes(q)) ?? false;
       const amenityMatch = v.amenities?.some(a => a.toLowerCase().includes(q)) ?? false;
-      const vibeTagMatch = v.sceneTags?.some(t => t.toLowerCase().includes(q)) ?? false;
-      const scheduleMatch = v.weekly_schedule
-        ? Object.values(v.weekly_schedule).flat().some(event => event.toString().toLowerCase().includes(q))
-        : false;
+      const playMatch = gameMatch || amenityMatch;
 
-      // [NEW] Description & Nicknames (Universal Search Expansion)
-      const descriptionMatch = (v.description?.toLowerCase().includes(q) ?? false) || (v.eventDescription?.toLowerCase().includes(q) ?? false) || (v.historySnippet?.toLowerCase().includes(q) ?? false);
-      const nicknameMatch = v.nicknames?.some(n => n.toLowerCase().includes(q)) ?? false;
-      const happyHourMatch = (v.happyHourSimple?.toLowerCase().includes(q) ?? false) || (v.happyHourSpecials?.toLowerCase().includes(q) ?? false) || (v.happyHour?.description?.toLowerCase().includes(q) ?? false);
+      // 4. Features & Vibes (Scene)
+      const featureMatch = (v.vibe?.toLowerCase().includes(q) ?? false) ||
+        (v.sceneTags?.some(tag => tag.replace('_', ' ').toLowerCase().includes(q)) ?? false) ||
+        (v.isAllAges && 'all ages'.includes(q)) ||
+        (v.isDogFriendly && 'dog friendly'.includes(q)) ||
+        (v.hasOutdoorSeating && 'patio'.includes(q));
 
-      const specialEventMatch = v.special_events?.some(e =>
-        e.title.toLowerCase().includes(q) ||
-        (e.description?.toLowerCase() || '').includes(q) ||
-        e.type.toLowerCase().includes(q)
-      ) ?? false;
-
-      const isMatch = nameMatch || typeMatch || vibeMatch || addressMatch || dealMatch || gameMatch || amenityMatch || scheduleMatch || descriptionMatch || nicknameMatch || happyHourMatch || specialEventMatch;
+      const isMatch = nameMatch || eventMatch || playMatch || featureMatch;
 
       if (!isMatch) return false;
-
-      // If we have a specific search, we generally ignore other filters unless searching within a specific category (pillar)
       return true;
+    }
+
+    // Date Context Filter
+    if (!isToday) {
+      const dayName = format(selectedDate, 'eeee').toLowerCase();
+      const hasEvents = (v.weekly_schedule?.[dayName]?.length ?? 0) > 0 ||
+        (v.special_events?.some(e => isSameDay(new Date(e.date), selectedDate)) ?? false);
+
+      // Check if open on that day
+      const isOpenOnDay = v.hours && typeof v.hours === 'object' && (v.hours as any)[dayName];
+
+      if (!isOpenOnDay && !hasEvents) return false;
     }
 
     if (filterKind === 'all') return true;
@@ -155,6 +220,34 @@ export const BuzzScreen: React.FC<{
     if (filterKind === 'status') {
       if (statusFilter === 'all') return true;
       return v.status === statusFilter;
+    }
+
+    if (filterKind === 'deals') {
+      // 1. Flash Bounty (Always Active)
+      const hasActiveBounty = v.activeFlashBounty?.isActive && (v.activeFlashBounty.endTime || 0) > Date.now();
+      if (hasActiveBounty) return true;
+
+      // 2. Explicit Deal Tag
+      if (v.deal) return true;
+
+      // 3. Active OR Upcoming Happy Hour (Strictly Matches Buzz Clock Logic)
+      const now = new Date();
+      const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getDay()];
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+      const rules = getEffectiveRules(v);
+      const hasRelevantRule = rules.some(r => {
+        if (r.days && r.days.length > 0 && !r.days.includes(currentDay)) return false;
+        const start = timeToMinutes(r.startTime);
+        const end = timeToMinutes(r.endTime);
+
+        // Match Active OR Upcoming (start > current)
+        return (currentMinutes >= start && currentMinutes < end) || (start > currentMinutes);
+      });
+
+      if (hasRelevantRule) return true;
+
+      return false;
     }
 
     if (filterKind === 'scene' && sceneFilter !== 'all') {
@@ -178,11 +271,32 @@ export const BuzzScreen: React.FC<{
       return v.amenities?.some(a => a.toLowerCase().includes(q)) ?? false;
     }
 
-    if (filterKind === 'events' && eventFilter !== 'all') {
+    if (filterKind === 'events') {
+      if (eventFilter === 'all') {
+        const hasWeekly = v.weekly_schedule && Object.keys(v.weekly_schedule).length > 0;
+        const hasSpecial = (v.special_events?.length ?? 0) > 0;
+        const hasLeague = !!v.leagueEvent;
+        return !!(hasWeekly || hasSpecial || hasLeague);
+      }
+
       const q = eventFilter.toLowerCase();
       const eventMatch = v.special_events?.some(e => e.type.toLowerCase().includes(q) || e.title.toLowerCase().includes(q)) ?? false;
       const leagueMatch = v.leagueEvent?.toLowerCase().includes(q) ?? false;
       const scheduleMatch = v.weekly_schedule && Object.values(v.weekly_schedule).flat().some(ev => (ev as string).toLowerCase().includes(q));
+
+      if (eventFilter === 'other') {
+        const hasAnyEvent = (v.special_events?.length ?? 0) > 0 ||
+          (v.weekly_schedule && Object.keys(v.weekly_schedule).length > 0) ||
+          !!v.leagueEvent;
+
+        const isMainEvent = TAXONOMY_EVENTS.some(main =>
+          v.leagueEvent?.toLowerCase().includes(main.toLowerCase()) ||
+          v.special_events?.some(e => e.title.toLowerCase().includes(main.toLowerCase()) || e.type.toLowerCase().includes(main.toLowerCase())) ||
+          (v.weekly_schedule && Object.values(v.weekly_schedule).flat().some(ev => (ev as string).toLowerCase().includes(main.toLowerCase())))
+        );
+        return hasAnyEvent && !isMainEvent;
+      }
+
       return !!(eventMatch || leagueMatch || scheduleMatch);
     }
 
@@ -195,21 +309,103 @@ export const BuzzScreen: React.FC<{
     if (!open && !v.isPaidLeagueMember && !hasActiveBounty) return false;
 
     return true;
-  }, [searchQuery, filterKind, statusFilter, sceneFilter, playFilter, featureFilter, eventFilter]);
+  }, [searchQuery, filterKind, statusFilter, sceneFilter, playFilter, featureFilter, eventFilter, selectedDate]);
 
   const venuesWithDistance = React.useMemo(() => venues.map(v => ({
     ...v,
-    isOpen: isVenueOpen(v),
-    hourStatus: getVenueStatus(v),
+    isOpen: isVenueOpen(v, selectedDate),
+    hourStatus: getVenueStatus(v, selectedDate),
     distance: coords && v.location ? metersToMiles(calculateDistance(coords.latitude, coords.longitude, v.location.lat, v.location.lng)) : null
-  })), [venues, coords]);
+  })), [venues, coords, selectedDate]);
 
   const filteredVenues = React.useMemo(() => [...venuesWithDistance]
     .filter(applyFilter)
     .sort((a, b) => {
-      // 1. Partner Priority (League Members) with Rotating Order
-      const isAPartner = a.isPaidLeagueMember;
-      const isBPartner = b.isPaidLeagueMember;
+      // 0. Deals Sort (Syncs with Buzz Clock)
+      if (filterKind === 'deals') {
+        const now = new Date();
+        const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][now.getDay()];
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+        const getSortMetric = (v: Venue) => {
+          // Priority 1: Flash Bounty (Active) - Score: -3000
+          if (v.activeFlashBounty?.isActive && (v.activeFlashBounty.endTime || 0) > Date.now()) {
+            return -3000;
+          }
+
+          const rules = getEffectiveRules(v);
+
+          // Priority 2: Active Happy Hour (Ending Soonest)
+          // Score: Minutes until end (0 to 1440)
+          const activeRule = rules.find(r => {
+            if (r.days && r.days.length > 0 && !r.days.includes(currentDay)) return false;
+            const start = timeToMinutes(r.startTime);
+            const end = timeToMinutes(r.endTime);
+            return currentMinutes >= start && currentMinutes < end;
+          });
+
+          if (activeRule) {
+            const end = timeToMinutes(activeRule.endTime);
+            return end - currentMinutes; // 10 mins left < 60 mins left
+          }
+
+          // Priority 3: Upcoming Happy Hour (Starting Soonest)
+          // Score: 5000 + Minutes until start
+          const upcomingRule = rules
+            .filter(r => {
+              if (r.days && r.days.length > 0 && !r.days.includes(currentDay)) return false;
+              return timeToMinutes(r.startTime) > currentMinutes;
+            })
+            .sort((r1, r2) => timeToMinutes(r1.startTime) - timeToMinutes(r2.startTime))[0];
+
+          if (upcomingRule) {
+            const start = timeToMinutes(upcomingRule.startTime);
+            return 5000 + (start - currentMinutes);
+          }
+
+          // Fallback
+          return 10000;
+        };
+
+        const scoreA = getSortMetric(a);
+        const scoreB = getSortMetric(b);
+        return scoreA - scoreB;
+      }
+
+      if (filterKind === 'events') {
+        const getEventScore = (v: Venue) => {
+          const dayName = format(selectedDate, 'eeee').toLowerCase();
+
+          // Check special events
+          const specialHours = v.special_events
+            ?.filter(e => isSameDay(new Date(e.date), selectedDate))
+            .map(e => {
+              const [h, m] = e.startTime.split(':').map(Number);
+              return h * 60 + m;
+            }) || [];
+
+          // Check weekly schedule
+          const hasWeekly = v.weekly_schedule?.[dayName]?.length;
+          // Weekly schedule items are usually just strings like "Trivia @ 7PM".
+          // Extracting time from strings is messy, so let's assume special_events is the source of truth for "Time" ordering.
+          // Or if it's weekly, just put it at 1000 mins if we can't parse it.
+          const weeklyScore = hasWeekly ? 1000 : 2000;
+
+          const minSpecial = specialHours.length > 0 ? Math.min(...specialHours) : 2000;
+          return Math.min(minSpecial, weeklyScore);
+        };
+
+        return getEventScore(a) - getEventScore(b);
+      }
+
+      // 1. Bounty Pinned
+      const aBounty = !!(a.activeFlashBounty && a.activeFlashBounty.isActive);
+      const bBounty = !!(b.activeFlashBounty && b.activeFlashBounty.isActive);
+      if (aBounty !== bBounty) return aBounty ? -1 : 1;
+
+      // 2. Partner Priority (League Members) with Rotating Order
+      const isAPartner = !!a.isPaidLeagueMember;
+      const isBPartner = !!b.isPaidLeagueMember;
 
       if (isAPartner !== isBPartner) return isAPartner ? -1 : 1;
 
@@ -219,14 +415,14 @@ export const BuzzScreen: React.FC<{
         return ((aHash + rotationOffset) % 100) - ((bHash + rotationOffset) % 100);
       }
 
-      // 2. Open Status (Open > Last Call > Closed)
+      // 3. Open Status (Open > Last Call > Closed)
       if (a.hourStatus === 'open' && b.hourStatus !== 'open') return -1;
       if (a.hourStatus !== 'open' && b.hourStatus === 'open') return 1;
       if (a.hourStatus === 'last_call' && b.hourStatus === 'closed') return -1;
       if (a.hourStatus === 'closed' && b.hourStatus === 'last_call') return 1;
 
-      return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
-    }), [venuesWithDistance, filterKind, statusFilter, applyFilter, rotationOffset]);
+      return (STATUS_ORDER[a.status] || 99) - (STATUS_ORDER[b.status] || 99);
+    }), [venuesWithDistance, filterKind, statusFilter, sceneFilter, playFilter, featureFilter, eventFilter, applyFilter, rotationOffset, searchQuery]);
 
   const flashBountyVenues = venues.filter(v => {
     const hasFlatDeal = !!v.deal && (v.dealEndsIn || 0) > 0;
@@ -249,6 +445,51 @@ export const BuzzScreen: React.FC<{
       })
     : filteredVenues;
 
+  const displayItems = useMemo(() => {
+    if (filterKind !== 'events') return displayVenues;
+
+    const dayName = format(selectedDate, 'eeee').toLowerCase();
+
+    return displayVenues.flatMap(v => {
+      const items: any[] = [];
+
+      // 1. Special Events
+      v.special_events?.filter(e => isSameDay(new Date(e.date), selectedDate)).forEach(e => {
+        // If eventFilter is set, check if e.type or e.title matches
+        const matchesEventFilter = eventFilter === 'all' ||
+          e.type.toLowerCase().includes(eventFilter.toLowerCase()) ||
+          e.title.toLowerCase().includes(eventFilter.toLowerCase());
+
+        if (matchesEventFilter || eventFilter === 'other') {
+          items.push({ ...e, isEvent: true, venue: v });
+        }
+      });
+
+      // 2. Weekly Schedule
+      const weekly = v.weekly_schedule?.[dayName] || [];
+      weekly.forEach(title => {
+        const matchesEventFilter = eventFilter === 'all' || title.toLowerCase().includes(eventFilter.toLowerCase());
+        if (matchesEventFilter || eventFilter === 'other') {
+          items.push({ title, isEvent: true, venue: v, type: 'Weekly Event' });
+        }
+      });
+
+      // 3. League Event
+      if (v.leagueEvent) {
+        const matchesEventFilter = eventFilter === 'all' || v.leagueEvent.toLowerCase().includes(eventFilter.toLowerCase());
+        if (matchesEventFilter || eventFilter === 'other') {
+          items.push({ title: v.leagueEvent, isEvent: true, venue: v, type: 'League Event' });
+        }
+      }
+
+      return items;
+    }).sort((a, b) => {
+      const timeA = a.startTime || '20:00';
+      const timeB = b.startTime || '20:00';
+      return timeA.localeCompare(timeB);
+    });
+  }, [displayVenues, filterKind, selectedDate, eventFilter]);
+
   const statusActive = filterKind === 'status' || filterKind === 'all';
   const sceneActive = filterKind === 'scene';
   const playActive = filterKind === 'play';
@@ -257,19 +498,6 @@ export const BuzzScreen: React.FC<{
 
   const baseChipClasses = 'px-3 py-1.5 text-xs font-bold rounded-full border transition-all whitespace-nowrap';
 
-  const clearAllFilters = () => {
-    setFilterKind('all');
-    setStatusFilter('all');
-    setSceneFilter('all');
-    setPlayFilter('all');
-    setFeatureFilter('all');
-    setEventFilter('all');
-    setShowPulseMenu(false);
-    setShowSceneMenu(false);
-    setShowPlayMenu(false);
-    setShowFeatureMenu(false);
-    setShowEventMenu(false);
-  };
 
   const generateOrgSchema = () => {
     const schema = {
@@ -291,419 +519,124 @@ export const BuzzScreen: React.FC<{
   return (
     <div className="bg-background min-h-screen pb-24 font-sans text-slate-100">
       {generateOrgSchema()}
-      <div className="p-4 space-y-6">
-        <div className="space-y-3">
-          {!searchQuery && (
-            <div className="flex flex-col items-center gap-1">
-              <h3 className="text-white text-xl font-bold tracking-tight text-center font-league uppercase">
-                The Oly Pulse
-              </h3>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">
-                  {filteredVenues.length} Spots Active
-                </span>
-                <span className="text-slate-700 font-black text-[10px]">•</span>
-                <button
-                  onClick={() => navigate('/pulse-playbook')}
-                  className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-0.5"
-                >
-                  How it Works <ChevronRight className="w-2.5 h-2.5" />
-                </button>
-              </div>
-            </div>
-          )}
 
-          <div className="mb-6">
-            <GlobalSearch
-              placeholder="SEARCH BARS, VIBES, OR DEALS..."
-              variant="hero"
-            />
-          </div>
-
-          {!searchQuery && (
-            <div className="flex justify-center items-center gap-2 pb-2 flex-wrap">
-              {/* ALL RESET */}
-              <button
-                onClick={clearAllFilters}
-                className={`${baseChipClasses} ${filterKind === 'all' ? 'bg-primary text-black border-primary' : 'bg-surface text-slate-300 border-slate-700 hover:border-slate-500'}`}
-              >
-                All
-              </button>
-
-              {/* PULSE (Status) */}
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setShowPulseMenu(!showPulseMenu);
-                    setShowSceneMenu(false); setShowPlayMenu(false); setShowFeatureMenu(false); setShowEventMenu(false);
-                  }}
-                  className={`${baseChipClasses} ${statusActive && filterKind !== 'all' ? 'bg-primary text-black border-primary' : 'bg-surface text-slate-300 border-slate-700 hover:border-slate-500'} flex items-center gap-1.5`}
-                >
-                  Pulse <ChevronRight className={`w-3 h-3 transition-transform ${showPulseMenu ? 'rotate-90' : ''}`} />
-                </button>
-                {showPulseMenu && (
-                  <div className="absolute mt-2 left-0 z-20 bg-surface border border-slate-700 rounded-md shadow-2xl overflow-hidden text-xs font-bold min-w-[140px]">
-                    {[
-                      { id: 'packed', label: '⚡ Packed', icon: Zap },
-                      { id: 'buzzing', label: '🔥 Buzzing', icon: Flame },
-                      { id: 'chill', label: '🍺 Chill', icon: Beer },
-                      { id: 'dead', label: '💀 Dead', icon: Clock }
-                    ].map(option => (
-                      <button
-                        key={option.id}
-                        onClick={() => {
-                          setStatusFilter(option.id as VenueStatus);
-                          setFilterKind('status');
-                          setShowPulseMenu(false);
-                        }}
-                        className="w-full text-left px-4 py-3 hover:bg-slate-800 flex items-center gap-3 transition-colors text-slate-200 border-b border-slate-800 last:border-0"
-                      >
-                        <option.icon className="w-3.5 h-3.5" /> {option.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* SCENE (Previously Vibe) */}
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setShowSceneMenu(!showSceneMenu);
-                    setShowPulseMenu(false); setShowPlayMenu(false); setShowFeatureMenu(false); setShowEventMenu(false);
-                  }}
-                  className={`${baseChipClasses} ${sceneActive ? 'bg-primary text-black border-primary' : 'bg-surface text-slate-300 border-slate-700 hover:border-slate-500'} flex items-center gap-1.5`}
-                >
-                  Scene <ChevronRight className={`w-3 h-3 transition-transform ${showSceneMenu ? 'rotate-90' : ''}`} />
-                </button>
-                {showSceneMenu && (
-                  <div className="absolute mt-2 left-0 z-20 bg-surface border border-slate-700 rounded-md shadow-2xl overflow-hidden text-xs font-bold min-w-[140px]">
-                    {[
-                      { id: 'dive', label: '🍺 Dive Bar' },
-                      { id: 'sports', label: '🏆 Sports Bar' },
-                      { id: 'speakeasy', label: '🗝️ Speakeasy' },
-                      { id: 'cocktail', label: '🍸 Cocktails' },
-                      { id: 'wine', label: '🍷 Wine & Tapas' },
-                      { id: 'brewery', label: '🍻 Brewery' }
-                    ].map(option => (
-                      <button
-                        key={option.id}
-                        onClick={() => {
-                          setSceneFilter(option.id);
-                          setFilterKind('scene');
-                          setShowSceneMenu(false);
-                        }}
-                        className="w-full text-left px-4 py-3 hover:bg-slate-800 transition-colors text-slate-200 border-b border-slate-800 last:border-0"
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* PLAY */}
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setShowPlayMenu(!showPlayMenu);
-                    setShowPulseMenu(false); setShowSceneMenu(false); setShowFeatureMenu(false); setShowEventMenu(false);
-                  }}
-                  className={`${baseChipClasses} ${playActive ? 'bg-primary text-black border-primary' : 'bg-surface text-slate-300 border-slate-700 hover:border-slate-500'} flex items-center gap-1.5`}
-                >
-                  Play <ChevronRight className={`w-3 h-3 transition-transform ${showPlayMenu ? 'rotate-90' : ''}`} />
-                </button>
-                {showPlayMenu && (
-                  <div className="absolute mt-2 left-0 z-20 bg-surface border border-slate-700 rounded-md shadow-2xl overflow-hidden text-xs font-bold min-w-[160px]">
-                    {TAXONOMY_PLAY.slice(0, 8).map(game => (
-                      <button
-                        key={game}
-                        onClick={() => {
-                          setPlayFilter(game);
-                          setFilterKind('play');
-                          setShowPlayMenu(false);
-                        }}
-                        className="w-full text-left px-4 py-3 hover:bg-slate-800 transition-colors text-slate-200 border-b border-slate-800 last:border-0"
-                      >
-                        {game}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* FEATURES */}
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setShowFeatureMenu(!showFeatureMenu);
-                    setShowPulseMenu(false); setShowSceneMenu(false); setShowPlayMenu(false); setShowEventMenu(false);
-                  }}
-                  className={`${baseChipClasses} ${featuresActive ? 'bg-primary text-black border-primary' : 'bg-surface text-slate-300 border-slate-700 hover:border-slate-500'} flex items-center gap-1.5`}
-                >
-                  Features <ChevronRight className={`w-3 h-3 transition-transform ${showFeatureMenu ? 'rotate-90' : ''}`} />
-                </button>
-                {showFeatureMenu && (
-                  <div className="absolute mt-2 left-0 z-20 bg-surface border border-slate-700 rounded-md shadow-2xl overflow-hidden text-xs font-bold min-w-[160px]">
-                    {[
-                      { id: 'patio', label: '🌳 Patio' },
-                      { id: 'dog_friendly', label: '🐕 Dog Friendly' },
-                      { id: 'all_ages', label: '👶 All Ages' },
-                      { id: 'fireplace', label: '🔥 Fireplace' },
-                      { id: 'dance_floor', label: '💃 Dance Floor' },
-                      { id: 'stage', label: '🎭 Stage' }
-                    ].map(option => (
-                      <button
-                        key={option.id}
-                        onClick={() => {
-                          setFeatureFilter(option.id);
-                          setFilterKind('features');
-                          setShowFeatureMenu(false);
-                        }}
-                        className="w-full text-left px-4 py-3 hover:bg-slate-800 transition-colors text-slate-200 border-b border-slate-800 last:border-0"
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* EVENTS */}
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setShowEventMenu(!showEventMenu);
-                    setShowPulseMenu(false); setShowSceneMenu(false); setShowPlayMenu(false); setShowFeatureMenu(false);
-                  }}
-                  className={`${baseChipClasses} ${eventsActive ? 'bg-primary text-black border-primary' : 'bg-surface text-slate-300 border-slate-700 hover:border-slate-500'} flex items-center gap-1.5`}
-                >
-                  Events <ChevronRight className={`w-3 h-3 transition-transform ${showEventMenu ? 'rotate-90' : ''}`} />
-                </button>
-                {showEventMenu && (
-                  <div className="absolute mt-2 left-0 z-20 bg-surface border border-slate-700 rounded-md shadow-2xl overflow-hidden text-xs font-bold min-w-[140px]">
-                    {TAXONOMY_EVENTS.slice(0, 6).map(event => (
-                      <button
-                        key={event}
-                        onClick={() => {
-                          setEventFilter(event);
-                          setFilterKind('events');
-                          setShowEventMenu(false);
-                        }}
-                        className="w-full text-left px-4 py-3 hover:bg-slate-800 transition-colors text-slate-200 border-b border-slate-800 last:border-0"
-                      >
-                        {event}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {!searchQuery && flashBountyVenues.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <div className="bg-red-500 rounded-full p-1 animate-pulse">
-                  <Zap className="w-3 h-3 text-white fill-current" />
-                </div>
-                <h4 className="text-sm font-black text-white uppercase tracking-widest font-league">Live Flash Bounties</h4>
-              </div>
-            </div>
-
-            <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide -mx-4 px-4">
-              {flashBountyVenues.slice(0, 3).map(fd => {
-                const endTime = fd.activeFlashBounty?.endTime || (Date.now() + (fd.dealEndsIn || 0) * 60000);
-                const minutesLeft = Math.max(0, Math.ceil((endTime - Date.now()) / 60000));
-
-                return (
-                  <div
-                    key={fd.id}
-                    onClick={() => navigate(`/venues/${fd.id}`)}
-                    className="min-w-[85vw] md:min-w-[400px] snap-center bg-gradient-to-br from-red-600 to-red-900 rounded-2xl p-0.5 shadow-[0_0_40px_rgba(220,38,38,0.2)] relative overflow-hidden group active:scale-[0.97] transition-all"
-                  >
-                    <div className="bg-[#0b1222] rounded-[14px] p-5 h-full relative overflow-hidden flex flex-col justify-between">
-                      <div className="flex justify-between items-start mb-4 relative z-10">
-                        <div>
-                          <h5 className="font-black text-white text-lg uppercase font-league leading-none group-hover:text-primary transition-colors">{fd.name}</h5>
-                          <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">{fd.venueType.replace(/_/g, ' ')}</p>
-                        </div>
-                        <div className="bg-red-600 text-white px-3 py-1 rounded-lg flex flex-col items-center">
-                          <span className="text-[14px] font-black font-league leading-none">{minutesLeft}</span>
-                          <span className="text-[8px] font-black uppercase tracking-tighter">MINS</span>
-                        </div>
-                      </div>
-                      <div className="space-y-1 relative z-10">
-                        <p className="text-2xl font-black text-primary uppercase font-league leading-tight tracking-tight">
-                          {fd.activeFlashBounty?.title || fd.deal}
-                        </p>
-                        <p className="text-xs text-slate-400 font-medium line-clamp-1 italic">
-                          {fd.activeFlashBounty?.description || 'Limited time offer! Get it while it lasts.'}
-                        </p>
-                      </div>
-                      <div className="mt-4 flex items-center justify-between relative z-10">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                            {fd.checkIns > 0 ? `${fd.checkIns} Players Here` : 'Deal is Fresh'}
-                          </span>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        <div className="relative group/list">
+      <div className="space-y-6">
+        <div className="relative group/list px-4">
           {!isLoading && isGuest && !searchQuery && (
             <div className="mb-6 px-1">
               <button
                 onClick={() => navigate('/league')}
-                className="w-full bg-primary border-4 border-black p-5 rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex items-center justify-between group active:scale-[0.98] transition-all"
+                className="w-full bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 p-4 rounded-xl flex items-center justify-between group/cta hover:from-primary/20 transition-all"
               >
-                <div className="text-left">
-                  <h3 className="text-black font-league font-black text-xl uppercase leading-none mb-1">Join the League</h3>
-                  <p className="text-black text-[10px] font-bold uppercase opacity-70">Standings • Prizes • Local Pride</p>
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary p-2 rounded-lg text-black">
+                    <Crown size={16} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">League Member?</p>
+                    <p className="text-xs font-bold text-white">Join the Artesian Bar League</p>
+                  </div>
                 </div>
-                <div className="bg-black text-white p-2 rounded-lg">
-                  <Trophy size={20} />
-                </div>
+                <ChevronRight size={16} className="text-primary group-hover/cta:translate-x-1 transition-transform" />
               </button>
             </div>
           )}
 
-          <div className="space-y-4 pb-12 transition-all">
-            {isLoading && (
-              <div className="space-y-4">
-                <SkeletonCard />
-                <SkeletonCard />
-                <SkeletonCard />
-              </div>
-            )}
-
-            {!isLoading && displayVenues.map((venue) => (
-              <div
-                key={venue.id}
-                className={`bg-surface/50 backdrop-blur-sm rounded-2xl border-2 p-5 shadow-xl transition-all duration-300 relative group/card active:scale-[0.98] ${isFallbackActive ? 'border-slate-800/10 opacity-70 scale-95' :
-                  venue.status === 'packed' ? 'border-pink-500/30' :
-                    venue.status === 'buzzing' ? 'border-primary/30' :
-                      'border-slate-800/60 hover:border-slate-700'
-                  }`}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1 min-w-0 pr-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Link to={`/venues/${venue.id}`} className="hover:text-primary transition-colors flex-shrink-0">
-                        <h4 className="font-bold text-xl text-white font-league uppercase tracking-tight truncate max-w-[200px]">{venue.name}</h4>
-                      </Link>
-                      {venue.isHQ && <Crown className="w-4 h-4 text-primary fill-current" />}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                        {(venue.venueType || 'venue').replace(/_/g, ' ')}
-                      </span>
-                      <span className="text-slate-700">•</span>
-                      <span className="text-[10px] text-slate-400 font-medium italic truncate max-w-[120px]">
-                        "{venue.vibe}"
-                      </span>
-                      {venue.distance !== null && (
-                        <>
-                          <span className="text-slate-700">•</span>
-                          <span className="text-[10px] text-primary font-black tracking-tighter">{venue.distance.toFixed(1)} MI</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <PulseMeter status={venue.status} />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 mb-4">
-                  {venue.manualStatusExpiresAt && venue.manualStatusExpiresAt > Date.now() && (
-                    <div className="flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest font-league">
-                      <ShieldCheck className="w-3 h-3" /> STAFF VERIFIED
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 bg-slate-900/40 border border-white/5 px-2 py-1 rounded-lg">
-                    <div className={`w-1.5 h-1.5 rounded-full ${venue.checkIns > 0 ? 'bg-primary animate-pulse' : 'bg-slate-700'}`} />
-                    <span className="text-[10px] text-slate-400 font-black tracking-widest font-league">{venue.checkIns} CLOCKED IN</span>
-                  </div>
-                </div>
-
-                {venue.leagueEvent && (
-                  <div
-                    onClick={() => navigate(`/venues/${venue.id}`)}
-                    className="mb-5 bg-gradient-to-r from-slate-900 to-black rounded-xl p-4 border border-white/5 flex justify-between items-center group cursor-pointer hover:border-primary/50 transition-all shadow-inner"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="bg-primary/10 p-2 rounded-lg text-primary border border-primary/20 shadow-lg">
-                        <Trophy className="w-5 h-5" strokeWidth={2.5} />
-                      </div>
-                      <div>
-                        <p className="text-[9px] text-primary font-black uppercase tracking-[0.2em] mb-0.5">TONIGHT'S EVENT</p>
-                        <p className="text-sm font-black text-white uppercase font-league tracking-wide group-hover:text-primary transition-colors">
-                          {venue.leagueEvent}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4" />
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleVibeCheck && handleVibeCheck(venue)}
-                    className="flex-1 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all border-2 font-league bg-surface border-white/5 text-slate-300 hover:bg-slate-800 hover:border-slate-500 active:scale-95"
-                  >
-                    <Users size={14} strokeWidth={3} className="text-primary" /> VIBE CHECK
-                  </button>
-                  <button
-                    onClick={() => handleClockIn?.(venue)}
-                    disabled={clockedInVenue === venue.id}
-                    className={`flex-1 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-all shadow-xl font-league ${clockedInVenue === venue.id
-                      ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed'
-                      : 'bg-primary text-black hover:bg-white hover:scale-[1.02] active:scale-95'
-                      }`}
-                  >
-                    {clockedInVenue === venue.id ? 'JOINED' : <><MapPin className="w-4 h-4" strokeWidth={3} /> CLOCK IN</>}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-12 bg-gradient-to-br from-[#0f172a] to-black border-2 border-primary/20 rounded-3xl p-8 relative overflow-hidden group/artie shadow-2xl">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px]" />
-          <div className="flex items-center justify-between mb-8 relative z-10">
-            <div className="flex items-center gap-4">
-              <div className="bg-primary p-3 rounded-2xl shadow-[0_0_20px_rgba(251,191,36,0.2)]">
-                <Bot className="w-6 h-6 text-black" strokeWidth={2.5} />
-              </div>
-              <div>
-                <h3 className="text-2xl font-black text-white uppercase tracking-tight font-league">Artie's Recommendations</h3>
-                <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">Next-Gen Intelligence</p>
-              </div>
+          {/* List/Map View Content */}
+          {viewMode === 'map' ? (
+            <div className="h-[60vh] rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
+              <VenueMap
+                venues={filteredVenues}
+              />
             </div>
-          </div>
-          <div className="relative z-10 space-y-4">
-            <p className="text-slate-400 text-sm italic">Artie is currently analyzing local vibes to find your perfect match...</p>
-            <button
-              onClick={() => onToggleWeeklyBuzz?.()}
-              className="w-full py-4 bg-primary/10 border border-primary/20 text-primary font-black text-xs uppercase tracking-widest rounded-xl hover:bg-primary hover:text-black transition-all"
-            >
-              Tune in to Weekly Buzz
-            </button>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {isLoading ? (
+                [...Array(6)].map((_, i) => <SkeletonCard key={i} />)
+              ) : displayItems.length > 0 ? (
+                displayItems.map((item) => {
+                  if (item.isEvent) {
+                    return (
+                      <EventCard
+                        key={`${item.venue.id}-${item.id || item.title}`}
+                        event={item}
+                        onClick={() => navigate(`/venues/${item.venue.id}`)}
+                      />
+                    );
+                  }
+
+                  const venue = item;
+                  const hasActiveBounty = !!(venue.activeFlashBounty && venue.activeFlashBounty.isActive);
+                  const bountyTitle = venue.activeFlashBounty?.title || venue.deal;
+
+                  return (
+                    <div
+                      key={venue.id}
+                      onClick={() => navigate(`/venues/${venue.id}`)}
+                      className={`p-4 rounded-2xl flex gap-4 transition-all cursor-pointer group animate-in fade-in slide-in-from-bottom-4 duration-500 border ${hasActiveBounty
+                        ? 'bg-red-950/20 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)] hover:bg-red-950/30'
+                        : 'bg-surface/50 border-white/5 hover:bg-surface'
+                        }`}
+                    >
+                      <div className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0">
+                        <img
+                          src={venue.photos?.[0]?.url || 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=100&auto=format&fit=crop'}
+                          alt={venue.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute top-1 right-1">
+                          <PulseMeter status={venue.status} />
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <h3 className={`text-lg font-black uppercase font-league leading-tight truncate transition-colors ${hasActiveBounty ? 'text-white' : 'group-hover:text-primary'
+                            }`}>
+                            {venue.name}
+                          </h3>
+                          {venue.distance && (
+                            <span className="text-[10px] font-bold text-slate-500 uppercase">{venue.distance}mi</span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-[10px] font-bold text-primary uppercase tracking-widest italic truncate">{venue.vibe}</span>
+                          <span className="text-slate-700">•</span>
+                          <span className="text-[10px] font-black text-slate-500 uppercase mb-[1px]">{venue.venueType.replace(/_/g, ' ')}</span>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1">
+                          {venue.sceneTags?.slice(0, 3).map((tag: string) => (
+                            <span key={tag} className="text-[8px] font-black bg-white/5 text-slate-400 px-1.5 py-0.5 rounded border border-white/5 uppercase tracking-tighter">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+
+                        {bountyTitle && (
+                          <div className={`mt-2 flex items-center gap-1.5 p-2 rounded-lg border ${hasActiveBounty ? 'bg-red-500 text-white border-red-400 font-black' : 'text-red-500 border-transparent'}`}>
+                            <Zap size={hasActiveBounty ? 12 : 10} className={`${hasActiveBounty ? 'fill-white' : 'fill-red-500'}`} />
+                            <span className={`text-[10px] uppercase tracking-tighter line-clamp-1 ${hasActiveBounty ? 'font-black' : 'font-bold'}`}>
+                              {hasActiveBounty ? 'FLASH BOUNTY: ' : ''}{bountyTitle}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-20 bg-surface/30 rounded-3xl border-2 border-dashed border-white/5">
+                  <Flame className="w-12 h-12 text-slate-800 mx-auto mb-4" />
+                  <p className="text-slate-500 font-bold uppercase tracking-widest italic">No Venues Found</p>
+                  <button onClick={clearAllFilters} className="mt-4 text-primary text-xs font-black uppercase hover:underline">Clear Filters</button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </div >
   );
 };

@@ -7,6 +7,7 @@ export const TAXONOMY_PLAY = [
     'Foosball',
     'Shuffleboard',
     'Cornhole',
+    'Ping Pong',
     'Giant Jenga',
     'Ring Toss',
     'Board Games',

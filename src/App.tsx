@@ -61,6 +61,7 @@ import UserProfileScreen from './features/profile/screens/UserProfileScreen';
 import { VenueProfileScreen } from './features/venues/screens/VenueProfileScreen';
 import AboutPage from './features/marketing/screens/About';
 import ArtieBioScreen from './features/artie/screens/ArtieBioScreen'; // [NEW] Import
+import { DiscoveryLayout } from './features/venues/screens/DiscoveryLayout';
 import OwnerPortal from './features/owner/screens/OwnerPortal';
 import { PointHistoryScreen } from './features/profile/screens/PointHistoryScreen';
 import { QRVibeCheckScreen } from './features/vibe-check/screens/QRVibeCheckScreen'; // [NEW] QR Screen
@@ -498,35 +499,40 @@ export default function OlyBarsApp() {
                   onLogout={handleLogout}
                   userProfile={userProfile}
                   onToggleFavorite={handleToggleFavorite}
+                  onClockIn={handleClockIn}
+                  onVibeCheck={handleVibeCheck}
+                  clockedInVenue={clockedInVenue}
+                  onEditVenue={(vid) => {
+                    setOwnerDashboardInitialVenueId(vid);
+                    setOwnerDashboardInitialView('listing');
+                    setShowOwnerDashboard(true);
+                  }}
                   onVenueDashboardClick={() => setShowOwnerDashboard(true)}
                   showArtie={showArtie}
                   setShowArtie={setShowArtie}
                 />
               }
             >
-              <Route
-                index
-                element={
-                  <>
-                    <SEO
-                      title="Pulse & Buzz"
-                      description="Track the real-time vibe of downtown Olympia. See which bars are buzzing right now."
-                    />
-                    <BuzzScreen
-                      venues={venues}
-                      userProfile={userProfile}
-                      userPoints={userPoints}
-                      handleClockIn={handleClockIn}
-                      clockedInVenue={clockedInVenue}
-                      handleVibeCheck={handleVibeCheck}
-                      lastVibeChecks={userProfile.lastVibeChecks}
-                      lastGlobalVibeCheck={userProfile.lastGlobalVibeCheck}
-                      isLoading={isLoading}
-                      onToggleWeeklyBuzz={handleToggleWeeklyBuzz}
-                    />
-                  </>
-                }
-              />
+              <Route element={<DiscoveryLayout />}>
+                <Route
+                  index
+                  element={
+                    <>
+                      <SEO
+                        title="Pulse & Buzz"
+                        description="Track the real-time vibe of downtown Olympia. See which bars are buzzing right now."
+                      />
+                      <BuzzScreen />
+                    </>
+                  }
+                />
+                <Route
+                  path="venues/:id"
+                  element={
+                    <VenueProfileScreen />
+                  }
+                />
+              </Route>
               <Route path="karaoke" element={<><SEO title="Karaoke Guide" description="Find the best karaoke spots in Olympia tonight." /><KaraokeScreen venues={venues} /></>} />
               <Route path="play" element={<><SEO title="The Arcade & Arena" description="The central hub for games, events, and activities in Olympia." /><PlayGatewayScreen venues={venues} /></>} />
               <Route path="trivia" element={<><SEO title="Trivia & Games" description="Your guide to trivia nights and bar games in the 98501." /><TriviaScreen venues={venues} userProfile={userProfile} /></>} />
@@ -561,24 +567,6 @@ export default function OlyBarsApp() {
               <Route path="artie-bio" element={<ArtieBioScreen />} />
               <Route path="artie" element={<ArtieBioScreen />} />
               <Route path="owner" element={<SmartOwnerRoute venues={venues} handleUpdateVenue={handleUpdateVenue} userProfile={userProfile} />} />
-              <Route
-                path="venues/:id"
-                element={
-                  <VenueProfileScreen
-                    venues={venues}
-                    userProfile={userProfile}
-                    handleClockIn={handleClockIn}
-                    handleVibeCheck={handleVibeCheck}
-                    clockedInVenue={clockedInVenue}
-                    handleToggleFavorite={handleToggleFavorite}
-                    onEdit={(vid) => {
-                      setOwnerDashboardInitialVenueId(vid);
-                      setOwnerDashboardInitialView('listing');
-                      setShowOwnerDashboard(true);
-                    }}
-                  />
-                }
-              />
               <Route
                 path="vc/:venueId"
                 element={

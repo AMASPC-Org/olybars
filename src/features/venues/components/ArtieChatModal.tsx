@@ -78,7 +78,7 @@ const getArtieGreeting = (profile?: UserProfile): ArtieGreeting => {
     if (hour >= 21 || hour < 2) {
         return {
             message: pick([
-                "Altitude 15 is buzzing, but The Brotherhood is chill. What’s your speed tonight?",
+                "Double Tap is buzzing, but The Brotherhood is chill. What’s your speed tonight?",
                 "Night is young for some, ending for others. Need a nightcap or a dance floor?",
                 "I've got the latest vibe reports. Where's the party at?"
             ]),

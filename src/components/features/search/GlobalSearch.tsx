@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
+import { useDiscovery } from '../../../features/venues/contexts/DiscoveryContext';
 
 interface GlobalSearchProps {
     placeholder?: string;
@@ -15,36 +15,19 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [searchParams] = useSearchParams();
-    const initialQuery = searchParams.get('q') || '';
+    const { searchQuery, setSearchQuery } = useDiscovery();
 
-    const [query, setQuery] = useState(initialQuery);
-
-    // Sync local state if URL changes externally (e.g. back button)
-    useEffect(() => {
-        // Only sync if we are on the search page to avoid overwriting state on other pages
-        if (location.pathname === '/bars' || location.pathname === '/events') {
-            setQuery(searchParams.get('q') || '');
-        }
-    }, [searchParams, location.pathname]);
 
     const handleSearch = (value: string) => {
-        setQuery(value);
+        setSearchQuery(value);
+        if (location.pathname !== '/') {
+            navigate('/');
+        }
     };
 
     const executeSearch = () => {
-        const trimmed = query.trim();
-        if (!trimmed) return;
-
-        // Use query param 'q' for general search to match BuzzScreen logic
-        // Updated: Always route to Home (/) where the Discovery Engine lives.
-        const targetPath = '/';
-
-        if (location.pathname !== targetPath) {
-            navigate(`${targetPath}?q=${encodeURIComponent(trimmed)}`);
-        } else {
-            // Just update params in place
-            navigate(`${targetPath}?q=${encodeURIComponent(trimmed)}`, { replace: true });
+        if (location.pathname !== '/') {
+            navigate('/');
         }
     };
 
@@ -88,19 +71,24 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
 
             <input
                 type="text"
-                value={query}
+                value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 onKeyDown={handleKeyDown}
+                onFocus={() => {
+                    if (location.pathname !== '/') {
+                        navigate('/');
+                    }
+                }}
                 placeholder={placeholder}
                 className={currentStyle.input}
             />
 
-            {query && (
+            {searchQuery && (
                 <button
                     onClick={() => {
-                        setQuery('');
-                        if (location.pathname === '/bars') {
-                            navigate('/bars');
+                        setSearchQuery('');
+                        if (location.pathname !== '/') {
+                            navigate('/');
                         }
                     }}
                     className={`absolute ${currentStyle.clearPos} p-1 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors`}
