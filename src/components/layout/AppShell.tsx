@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Menu,
   Clock,
@@ -86,6 +86,8 @@ export const AppShell: React.FC<AppShellProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q');
   const [showMenu, setShowMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [forceShowGrid, setForceShowGrid] = useState(false);
@@ -142,6 +144,17 @@ export const AppShell: React.FC<AppShellProps> = ({
   useEffect(() => {
     localStorage.setItem('olybars_view_mode', viewMode);
   }, [viewMode]);
+
+  // Extract Venue Context for Artie
+  const getVenueIdFromPath = () => {
+    const venueMatch = location.pathname.match(/\/venues\/([^/]+)/);
+    if (venueMatch) return venueMatch[1];
+    const vcMatch = location.pathname.match(/\/vc\/([^/]+)/);
+    if (vcMatch) return vcMatch[1];
+    return null;
+  };
+
+  const initialVenueId = getVenueIdFromPath();
 
   /* Floating Buttons style with individual borders and gaps */
   const navItems = [
@@ -231,8 +244,8 @@ export const AppShell: React.FC<AppShellProps> = ({
           </div>
         </div>
 
-        {/* The Buzz Clock Component - Hidden on Map */}
-        {!isMapPage && <BuzzClock venues={venues} />}
+        {/* The Buzz Clock Component - Hidden on Map or during Search */}
+        {!isMapPage && !searchQuery && <BuzzClock venues={venues} />}
 
         {/* Navigation Grid: "Floating Buttons" Style */}
         <div className={`bg-black border-b border-[#333] backdrop-blur-sm transition-all duration-500 overflow-hidden ${(isScrolled || (isMapPage && !forceShowGrid)) ? 'max-h-0 invisible scale-y-0 opacity-0' : 'max-h-[200px] visible scale-y-100 opacity-100'}`}>
@@ -300,6 +313,9 @@ export const AppShell: React.FC<AppShellProps> = ({
                 <p className="text-[9px] text-slate-500 font-bold uppercase mx-1">
                   Season ends Feb 28, 2026
                 </p>
+                <p className="text-[7px] text-slate-600 font-black uppercase mx-1 mt-0.5">
+                  Points have no cash value. 21+.
+                </p>
                 <div className="flex items-center justify-end gap-1 mt-0.5">
                   <span className="text-[10px] text-black font-black bg-primary border-2 border-white px-2 py-0.5 transform -skew-x-12 inline-block">
                     RANK: #{userRank || '-'}
@@ -348,7 +364,12 @@ export const AppShell: React.FC<AppShellProps> = ({
       <ArtieHoverIcon onClick={() => setShowArtie?.(true)} />
 
       {/* Artie Chat Modal */}
-      <ArtieChatModal isOpen={!!showArtie} onClose={() => setShowArtie?.(false)} userProfile={userProfile} />
+      <ArtieChatModal
+        isOpen={!!showArtie}
+        onClose={() => setShowArtie?.(false)}
+        userProfile={userProfile}
+        initialVenueId={initialVenueId || undefined}
+      />
 
       <CookieBanner />
     </div >

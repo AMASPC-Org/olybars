@@ -23,6 +23,8 @@
 14. [Appendix F: OlyBars Sales Playbook](#14-appendix-f-olybars-sales-playbook)
 15. [Appendix G: WSLCB Sales Compliance](#15-appendix-g-wslcb-sales-compliance)
 16. [Appendix H: Prohibited Terminology](#16-appendix-h-prohibited-terminology)
+17. [Appendix I: The Navigation Hierarchy](#17-appendix-i-the-navigation-hierarchy)
+18. [Appendix J: Partner Feature Matrix](file:///c:/Users/USER1/olybars/docs/specs/Partner_Feature_Matrix.md)
 
 ---
 
@@ -235,7 +237,7 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 
 ### 9.1 User Taxonomy
 *   **User**: Any human interacting with OlyBars.com.
-*   **Visitor**: A User who is browsing anonymously (not logged in).
+*   **Visitor**: A User who is browsing anonymously (not logged in). Fast load times, accurate status, and the "Unified Pulse" view are prioritized.
 *   **Guest**: A User who has authenticated (logged in) but has not yet joined the League.
 *   **League Player**: A registered patron (User) who has officially joined the League. Players earn points, track progress, and unlock digital trophies (Badges). (Formerly referred to as Member).
 *   **Venue Owner**: The human operator authorized to manage a venue's profile. This is the person who performs the login action to access The Brew House.
@@ -428,3 +430,26 @@ Owners hate "marketing" because it feels like homework. We offer "Bubbles" on th
 🛑 **NEVER USE**: "Flash Deal" (implies price drop), "Free Beer," "BOGO," "Drink to Win," "Bar Crawl," "Bottomless," "Wasted," "Chug."
 
 ✅ **ALWAYS USE**: "Flash Bounty" (points), "Menu Bounty" (food points), "Prizes/Swag," "The Sync," "Earn Status," "Rule of Two," "Safe Ride."
+
+---
+
+## 17. Appendix I: The Navigation Hierarchy
+**Purpose: Standardizing component naming and functional zones for the Nightlife OS.**
+
+This hierarchy defines how the OlyBars interface is organized from top to bottom (left to right), ensuring Artie and system architects share a unified mental map of the product surfaces.
+
+| # | UI Name | Technical Name | Logic & Behavioral "Soul" |
+| :--- | :--- | :--- | :--- |
+| **1-3** | **Header & Nav Hub** | `AppShell` | The persistent identity and global module switching. |
+| **4** | **Discovery Engine** | `FilterEngine` | **The Brain-Dead Simple Search**: Houses the `GlobalSearch` input and 5 primary filter chips (Pulse, Vibe, Play, Features, Events) plus the **All** reset. |
+| **4.1** | **All** | `DefaultFilter` | Resets the Discovery Engine to show the city's baseline heartbeat. |
+| **4.2** | **Pulse** | `PulseEnergyFilter` | **Transient Energy**: Filters by live energy levels (Dead, Chill, Buzzing, Packed). |
+| **4.3** | **Vibe** | `VenueVibeFilter` | **Permanent Character**: Filters by "Vibe Tags" (Sports Bar, Dive, Speakeasy, Cocktail Lounge, etc). |
+| **4.4** | **Play** | `GameFilter` | **Hardware Interaction**: Filters for physical games (Pool, Darts, Arcade, Pinball). |
+| **4.5** | **Features** | `AmenityFilter` | **Hardware Comfort**: Filters for venue amenities (Patio, Fireplace, Fire Pits, Dog Friendly). |
+| **4.6** | **Events** | `PulseEventFilter` | **Tonight's Highlights**: Filters for live happenings (Trivia, Karaoke, Live Music). |
+| **5-7** | **The Pulse & Intel** | `PulseFeed` | **Unified Discovery**: The dynamic list of "What's happening now." It responds to the `GlobalSearch` by filtering for Venue Name, Vibe Tags, Games, Features, or Events. |
+| **8** | **Weekly Buzz CTA** | `ConversionBanner` | Guest-to-User conversion point for newsletter signups. |
+| **9** | **Ask Artie** | `ChatFAB` | Floating Action Button (FAB) for persistent AI concierge access. |
+| **10** | **League Tracking** | `UserStatusStrip` | **State-Aware UI**: Displays Points/Rank for members; converts to "Join" promo for guests. |
+| **11** | **Sticky Footer** | `GlobalTray` | **Responsive Tray**: Collapses to a compact status bar during scroll; expands to show full site links at the bottom. |

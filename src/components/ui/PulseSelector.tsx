@@ -1,12 +1,12 @@
 import React from 'react';
 import { Flame, Users, Beer } from 'lucide-react';
 
-interface VibeSelectorProps {
+interface PulseSelectorProps {
     onSelect: (vibe: 'buzzing' | 'chill') => void;
     currentVibe?: string;
 }
 
-export const VibeSelector: React.FC<VibeSelectorProps> = ({ onSelect, currentVibe }) => {
+export const PulseSelector: React.FC<PulseSelectorProps> = ({ onSelect, currentVibe }) => {
     return (
         <div className="flex gap-4 p-1 bg-black/40 backdrop-blur-md rounded-2xl border border-white/5 shadow-2xl">
             <button

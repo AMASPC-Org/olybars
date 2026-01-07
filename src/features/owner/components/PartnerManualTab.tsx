@@ -1,5 +1,5 @@
 import React from 'react';
-import { Book, Zap, Layout, Clock, Calendar, Users, Globe, ExternalLink, Smartphone, ChevronRight, CheckCircle2, X, AlertTriangle } from 'lucide-react';
+import { Book, Zap, Layout, Clock, Calendar, Users, Globe, ExternalLink, Smartphone, ChevronRight, CheckCircle2, X, AlertTriangle, HelpCircle } from 'lucide-react';
 import { ARTIE_SKILLS } from '../../../config/artieSkills';
 
 export const PartnerManualTab: React.FC = () => {
@@ -70,9 +70,19 @@ export const PartnerManualTab: React.FC = () => {
                 </div>
                 <div>
                     <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league leading-none">THE PARTNER MANUAL</h2>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase mt-2 tracking-widest leading-relaxed">
-                        Master your presence on OlyBars. Choose your path: <span className="text-primary italic">The Artie Way</span> or <span className="text-white italic">The Manual Way</span>.
-                    </p>
+                    <div className="flex items-center gap-4 mt-2">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
+                            Master your presence on OlyBars. Choose your path: <span className="text-primary italic">The Artie Way</span> or <span className="text-white italic">The Manual Way</span>.
+                        </p>
+                        <button
+                            onClick={() => window.open('/faq', '_blank')}
+                            className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-lg group/faq hover:bg-primary/20 transition-all shrink-0"
+                        >
+                            <HelpCircle className="w-3 h-3 text-primary" />
+                            <span className="text-[9px] font-black text-primary uppercase tracking-widest">Player FAQ</span>
+                            <ExternalLink className="w-2.5 h-2.5 text-primary/50 group-hover/faq:translate-x-0.5 group-hover/faq:-translate-y-0.5 transition-transform" />
+                        </button>
+                    </div>
                 </div>
             </header>
 

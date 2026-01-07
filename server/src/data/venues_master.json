@@ -1949,8 +1949,40 @@
         "startTime": "15:00",
         "endTime": "18:00",
         "description": "Classic drink and appetizer specials"
+      },
+      {
+        "id": "hh-hannahs-late",
+        "name": "Late Night Pulse",
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Sun"
+        ],
+        "startTime": "22:00",
+        "endTime": "02:00",
+        "description": "$5 Well Drinks"
       }
     ],
+    "flashBounties": [
+      {
+        "id": "fb-hannahs-active",
+        "venueId": "hannahs",
+        "title": "Midnight Burger Special",
+        "description": "$10 Burger & Fries for the late crowd.",
+        "startTime": 1704499200000,
+        "endTime": 1770000000000,
+        "isApproved": true,
+        "active": true
+      }
+    ],
+    "activeFlashBountyId": "fb-hannahs-active",
+    "isPaidLeagueMember": true,
+    "currentBuzz": {
+      "score": 85,
+      "lastUpdated": 1767436252597
+    },
     "happyHourMenu": [
       {
         "id": "hhh-1",
@@ -1973,17 +2005,12 @@
         "Karaoke with DJ Mike"
       ]
     },
-    "isPaidLeagueMember": true,
     "ownerId": "KU9KvRYzzrZfVU7BV4gaPYAFlKS2",
     "managerIds": [
       "KU9KvRYzzrZfVU7BV4gaPYAFlKS2"
     ],
     "hasGameVibeCheckEnabled": true,
-    "liveGameStatus": {},
-    "currentBuzz": {
-      "score": 0,
-      "lastUpdated": 1767436252598
-    }
+    "liveGameStatus": {}
   },
   {
     "id": "charlies-bar-grill",

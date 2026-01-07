@@ -2,8 +2,9 @@ import { db } from './firebaseAdmin';
 import { config } from './config';
 import readline from 'readline';
 import venues from './data/venues_master.json'; // Direct import for script
+import knowledge from './data/knowledgeBase.json';
 import { VenueSchema } from './utils/validation';
-export { venues };
+export { venues, knowledge };
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -98,8 +99,23 @@ async function seedVenues() {
             successCount++;
         }
 
+        console.log('--- Seeding Knowledge Base ---');
+        const knowledgeRef = db.collection('knowledge');
+        let kSuccessCount = 0;
+
+        for (const faqItem of (knowledge.faq as any[])) {
+            const id = faqItem.question.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 50);
+            await knowledgeRef.doc(id).set({
+                ...faqItem,
+                type: 'faq',
+                updatedAt: Date.now()
+            }, { merge: true });
+            console.log(`🧠 Added FAQ: ${faqItem.question}`);
+            kSuccessCount++;
+        }
+
         console.log(`\nIron Seed Complete! 🍺`);
-        console.log(`Success: ${successCount} | Failed: ${failCount}`);
+        console.log(`Venues: ${successCount} | Knowledge: ${kSuccessCount} | Failed: ${failCount}`);
 
         if (failCount > 0) process.exit(1);
         process.exit(0);

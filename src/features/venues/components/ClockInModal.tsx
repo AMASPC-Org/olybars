@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Camera, Share2, MapPin, Info, Loader2, Sparkles, Facebook, Instagram, Music2 } from 'lucide-react';
+import { X, Camera, Share2, MapPin, Info, Loader2, Sparkles, Facebook, Instagram, Music2, Lock } from 'lucide-react';
 import { Venue, CheckInRecord, PointsReason } from '../../../types';
 import { performCheckIn } from '../../../services/userService';
 import { useGeolocation } from '../../../hooks/useGeolocation';
@@ -38,7 +38,9 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     const [cameraError, setCameraError] = useState(false);
     const [isCheckingIn, setIsCheckingIn] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
     const [isSuccess, setIsSuccess] = useState(false);
+    const [shadowVariant, setShadowVariant] = useState<'success' | 'locked' | null>(null);
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -106,17 +108,27 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
         setIsCheckingIn(true);
         setErrorMessage(null);
 
+
         try {
             const { latitude, longitude } = coords;
 
-            if (userId !== 'guest') {
-                await performCheckIn(selectedVenue.id, userId, latitude, longitude);
+            // [HONEST GATE LOGIC]
+            // Attempt generic check-in first
+            // If success -> Shadow Success (Guest) or Standard Success (User)
+            // If 401/403 -> Shadow Locked (Guest)
+            await performCheckIn(selectedVenue.id, userId, latitude, longitude);
+
+            // If we get here, the call succeeded (200 OK)
+            if (userId === 'guest') {
+                setShadowVariant('success');
+            } else {
+                setCheckInHistory(prev => [...prev, { venueId: selectedVenue.id, timestamp: Date.now() }]);
+                setClockedInVenue(selectedVenue.id);
+                setIsSuccess(true);
             }
 
-            // Skip backend logging if user is not guest
+            // Always award points locally for UI feedback (skipped for guest if locked, handled below)
             awardPoints('checkin', selectedVenue.id, allowMarketingUse, 'gps', 0, userId !== 'guest');
-            setCheckInHistory(prev => [...prev, { venueId: selectedVenue.id, timestamp: Date.now() }]);
-            setClockedInVenue(selectedVenue.id);
 
             // Optimistic UI Update (TanStack Query Cache)
             queryClient.setQueryData(['venues'], (oldVenues: Venue[] | undefined) => {
@@ -124,11 +136,18 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                 return oldVenues.map(v => v.id === selectedVenue.id ? { ...v, checkIns: (v.checkIns || 0) + 1 } : v);
             });
 
-            setIsSuccess(true);
-            if (vibeChecked) {
-                setTimeout(onClose, 3000); // Slightly longer to show streak
+            if (userId !== 'guest' && vibeChecked) {
+                setTimeout(onClose, 3000);
             }
+
         } catch (err: any) {
+            // Honest Gate: Handle Auth Errors
+            if (userId === 'guest' && (err.status === 401 || err.status === 403)) {
+                setShadowVariant('locked');
+                setIsCheckingIn(false);
+                return;
+            }
+
             setErrorMessage(err.message);
             setIsCheckingIn(false);
         }
@@ -143,34 +162,18 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                     </div>
                     <div>
                         <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league italic">Clocked In!</h2>
-                        {isLoggedIn ? (
-                            <p className="text-primary font-black uppercase tracking-widest text-[10px] mt-1">+10 LEAGUE POINTS AWARDED</p>
-                        ) : (
-                            <p className="text-primary font-black uppercase tracking-widest text-[10px] mt-1">+10 POINTS PENDING CLAIM</p>
-                        )}
+                        <p className="text-primary font-black uppercase tracking-widest text-[10px] mt-1">+10 LEAGUE POINTS AWARDED</p>
                     </div>
 
-                    {isLoggedIn ? (
-                        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Current Streak</p>
-                            <div className="flex items-center justify-center gap-2">
-                                <div className="text-2xl font-black text-white font-mono">
-                                    🔥 2-DAY STREAK
-                                </div>
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Current Streak</p>
+                        <div className="flex items-center justify-center gap-2">
+                            <div className="text-2xl font-black text-white font-mono">
+                                🔥 2-DAY STREAK
                             </div>
-                            <p className="text-[9px] text-primary font-bold uppercase mt-1 italic">Keep it up for a Bonus Badge!</p>
                         </div>
-                    ) : (
-                        <div className="bg-primary/10 rounded-xl p-4 border border-primary/20">
-                            <p className="text-[10px] text-primary font-bold uppercase tracking-widest mb-2">Claim Your Progress</p>
-                            <button
-                                onClick={() => onLogin('signup')}
-                                className="w-full bg-primary text-black font-black py-2 rounded-lg uppercase tracking-wider text-xs hover:scale-105 transition-transform"
-                            >
-                                Join League to Save
-                            </button>
-                        </div>
-                    )}
+                        <p className="text-[9px] text-primary font-bold uppercase mt-1 italic">Keep it up for a Bonus Badge!</p>
+                    </div>
 
                     {!vibeChecked && onVibeCheckPrompt ? (
                         <div className="bg-slate-950 p-6 rounded-2xl border border-primary/20 space-y-4 shadow-xl">
@@ -195,6 +198,49 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                     ) : (
                         <p className="text-slate-400 text-xs font-medium italic">Redirecting to status hub...</p>
                     )}
+                </div>
+            </div>
+        );
+    }
+
+    if (shadowVariant) {
+        const isLocked = shadowVariant === 'locked';
+        return (
+            <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+                <div className="bg-surface w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
+                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${isLocked ? 'bg-slate-800 border-2 border-primary/30' : 'bg-primary animate-bounce'}`}>
+                        {isLocked ? <Lock className="w-8 h-8 text-primary" /> : <Sparkles className="w-10 h-10 text-black" />}
+                    </div>
+
+                    <div>
+                        <h2 className="text-2xl font-black text-white uppercase tracking-tighter font-league italic">
+                            {isLocked ? 'Signal Ready' : 'Pulse Updated'}
+                        </h2>
+                        <div className="mt-4 space-y-3">
+                            <p className="text-sm text-slate-300 font-medium leading-relaxed">
+                                {isLocked
+                                    ? <>Guest signals are currently limited. Create a League Profile to <span className="text-white font-bold">publish this Check-In</span> and earn your first <span className="text-primary font-black">10 Points</span>.</>
+                                    : <>Thanks for the intel! That check-in was worth <span className="text-primary font-black">10 Points</span>. You are in Guest Mode, so you didn't bank them.</>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="pt-2">
+                        <button
+                            onClick={() => onLogin('signup')}
+                            className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-wider font-league hover:scale-105 transition-transform shadow-lg shadow-primary/20"
+                        >
+                            {isLocked ? 'Create Profile & Publish' : 'Join League to Bank Points'}
+                        </button>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-3 italic">
+                            {isLocked ? 'It takes 30 seconds.' : "Don't miss out next time."}
+                        </p>
+                    </div>
+
+                    <button onClick={onClose} className="text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">
+                        Close & Continue as Guest
+                    </button>
                 </div>
             </div>
         );

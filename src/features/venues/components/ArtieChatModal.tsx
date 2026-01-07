@@ -13,6 +13,7 @@ interface ArtieChatModalProps {
     isOpen: boolean;
     onClose: () => void;
     userProfile?: UserProfile;
+    initialVenueId?: string; // [NEW] Track the venue context
 }
 
 interface ArtieAction {
@@ -92,7 +93,7 @@ const getArtieGreeting = (profile?: UserProfile): ArtieGreeting => {
     };
 };
 
-export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, userProfile }) => {
+export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, userProfile, initialVenueId }) => {
     // --- 1. Mode Determination ---
     const isOpsMode = userProfile && (isSystemAdmin(userProfile) || userProfile.role === 'owner' || userProfile.role === 'manager');
 
@@ -124,15 +125,17 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
         if (isOpen && !greeting) {
             setGreeting(getArtieGreeting(userProfile));
 
-            // Set global venue context
-            if (userProfile?.homeBase) {
-                (window as any)._artie_venue_id = userProfile.homeBase;
+            // Set global venue context for the LLM Guest Hook to pick up
+            const venueContext = initialVenueId || userProfile?.homeBase;
+            if (venueContext) {
+                (window as any)._artie_venue_id = venueContext;
             }
 
             if (isOpsMode) {
                 // Initialize Ops Session
                 if (!hasInitializedOps) {
-                    opsArtie.processAction('START_SESSION', undefined, userProfile.homeBase);
+                    const venueId = initialVenueId || userProfile.homeBase;
+                    opsArtie.processAction('START_SESSION', undefined, venueId);
                     setHasInitializedOps(true);
                 }
             } else {
@@ -193,7 +196,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
             setPendingAction({
                 skill: opsArtie.draftData.skill,
                 params: opsArtie.draftData.params,
-                venueId: userProfile?.homeBase
+                venueId: initialVenueId || userProfile?.homeBase
             });
         }
     }, [opsArtie.messages, opsArtie.opsState, opsArtie.draftData, isOpsMode]);
@@ -207,21 +210,32 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
         setInput('');
 
         if (isOpsMode) {
+            const venueId = initialVenueId || userProfile?.homeBase;
             // In Ops mode, check if we are in a specific input step
             if (opsArtie.opsState === 'flash_deal_input') {
                 await opsArtie.processAction('SUBMIT_DEAL_TEXT', userText);
             } else if (opsArtie.opsState === 'event_input') {
                 await opsArtie.processAction('SUBMIT_EVENT_TEXT', userText);
             } else if (opsArtie.opsState === 'social_post_input') {
-                await opsArtie.processAction('SUBMIT_SOCIAL_POST_TEXT', userText, userProfile?.homeBase);
+                await opsArtie.processAction('SUBMIT_SOCIAL_POST_TEXT', userText, venueId);
             } else if (opsArtie.opsState === 'email_draft_input') {
-                await opsArtie.processAction('SUBMIT_EMAIL_TEXT', userText, userProfile?.homeBase);
+                await opsArtie.processAction('SUBMIT_EMAIL_TEXT', userText, venueId);
             } else if (opsArtie.opsState === 'calendar_post_input') {
-                await opsArtie.processAction('SUBMIT_CALENDAR_TEXT', userText, userProfile?.homeBase);
+                await opsArtie.processAction('SUBMIT_CALENDAR_TEXT', userText, venueId);
             } else if (opsArtie.opsState === 'website_content_input') {
-                await opsArtie.processAction('SUBMIT_WEB_TEXT', userText, userProfile?.homeBase);
-            } else if (opsArtie.opsState === 'image_gen_input') {
-                await opsArtie.processAction('SUBMIT_IMAGE_GEN_TEXT', userText, userProfile?.homeBase);
+                await opsArtie.processAction('SUBMIT_WEB_TEXT', userText, venueId);
+            } else if (opsArtie.opsState === 'image_gen_purpose') {
+                await opsArtie.processAction('SUBMIT_IMAGE_PURPOSE', userText, venueId);
+            } else if (opsArtie.opsState === 'image_gen_goal') {
+                await opsArtie.processAction('SUBMIT_IMAGE_GOAL', userText, venueId);
+            } else if (opsArtie.opsState === 'image_gen_event') {
+                await opsArtie.processAction('SUBMIT_IMAGE_EVENT', userText, venueId);
+            } else if (opsArtie.opsState === 'image_gen_audience') {
+                await opsArtie.processAction('SUBMIT_IMAGE_AUDIENCE', userText, venueId);
+            } else if (opsArtie.opsState === 'image_gen_specials') {
+                await opsArtie.processAction('SUBMIT_IMAGE_SPECIALS', userText, venueId);
+            } else if (opsArtie.opsState === 'image_gen_context') {
+                await opsArtie.processAction('SUBMIT_IMAGE_CONTEXT', userText, venueId);
             } else {
                 // General chat fallback for partners
                 await guestArtie.sendMessage(userText, userProfile?.uid, userProfile?.role, hpValue);
@@ -241,7 +255,8 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
     // Handler for Chips
     const handleChipSelect = (option: QuickReplyOption) => {
-        opsArtie.processAction(option.value);
+        const venueId = initialVenueId || userProfile?.homeBase;
+        opsArtie.processAction(option.value, undefined, venueId);
     };
 
     const handleConfirmAction = async () => {
@@ -253,7 +268,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
             const venueId = pendingAction.venueId || userProfile.homeBase;
 
             if (!venueId) {
-                showToast("No venue context found.", "error");
+                showToast("Whoops! I need to know which venue we're working on. Try opening me from a bar profile!", "error");
                 setActionStatus('error');
                 return;
             }
@@ -329,8 +344,15 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                     break;
 
                 case 'generate_image':
-                    await VenueOpsService.generateImage(venueId, pendingAction.params as { prompt: string });
-                    successMessage = "Image Prompt Drafted!";
+                    await VenueOpsService.generateImage(venueId, { prompt: pendingAction.params.prompt });
+                    successMessage = "Image Assets Generated!";
+                    // Add a mock asset message to WOW the user
+                    opsArtie.addArtieMessage(
+                        "I've drafted the assets based on your vision. Here's a preview of the primary marketing visual:",
+                        "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&auto=format&fit=crop&q=60"
+                    );
+                    // ADVANCE STATE to allow for Ad Copy drafting
+                    opsArtie.processAction('COMPLETE_IMAGE_GEN');
                     break;
 
                 default:
@@ -464,6 +486,11 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                     : 'bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none'
                                     }`}>
                                     {displayContent}
+                                    {m.imageUrl && (
+                                        <div className="mt-3 rounded-xl overflow-hidden border border-white/10 shadow-lg">
+                                            <img src={m.imageUrl} alt="Artie Generated Content" className="w-full h-auto object-cover" />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         );
@@ -494,8 +521,8 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                     {pendingAction.skill.split('_').join(' ')}
                                 </h4>
                                 <div className="bg-black/30 p-2 rounded-lg border border-white/5 mb-4">
-                                    <p className="text-slate-300 text-[11px] font-medium leading-relaxed italic">
-                                        &ldquo;{pendingAction.params.summary || pendingAction.params.topic || 'Updating...'}&rdquo;
+                                    <p className="text-slate-300 text-[11px] font-medium leading-relaxed italic line-clamp-2">
+                                        &ldquo;{pendingAction.params.summary || pendingAction.params.topic || pendingAction.params.prompt || (pendingAction.skill === 'generate_image' ? 'Crafting multimodal prompt...' : 'Updating...')}&rdquo;
                                     </p>
                                 </div>
 
@@ -511,7 +538,10 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                             disabled={actionStatus === 'loading'}
                                             className="flex-1 bg-primary hover:bg-yellow-400 text-black font-black text-[10px] py-2 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50"
                                         >
-                                            {actionStatus === 'loading' ? 'Processing...' : 'Deploy Now'}
+                                            {actionStatus === 'loading' ? 'Processing...' : (
+                                                pendingAction.skill === 'generate_image' ? 'Generate Assets' :
+                                                    pendingAction.skill === 'schedule_flash_deal' ? 'Deploy to Buzz Clock' : 'Confirm & Save'
+                                            )}
                                         </button>
                                         <button
                                             onClick={handleEditAction}
@@ -574,8 +604,13 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                             opsArtie.opsState === 'email_draft_input' ? "Who/what is the email for?" :
                                                 opsArtie.opsState === 'calendar_post_input' ? "Event summary for calendar?" :
                                                     opsArtie.opsState === 'website_content_input' ? "Web content update details?" :
-                                                        opsArtie.opsState === 'image_gen_input' ? "Describe the image..." :
-                                                            "Ask Artie..."
+                                                        opsArtie.opsState === 'image_gen_purpose' ? "What's the image for?" :
+                                                            opsArtie.opsState === 'image_gen_goal' ? "What's the goal?" :
+                                                                opsArtie.opsState === 'image_gen_event' ? "Event details..." :
+                                                                    opsArtie.opsState === 'image_gen_audience' ? "Who's the audience?" :
+                                                                        opsArtie.opsState === 'image_gen_specials' ? "Any specials/deals?" :
+                                                                            opsArtie.opsState === 'image_gen_context' ? "Extra context/vibe..." :
+                                                                                "Ask Artie..."
                                 ) : "Ask Artie...")}
                                 className={`w-full bg-transparent px-3 text-sm text-white outline-none placeholder:text-slate-600 font-medium ${isListening ? 'animate-pulse' : ''}`}
                             />

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin, Gamepad2, Clock, Zap, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin, Gamepad2, Clock, Zap, AlertTriangle, ShieldCheck, Lock } from 'lucide-react';
 import { Venue, VenueStatus, GameStatus } from '../../../types';
 import { getGameTTL } from '../../../config/gameConfig';
 import { useGeolocation } from '../../../hooks/useGeolocation';
@@ -36,6 +36,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     const [allowMarketingUse, setAllowMarketingUse] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [shadowVariant, setShadowVariant] = useState<'success' | 'locked' | null>(null);
 
     // Initialize with existing status or empty
     const [gameStatus, setGameStatus] = useState<Record<string, GameStatus>>(venue.liveGameStatus || {});
@@ -107,13 +108,24 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
 
         try {
             await onConfirm(venue, selectedStatus, allowMarketingUse, capturedPhoto || undefined, verificationMethod, Object.keys(gameStatus).length > 0 ? gameStatus : undefined, soberCheck || undefined);
-            setIsSuccess(true);
+
+            // If success (200), check mode
+            if (!isLoggedIn) {
+                setShadowVariant('success');
+            } else {
+                setIsSuccess(true);
+            }
 
             if (clockedIn) {
                 setTimeout(onClose, 2000);
             }
         } catch (err: any) {
-            setErrorMessage(err.message || "Failed to submit vibe.");
+            // Honest Gate: Handle Auth Errors (401/403)
+            if (!isLoggedIn && (err.status === 401 || err.status === 403)) {
+                setShadowVariant('locked');
+            } else {
+                setErrorMessage(err.message || "Failed to submit vibe.");
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -171,6 +183,49 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                             <p className="text-slate-400 text-xs font-medium italic">Redirecting to status hub...</p>
                         )
                     )}
+                </div>
+            </div>
+        );
+    }
+
+    if (shadowVariant) {
+        const isLocked = shadowVariant === 'locked';
+        return (
+            <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
+                <div className="bg-surface w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
+                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${isLocked ? 'bg-slate-800 border-2 border-primary/30' : 'bg-primary animate-bounce'}`}>
+                        {isLocked ? <Lock className="w-8 h-8 text-primary" /> : <Sparkles className="w-10 h-10 text-black" />}
+                    </div>
+
+                    <div>
+                        <h2 className="text-2xl font-black text-white uppercase tracking-tighter font-league italic">
+                            {isLocked ? 'Signal Ready' : 'Pulse Updated'}
+                        </h2>
+                        <div className="mt-4 space-y-3">
+                            <p className="text-sm text-slate-300 font-medium leading-relaxed">
+                                {isLocked
+                                    ? <>Guest signals are currently limited. Create a League Profile to <span className="text-white font-bold">publish this Vibe Check</span> and earn your first <span className="text-primary font-black">5 Points</span>.</>
+                                    : <>Thanks for the intel! That check-in was worth <span className="text-primary font-black">5 Points</span>. You are in Guest Mode, so you didn't bank them.</>
+                                }
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="pt-2">
+                        <button
+                            onClick={() => onLogin?.('signup')}
+                            className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-wider font-league hover:scale-105 transition-transform shadow-lg shadow-primary/20"
+                        >
+                            {isLocked ? 'Create Profile & Publish' : 'Join League to Bank Points'}
+                        </button>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-3 italic">
+                            {isLocked ? 'It takes 30 seconds.' : "Don't miss out next time."}
+                        </p>
+                    </div>
+
+                    <button onClick={onClose} className="text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">
+                        Close & Continue as Guest
+                    </button>
                 </div>
             </div>
         );

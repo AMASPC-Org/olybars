@@ -135,7 +135,7 @@ export interface HappyHourRule {
     specials?: string;
 }
 
-export type VibeTag =
+export type SceneTag =
     | 'dive'
     | 'speakeasy'
     | 'sports'
@@ -185,7 +185,7 @@ export interface Venue {
     id: string;
     name: string;
     venueType: VenueType; // [NEW] Primary Business Model
-    vibeTags?: VibeTag[]; // [NEW] Vibe Tags
+    sceneTags?: SceneTag[]; // [NEW] Scene Tags
 
     status: VenueStatus;
     checkIns: number;

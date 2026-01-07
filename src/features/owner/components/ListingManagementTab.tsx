@@ -4,7 +4,7 @@ import {
     Save, Clock, MapPin, Mail, ChevronRight, Beer,
     Sparkles, Users, Shield, Gamepad2, Trophy, Zap, Utensils, X, Feather, Plus, Trash2, ShoppingBag
 } from 'lucide-react';
-import { Venue, VenueType, VibeTag, UserProfile, HappyHourRule, PartnerTier } from '../../../types';
+import { Venue, VenueType, SceneTag, UserProfile, HappyHourRule, PartnerTier } from '../../../types';
 import { isSystemAdmin } from '../../../types/auth_schema';
 import { syncVenueWithGoogle } from '../../../services/venueService';
 import { useToast } from '../../../components/ui/BrandedToast';
@@ -61,7 +61,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         isLowCapacity: venue.isLowCapacity || false,
         isSoberFriendly: venue.isSoberFriendly || false,
         establishmentType: venue.establishmentType || 'Bar Only',
-        vibeTags: venue.vibeTags || [],
+        sceneTags: venue.sceneTags || [],
         isLocalMaker: venue.isLocalMaker || false,
         tier_config: venue.tier_config || { is_directory_listed: true, is_league_eligible: false },
         hasGameVibeCheckEnabled: venue.hasGameVibeCheckEnabled || false,
@@ -109,7 +109,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
             isLowCapacity: venue.isLowCapacity || false,
             isSoberFriendly: venue.isSoberFriendly || false,
             establishmentType: venue.establishmentType || 'Bar Only',
-            vibeTags: venue.vibeTags || [],
+            sceneTags: venue.sceneTags || [],
             tier_config: venue.tier_config || { is_directory_listed: true, is_league_eligible: false },
             hasGameVibeCheckEnabled: venue.hasGameVibeCheckEnabled || false,
             gameFeatures: venue.gameFeatures || [],
@@ -315,7 +315,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Vibe Tags (Select All That Apply)</label>
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Scene Tags (Select All That Apply)</label>
                             <div className="flex flex-wrap gap-2">
                                 {([
                                     { value: 'dive', label: 'Dive' },
@@ -326,17 +326,17 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                                     { value: 'cocktail_focus', label: 'Cocktail / Mixology' },
                                     { value: 'lgbtq', label: 'LGBTQ+ / Queer Bar' },
                                     { value: 'patio_garden', label: 'Patio / Beer Garden' }
-                                ] as { value: VibeTag, label: string }[]).map((tag) => (
+                                ] as { value: SceneTag, label: string }[]).map((tag) => (
                                     <button
                                         key={tag.value}
                                         onClick={() => {
-                                            const currentTags = formData.vibeTags || [];
+                                            const currentTags = formData.sceneTags || [];
                                             const newTags = currentTags.includes(tag.value)
-                                                ? currentTags.filter((t: VibeTag) => t !== tag.value) // Explicit type for clarity
+                                                ? currentTags.filter((t: SceneTag) => t !== tag.value) // Explicit type for clarity
                                                 : [...currentTags, tag.value];
-                                            setFormData(prev => ({ ...prev, vibeTags: newTags }));
+                                            setFormData(prev => ({ ...prev, sceneTags: newTags }));
                                         }}
-                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${(formData.vibeTags || []).includes(tag.value)
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${(formData.sceneTags || []).includes(tag.value)
                                             ? 'bg-primary text-black border-primary'
                                             : 'bg-black/40 text-slate-500 border-white/10 hover:border-white/30'
                                             } `}

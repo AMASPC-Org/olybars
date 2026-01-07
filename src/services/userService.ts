@@ -13,7 +13,11 @@ export const toggleFavorite = async (userId: string, venueId: string, favorites:
       ? favorites.filter(id => id !== venueId)
       : [...favorites, venueId];
 
-    if (userId === 'guest') return { success: false, error: 'Auth required' };
+    if (userId === 'guest') {
+      // Allow local toggle for guest (App.tsx manages state)
+      // We don't save to backend, but we return success so UI updates
+      return { success: true, favorites: newFavorites };
+    }
     await setDoc(doc(db, 'users', userId), { favorites: newFavorites }, { merge: true });
     return { success: true, favorites: newFavorites };
   } catch (e) {
@@ -23,7 +27,7 @@ export const toggleFavorite = async (userId: string, venueId: string, favorites:
 };
 
 export const saveAlertPreferences = async (userId: string, prefs: UserAlertPreferences) => {
-  if (userId === 'guest') return;
+  if (userId === 'guest') return; // Local state handled in App.tsx, no backend save needed
   try {
     await setDoc(doc(db, 'users', userId), { preferences: prefs }, { merge: true });
   } catch (e) {
@@ -131,7 +135,9 @@ export const performCheckIn = async (venueId: string, userId: string, lat: numbe
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Check-in failed');
+      const customError: any = new Error(error.error || 'Check-in failed');
+      customError.status = response.status;
+      throw customError;
     }
 
     return await response.json();

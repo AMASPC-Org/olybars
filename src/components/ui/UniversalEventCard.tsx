@@ -1,7 +1,7 @@
 import React from 'react';
 import { MapPin, Share2, Plus, Hammer, Trophy, Music, Mic, Sparkles } from 'lucide-react';
 import { Venue, AppEvent } from '../../types';
-import { VibeSelector } from './VibeSelector';
+import { PulseSelector } from './PulseSelector';
 
 interface UniversalEventCardProps {
     venue?: Venue;
@@ -157,7 +157,7 @@ export const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
                         {/* Vibe Pulse Section */}
                         <div className="space-y-2">
                             <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest px-1">Update the Pulse</p>
-                            <VibeSelector onSelect={onVibeChange || (() => { })} currentVibe={venue.status} />
+                            <PulseSelector onSelect={onVibeChange || (() => { })} currentVibe={venue.status} />
                         </div>
 
                         {/* Participation Actions */}

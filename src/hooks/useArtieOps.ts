@@ -15,7 +15,13 @@ export type ArtieOpsState =
     | 'email_draft_input'
     | 'calendar_post_input'
     | 'website_content_input'
-    | 'image_gen_input'
+    | 'image_gen_purpose'
+    | 'image_gen_goal'
+    | 'image_gen_event'
+    | 'image_gen_audience'
+    | 'image_gen_specials'
+    | 'image_gen_context'
+    | 'post_image_gen'
     | 'confirm_action'
     | 'completed';
 
@@ -24,6 +30,7 @@ export interface ArtieMessage {
     role: 'artie' | 'user';
     text: string;
     timestamp: number;
+    imageUrl?: string;
 }
 
 // 2. Regulatory Guardrails (LCB Compliance)
@@ -300,30 +307,110 @@ export const useArtieOps = () => {
             // --- SKILL: Generate Image ---
             case 'skill_generate_image':
                 addUserMessage('Gen Image');
-                setOpsState('image_gen_input');
-                newMessage.text = "Describe the image you want me to create. (e.g. 'A cozy pub interior with a roaring fire and people laughing')";
+                setOpsState('image_gen_purpose');
+                newMessage.text = "I'm on it. To get the perfect result, I need a little intel. \n\nWhat is this image for?";
+                setMessages(prev => [...prev, newMessage]);
+                setCurrentBubbles([
+                    { id: '1', label: '📱 Social Media', value: 'purpose_social' },
+                    { id: '2', label: '🌐 Website', value: 'purpose_web' },
+                    { id: '3', label: '📄 Print Flyer', value: 'purpose_print' },
+                    { id: '4', label: '👑 Member Only', value: 'purpose_exclusive' }
+                ]);
+                break;
+
+            case 'SUBMIT_IMAGE_PURPOSE':
+                if (!payload) return;
+                addUserMessage(payload);
+                setDraftData({ ...draftData, purpose: payload });
+                setOpsState('image_gen_goal');
+                newMessage.text = `Got it, a ${payload}. \n\nWhat's the main goal of this asset?`;
+                setMessages(prev => [...prev, newMessage]);
+                setCurrentBubbles([
+                    { id: '1', label: '📅 Promote Event', value: 'goal_event' },
+                    { id: '2', label: '🍔 Showcase Menu', value: 'goal_menu' },
+                    { id: '3', label: '✨ Daily Vibe', value: 'goal_vibe' },
+                    { id: '4', label: '🤝 Hiring/Team', value: 'goal_hiring' }
+                ]);
+                break;
+
+            case 'SUBMIT_IMAGE_GOAL':
+                if (!payload) return;
+                addUserMessage(payload);
+                setDraftData({ ...draftData, goal: payload });
+
+                if (payload.toLowerCase().includes('event')) {
+                    setOpsState('image_gen_event');
+                    newMessage.text = "Tell me about the event. (e.g. 'Trivia Night, 8pm, high energy')";
+                    setMessages(prev => [...prev, newMessage]);
+                    setCurrentBubbles([]);
+                } else {
+                    setOpsState('image_gen_audience');
+                    newMessage.text = "Who's the target audience for this? (e.g. 'Regulars', 'Families', 'Night owls')";
+                    setMessages(prev => [...prev, newMessage]);
+                    setCurrentBubbles([]);
+                }
+                break;
+
+            case 'SUBMIT_IMAGE_EVENT':
+                if (!payload) return;
+                addUserMessage(payload);
+                setDraftData({ ...draftData, eventDetails: payload });
+                setOpsState('image_gen_audience');
+                newMessage.text = "Solid. And who's the target audience? (e.g. 'Late night party crowd', 'Craft beer lovers')";
                 setMessages(prev => [...prev, newMessage]);
                 setCurrentBubbles([]);
                 break;
 
-            case 'SUBMIT_IMAGE_GEN_TEXT':
+            case 'SUBMIT_IMAGE_AUDIENCE':
+                if (!payload) return;
+                addUserMessage(payload);
+                setDraftData({ ...draftData, audience: payload });
+                setOpsState('image_gen_specials');
+                newMessage.text = "Are there any specific specials or details I should include in the visual context?";
+                setMessages(prev => [...prev, newMessage]);
+                setCurrentBubbles([
+                    { id: 'none', label: 'Just the vibe', value: 'no_specials' }
+                ]);
+                break;
+
+            case 'SUBMIT_IMAGE_SPECIALS':
+                if (!payload) return;
+                addUserMessage(payload);
+                setDraftData({ ...draftData, specials: payload === 'no_specials' ? 'None' : payload });
+                setOpsState('image_gen_context');
+                newMessage.text = "Final question—do you have any specific input or creative context you'd like me to follow? (Colors, lighting, specific items)";
+                setMessages(prev => [...prev, newMessage]);
+                setCurrentBubbles([]);
+                break;
+
+            case 'SUBMIT_IMAGE_CONTEXT':
                 if (!payload) return;
                 addUserMessage(payload);
                 setIsLoading(true);
 
-                // In a real flow, we'd call a backend function. For now, we simulate the "Generated" state.
-                const imagePrompt = `High-quality, vibrant photo of ${payload} at ${venue?.name}, Olympia style.`;
+                const finalData = { ...draftData, context: payload };
+
+                // Construct a sophisticated multimodal prompt
+                const prompt = `A high-end, professionally shot marketing image for ${venue?.name || 'an Olympia Bar'}. 
+Purpose: ${finalData.purpose}. 
+Goal: ${finalData.goal}. 
+${finalData.eventDetails ? `Focusing on: ${finalData.eventDetails}.` : ''} 
+Targeting: ${finalData.audience}. 
+Details to hint at: ${finalData.specials}. 
+Style/Vibe: ${finalData.context}. 
+Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia energy. Use brand colors if applicable.`;
 
                 setDraftData({
                     skill: 'generate_image',
                     params: {
-                        prompt: imagePrompt
+                        prompt: prompt,
+                        ...finalData
                     }
                 });
 
                 setIsLoading(false);
                 setOpsState('confirm_action');
-                newMessage.text = `Artie is firing up the kiln... 🎨\n\nI've generated a prompt for our image engine: \n\n"${imagePrompt}"\n\nGenerate and save to gallery?`;
+                newMessage.text = `Artie is firing up the kiln... 🎨\n\nI've generated a multimodal prompt based on our brief: \n\n"${prompt}"\n\nGenerate and save to your dashboard?`;
                 setMessages(prev => [...prev, newMessage]);
                 break;
 
@@ -400,7 +487,64 @@ export const useArtieOps = () => {
                 break;
 
             // --- CONFIRMATION & EXECUTION ---
+            case 'purpose_social':
+            case 'purpose_web':
+            case 'purpose_print':
+            case 'purpose_exclusive':
+                const purpLabel = action === 'purpose_social' ? 'Social Media' :
+                    action === 'purpose_web' ? 'Website' :
+                        action === 'purpose_print' ? 'Print Flyer' : 'Member Only';
+                await processAction('SUBMIT_IMAGE_PURPOSE', purpLabel);
+                break;
+
+            case 'goal_event':
+            case 'goal_menu':
+            case 'goal_vibe':
+            case 'goal_hiring':
+                const goalLabel = action === 'goal_event' ? 'Promote Event' :
+                    action === 'goal_menu' ? 'Showcase Menu' :
+                        action === 'goal_vibe' ? 'Daily Vibe' : 'Hiring/Team';
+                await processAction('SUBMIT_IMAGE_GOAL', goalLabel);
+                break;
+
+            case 'no_specials':
+                await processAction('SUBMIT_IMAGE_SPECIALS', 'no_specials');
+                break;
+
+            case 'COMPLETE_IMAGE_GEN':
+                setOpsState('post_image_gen');
+                newMessage.text = "Visual assets are staged. Shall I draft the high-engagement social copy to go with this visual?";
+                setMessages(prev => [...prev, newMessage]);
+                setCurrentBubbles([
+                    { id: 'draft_copy', label: '✍️ Draft Ad Copy', value: 'skill_ad_copy' },
+                    { id: 'edit_vis', label: '🎨 Edit Visual', value: 'skill_generate_image' },
+                    { id: 'finish', label: '✅ All Done', value: 'completed' }
+                ]);
+                break;
+
+            case 'skill_ad_copy':
+                addUserMessage('Draft Ad Copy');
+                setIsLoading(true);
+                // Simulate AI copy generation based on the draftData we already have
+                const { goal, purpose, eventDetails, audience, specials, context } = draftData;
+                const adCopy = `✨ NEW ASSET ALERT ✨\n\nGoal: ${goal}\nTarget: ${audience}\n\n"Come down to ${venue?.name || 'Hannah\'s'}! 🍻 ${eventDetails ? `We've got ${eventDetails} happening.` : ''} ${specials !== 'None' ? `Don't miss out on ${specials}!` : ''} Our vibe is always ${context} and we can't wait to see you!"\n\n#OlyBars #SocialMarketing #LocalVibes`;
+
+                newMessage.text = `Here is your suggested ad copy:\n\n---\n${adCopy}\n---\n\nWould you like to save this draft to your marketing suite?`;
+                setMessages(prev => [...prev, newMessage]);
+                setCurrentBubbles([
+                    { id: 'save_copy', label: '🚀 Save Copy', value: 'completed' },
+                    { id: 'edit_copy', label: '✏️ Edit', value: 'skill_social_post' }
+                ]);
+                setIsLoading(false);
+                break;
+
             case 'confirm_post':
+                if (opsState === 'confirm_action' && draftData.skill === 'generate_image') {
+                    // Logic handled by COMPLETE_IMAGE_GEN called from Modal primarily,
+                    // but if called from bubbles:
+                    await processAction('COMPLETE_IMAGE_GEN');
+                    break;
+                }
                 setOpsState('completed');
                 // This is where the parent component picks up the 'pendingAction' via the draftData return
                 // We simulate Artie confirming the "Intent" to the parent
@@ -428,12 +572,25 @@ export const useArtieOps = () => {
         }
     }, [draftData, validateLCBCompliance, validateSchedule]);
 
+    const addArtieMessage = useCallback((text: string, imageUrl?: string) => {
+        const newMessage: ArtieMessage = {
+            id: `artie-${Date.now()}`,
+            role: 'artie',
+            text,
+            timestamp: Date.now(),
+            imageUrl
+        };
+        setMessages(prev => [...prev, newMessage]);
+    }, []);
+
     return {
         opsState,
         messages,
         currentBubbles,
         processAction,
         draftData,
-        isLoading
+        isLoading,
+        venue,
+        addArtieMessage
     };
 };

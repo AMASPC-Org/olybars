@@ -334,17 +334,16 @@ export default function OlyBarsApp() {
       gameBonus = Math.min(gameCount * 2, 10);
     }
 
-    // Update Venue Status and Photos (Skip for Guests to avoid auth errors)
-    if (userProfile.uid !== 'guest') {
-      try {
-        await performVibeCheck(venue.id, userProfile.uid, status, hasConsent, photoUrl, verificationMethod, gameStatus, soberFriendlyCheck);
-      } catch (err) {
-        console.error('[OlyBars] Vibe Check Backend Error:', err);
-        showToast('Vibe Check recorded offline (points may be delayed)', 'info');
+    // Update Venue Status and Photos (Attempt for all, handle guest auth errors)
+    try {
+      await performVibeCheck(venue.id, userProfile.uid, status, hasConsent, photoUrl, verificationMethod, gameStatus, soberFriendlyCheck);
+    } catch (err: any) {
+      // Honest Gate: Propagate Auth Errors for Guest UI handling
+      if (userProfile.uid === 'guest' && (err.status === 401 || err.status === 403)) {
+        throw err;
       }
-    } else {
-      // Guest mode fallback (or keep updating local state if desired)
-      // Original logic for guests could remain or be skipped if we don't support guest vibe buzz updates
+      console.error('[OlyBars] Vibe Check Backend Error:', err);
+      showToast('Vibe Check recorded offline (points may be delayed)', 'info');
     }
 
     awardPoints('vibe', venue.id, hasConsent, verificationMethod, gameBonus, userProfile.uid !== 'guest');
@@ -395,8 +394,7 @@ export default function OlyBarsApp() {
 
   const handleToggleFavorite = async (venueId: string) => {
     if (userProfile.uid === 'guest') {
-      setShowLoginModal(true);
-      return;
+      // Allow local toggle without login modal
     }
 
     try {
