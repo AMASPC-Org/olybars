@@ -16,18 +16,18 @@ interface Deal {
  * 2. Happy Hour Sorting: Prioritize by TimeRemaining, push >4h to bottom.
  */
 export const LcbCompliantCheckin: React.FC = () => {
-  const [checkInTimestamps, setCheckInTimestamps] = useState<number[]>([]);
+  const [clockInTimestamps, setClockInTimestamps] = useState<number[]>([]);
 
   // Rule 3: Enforcement Logic
-  const canCheckIn = useMemo(() => {
+  const canClockIn = useMemo(() => {
     const lcbWindowAgo = Date.now() - PULSE_CONFIG.WINDOWS.LCB_WINDOW;
-    const recentCheckIns = checkInTimestamps.filter(ts => ts > lcbWindowAgo);
-    return recentCheckIns.length < 2;
-  }, [checkInTimestamps]);
+    const recentClockIns = clockInTimestamps.filter(ts => ts > lcbWindowAgo);
+    return recentClockIns.length < 2;
+  }, [clockInTimestamps]);
 
-  const handleCheckIn = () => {
-    if (canCheckIn) {
-      setCheckInTimestamps([...checkInTimestamps, Date.now()]);
+  const handleClockIn = () => {
+    if (canClockIn) {
+      setClockInTimestamps([...clockInTimestamps, Date.now()]);
       console.log('Clock-in successful and logged within LCB limits.');
     } else {
       console.warn('LCB RESTRICTION: Maximum clock-in frequency reached (2 per 12h).');
@@ -69,7 +69,7 @@ export const LcbCompliantCheckin: React.FC = () => {
       <section className="mb-8 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
         <div className="flex justify-between items-center mb-4">
           <span className="text-sm font-medium">Clock-in Status</span>
-          {canCheckIn ? (
+          {canClockIn ? (
             <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">AVAILABLE</span>
           ) : (
             <span className="text-xs px-2 py-1 bg-rose-500/20 text-rose-400 rounded-full border border-rose-500/30">LOCKED (Rule 3)</span>
@@ -77,9 +77,9 @@ export const LcbCompliantCheckin: React.FC = () => {
         </div>
 
         <button
-          onClick={handleCheckIn}
-          disabled={!canCheckIn}
-          className={`w-full py-3 px-4 rounded-lg font-bold transition-all duration-200 flex items-center justify-center gap-2 ${canCheckIn
+          onClick={handleClockIn}
+          disabled={!canClockIn}
+          className={`w-full py-3 px-4 rounded-lg font-bold transition-all duration-200 flex items-center justify-center gap-2 ${canClockIn
             ? 'bg-amber-500 text-slate-900 hover:bg-amber-400 active:scale-95 shadow-lg shadow-amber-500/20'
             : 'bg-slate-700 text-slate-500 cursor-not-allowed grayscale'
             }`}
@@ -87,7 +87,7 @@ export const LcbCompliantCheckin: React.FC = () => {
           Clock In Now
         </button>
 
-        {!canCheckIn && (
+        {!canClockIn && (
           <p className="mt-3 text-[10px] text-rose-400/80 leading-tight flex items-start gap-1">
             <AlertCircle className="w-3 h-3 mt-0.5" />
             WA LCB mandates a limit of 2 passport clock-ins per 12-hour period.

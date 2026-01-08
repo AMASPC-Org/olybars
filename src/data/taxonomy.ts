@@ -1,25 +1,20 @@
 export const TAXONOMY_PLAY = [
+    'Pool',
     'Pinball',
-    'Pool / Billiards',
     'Darts',
-    'Arcade Cabinets',
-    'Skee-Ball',
-    'Foosball',
+    'Arcade',
     'Shuffleboard',
     'Cornhole',
-    'Ping Pong',
-    'Giant Jenga',
-    'Ring Toss',
+    'Skee-Ball',
     'Board Games',
-    'Dice Kits',
-    'Pull Tabs',
-    'Lottery Kiosk',
-    'Console Gaming'
+    'Ping Pong',
+    'Foosball',
+    'Giant Jenga',
+    'Ring Toss'
 ];
 
 export const TAXONOMY_FEATURES = [
     'Dance Floor',
-    'Stage',
     'DJ Booth',
     'Jukebox',
     'Piano',
@@ -30,14 +25,14 @@ export const TAXONOMY_FEATURES = [
 ];
 
 export const TAXONOMY_EVENTS = [
-    'Trivia Night',
-    'Bar Bingo',
     'League Night',
-    'Tournaments',
+    'Live Music',
+    'Trivia Night',
     'Karaoke',
     'Open Mic',
-    'Live Band',
-    'DJ Set',
-    'Theme Night',
-    'Viewing Party'
+    'Bar Bingo',
+    'Tournaments',
+    'DJ',
+    'Watch Party',
+    'Theme Night'
 ];

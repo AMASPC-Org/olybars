@@ -224,7 +224,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         createdAt: Date.now(),
         stats: joinLeague ? {
           seasonPoints: 50,
-          lifetimeCheckins: 0,
+          lifetimeClockins: 0,
           currentStreak: 0,
           vibeCheckCount: 0,
           competitionPoints: 0

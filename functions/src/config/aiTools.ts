@@ -27,7 +27,7 @@ export const ARTIE_TOOLS = [
             properties: {
                 query: {
                     type: 'STRING',
-                    description: 'The question or keywords to search in the Playbook (e.g., "check-in limits", "how to earn points").'
+                    description: 'The question or keywords to search in the Playbook (e.g., "clock-in limits", "how to earn points").'
                 }
             },
             required: ['query']

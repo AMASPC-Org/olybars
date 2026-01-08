@@ -32,9 +32,9 @@ const PrivacyScreen: React.FC = () => {
                         To provide the Pulse and League features, we collect:
                     </p>
                     <ul className="list-disc list-inside text-slate-400 text-sm space-y-2 ml-4">
-                        <li>Location data (Verified via GPS Check-In and active Region Monitoring/Geofencing)</li>
+                        <li>Location data (Verified via GPS Clock-In and active Region Monitoring/Geofencing)</li>
                         <li>Account information (Handle and points are stored locally for guests; synced to Cloud only upon profile creation)</li>
-                        <li>Activity data (Vibe reports and check-in frequency for the Pulse algorithm)</li>
+                        <li>Activity data (Vibe reports and clock-in frequency for the Pulse algorithm)</li>
                         <li>Photos (Optional "Vibe Photos" provided with or without marketing consent)</li>
                     </ul>
                 </section>

@@ -3,7 +3,7 @@ export type VibeLevel = 'dead' | 'chill' | 'buzzing' | 'packed';
 export const PULSE_CONFIG = {
     // Scoring Weights
     POINTS: {
-        CHECK_IN: 10.0,
+        CLOCK_IN: 10.0,
         VIBE_REPORT: 5.0,
         PHOTO_VIBE: 10.0,
         VERIFIED_BONUS: 15.0 // For verified QR/GPS consent
@@ -17,7 +17,7 @@ export const PULSE_CONFIG = {
         STALE_THRESHOLD: 10 * 60 * 1000, // 10 Minutes (Trigger background refresh)
         DECAY_HALFLIFE: 60 * 60 * 1000, // 60 Minutes (Score drops by 50%)
         LCB_WINDOW: 12 * 60 * 60 * 1000, // 12 Hours (WA State LCB Compliance)
-        CHECK_IN_THROTTLE: 120 * 60 * 1000, // 120 Minutes (2 Hour Cooldown)
+        CLOCK_IN_THROTTLE: 120 * 60 * 1000, // 120 Minutes (2 Hour Cooldown)
         SAME_VENUE_THROTTLE: 360 * 60 * 1000 // 360 Minutes (6 Hour Cooldown)
     },
 
@@ -38,8 +38,8 @@ export const PULSE_CONFIG = {
 
     // Consensus Algorithm (User-Generated Pulse)
     CONSENSUS: {
-        CHECKINS_REQUIRED: 3,      // 3 Unique users
-        CHECKIN_WINDOW: 15 * 60 * 1000, // 15 Minutes
+        CLOCKINS_REQUIRED: 3,      // 3 Unique users
+        CLOCKIN_WINDOW: 15 * 60 * 1000, // 15 Minutes
         VIBE_REPORTS_REQUIRED: 2,   // 2 Unique users reporting 'Packed'
         VIBE_WINDOW: 10 * 60 * 1000     // 10 Minutes
     },

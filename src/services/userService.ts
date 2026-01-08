@@ -1,6 +1,6 @@
 import { doc, setDoc, collection, query, where, getDocs, getCountFromServer, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { UserAlertPreferences, CheckInRecord, UserProfile } from '../types';
+import { UserAlertPreferences, ClockInRecord, UserProfile } from '../types';
 import { getAuthHeaders } from './apiUtils';
 
 // Forcing production URL for now since user is running frontend-only locally
@@ -123,11 +123,11 @@ export const performVibeCheck = async (
 };
 
 /**
- * Perform a geofenced check-in via the production backend.
+ * Perform a geofenced Clock In via the production backend.
  */
-export const performCheckIn = async (venueId: string, userId: string, lat: number, lng: number, verificationMethod: 'gps' | 'qr' = 'gps') => {
+export const performClockIn = async (venueId: string, userId: string, lat: number, lng: number, verificationMethod: 'gps' | 'qr' = 'gps') => {
   try {
-    const response = await fetch(`${API_BASE_URL}/check-in`, {
+    const response = await fetch(`${API_BASE_URL}/clock-in`, {
       method: 'POST',
       headers: await getAuthHeaders(),
       body: JSON.stringify({ venueId, userId, lat, lng, verificationMethod })
@@ -135,24 +135,24 @@ export const performCheckIn = async (venueId: string, userId: string, lat: numbe
 
     if (!response.ok) {
       const error = await response.json();
-      const customError: any = new Error(error.error || 'Check-in failed');
+      const customError: any = new Error(error.error || 'Clock In failed');
       customError.status = response.status;
       throw customError;
     }
 
     return await response.json();
   } catch (e) {
-    console.error('Check-in error:', e);
+    console.error('Clock In error:', e);
     throw e;
   }
 };
 
 /**
- * Perform an amenity-specific "Play" check-in.
+ * Perform an amenity-specific "Play" Clock In.
  */
-export const performPlayCheckIn = async (venueId: string, userId: string, amenityId: string) => {
+export const performPlayClockIn = async (venueId: string, userId: string, amenityId: string) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/play/check-in`, {
+    const response = await fetch(`${API_BASE_URL}/play/clock-in`, {
       method: 'POST',
       headers: await getAuthHeaders(),
       body: JSON.stringify({ venueId, userId, amenityId })
@@ -160,23 +160,23 @@ export const performPlayCheckIn = async (venueId: string, userId: string, amenit
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Play check-in failed');
+      throw new Error(error.error || 'Play Clock In failed');
     }
 
     return await response.json();
   } catch (e) {
-    console.error('Play check-in error:', e);
+    console.error('Play Clock In error:', e);
     throw e;
   }
 };
 
 
-export const syncCheckIns = async (userId: string, history: CheckInRecord[]) => {
+export const syncClockIns = async (userId: string, history: ClockInRecord[]) => {
   if (userId === 'guest') return;
   try {
-    await setDoc(doc(db, 'users', userId), { checkInHistory: history }, { merge: true });
+    await setDoc(doc(db, 'users', userId), { clockInHistory: history }, { merge: true });
   } catch (e) {
-    console.error('Error syncing checkins:', e);
+    console.error('Error syncing Clock Ins:', e);
   }
 };
 

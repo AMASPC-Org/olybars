@@ -23,7 +23,7 @@ async function verifyPulse() {
         for (const s of signals) {
             await db.collection('signals').doc(s.id).set({
                 venueId,
-                type: 'check_in',
+                type: 'clock_in',
                 timestamp: s.timestamp
             });
         }

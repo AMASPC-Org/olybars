@@ -88,7 +88,7 @@
     ],
     "compliance_and_safety": {
         "alcohol_policy": "Strictly follow WA State LCB alignment. Never encourage over-consumption.",
-        "check_in_limit": "Enforce max 2 check-ins per 12-hour window per user.",
+        "clock_in_limit": "Enforce max 2 clock-ins per 12-hour window per user.",
         "undue_influence": "Points are awarded for attendance and gameplay, never for alcohol purchase volume.",
         "anti_volume": "Marketing content for League Partners must never promote rapid or excessive drinking."
     },

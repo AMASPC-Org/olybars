@@ -12,6 +12,7 @@ export const DiscoveryLayout: React.FC = () => {
     const {
         venues,
         userProfile,
+        onAskArtie,
         onToggleMenu,
         onClockIn,
         onVibeCheck,
@@ -23,6 +24,7 @@ export const DiscoveryLayout: React.FC = () => {
     } = useOutletContext<{
         venues: Venue[],
         userProfile: UserProfile,
+        onAskArtie: () => void,
         onToggleMenu: () => void,
         onClockIn: (venue: Venue) => void,
         onVibeCheck: (venue: Venue) => void,
@@ -34,26 +36,26 @@ export const DiscoveryLayout: React.FC = () => {
     }>();
 
     return (
-        <DiscoveryProvider>
-            <DiscoveryLayoutContent
-                venues={venues}
-                userProfile={userProfile}
-                onToggleMenu={onToggleMenu}
-                onClockIn={onClockIn}
-                onVibeCheck={onVibeCheck}
-                clockedInVenue={clockedInVenue}
-                onToggleFavorite={onToggleFavorite}
-                onEditVenue={onEditVenue}
-                isLoading={isLoading}
-                onToggleWeeklyBuzz={onToggleWeeklyBuzz}
-            />
-        </DiscoveryProvider>
+        <DiscoveryLayoutContent
+            venues={venues}
+            userProfile={userProfile}
+            onAskArtie={onAskArtie}
+            onToggleMenu={onToggleMenu}
+            onClockIn={onClockIn}
+            onVibeCheck={onVibeCheck}
+            clockedInVenue={clockedInVenue}
+            onToggleFavorite={onToggleFavorite}
+            onEditVenue={onEditVenue}
+            isLoading={isLoading}
+            onToggleWeeklyBuzz={onToggleWeeklyBuzz}
+        />
     );
 };
 
 const DiscoveryLayoutContent: React.FC<{
     venues: Venue[],
     userProfile: UserProfile,
+    onAskArtie: () => void,
     onToggleMenu: () => void,
     onClockIn: (venue: Venue) => void,
     onVibeCheck: (venue: Venue) => void,
@@ -65,6 +67,7 @@ const DiscoveryLayoutContent: React.FC<{
 }> = ({
     venues,
     userProfile,
+    onAskArtie,
     onToggleMenu,
     onClockIn,
     onVibeCheck,
@@ -104,13 +107,14 @@ const DiscoveryLayoutContent: React.FC<{
                     )}
 
                     {/* Zone 3: Control Center (Persistent) */}
-                    <DiscoveryControls />
+                    <DiscoveryControls venues={venues} />
 
                     {/* Child Screens (Home Feed or Venue Profile Content) */}
                     <div className="flex-1">
                         <Outlet context={{
                             venues,
                             userProfile,
+                            onAskArtie,
                             onToggleMenu,
                             onClockIn,
                             onVibeCheck,

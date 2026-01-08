@@ -16,12 +16,12 @@ export interface UserAlertPreferences {
     interests: string[];
 }
 
-export interface CheckInRecord {
+export type ClockInRecord = {
     venueId: string;
     timestamp: number;
 }
 
-export type PointsReason = 'checkin' | 'photo' | 'share' | 'vibe' | 'redeem' | 'bonus' | 'play' | 'social_share';
+export type PointsReason = 'clockin' | 'photo' | 'share' | 'vibe' | 'redeem' | 'bonus' | 'play' | 'social_share';
 
 export interface ActivityLog {
     id: string;
@@ -78,7 +78,7 @@ export interface UserProfile {
     lastGlobalVibeCheck?: number;
     stats?: {
         seasonPoints: number;
-        lifetimeCheckins: number;
+        lifetimeClockins: number;
         currentStreak: number;
         vibeCheckCount: number;
         competitionPoints: number;

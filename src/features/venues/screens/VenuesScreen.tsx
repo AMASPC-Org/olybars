@@ -87,10 +87,9 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
             else if (activeTag === 'Trivia') result = result.filter(v => v.leagueEvent === 'trivia');
             // Check Vibe Tags
             else {
-                // Map display tag back to VibeTag value if needed, or simply check vibeTags array
-                const vibeTagValue = activeTag.toLowerCase().replace(/ /g, '_') as VibeTag; // rough mapping, better to specific map
+                const sceneTagValue = activeTag.toLowerCase().replace(/ /g, '_') as SceneTag; // rough mapping, better to specific map
                 // Helper map for display -> value
-                const TAG_MAP: Record<string, VibeTag> = {
+                const TAG_MAP: Record<string, SceneTag> = {
                     'Dive': 'dive',
                     'Speakeasy': 'speakeasy',
                     'Sports': 'sports',
@@ -100,9 +99,9 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                     'LGBTQ+': 'lgbtq',
                     'Patio': 'patio_garden'
                 };
-                const targetVibe = TAG_MAP[activeTag];
-                if (targetVibe) {
-                    result = result.filter(v => v.vibeTags?.includes(targetVibe));
+                const targetScene = TAG_MAP[activeTag];
+                if (targetScene) {
+                    result = result.filter(v => v.sceneTags?.includes(targetScene));
                 }
             }
         }

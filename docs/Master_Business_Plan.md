@@ -1,8 +1,8 @@
 # OlyBars.com: The Nightlife Operating System
 ## Master Business Plan & Source of Truth
-**Version:** 3.2 (Waze Model & Honest Gate)
+**Version:** 3.3 (Scenes & Map Precision)
 **Status:** Production Live  
-**Date:** 2026-01-07
+**Date:** 2026-01-08
 
 ---
 
@@ -48,7 +48,7 @@ OlyBars operates on a permission-gated hierarchy to ensure data integrity and co
 
 | Persona | Type | Motivation | Product Needs |
 | :--- | :--- | :--- | :--- |
-| **The Visitor** | Casual / Incognito | "What's happening right now?" | Universal Search. Instant access to Map/List. Can attempt actions (Clock-In/Vibe), which trigger the "Honest Gate" conversion modal. |
+| **The Visitor** | Casual / Incognito | "What's happening right now?" | Universal Search. Instant access to Map/List. Can attempt actions (Clock In/Vibe), which trigger the "Honest Gate" conversion modal. |
 | **The Guest** | Local / Contributor | Utility & Alerts. | Local State Storage. Can "Favorite" venues (stored locally). Can submit "Shadow Signals" (held until signup). Targeted by "Points Missed" notifications. |
 | **The Player** | Local / Regular | Status, Competition, Prizes, Social Connection. | Login Required. Points accumulation, League Standings, Badges, "The Sync". |
 | **The Partner** | Venue Owner | Filling slow nights, selling high-margin food, saving time. | The Brew House. "One-Click" marketing, Point Bank management. |
@@ -60,9 +60,10 @@ OlyBars operates on a permission-gated hierarchy to ensure data integrity and co
 ### 2.3 The AI Concierge: "Artie"
 Role: The friendly, witty, slightly mystical "Spirit of the Well."
 
-#### A. For Players: The Guide
+#### A. For Players: The Guide (including Visitor Mode)
 *   **Vibe Discovery**: "Artie, where can I play pool right now?"
 *   **League Support**: "How many points do I need for the next badge?"
+*   **Visitor Mode**: When accessed from public discovery feeds, Artie defaults to a "Visitor Concierge" persona. For Administrators, this mode suppresses Ops/Owner tools to ensure a consistent, role-agnostic guide experience for public-facing discovery.
 *   **Compliance Guardrails**: Artie shifts to "Guardian Mode" if users exhibit behavior suggesting over-consumption, suggesting food or water.
 
 #### B. For Partners: The Multimodal Marketing Co-Pilot
@@ -78,7 +79,7 @@ Role: The friendly, witty, slightly mystical "Spirit of the Well."
 *   **Buzz Clock**: The real-time happy hour scheduler (Upcoming, Current, Soon-to-End).
 *   **Vibe Signal**: Real-time energy status (Dead, Chill, Buzzing, Packed).
 *   **Star Alerts**: Users "Star" a venue to subscribe to "Packed" pulse alerts (Double-opt-in).
-*   **League Passport**: Geolocation clock-ins as attendance signals.
+*   **League Passport**: Geolocation Clock Ins as attendance signals.
 *   **Artie Chat**: Conversational AI for local discovery and "The Manual" (FAQ).
 
 #### B. The Brew House (The Dashboard)
@@ -101,7 +102,7 @@ When a Partner updates an event or needs content in The Brew House:
 
 ### 3.2 Automated Compliance (Legal Moat)
 Legal compliance is our primary competitive advantage. By enforcing "Law-as-Code," we eliminate human error.
-*   **The Smart Gatekeeper**: Players are capped at **2 clock-ins per 12 hours** globally (**Rule of Two**).
+*   **The Smart Gatekeeper**: Players are capped at **2 Clock Ins per 12 hours** globally (**Rule of Two**).
 *   **The Bounty Standard**: The system hard-codes WA LCB rules. A venue cannot accidentally create an illegal "2-for-1" because we only allow **Flash Bounties** (Points).
 *   **The Honest Gate (Conversion Logic)**: We do not block unauthenticated users from clicking "Clock In" or "Vibe Check." Instead, we allow the interaction to proceed on the frontend, then use the backend authentication requirement to trigger a "Signal Ready" modal. This leverages the Endowment Effect—the user feels they have already "done the work" and must sign up to "save" their contribution.
 
@@ -133,9 +134,9 @@ By leveraging "Free Tier" enterprise quotas, we achieve a cost structure that al
 
 ### 4.3 Signal Integrity (Real-World Accuracy)
 Since not everyone has location services enabled, OlyBars cross-references three critical data points (The "Holy Trinity" of Signals) to determine the "Current State":
-1.  **Clock-ins**: High-intent attendance verification (The "Gold Standard").
+1.  **Clock Ins**: High-intent attendance verification (The "Gold Standard").
 2.  **Vibe Checks**: Manual "Ground Truth" reports from users on the floor.
-3.  **Venue Capacity**: The denominator for density. Knowing a venue holds 50 people allows 15 verified check-ins to correctly register as "Buzzing" (30%), whereas the same 15 people in a 300-person hall would remain "Chill" (5%).
+3.  **Venue Capacity**: The denominator for density. Knowing a venue holds 50 people allows 15 verified Clock Ins to correctly register as "Buzzing" (30%), whereas the same 15 people in a 300-person hall would remain "Chill" (5%).
 
 ---
 
@@ -212,18 +213,32 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 
 ---
 
+## 8. The Conversion Strategy: Double Dip & Tiered Access
+ 
+OlyBars uses a "Low Friction, High Value" funnel to maximize both user adoption and partner ROI.
+ 
+### 8.1 Tiered Access (Funnel)
+1.  **Phase 1: Anonymous Discovery**: Pass Age Gate -> Discovery Dashboard. No login, no tutorial. Zero friction.
+2.  **Phase 2: Contextual Engagement**: Attempt Clock In -> Contextual Location Permission Prompt.
+3.  **Phase 3: Progressive Profiling**: Successful Clock In -> Shadow Points Earned. "Join the League to save points" CTA.
+ 
+### 8.2 The "Double Dip" (Partner ROI)
+While OlyBars builds a global community, we proactively drive users into the **Partner's own ecosystems**.
+*   **Loyalty Handoff (Flow A)**: After a successful OlyBars Clock In, users with a `loyalty_signup_url` are prompted to "Stack your points" by joining the venue's external rewards program (Toast, Square, etc.).
+*   **The Margin Nudge (Flow B)**: For venues without digital loyalty, Artie presents an "Insider Tip" (Hero Item) after Clock In, nudging users toward high-margin menu items or signature drinks.
+
 ---
 
-## 8. Master Roadmap
+## 9. Master Roadmap
 
-### 8.1 Status: **PRODUCTION LIVE** 🚀
+### 9.1 Status: **PRODUCTION LIVE** 🚀
 *   **Domain**: [olybars.com](https://olybars.com)
 *   **Stack**: See [System_Architecture_Master.md](specs/System_Architecture_Master.md)
 
 ### 8.2 Completed Milestones
 *   ✅ **Core Engine**: Standardized `venues`, `signals`, and `users`.
 *   ✅ **The Brew House**: Integrated owner dashboard.
-*   ✅ **Geofencing**: Backend-verified check-ins.
+*   ✅ **Geofencing**: Backend-verified Clock Ins.
 *   ✅ **Artie Intelligence**: Level 1 RAG (Persona responses).
 *   ✅ **Security Framework**: MFA, RBAC, and Policy Docs.
 *   ✅ **Meta Integration**: Dual-track venue sync & Facebook auth.
@@ -252,11 +267,11 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 *   **League Partner**: A venue that has claimed their profile and entered into a marketing agreement with the League. Includes all active tiers: Free, DIY, Pro, and Agency.
 
 ### 9.2 Economy & Rankings
-*   **Player Points**: The points earned by a League Player for real-world interactions (Check-ins, Vibe Checks). Stored securely in the Player's profile (`users/{uid}/stats/seasonPoints`).
+*   **Player Points**: The points earned by a League Player for real-world interactions (Clock Ins, Vibe Checks). Stored securely in the Player's profile (`users/{uid}/stats/seasonPoints`).
 *   **Venue Point Bank**: The dedicated pool of points owned by a League Partner. Venues "spend" these points to attract traffic by offering multipliers or bounties. Stored in the venue's private sub-collection (`venues/{id}/private_data/main/pointBank`) to ensure operational confidentiality.
 *   **League Standings**: The city-wide leaderboard showing the current rankings of all League Players based on their Season Points. Computed as a real-time query of the `users` collection.
 *   **Time Bounty**: A temporary increase in points awarded for visiting a specific venue, typically used to drive traffic during slow periods. Bounties are deducted from the Venue Point Bank.
-*   **Standings Tie-Breaker**: In the event of a point tie, the system ranks players based on: 1. Total Lifetime Check-ins, 2. Current Streak, 3. Alphabetical Handle.
+*   **Standings Tie-Breaker**: In the event of a point tie, the system ranks players based on: 1. Total Lifetime Clock Ins, 2. Current Streak, 3. Alphabetical Handle.
 
 ### 9.3 Key Concepts
 *   **Artie**: The spirit of the Artesian Well. A permission-gated AI agent that acts as a concierge for Players and a drafter/co-pilot for Partners.
@@ -291,7 +306,7 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 ## 11. Appendix C: Official Rulebook
 
 ### 1. Scoring Mechanics
-* **Clock-In**: 10 Points. Requires location verification + Photo Evidence. (Max 2 per 12h).
+* **Clock In**: 10 Points. Requires location verification + Photo Evidence. (Max 2 per 12h).
 * **Vibe Check**: 5 Points. Confirm energy levels (Dead-Packed). (Max 3 per night).
 * **Game Vibe Check**: +2 Points. Verify specific amenity status (e.g., "Table 1 is Open").
 * **Menu Bounty**: 20-50 Points. Requires photo of specific high-margin item (e.g., Wagyu Burger).
@@ -313,23 +328,25 @@ Artie operates using a **"Skills & Protocols"** framework. Every action (skill) 
 
 ### 1. PLAY (Interactive)
 *Definition*: Items physically present 24/7 or during open hours.
-* **Skill / Barcade**: Pinball, Pool / Billiards, Darts, Arcade Cabinets, Skee-Ball, Foosball, Shuffleboard.
-* **Social**: Cornhole, Giant Jenga, Ring Toss, Board Games, Dice Kits.
-* **Chance**: Pull Tabs, Lottery Kiosk.
+* **Skill / Barcade (Hardcoded Popularity Order)**: Pool, Pinball, Darts, Arcade, Shuffleboard, Cornhole, Skee-Ball, Board Games, Ping Pong, Foosball, Giant Jenga, Ring Toss.
 
 ### 2. FEATURES (The Setup)
 *Definition*: Permanent hardware or architectural elements that define the space.
 * **Vibe Hardware**: Dance Floor, Stage, DJ Booth, Jukebox, Piano.
 * **Comfort**: Patio / Beer Garden, Fireplace, Photo Booth, TV Walls.
 
-### 3.V2 The Intelligence of Points (Taxonomy Pillars)
-To ensure system integrity, Artie enforces a strict classification between "Activities" (Check-ins) and "Offers" (Incentives).
+### 3.V2 The Intelligence of Scenes (Taxonomy Pillars)
+To ensure system integrity, Artie enforces a strict classification between permanent "Scenes" (Dive, Speakeasy) and "Activities" (Clock Ins).
 
 > [!NOTE]
-> The Universal Search treats "Play" (Games) and "Features" (Amenities) as first-class search keywords, not just filter chips.
+> **Map Purification**: OlyBars employs a "Nuclear Option" map style—a dark canvas that hides all default Google POIs (museums, transit, schools) and non-bar businesses. This ensures the map is a dedicated discovery layer exclusively for the OlyBars network.
+
+> [!TIP]
+> **Pin Precision**: Location accuracy is maintained through the **Pin Calibration Tool** in the Admin Dashboard, allowing manual "Doorstep Precision" to override standard geocoding.
 
 | Pillar | Definition | Points | Display |
 | :--- | :--- | :--- | :--- |
+| **Scene** | Permanent venue identity (Dive, Sports). | N/A | Filter Chip |
 | **League Event** | Point-awarding activity (Trivia, Music). | +25 Bonus Pts | Global Calendar |
 | **Non-League Event** | Activity that does not award points. | 0 Base Pts | Global Calendar |
 | **Happy Hour** | Time-bound window for multi-item deals. | 0 Base Pts | Venue Card |
@@ -379,7 +396,7 @@ Owners typically intervene to **correct** inaccurate user data.
 
 | Owner Intention ("Hey Artie...") | System Action | Logic / Constraint |
 | :--- | :--- | :--- |
-| "Nobody is playing pool right now." | `resetAssetStatus('pool_table')` | **Immediate**: Sets `status: available`, clears active check-ins. |
+| "Nobody is playing pool right now." | `resetAssetStatus('pool_table')` | **Immediate**: Sets `status: available`, clears active Clock Ins. |
 | "We are at capacity / There's a line." | `setVenueStatus('packed')` | **Overrides** calculated Buzz Score for set duration (e.g., 2 hrs). |
 | "It's dead in here." | `setVenueStatus('chill')` | **Overrides** calculated Buzz Score. |
 | "Kitchen is closed early." | `updateServiceStatus('kitchen', 'closed')` | Updates real-time flags, distinct from standard hours. |
@@ -456,5 +473,5 @@ This hierarchy defines how the OlyBars interface is organized from top to bottom
 | **3.2** | **Time Context** | `DateSelector` | **Planning**: Dropdown to toggle between "Today" (Live Status) and Future Dates (Calendar Planning). |
 | **3.3** | **View Toggle** | `ViewSwitch` | **Preference**: Toggles the main feed between "List View" (Scanning) and "Map View" (Proximity). |
 | **3.4** | **Quick Filters** | `FilterChips` | **Horizontal Scroll**: Top 5 categories (Buzzing, Trivia, etc.) + "More" drawer. |
-| **4** | **The Feed** | `VenueFeed` | **The List**: Vertical scroll of venues. Flash Bounties are pinned to the top (Red Card). Every card features an exposed "Clock In" button. |
-| **5** | **Artie Chat** | `ChatWidget` | **The Concierge**: Fixed to the Bottom Right. No other UI elements (like FABs) may overlap this zone. |
+| **4** | **The Feed** | `VenueFeed` | **The List**: Vertical scroll of venues. Flash Bounties are pinned to the top (Red Card). Every card features an exposed "Clock In" button. Vertical padding is optimized (pb-12) for mobile density. |
+| **5** | **Artie Chat** | `ChatWidget` | **The Concierge**: Fixed to the Bottom Right. Branded with `artie-head.png`. No other UI elements (like FABs) may overlap this zone. |

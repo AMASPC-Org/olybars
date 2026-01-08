@@ -101,7 +101,7 @@ export const updateVenueBuzz = async (venueId: string) => {
 
         // 1. Calculate Buzz Score
         let signalValue = 0;
-        if (data.type === 'check_in') signalValue = PULSE_CONFIG.POINTS.CHECK_IN;
+        if (data.type === 'clock_in') signalValue = PULSE_CONFIG.POINTS.CLOCK_IN;
         if (data.type === 'vibe_report') signalValue = PULSE_CONFIG.POINTS.VIBE_REPORT;
 
         // Recency Decay: 50% drop every HALFLIFE (default 60 mins)
@@ -110,7 +110,7 @@ export const updateVenueBuzz = async (venueId: string) => {
         score += decayedValue;
 
         // 2. Calculate Live Headcount (Rolling Window)
-        if (data.timestamp > liveWindowAgo && data.type === 'check_in') {
+        if (data.timestamp > liveWindowAgo && data.type === 'clock_in') {
             activeUserIds.add(data.userId);
         }
     });
@@ -121,16 +121,16 @@ export const updateVenueBuzz = async (venueId: string) => {
     const oldStatus = venueData?.status;
 
     // 4. Consensus Algorithm Logic (Rule 05-X - Beta Battalion Pivot)
-    const consensusCheckinWindow = now - PULSE_CONFIG.CONSENSUS.CHECKIN_WINDOW;
+    const consensusClockinWindow = now - PULSE_CONFIG.CONSENSUS.CLOCKIN_WINDOW;
     const consensusVibeWindow = now - PULSE_CONFIG.CONSENSUS.VIBE_WINDOW;
 
-    const consensusCheckins = new Set<string>();
+    const consensusClockins = new Set<string>();
     const consensusVibeReports = new Set<string>();
 
     signalsSnapshot.forEach(doc => {
         const data = doc.data() as Signal;
-        if (data.timestamp > consensusCheckinWindow && data.type === 'check_in') {
-            consensusCheckins.add(data.userId);
+        if (data.timestamp > consensusClockinWindow && data.type === 'clock_in') {
+            consensusClockins.add(data.userId);
         }
         if (data.timestamp > consensusVibeWindow && data.type === 'vibe_report' && data.value?.status === 'packed') {
             consensusVibeReports.add(data.userId);
@@ -138,7 +138,7 @@ export const updateVenueBuzz = async (venueId: string) => {
     });
 
     const isConsensusPacked =
-        consensusCheckins.size >= PULSE_CONFIG.CONSENSUS.CHECKINS_REQUIRED ||
+        consensusClockins.size >= PULSE_CONFIG.CONSENSUS.CLOCKINS_REQUIRED ||
         consensusVibeReports.size >= PULSE_CONFIG.CONSENSUS.VIBE_REPORTS_REQUIRED;
 
     // If consensus is met, force 'packed'. Otherwise follow score-based status.
@@ -150,15 +150,15 @@ export const updateVenueBuzz = async (venueId: string) => {
         ? venueData.manualStatus
         : calibratedStatus;
 
-    const finalCheckIns = (venueData?.manualCheckIns !== undefined && venueData?.manualCheckInsExpiresAt > now)
-        ? venueData.manualCheckIns
+    const finalClockIns = (venueData?.manualClockIns !== undefined && venueData?.manualClockInsExpiresAt > now)
+        ? venueData.manualClockIns
         : activeUserIds.size;
 
     await db.collection('venues').doc(venueId).update({
         'currentBuzz.score': score,
         'currentBuzz.lastUpdated': now,
         'status': finalStatus,
-        'checkIns': finalCheckIns
+        'clockIns': finalClockIns
     });
 
     // 5. Trigger Pulse Alert (ONLY ON CONSENSUS TRANSITION)
@@ -211,10 +211,10 @@ const applyVirtualDecay = (venue: Venue): Venue => {
         else status = 'dead';
     }
 
-    // 3. Determine Check-ins (Respect Manual Override)
-    let checkIns = venue.checkIns || 0;
-    if (venue.manualCheckIns !== undefined && venue.manualCheckInsExpiresAt && venue.manualCheckInsExpiresAt > now) {
-        checkIns = venue.manualCheckIns;
+    // 3. Determine Clock-ins (Respect Manual Override)
+    let clockIns = venue.clockIns || 0;
+    if (venue.manualClockIns !== undefined && venue.manualClockInsExpiresAt && venue.manualClockInsExpiresAt > now) {
+        clockIns = venue.manualClockIns;
     }
 
     return {
@@ -225,7 +225,7 @@ const applyVirtualDecay = (venue: Venue): Venue => {
             lastUpdated: venue.currentBuzz?.lastUpdated || now
         },
         status: status as any,
-        checkIns
+        clockIns
     };
 };
 
@@ -279,7 +279,7 @@ export const fetchVenues = async (): Promise<Venue[]> => {
 };
 
 
-export const checkIn = async (venueId: string, userId: string, userLat: number, userLng: number, verificationMethod: 'gps' | 'qr' = 'gps') => {
+export const clockIn = async (venueId: string, userId: string, userLat: number, userLng: number, verificationMethod: 'gps' | 'qr' = 'gps') => {
     const venueDoc = await db.collection('venues').doc(venueId).get();
     if (!venueDoc.exists) throw new Error('Venue not found');
 
@@ -300,7 +300,7 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
     const signal: Partial<Signal> = {
         venueId,
         userId,
-        type: 'check_in',
+        type: 'clock_in',
         timestamp,
         verificationMethod
     };
@@ -309,7 +309,7 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
     const recentDuplicate = await db.collection('signals')
         .where('userId', '==', userId)
         .where('venueId', '==', venueId)
-        .where('type', '==', 'check_in')
+        .where('type', '==', 'clock_in')
         .where('timestamp', '>', timestamp - (5 * 60 * 1000))
         .limit(1)
         .get();
@@ -324,7 +324,7 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
     // 1. Conflict of Interest Check (Rule 03-B)
 
     // 2. LCB Compliance Check (Rule 03-A) & Nightly Cap
-    // WA State law limits users to 2 League check-ins per 12-hour window.
+    // WA State law limits users to 2 League clock-ins per 12-hour window.
     // Also enforcing the OlyBars 4:00 AM Business Day cap of 2.
     const today4AM = new Date();
     today4AM.setHours(4, 0, 0, 0);
@@ -335,20 +335,20 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
     const lcbWindowAgo = timestamp - PULSE_CONFIG.WINDOWS.LCB_WINDOW;
     const windowStart = Math.min(businessDayStart, lcbWindowAgo);
 
-    const checkInsLastWindow = await db.collection('signals')
+    const clockinsLastWindow = await db.collection('signals')
         .where('userId', '==', userId)
-        .where('type', '==', 'check_in')
+        .where('type', '==', 'clock_in')
         .where('timestamp', '>', windowStart)
         .get();
 
-    if (checkInsLastWindow.size >= 2) {
-        throw new Error('Nightly Cap Reached: You have reached the limit of 2 League check-ins for this window. Please try again tomorrow after 4:00 AM!');
+    if (clockinsLastWindow.size >= 2) {
+        throw new Error('Nightly Cap Reached: You have reached the limit of 2 League clock-ins for this window. Please try again tomorrow after 4:00 AM!');
     }
 
     // 3. Throttling & Impossible Movement (Rule 03-C)
     const recentSignals = await db.collection('signals')
         .where('userId', '==', userId)
-        .where('type', '==', 'check_in')
+        .where('type', '==', 'clock_in')
         .orderBy('timestamp', 'desc')
         .limit(1)
         .get();
@@ -379,22 +379,22 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
         }
 
         // Global Throttle
-        if (timeSinceLast < PULSE_CONFIG.WINDOWS.CHECK_IN_THROTTLE) {
+        if (timeSinceLast < PULSE_CONFIG.WINDOWS.CLOCK_IN_THROTTLE) {
             const minutesSinceLast = Math.floor(timeSinceLast / (60 * 1000));
-            const waitTime = (PULSE_CONFIG.WINDOWS.CHECK_IN_THROTTLE / (60 * 1000)) - minutesSinceLast;
+            const waitTime = (PULSE_CONFIG.WINDOWS.CLOCK_IN_THROTTLE / (60 * 1000)) - minutesSinceLast;
             throw new Error(`Slow down, League Legend! The Pulse needs a bit more time. You can clock in again in ${Math.ceil(waitTime)} minutes.`);
         }
 
         // Same-Venue Throttle
         if (lastCheckIn.venueId === venueId && timeSinceLast < PULSE_CONFIG.WINDOWS.SAME_VENUE_THROTTLE) {
             const waitTime = (PULSE_CONFIG.WINDOWS.SAME_VENUE_THROTTLE - timeSinceLast) / (60 * 1000);
-            throw new Error(`Already checked in here recently! Please wait another ${Math.floor(waitTime / 60)} hours and ${Math.ceil(waitTime % 60)} minutes before checking into ${venueData.name} again.`);
+            throw new Error(`Already clocked in here recently! Please wait another ${Math.floor(waitTime / 60)} hours and ${Math.ceil(waitTime % 60)} minutes before checking into ${venueData.name} again.`);
         }
     }
 
     // [REMOVED] Signal added earlier above
     await db.collection('venues').doc(venueId).update({
-        checkIns: (venueData.checkIns || 0) + 1
+        clockIns: (venueData.clockIns || 0) + 1
     });
 
     // Invalidate cache
@@ -405,7 +405,7 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
     // Local Maker (Supporter/High Local Score): 15 (1.5x)
     // Master Maker (Hybrid/Verified Production): 20 (2x)
 
-    let points = PULSE_CONFIG.POINTS.CHECK_IN; // 10.0
+    let points = PULSE_CONFIG.POINTS.CLOCK_IN; // 10.0
     const isLocalMakerSupporter = venueData.isLocalMaker === true;
 
     if (isLocalMakerSupporter) {
@@ -416,7 +416,7 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
     // We log it here to ensure backend source of truth
     await logUserActivity({
         userId,
-        type: 'check_in',
+        type: 'clock_in',
         venueId,
         points,
         verificationMethod,
@@ -449,9 +449,9 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
             badgesAwarded.push(badge);
         }
     } else {
-        // Only log the check-in points if no badge activity already logged it (though we treat them separate)
+        // Only log the clock-in points if no badge activity already logged it (though we treat them separate)
         // Actually, logUserActivity is called above separately? No, checkIn function doesn't call logUserActivity yet for the checkin itself?
-        // Wait, checkIn logic in this file returns points but doesn't seem to call logUserActivity for the check-in points?
+        // Wait, clockIn logic in this file returns points but doesn't seem to call logUserActivity for the clock-in points?
         // Let's check existing code. It seems checkIn returns points, and Frontend might be calling logUserActivity?
         // Or specific logUserActivity call is missing in checkIn?
         // Looking at previous `checkIn` code: "Pass calculated points to the activity logger (handled mostly by frontend currently...)"
@@ -461,7 +461,7 @@ export const checkIn = async (venueId: string, userId: string, userLat: number, 
 
     return {
         success: true,
-        message: `Checked in at ${venueData.name}!`,
+        message: `Clocked in at ${venueData.name}!`,
         pointsAwarded: points,
         isLocalMaker: venueData.isLocalMaker,
         badgesEarned: badgesAwarded
@@ -578,7 +578,7 @@ export const performVibeCheck = async (
         const recentCheckIn = await db.collection('signals')
             .where('userId', '==', userId)
             .where('venueId', '==', venueId)
-            .where('type', '==', 'check_in')
+            .where('type', '==', 'clock_in')
             .where('timestamp', '>', now - (12 * 60 * 60 * 1000)) // Within 12 hours
             .limit(1)
             .get();
@@ -650,7 +650,7 @@ export const performVibeCheck = async (
 /**
  * Handle specific Amenity Check-ins (5 points)
  */
-export const checkInAmenity = async (venueId: string, userId: string, amenityId: string) => {
+export const clockInAmenity = async (venueId: string, userId: string, amenityId: string) => {
     const venueDoc = await db.collection('venues').doc(venueId).get();
     if (!venueDoc.exists) throw new Error('Venue not found');
 
@@ -688,10 +688,10 @@ export const checkAndAwardBadges = async (userId: string, currentVenueId: string
     const userData = userDoc.data();
     const currentBadges = userData?.badges || {};
 
-    // Get unique check-ins history
+    // Get unique clock-ins history
     const signalsSnapshot = await db.collection('signals')
         .where('userId', '==', userId)
-        .where('type', '==', 'check_in')
+        .where('type', '==', 'clock_in')
         .get();
 
     const uniqueVenues = new Set<string>();
@@ -699,7 +699,7 @@ export const checkAndAwardBadges = async (userId: string, currentVenueId: string
         const data = doc.data() as Signal;
         uniqueVenues.add(data.venueId);
     });
-    // Ensure current check-in is counted (it was just added)
+    // Ensure current clock-in is counted (it was just added)
     uniqueVenues.add(currentVenueId);
 
     const newBadges: Badge[] = [];
@@ -710,7 +710,7 @@ export const checkAndAwardBadges = async (userId: string, currentVenueId: string
 
         let unlocked = false;
 
-        if (badge.criteria.type === 'checkin_set' && badge.criteria.venueIds) {
+        if (badge.criteria.type === 'clockin_set' && badge.criteria.venueIds) {
             // Check if all required venues are visited
             const hasAll = badge.criteria.venueIds.every(vid => uniqueVenues.has(vid));
             if (hasAll) unlocked = true;
@@ -729,7 +729,7 @@ export const checkAndAwardBadges = async (userId: string, currentVenueId: string
 
             const recentSignals = await db.collection('signals')
                 .where('userId', '==', userId)
-                .where('type', '==', 'check_in')
+                .where('type', '==', 'clock_in')
                 .where('timestamp', '>', historyLimit)
                 .get();
 
@@ -768,7 +768,7 @@ export const checkAndAwardBadges = async (userId: string, currentVenueId: string
             });
         } else {
             // Update progress if checkin_set
-            if (badge.criteria.type === 'checkin_set' && badge.criteria.venueIds) {
+            if (badge.criteria.type === 'clockin_set' && badge.criteria.venueIds) {
                 const visitedCount = badge.criteria.venueIds.filter(vid => uniqueVenues.has(vid)).length;
                 const progress = visitedCount / badge.criteria.venueIds.length;
 
@@ -817,16 +817,16 @@ export const logUserActivity = async (data: {
         const userData = userDoc.data();
         await userRef.update({
             'stats.seasonPoints': (userData?.stats?.seasonPoints || 0) + data.points,
-            'stats.lifetimeCheckins': (data.type === 'check_in' || data.type === 'checkin')
-                ? (userData?.stats?.lifetimeCheckins || 0) + 1
-                : (userData?.stats?.lifetimeCheckins || 0)
+            'stats.lifetimeClockins': (data.type === 'clock_in' || data.type === 'clockin')
+                ? (userData?.stats?.lifetimeClockins || 0) + 1
+                : (userData?.stats?.lifetimeClockins || 0)
         });
     } else {
         await userRef.set({
             uid: data.userId,
             stats: {
                 seasonPoints: data.points,
-                lifetimeCheckins: data.type === 'checkin' ? 1 : 0,
+                lifetimeClockins: (data.type === 'checkin' || data.type === 'clockin') ? 1 : 0,
                 currentStreak: 0
             },
             role: 'user'
@@ -944,17 +944,17 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'name', 'nicknames',
         'address', 'description', 'hours', 'phone', 'website',
         'email', 'instagram', 'facebook', 'twitter',
-        'gameFeatures', 'vibe', 'vibeTags', 'status',
+        'gameFeatures', 'vibe', 'sceneTags', 'status',
         'originStory', 'insiderVibe', 'geoLoop',
         'isLowCapacity', 'isSoberFriendly',
         'physicalRoom', 'carryingMakers',
-        'leagueEvent', 'triviaTime', 'deal', 'dealEndsIn', 'checkIns',
+        'leagueEvent', 'triviaTime', 'deal', 'dealEndsIn', 'clockIns',
         'isActive',
         'googlePlaceId',
         'managersCanAddUsers',
         'liveGameStatus', 'photos',
         'manualStatus', 'manualStatusExpiresAt',
-        'manualCheckIns', 'manualCheckInsExpiresAt',
+        'manualClockIns', 'manualClockInsExpiresAt',
         'happyHour', 'happyHourSpecials', 'happyHourSimple',
         'tier_config', 'hasGameVibeCheckEnabled',
         'fullMenu' // [PHASE 1] Menu Module
@@ -1134,7 +1134,7 @@ export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: strin
 
 /**
  * Pulse Calculation Service (MVP)
- * Calculates real-time pulse score based on recent check-ins.
+ * Calculates real-time pulse score based on recent clock-ins.
  * Weighting: (0-15m): 1.0, (15-30m): 0.8, (30-60m): 0.5
  */
 export const getVenuePulse = async (venueId: string): Promise<number> => {
@@ -1143,7 +1143,7 @@ export const getVenuePulse = async (venueId: string): Promise<number> => {
 
     const signalsSnapshot = await db.collection('signals')
         .where('venueId', '==', venueId)
-        .where('type', '==', 'check_in')
+        .where('type', '==', 'clock_in')
         .where('timestamp', '>', oneHourAgo)
         .get();
 
@@ -1214,7 +1214,7 @@ export const onboardVenue = async (googlePlaceId: string, ownerId: string) => {
             ownerId,
             status: 'OPEN',
             type: 'bar',
-            checkIns: 0,
+            clockIns: 0,
             vibe: 'CHILL',
             vibeDefault: 'CHILL',
             assets: {},
@@ -1480,17 +1480,17 @@ export const getPartnerHourlyReport = async (venueId: string, dayTimestamp?: num
         .where('timestamp', '<', endOfDay.getTime())
         .get();
 
-    const hourlyData: Record<number, { checkins: number, vibeReports: number, points: number }> = {};
+    const hourlyData: Record<number, { clockins: number, vibeReports: number, points: number }> = {};
     for (let i = 0; i < 24; i++) {
-        hourlyData[i] = { checkins: 0, vibeReports: 0, points: 0 };
+        hourlyData[i] = { clockins: 0, vibeReports: 0, points: 0 };
     }
 
     snapshot.forEach(doc => {
         const data = doc.data();
         const hour = new Date(data.timestamp).getHours();
 
-        if (data.type === 'check_in' || data.type === 'checkin') {
-            hourlyData[hour].checkins++;
+        if (data.type === 'clock_in' || data.type === 'clockin') {
+            hourlyData[hour].clockins++;
         } else if (data.type === 'vibe' || data.type === 'vibe_report') {
             hourlyData[hour].vibeReports++;
         }

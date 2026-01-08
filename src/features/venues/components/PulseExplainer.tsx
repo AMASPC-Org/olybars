@@ -40,7 +40,7 @@ export const PulseExplainer: React.FC = () => {
                     <div className="grid grid-cols-2 gap-3 pb-2">
                         <div className="bg-black/40 p-3 rounded-xl border border-white/5">
                             <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">Clock In</span>
-                            <span className="text-xl font-black text-white font-league">+{PULSE_CONFIG.POINTS.CHECK_IN} Pts</span>
+                            <span className="text-xl font-black text-white font-league">+{PULSE_CONFIG.POINTS.CLOCK_IN} Pts</span>
                         </div>
                         <div className="bg-black/40 p-3 rounded-xl border border-white/5">
                             <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">Vibe Report</span>

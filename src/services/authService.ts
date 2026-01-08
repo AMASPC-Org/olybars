@@ -68,7 +68,7 @@ export const AuthService = {
                 updatedAt: Date.now(),
                 stats: {
                     seasonPoints: 50, // Welcome bonus
-                    lifetimeCheckins: 0,
+                    lifetimeClockins: 0,
                     currentStreak: 0,
                     vibeCheckCount: 0,
                     competitionPoints: 0

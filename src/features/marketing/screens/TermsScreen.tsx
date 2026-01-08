@@ -72,7 +72,7 @@ const TermsScreen: React.FC = () => {
                         To maintain a fair League, we enforce strict anti-gaming measures. These include:
                     </p>
                     <ul className="list-disc list-inside text-slate-400 text-sm space-y-2 ml-4">
-                        <li><strong>Nightly Caps:</strong> Verified check-ins are strictly limited to two (2) per 12-hour window.</li>
+                        <li><strong>Nightly Caps:</strong> Verified clock-ins are strictly limited to two (2) per 12-hour window.</li>
                         <li><strong>Global Cooldown:</strong> All "Vibe Checks" are subject to a 30-minute global cooling-off period.</li>
                         <li><strong>Venue Cooldown:</strong> Users must wait 60 minutes between "Vibe Checks" at the same venue.</li>
                     </ul>

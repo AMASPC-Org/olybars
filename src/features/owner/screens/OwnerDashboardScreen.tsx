@@ -50,7 +50,7 @@ const calculatePulseScore = (venue: Venue): number => {
     }
     if (venue.deal) score += 10;
     if (venue.leagueEvent) score += 10;
-    score += (venue.checkIns || 0) * 1.5;
+    score += (venue.clockIns || 0) * 1.5;
     return Math.min(Math.round(score), 100);
 };
 
@@ -359,11 +359,11 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
     const adjustClockIns = (delta: number) => {
         if (!myVenue) return;
-        const newCount = Math.max(0, (myVenue.checkIns || 0) + delta);
+        const newCount = Math.max(0, (myVenue.clockIns || 0) + delta);
         updateVenue(myVenue.id, {
-            checkIns: newCount,
-            manualCheckIns: newCount,
-            manualCheckInsExpiresAt: Date.now() + (60 * 60 * 1000) // 60m TTL
+            clockIns: newCount,
+            manualClockIns: newCount,
+            manualClockInsExpiresAt: Date.now() + (60 * 60 * 1000) // 60m TTL
         });
     };
 
@@ -382,9 +382,9 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
             // 1. Execute the skill
             if (insight.actionSkill === 'update_flash_deal') {
                 await VenueOpsService.updateFlashBounty(myVenue.id, {
-                    title: insight.actionParams.summary,
-                    description: insight.actionParams.details,
-                    duration: parseInt(insight.actionParams.duration) || 60,
+                    title: insight.actionParams.summary as string,
+                    description: insight.actionParams.details as string,
+                    duration: parseInt(insight.actionParams.duration as string) || 60,
                     isActive: true
                 });
             }
@@ -590,7 +590,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-surface p-4 border border-white/10 rounded-lg shadow-xl">
                                 <p className="text-[10px] uppercase font-black text-slate-500 mb-1 font-league">Live Clock-ins</p>
-                                <p className="text-4xl font-black text-white font-league">{myVenue.checkIns || 0}</p>
+                                <p className="text-4xl font-black text-white font-league">{myVenue.clockIns || 0}</p>
                             </div>
                             <div className="bg-surface p-4 border border-white/10 rounded-lg shadow-xl">
                                 <div className="flex justify-between items-center mb-2">
@@ -701,9 +701,9 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         <div className="bg-surface p-6 border border-white/10 rounded-lg shadow-2xl">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest font-league">Manual Headcount Adjust</h3>
-                                {myVenue.manualCheckInsExpiresAt && Date.now() < myVenue.manualCheckInsExpiresAt && (
+                                {myVenue.manualClockInsExpiresAt && Date.now() < myVenue.manualClockInsExpiresAt && (
                                     <span className="text-[8px] font-black text-primary uppercase animate-pulse">
-                                        Override Active ({Math.ceil((myVenue.manualCheckInsExpiresAt - Date.now()) / 60000)}m)
+                                        Override Active ({Math.ceil((myVenue.manualClockInsExpiresAt - Date.now()) / 60000)}m)
                                     </span>
                                 )}
                             </div>
@@ -711,7 +711,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 <button onClick={() => adjustClockIns(-1)} className="w-14 h-14 flex items-center justify-center bg-black border border-white/10 text-white rounded-lg active:scale-95">
                                     <Minus className="w-8 h-8" />
                                 </button>
-                                <p className="text-5xl font-black text-white font-league">{myVenue.checkIns || 0}</p>
+                                <p className="text-5xl font-black text-white font-league">{myVenue.clockIns || 0}</p>
                                 <button onClick={() => adjustClockIns(1)} className="w-14 h-14 flex items-center justify-center bg-primary text-black rounded-lg active:scale-95">
                                     <Plus className="w-8 h-8" />
                                 </button>
@@ -1067,9 +1067,9 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4 mb-6">
                                         <div className="p-3 bg-black/40 rounded-xl border border-white/5">
-                                            <p className="text-[9px] text-slate-500 uppercase font-black mb-1">Total Check-ins</p>
+                                            <p className="text-[9px] text-slate-500 uppercase font-black mb-1">Total Clock Ins</p>
                                             <p className="text-xl font-black text-white">
-                                                {(Object.values(hourlyReport.hourly) as any[]).reduce((acc: number, h: any) => acc + (h.checkins || 0), 0)}
+                                                {(Object.values(hourlyReport.hourly) as any[]).reduce((acc: number, h: any) => acc + (h.clockins || 0), 0)}
                                             </p>
                                         </div>
                                         <div className="p-3 bg-black/40 rounded-xl border border-white/5">
@@ -1083,12 +1083,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                     {/* Simple Hourly Visualizer */}
                                     <div className="h-48 flex items-end gap-1 px-2 border-b border-white/10 pb-2">
                                         {Object.entries(hourlyReport.hourly).map(([hour, data]: [string, any]) => {
-                                            const max = Math.max(...Object.values(hourlyReport.hourly).map((h: any) => h.checkins || 0), 1);
-                                            const height = ((data.checkins || 0) / max) * 100;
+                                            const max = Math.max(...Object.values(hourlyReport.hourly).map((h: any) => h.clockins || 0), 1);
+                                            const height = ((data.clockins || 0) / max) * 100;
                                             return (
                                                 <div key={hour} className="flex-1 flex flex-col items-center group relative">
                                                     <div className="absolute -top-10 bg-primary text-black text-[9px] font-black px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                                                        {data.checkins || 0} hits
+                                                        {data.clockins || 0} hits
                                                     </div>
                                                     <div
                                                         className="w-full bg-primary/20 hover:bg-primary/40 transition-colors rounded-t-sm"
@@ -1099,7 +1099,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                             );
                                         })}
                                     </div>
-                                    <p className="text-center text-[9px] text-slate-600 italic">X-Axis: Hour (0-23) | Y-Axis: Live Check-ins</p>
+                                    <p className="text-center text-[9px] text-slate-600 italic">X-Axis: Hour (0-23) | Y-Axis: Live Clock Ins</p>
                                 </div>
                             ) : (
                                 <div className="py-20 flex flex-col items-center gap-4">
@@ -1114,7 +1114,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Activity Breakdown</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                                 {hourlyReport && Object.entries(hourlyReport.hourly)
-                                    .filter(([_, data]: [string, any]) => (data.checkins || 0) > 0 || (data.vibeReports || 0) > 0)
+                                    .filter(([_, data]: [string, any]) => (data.clockins || 0) > 0 || (data.vibeReports || 0) > 0)
                                     .map(([hour, data]: [string, any]) => (
                                         <div key={hour} className="bg-black/40 p-4 rounded-xl flex items-center justify-between border border-white/5">
                                             <div className="flex items-center gap-4">
@@ -1122,8 +1122,8 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                                 <div className="h-8 w-px bg-white/10" />
                                                 <div className="flex gap-4">
                                                     <div>
-                                                        <p className="text-[9px] text-slate-500 uppercase font-black">Check-ins</p>
-                                                        <p className="text-sm font-black text-white">{data.checkins || 0}</p>
+                                                        <p className="text-[9px] text-slate-500 uppercase font-black">Clock Ins</p>
+                                                        <p className="text-sm font-black text-white">{data.clockins || 0}</p>
                                                     </div>
                                                     <div>
                                                         <p className="text-[9px] text-slate-500 uppercase font-black">Vibes</p>

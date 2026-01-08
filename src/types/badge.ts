@@ -5,7 +5,7 @@ export interface Badge {
     icon?: string;
     points: number;
     criteria: {
-        type: 'checkin_set' | 'count';
+        type: 'clockin_set' | 'count';
         venueIds?: string[];
         count?: number;
         category?: string;

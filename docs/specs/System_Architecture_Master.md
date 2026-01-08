@@ -31,7 +31,7 @@ This document serves as the single source of truth for the OlyBars system archit
 *   **Aggressive Caching**: Static assets on CDN and dynamic queries (e.g., Redis/Memorystore) to minimize Firestore reads and LLM tokens.
 
 ## 3. Intelligence Layer (Artie)
-*   **Model**: Vertex AI (Gemini 2.0 Pro).
+*   **Model**: Vertex AI (Gemini 1.5 Flash).
 *   **Memory**: Firestore Vector Search for vibe-based discovery.
 *   **Optimization**: Redis (Memorystore) for frequent local queries.
 *   **Persona**: "Artie" - The Spirit of the Artesian Well. Helpful, slightly mystical, local expert.
@@ -105,7 +105,7 @@ Cell service in Olympia bars (e.g., The Brotherhood basement) is unreliable.
 ### 8.1 The League Engine (Scoring)
 | Action | Points | Frequency Cap | Method |
 | :--- | :--- | :--- | :--- |
-| **Check-In** | 10 pts | 1/venue/12h | Geofence + Device ID |
+| **Check-In** | 10 pts | 1/venue/12h (2 Global/12h) | Geofence + Device ID |
 | **Vibe Report** | 5 pts | 1/venue/night | User Selection |
 | **Vibe Photo** | 15 pts | 1/venue/night | CV Analysis |
 | **Explorer Bonus** | 50 pts | 5 unique/7 days | System Logic |
@@ -116,7 +116,12 @@ Calculates real-time venue activity.
 *   **Decay**: Score drops by 50% every 60 mins without signals.
 *   **States**: Dead (0-10), Chill (11-40), Buzzing (41-100), Packed (101+).
 
-### 8.3 Anti-Cheat ("The Bouncer")
+### 8.3 Exposure Equity (Algorithmic Fairness)
+To prevent "The Drowning Effect," visibility is managed via dynamic rotation.
+*   **5-Minute Shifting**: Priority weights for the **Buzz Clock** and **Pulse List** shift globally every 5 minutes.
+*   **Partner Fallback**: Unmatched searches return a rotating selection of active League Partners to ensure baseline exposure.
+
+### 8.4 Anti-Cheat ("The Bouncer")
 *   **Superman Rule**: Velocity checks (distance/time) to prevent teleportation.
 *   **Camper Rule**: Debouncing repetitive signals from same location.
 

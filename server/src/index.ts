@@ -3,12 +3,12 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import { config } from './config';
-import { fetchVenues, checkIn } from './venueService';
+import { fetchVenues, clockIn } from './venueService';
 import { isAiBot, getBotName } from './utils/botDetector';
 import { verifyToken, requireRole, requireVenueAccess, verifyAppCheck, identifyUser } from './middleware/authMiddleware';
 import {
-    CheckInSchema,
-    PlayCheckInSchema,
+    ClockInSchema,
+    PlayClockInSchema,
     AdminRequestSchema,
     UserUpdateSchema,
     ChatRequestSchema,
@@ -251,22 +251,22 @@ v1Router.get('/venues', async (req, res) => {
 });
 
 /**
- * @route POST /api/check-in
- * @desc Verify location and log a check-in signal
+ * @route POST /api/clock-in
+ * @desc Verify location and log a clock-in signal
  */
-v1Router.post('/check-in', verifyAppCheck, verifyToken, async (req, res) => {
-    const validation = CheckInSchema.safeParse(req.body);
+v1Router.post('/clock-in', verifyAppCheck, verifyToken, async (req, res) => {
+    const validation = ClockInSchema.safeParse(req.body);
     if (!validation.success) {
-        return res.status(400).json({ error: 'Invalid check-in data', details: validation.error.format() });
+        return res.status(400).json({ error: 'Invalid clock-in data', details: validation.error.format() });
     }
     const { venueId, lat, lng, verificationMethod } = validation.data;
     const userId = (req as any).user.uid;
 
     try {
-        const result = await checkIn(venueId, userId, lat, lng, verificationMethod);
+        const result = await clockIn(venueId, userId, lat, lng, verificationMethod);
         res.json(result);
     } catch (error: any) {
-        log('WARNING', 'Check-in failed', { venueId, userId, error: error.message });
+        log('WARNING', 'Clock-in failed', { venueId, userId, error: error.message });
         res.status(400).json({ error: error.message });
     }
 });
@@ -297,8 +297,8 @@ v1Router.post('/vibe-check', verifyToken, async (req, res) => {
     }
 });
 
-v1Router.post('/play/check-in', verifyToken, async (req, res) => {
-    const validation = PlayCheckInSchema.safeParse(req.body);
+v1Router.post('/play/clock-in', verifyToken, async (req, res) => {
+    const validation = PlayClockInSchema.safeParse(req.body);
     if (!validation.success) {
         return res.status(400).json({ error: 'Invalid play data', details: validation.error.format() });
     }
@@ -306,11 +306,11 @@ v1Router.post('/play/check-in', verifyToken, async (req, res) => {
     const userId = (req as any).user.uid;
 
     try {
-        const { checkInAmenity } = await import('./venueService');
-        const result = await checkInAmenity(venueId, userId, amenityId);
+        const { clockInAmenity } = await import('./venueService');
+        const result = await clockInAmenity(venueId, userId, amenityId);
         res.json(result);
     } catch (error: any) {
-        log('WARNING', 'Play check-in failed', { venueId, userId, amenityId, error: error.message });
+        log('WARNING', 'Play clock-in failed', { venueId, userId, amenityId, error: error.message });
         res.status(400).json({ error: error.message });
     }
 });

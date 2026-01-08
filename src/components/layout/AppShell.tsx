@@ -294,11 +294,15 @@ export const AppShell: React.FC<AppShellProps> = ({
 
       {/* Main Content (Outlet) */}
       <div className="flex-1 overflow-y-auto relative flex flex-col">
-        <div className="flex-1">
+        <div>
           <Outlet context={{
             venues,
             userProfile,
-            onAskArtie: () => setShowArtie?.(true),
+            onAskArtie: (mode?: 'visitor' | 'ops') => {
+              if (mode === 'visitor') (window as any)._artie_force_guest = true;
+              else (window as any)._artie_force_guest = false;
+              setShowArtie?.(true);
+            },
             onToggleMenu: () => setShowMenu(true),
             onClockIn,
             onVibeCheck,

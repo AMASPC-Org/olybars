@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { checkIn } from '../venueService';
+import { clockIn } from '../venueService';
 import { db } from '../firebaseAdmin';
 
 // Mock dependencies
@@ -9,7 +9,7 @@ vi.mock('../firebaseAdmin', () => ({
     }
 }));
 
-describe('venueService - checkIn', () => {
+describe('venueService - clockIn', () => {
     const mockCollection = db.collection as any;
     const mockDoc = vi.fn();
     const mockGet = vi.fn();
@@ -64,7 +64,7 @@ describe('venueService - checkIn', () => {
     it('should throw error if venue does not exist', async () => {
         mockGet.mockResolvedValueOnce({ exists: false });
 
-        await expect(checkIn('inv-venue', 'user-1', 0, 0)).rejects.toThrow('Venue not found');
+        await expect(clockIn('inv-venue', 'user-1', 0, 0)).rejects.toThrow('Venue not found');
         expect(mockCollection).toHaveBeenCalledWith('venues');
         expect(mockDoc).toHaveBeenCalledWith('inv-venue');
     });
@@ -79,7 +79,7 @@ describe('venueService - checkIn', () => {
         });
 
         // User is at 0,0 (Null Island)
-        await expect(checkIn('venue-1', 'user-1', 0, 0)).rejects.toThrow(/Too far away/);
+        await expect(clockIn('venue-1', 'user-1', 0, 0)).rejects.toThrow(/Too far away/);
     });
 
     it('should succeed if user is close enough', async () => {
@@ -95,7 +95,7 @@ describe('venueService - checkIn', () => {
                     location: { lat, lng },
                     ownerId: 'other',
                     managerIds: [],
-                    checkIns: 0,
+                    clockIns: 0,
                     isActive: true,
                     isLocalMaker: false
                 })
@@ -135,7 +135,7 @@ describe('venueService - checkIn', () => {
             return { doc: mockDoc };
         });
 
-        const result = await checkIn('venue-1', 'user-1', lat, lng);
+        const result = await clockIn('venue-1', 'user-1', lat, lng);
 
         expect(result.success).toBe(true);
         expect(result.pointsAwarded).toBe(10); // Default points

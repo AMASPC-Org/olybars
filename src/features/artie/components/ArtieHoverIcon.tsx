@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import tapArtie from '/artie-tap-icon.png';
+import artieHead from '/artie-head.png';
 
 interface ArtieHoverIconProps {
     onClick?: () => void;
@@ -30,19 +30,19 @@ export const ArtieHoverIcon: React.FC<ArtieHoverIconProps> = ({ onClick }) => {
                 <p className="text-xs font-black uppercase tracking-widest font-league">Artie is Online</p>
             </div>
 
-            {/* Icon & Label Container (Branded Pill) */}
-            <div className="flex items-center bg-oly-navy border-2 border-oly-gold rounded-full shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden pr-4 sm:pr-2 group-hover:shadow-primary/20">
-                {/* Icon Circle */}
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-r-2 border-oly-gold/30 bg-black flex-shrink-0">
+            {/* Icon & Label Container (Branded Pill) - Tightened Pr-3 */}
+            <div className="flex items-center bg-oly-navy border-2 border-oly-gold rounded-full shadow-2xl hover:scale-105 transition-all duration-300 overflow-hidden pr-3 group-hover:shadow-primary/20">
+                {/* Icon Circle - Optimized for head framing */}
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-r-2 border-oly-gold/30 bg-black flex-shrink-0">
                     <img
-                        src={tapArtie}
+                        src={artieHead}
                         alt="Artie"
-                        className="w-full h-full object-contain p-1"
+                        className="w-full h-full object-contain p-0.5"
                     />
                 </div>
 
-                {/* "ASK" Label */}
-                <div className="pl-3 flex flex-col justify-center">
+                {/* "ASK" Label - Reduced spacing */}
+                <div className="pl-2.5 flex flex-col justify-center">
                     <span className="text-oly-gold font-league font-black text-xs sm:text-sm tracking-widest mb-0.5 whitespace-nowrap">
                         ASK
                     </span>

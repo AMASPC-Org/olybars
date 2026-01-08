@@ -7,11 +7,11 @@ type LeagueTab = 'league' | 'schedule' | 'standings' | 'bars' | 'rules' | 'prize
 
 // Mock data for the standings with tie-breaker info
 const leaderboardData = [
-  { id: '1', name: "BarFly_99", points: 4520, lifetimeCheckins: 150, currentStreak: 12, badge: "👑" },
-  { id: '2', name: "IPA_Lover", points: 3890, lifetimeCheckins: 120, currentStreak: 8, badge: "🥈" },
-  { id: '3', name: "TriviaKing", points: 3890, lifetimeCheckins: 110, currentStreak: 5, badge: "🥉" }, // Tied in points with IPA_Lover
-  { id: '4', name: "OlyGirl", points: 3100, lifetimeCheckins: 90, currentStreak: 10, badge: "" },
-  { id: '5', name: "Zack_Attack", points: 2950, lifetimeCheckins: 85, currentStreak: 3, badge: "" },
+  { id: '1', name: "BarFly_99", points: 4520, lifetimeClockins: 150, currentStreak: 12, badge: "👑" },
+  { id: '2', name: "IPA_Lover", points: 3890, lifetimeClockins: 120, currentStreak: 8, badge: "🥈" },
+  { id: '3', name: "TriviaKing", points: 3890, lifetimeClockins: 110, currentStreak: 5, badge: "🥉" }, // Tied in points with IPA_Lover
+  { id: '4', name: "OlyGirl", points: 3100, lifetimeClockins: 90, currentStreak: 10, badge: "" },
+  { id: '5', name: "Zack_Attack", points: 2950, lifetimeClockins: 85, currentStreak: 3, badge: "" },
 ];
 
 const totalMembers = 1242; // Example total
@@ -20,7 +20,7 @@ const totalMembers = 1242; // Example total
 const calculateRanks = (data: typeof leaderboardData) => {
   const sorted = [...data].sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
-    if (b.lifetimeCheckins !== a.lifetimeCheckins) return b.lifetimeCheckins - a.lifetimeCheckins;
+    if (b.lifetimeClockins !== a.lifetimeClockins) return b.lifetimeClockins - a.lifetimeClockins;
     if (b.currentStreak !== a.currentStreak) return b.currentStreak - a.currentStreak;
     return a.name.localeCompare(b.name);
   });
@@ -196,7 +196,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
                 ))}
               </div>
             </div>
-            <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest">Tie-Breaker: Clock-ins &gt; Streak &gt; A-Z</p>
+            <p className="text-center text-[9px] text-slate-600 font-bold uppercase tracking-widest">Tie-Breaker: Clock Ins &gt; Streak &gt; A-Z</p>
           </div>
         );
       case 'prizes':
@@ -209,7 +209,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
                 { title: "The Silver Chalice", prize: "$200 Gift Pack", requirement: "2nd Place Overall", icon: Gift },
                 { title: "Bronze Medallion", prize: "Limited Edition League Tee", requirement: "3rd Place Overall", icon: Star },
                 { title: "Venue MVP", prize: "Free Appetizer (Nightly)", requirement: "Most Points at a specific HQ", icon: Zap },
-                { title: "Mayor of the Bar", prize: "Custom Bar Stool Plaque", requirement: "Most Clock-ins (Monthly)", icon: Crown },
+                { title: "Mayor of the Bar", prize: "Custom Bar Stool Plaque", requirement: "Most Clock Ins (Monthly)", icon: Crown },
               ].map((p, i) => (
                 <div key={i} className="bg-slate-900/50 border border-white/5 p-5 rounded-2xl flex items-center gap-5 group hover:border-primary/20 transition-all">
                   <div className="bg-slate-800 p-3 rounded-xl border-2 border-slate-700 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all">
@@ -266,7 +266,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
               </div>
               <div className="bg-slate-900/50 border border-slate-700/50 p-5 rounded-2xl">
                 <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #2: Points & Limits</h3>
-                <p className="font-bold text-slate-400 text-sm leading-relaxed">Max two (2) clock-ins per 12-hour period. No purchase necessary to earn points. Ghosting (clocking in without being present) is prohibited.</p>
+                <p className="font-bold text-slate-400 text-sm leading-relaxed">Max two (2) Clock Ins per 12-hour period. No purchase necessary to earn points. Ghosting (clocking in without being present) is prohibited.</p>
               </div>
               <div className="bg-slate-900/50 border border-slate-700/50 p-5 rounded-2xl">
                 <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #3: The Vibe Check</h3>
@@ -274,7 +274,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
               </div>
               <div className="bg-slate-900/50 border border-slate-700/50 p-5 rounded-2xl">
                 <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #4: Fair Play</h3>
-                <p className="font-bold text-slate-400 text-sm leading-relaxed">Any attempt to spoof GPS or automate clock-ins results in a permanent ban. Play fair, drink responsibly.</p>
+                <p className="font-bold text-slate-400 text-sm leading-relaxed">Any attempt to spoof GPS or automate Clock Ins results in a permanent ban. Play fair, drink responsibly.</p>
               </div>
 
               {/* [NEW] Points Guide Link */}

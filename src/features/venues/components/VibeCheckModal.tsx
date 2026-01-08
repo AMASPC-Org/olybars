@@ -205,7 +205,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                             <p className="text-sm text-slate-300 font-medium leading-relaxed">
                                 {isLocked
                                     ? <>Guest signals are currently limited. Create a League Profile to <span className="text-white font-bold">publish this Vibe Check</span> and earn your first <span className="text-primary font-black">5 Points</span>.</>
-                                    : <>Thanks for the intel! That check-in was worth <span className="text-primary font-black">5 Points</span>. You are in Guest Mode, so you didn't bank them.</>
+                                    : <>Thanks for the intel! That Vibe Check was worth <span className="text-primary font-black">5 Points</span>. You are in Guest Mode, so you didn't bank them.</>
                                 }
                             </p>
                         </div>

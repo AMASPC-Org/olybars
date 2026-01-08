@@ -11,13 +11,13 @@ async function testBuzz() {
         'currentBuzz.score': 0
     });
 
-    // 2. Add 7 check-ins (7 * 10 = 70 points -> Buzzing)
-    console.log('Adding 7 check-ins...');
+    // 2. Add 7 clock-ins (7 * 10 = 70 points -> Buzzing)
+    console.log('Adding 7 clock-ins...');
     for (let i = 0; i < 7; i++) {
         await db.collection('signals').add({
             venueId: testVenueId,
             userId: `test_user_${i}`,
-            type: 'check_in',
+            type: 'clock_in',
             timestamp: Date.now()
         });
     }

@@ -36,7 +36,7 @@ export const KaraokeScreen: React.FC<KaraokeScreenProps> = ({ venues }) => {
                             time="9:00 PM - 2:00 AM"
                             category="karaoke"
                             points={10}
-                            onCheckIn={() => console.log('Clock-in', venue.id)}
+                            onClockIn={() => console.log('Clock-in', venue.id)}
                             onShare={() => console.log('Share', venue.id)}
                             onVibeChange={(v) => console.log('Vibe', venue.id, v)}
                             contextSlot={

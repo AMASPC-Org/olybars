@@ -7,7 +7,7 @@ export const BADGES: Badge[] = [
         description: "You’ve conquered the Tumwater industrial front. From the 80s synth-pop hop-bombs at Matchless to the dangerously drinkable 'Strawberry Golden' at Triceratops and the nautical grit of Rainwater Brewing, you’ve tasted the heart of the warehouse district.",
         points: 150,
         criteria: {
-            type: 'checkin_set',
+            type: 'clockin_set',
             venueIds: ['matchless', 'triceratops', 'rainwater'] // IDs must match venue IDs in DB
         }
     },
@@ -17,7 +17,7 @@ export const BADGES: Badge[] = [
         description: "The core of the 98501. You’ve tapped the mythical 1896 aquifer at Well 80, witnessed the 'punk rock' resurrection of the old Fish Tale space at Ilk Lodge, and found the 'Third Place' at Three Magnets.",
         points: 100,
         criteria: {
-            type: 'checkin_set',
+            type: 'clockin_set',
             venueIds: ['well80', 'ilklodge', 'threemagnets']
         }
     },
@@ -27,7 +27,7 @@ export const BADGES: Badge[] = [
         description: "A purist’s journey. From the Leopold Schmidt heritage at Well 80 to the curated taps at The Double Tap Tap House, you appreciate the craft in every pour.",
         points: 125,
         criteria: {
-            type: 'checkin_set',
+            type: 'clockin_set',
             venueIds: ['double-tap', 'well80', 'ilklodge']
         }
     },
@@ -37,7 +37,7 @@ export const BADGES: Badge[] = [
         description: "A true regional explorer. You’ve visited the shrine of Tenino stone-carving at Sandstone Distillery and the monument to tribal sovereignty at Talking Cedar. Some legends are worth the drive.",
         points: 250,
         criteria: {
-            type: 'checkin_set',
+            type: 'clockin_set',
             venueIds: ['sandstone', 'talkingcedar', 'toprung']
         }
     },
@@ -47,7 +47,7 @@ export const BADGES: Badge[] = [
         description: "The ultimate wingman. You’ve explored the national leaders of the sober-curious movement at Three Magnets and shared a fresh-pressed autumn tradition at Lattin's Cider Mill.",
         points: 100, // Points not specified in summary, assuming 100 based on standard
         criteria: {
-            type: 'checkin_set',
+            type: 'clockin_set',
             venueIds: ['threemagnets', 'lattins']
         }
     },

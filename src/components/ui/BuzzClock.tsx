@@ -39,7 +39,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                     isLive: true,
                     isBounty: true,
                     urgency: 'red',
-                    checkIns: v.checkIns,
+                    clockIns: v.clockIns,
                     status: v.status || 'buzzing', // Bounties imply buzz
                     lastUpdated: v.currentBuzz?.lastUpdated
                 });
@@ -66,7 +66,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                     isLive: true,
                     isBounty: false,
                     urgency: (timeToMinutes(activeRule.endTime) - currentMinutes) < 60 ? 'red' : 'green',
-                    checkIns: v.checkIns,
+                    clockIns: v.clockIns,
                     status: v.status,
                     lastUpdated: v.currentBuzz?.lastUpdated
                 });
@@ -84,7 +84,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                     isLive: true,
                     isBounty: false,
                     urgency: 'green',
-                    checkIns: v.checkIns,
+                    clockIns: v.clockIns,
                     status: v.status,
                     lastUpdated: v.currentBuzz?.lastUpdated
                 });
@@ -135,7 +135,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                     isLive: false,
                     isBounty: false,
                     urgency: 'blue',
-                    checkIns: v.checkIns,
+                    clockIns: v.clockIns,
                     status: v.status,
                     lastUpdated: v.currentBuzz?.lastUpdated
                 }];
@@ -186,11 +186,11 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
         return null;
     };
 
-    // Helper to calculate decayed check-ins (50% decay per hour)
-    const calculateEffectiveCheckIns = (rawCheckIns: number = 0, lastUpdated: number = Date.now()) => {
+    // Helper to calculate decayed clock-ins (50% decay per hour)
+    const calculateEffectiveClockIns = (rawClockIns: number = 0, lastUpdated: number = Date.now()) => {
         const hoursDiff = (Date.now() - lastUpdated) / (1000 * 60 * 60);
         const decayFactor = Math.pow(0.5, hoursDiff);
-        return Math.max(1, Math.round(rawCheckIns * decayFactor));
+        return Math.max(1, Math.round(rawClockIns * decayFactor));
     };
 
     return (
@@ -219,7 +219,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                 {displayItems.length > 0 ? displayItems.map((item) => {
                     const statusConfig = getStatusDisplay(item.status);
                     const timeValue = item.timeLabel.split(' ');
-                    const effectiveCheckIns = calculateEffectiveCheckIns(item.checkIns, item.lastUpdated || Date.now());
+                    const effectiveClockIns = calculateEffectiveClockIns(item.clockIns, item.lastUpdated || Date.now());
 
                     return (
                         <div
@@ -244,7 +244,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                                         </span>
                                     )}
                                     <span className="flex items-center gap-1 text-[9px] font-bold text-slate-400">
-                                        <Users className="w-3 h-3" /> {effectiveCheckIns}
+                                        <Users className="w-3 h-3" /> {effectiveClockIns}
                                     </span>
                                 </div>
                             </div>

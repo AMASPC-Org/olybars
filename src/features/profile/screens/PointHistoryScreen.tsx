@@ -39,7 +39,7 @@ export const PointHistoryScreen: React.FC<PointHistoryScreenProps> = ({ onBack, 
 
     const getTypeColor = (type: string) => {
         switch (type) {
-            case 'check_in': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+            case 'clock_in': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
             case 'vibe': return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
             case 'photo': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
             case 'play': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
@@ -48,7 +48,7 @@ export const PointHistoryScreen: React.FC<PointHistoryScreenProps> = ({ onBack, 
     };
 
     const getArtieNote = (item: ActivityLog) => {
-        if (item.type === 'check_in') return "You clocked in and joined the Pulse! 🍻";
+        if (item.type === 'clock_in') return "You clocked in and joined the Pulse! 🍻";
         if (item.type === 'vibe') return "Thanks for the heads-up on the vibe! 🕯️";
         if (item.type === 'play') return `Game on! Verified at ${item.metadata?.amenityName || 'the venue'}. 🎯`;
         if (item.type === 'photo') return "Visual proof! Your photo is rocking the feed. 📸";

@@ -41,7 +41,7 @@ const CookiePolicyScreen: React.FC = () => {
                     <ul className="list-disc list-inside text-slate-400 text-sm space-y-2 ml-4">
                         <li><strong>Auth Token:</strong> Keeps you signed in securely via Firebase.</li>
                         <li><strong>League ID:</strong> Stores your anonymous user ID if you are a guest.</li>
-                        <li><strong>Verification Timestamps:</strong> Local timestamps used to enforce the "30-minute Vibe Check Cooldown" and "12-hour Check-In Cap" to prevent cheating.</li>
+                        <li><strong>Verification Timestamps:</strong> Local timestamps used to enforce the "30-minute Vibe Check Cooldown" and "12-hour Clock-In Cap" to prevent cheating.</li>
                     </ul>
                 </section>
 

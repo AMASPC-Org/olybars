@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { VenueStatus } from '../../../types';
-import { isSameDay } from 'date-fns';
+import { isSameDay, isAfter, startOfToday } from 'date-fns';
 
 export type FilterKind = 'status' | 'deals' | 'scene' | 'play' | 'features' | 'events' | 'all';
 
@@ -26,6 +26,8 @@ interface DiscoveryContextType {
     setViewMode: (m: 'list' | 'map') => void;
     clearAllFilters: () => void;
     isToday: boolean;
+    mapRegion: string;
+    setMapRegion: (r: string) => void;
 }
 
 const DiscoveryContext = createContext<DiscoveryContextType | undefined>(undefined);
@@ -42,8 +44,29 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const [eventFilter, setEventFilter] = useState<string | 'all'>('all');
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+    const [mapRegion, setMapRegion] = useState<string>('downtown');
 
     const isToday = useMemo(() => isSameDay(selectedDate, new Date()), [selectedDate]);
+
+    /**
+     * Discovery Pivot Logic
+     * When picking a future date, some filters "don't make sense" (All, Vibe, Scene, Features).
+     * We pivot to 'Events' automatically to show relevant future plans.
+     */
+    const handleSetSelectedDate = useCallback((d: Date) => {
+        setSelectedDate(d);
+
+        const isFuture = isAfter(d, startOfToday()) && !isSameDay(d, new Date());
+        if (isFuture) {
+            // Forbidden categories for future view (Mental Model: "Pulse" is for now, "Scene" is for now)
+            const incompatibleFilters: FilterKind[] = ['all', 'status', 'scene', 'features'];
+            if (incompatibleFilters.includes(filterKind)) {
+                console.log(`[DISCOVERY] Pivoting to 'events' for future date ${d.toDateString()}`);
+                setFilterKind('events');
+                setEventFilter('all');
+            }
+        }
+    }, [filterKind]);
 
     const setSearchQuery = useCallback((q: string) => {
         setSearchParams(prev => {
@@ -60,6 +83,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setPlayFilter('all');
         setFeatureFilter('all');
         setEventFilter('all');
+        setSelectedDate(new Date());
     }, []);
 
     const value = useMemo(() => ({
@@ -78,15 +102,17 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         eventFilter,
         setEventFilter,
         selectedDate,
-        setSelectedDate,
+        setSelectedDate: handleSetSelectedDate,
         viewMode,
         setViewMode,
         clearAllFilters,
-        isToday
+        isToday,
+        mapRegion,
+        setMapRegion
     }), [
         searchQuery, setSearchQuery, filterKind, statusFilter, sceneFilter,
-        playFilter, featureFilter, eventFilter, selectedDate, viewMode,
-        clearAllFilters, isToday
+        playFilter, featureFilter, eventFilter, selectedDate, handleSetSelectedDate,
+        viewMode, setViewMode, clearAllFilters, isToday, mapRegion
     ]);
 
     return (

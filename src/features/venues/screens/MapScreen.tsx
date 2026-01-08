@@ -83,8 +83,8 @@ const MapScreen = () => {
           const iconColor = isLeagueAnchor ? "#fbbf24" : "#64748b";
 
           // Badge Logic for Clock-Ins
-          const badgeHtml = (venue.checkIns && venue.checkIns > 0)
-            ? `<div style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; border: 2px solid #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10;">${venue.checkIns}</div>`
+          const badgeHtml = (venue.clockIns && venue.clockIns > 0)
+            ? `<div style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; border: 2px solid #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10;">${venue.clockIns}</div>`
             : '';
 
           div.innerHTML = showBeerMug
@@ -105,7 +105,7 @@ const MapScreen = () => {
       markersRef.current.push(marker);
 
       // LIVE PULSE: Add a background glow for active venues
-      const recentActivity = venue.checkIns && venue.checkIns > 0;
+      const recentActivity = venue.clockIns && venue.clockIns > 0;
       const recentVibeCheck = venue.currentBuzz?.lastUpdated && (Date.now() - venue.currentBuzz.lastUpdated) < 3600000; // Last 1 hour
 
       if (recentActivity || recentVibeCheck) {
@@ -182,13 +182,15 @@ const MapScreen = () => {
             </div>
             <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 900; font-family: 'Oswald', sans-serif; text-transform: uppercase;">${venue.name}</h3>
             
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 10px; font-weight: bold; color: #cbd5e1;">
-              <div style="display: flex; align-items: center; gap: 3px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 10px; font-weight: 900; text-transform: uppercase; tracking: 0.05em;">
+              <div style="display: flex; align-items: center; gap: 3px; color: #64748b;">
                 <span>👥</span>
-                <span>${venue.checkIns || 0} Clocked In</span>
+                <span>${venue.clockIns || 0} IN</span>
               </div>
-              ${isBuzzing ? '<div style="display: flex; align-items: center; gap: 3px; color: #fbbf24;"><span>🔥</span><span>Buzzing</span></div>' : ''}
-              ${(venue.status === 'chill' || !venue.status) ? '<div style="display: flex; align-items: center; gap: 3px; color: #60a5fa;"><span>🧊</span><span>Chill</span></div>' : ''}
+              ${isBuzzing ? '<div style="display: flex; align-items: center; gap: 3px; color: #fff; background: rgba(239, 68, 68, 0.2); border: 1.5px solid #fbbf24; padding: 2px 6px; border-radius: 4px; box-shadow: 0 0 8px rgba(251, 191, 36, 0.3);"><span>🔥</span><span>Buzzing</span></div>' : ''}
+              ${venue.status === 'packed' ? '<div style="display: flex; align-items: center; gap: 3px; color: #fff; background: rgba(236, 72, 153, 0.2); border: 1.5px solid #fbbf24; padding: 2px 6px; border-radius: 4px; box-shadow: 0 0 8px rgba(251, 191, 36, 0.3);"><span>⚡</span><span>Packed</span></div>' : ''}
+              ${venue.status === 'chill' ? '<div style="display: flex; align-items: center; gap: 3px; color: #fff; background: rgba(59, 130, 246, 0.2); border: 1.5px solid #fbbf24; padding: 2px 6px; border-radius: 4px; box-shadow: 0 0 8px rgba(251, 191, 36, 0.3);"><span>🧊</span><span>Chill</span></div>' : ''}
+              ${venue.status === 'dead' ? '<div style="display: flex; align-items: center; gap: 3px; color: #94a3b8; background: rgba(15, 23, 42, 0.6); border: 1.5px solid #fbbf24; padding: 2px 6px; border-radius: 4px; box-shadow: 0 0 8px rgba(251, 191, 36, 0.3);"><span>💀</span><span>Dead</span></div>' : ''}
             </div>
 
             <p style="margin: 0; font-size: 11px; color: #94a3b8; line-height: 1.3; font-style: italic;">"${venue.vibe}"</p>
@@ -354,7 +356,10 @@ const darkMapStyle = [
   { featureType: "poi.business", stylers: [{ visibility: "off" }] },
   { featureType: "poi.attraction", stylers: [{ visibility: "off" }] },
   { featureType: "poi.medical", stylers: [{ visibility: "off" }] },
-  { featureType: "poi.park", elementType: "labels.text", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.park", stylers: [{ visibility: "on" }] }, // Keep park geometry visible for spatial awareness
+  { featureType: "poi.park", elementType: "labels", stylers: [{ visibility: "off" }] }, // Hide labels
+  { featureType: "poi.place_of_worship", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.school", stylers: [{ visibility: "off" }] },
   { featureType: "transit", stylers: [{ visibility: "off" }] },
   { featureType: "road", elementType: "geometry", stylers: [{ color: "#334155" }] },
   { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#1e293b" }] },

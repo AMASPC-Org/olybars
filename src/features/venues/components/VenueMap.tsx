@@ -4,6 +4,7 @@ import { Venue } from '../../../types';
 import { useGoogleMapsScript } from '../../../hooks/useGoogleMapsScript';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { Loader2, MapPin } from 'lucide-react';
+import { useDiscovery } from '../contexts/DiscoveryContext';
 
 interface VenueMapProps {
     venues: Venue[];
@@ -12,6 +13,12 @@ interface VenueMapProps {
     height?: string;
     className?: string;
 }
+
+const REGION_TARGETS: Record<string, { lat: number; lng: number; zoom: number }> = {
+    westside: { lat: 47.0435, lng: -122.9310, zoom: 14 },
+    downtown: { lat: 47.0425, lng: -122.9007, zoom: 15 },
+    eastside: { lat: 47.0425, lng: -122.8680, zoom: 14 }
+};
 
 export const VenueMap: React.FC<VenueMapProps> = ({
     venues,
@@ -27,13 +34,16 @@ export const VenueMap: React.FC<VenueMapProps> = ({
     const { status, apiKey } = useGoogleMapsScript();
     const { coords } = useGeolocation({ shouldPrompt: false });
     const [map, setMap] = useState<google.maps.Map | null>(null);
+    const { mapRegion } = useDiscovery();
 
     const initMap = () => {
         if (!mapRef.current || !window.google) return;
-        const defaultCenter = { lat: 47.0425, lng: -122.9007 }; // Olympia
+
+        // Use region target or geolocation or default Oly
+        const target = REGION_TARGETS[mapRegion] || REGION_TARGETS.downtown;
         const initialMap = new google.maps.Map(mapRef.current, {
-            center: center || (coords ? { lat: coords.latitude, lng: coords.longitude } : defaultCenter),
-            zoom: zoom,
+            center: center || target,
+            zoom: zoom || target.zoom,
             disableDefaultUI: true,
             zoomControl: true,
             mapId: '6b4fa3a2419c825a',
@@ -47,6 +57,16 @@ export const VenueMap: React.FC<VenueMapProps> = ({
             initMap();
         }
     }, [status, map]);
+
+    // Region Navigation Logic
+    useEffect(() => {
+        if (!map || !window.google) return;
+        const target = REGION_TARGETS[mapRegion];
+        if (target) {
+            map.panTo({ lat: target.lat, lng: target.lng });
+            map.setZoom(target.zoom);
+        }
+    }, [map, mapRegion]);
 
     useEffect(() => {
         if (!map || !venues || !window.google) return;
@@ -76,8 +96,8 @@ export const VenueMap: React.FC<VenueMapProps> = ({
                     const div = document.createElement('div');
                     div.className = "custom-marker";
                     const iconColor = isLeagueAnchor ? "#fbbf24" : "#64748b";
-                    const badgeHtml = (venue.checkIns && venue.checkIns > 0)
-                        ? `<div style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; border: 2px solid #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10;">${venue.checkIns}</div>`
+                    const badgeHtml = (venue.clockIns && venue.clockIns > 0)
+                        ? `<div style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; border: 2px solid #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10;">${venue.clockIns}</div>`
                         : '';
 
                     div.innerHTML = showBeerMug
@@ -89,8 +109,8 @@ export const VenueMap: React.FC<VenueMapProps> = ({
                  <div style="background: rgba(15, 23, 42, 0.8); color: white; padding: 2px 6px; border-radius: 4px; font-size: ${isLeagueAnchor ? '11px' : '9px'}; font-weight: 900; white-space: nowrap; margin-top: -4px;">${venue.name}</div>
                </div>`
                         : `<div style="position: relative; width: 12px; height: 12px; background: ${iconColor}; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
-                ${badgeHtml}
-               </div>`;
+                 ${badgeHtml}
+                </div>`;
                     return div;
                 })()
             });
@@ -102,7 +122,7 @@ export const VenueMap: React.FC<VenueMapProps> = ({
             markersRef.current.push(marker);
 
             // Pulse logic logic
-            const recentActivity = venue.checkIns && venue.checkIns > 0;
+            const recentActivity = venue.clockIns && venue.clockIns > 0;
             const recentVibeCheck = venue.currentBuzz?.lastUpdated && (Date.now() - venue.currentBuzz.lastUpdated) < 3600000;
 
             if (recentActivity || recentVibeCheck) {

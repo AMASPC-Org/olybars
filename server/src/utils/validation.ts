@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-export const CheckInSchema = z.object({
+export const ClockInSchema = z.object({
     venueId: z.string().min(1),
     lat: z.number(),
     lng: z.number(),
     verificationMethod: z.enum(['gps', 'qr']).optional(),
 });
 
-export const PlayCheckInSchema = z.object({
+export const PlayClockInSchema = z.object({
     venueId: z.string().min(1),
     amenityId: z.string().min(1),
 });
@@ -171,7 +171,7 @@ export const VenueUpdateSchema = z.object({
         last_toggled_at: z.number().optional()
     })).optional(),
 
-    checkIns: z.number().optional(),
+    clockIns: z.number().optional(),
     capacity: z.number().optional(),
     isVisible: z.boolean().optional(),
     isActive: z.boolean().optional(),
@@ -225,7 +225,7 @@ export const VenueSchema = z.object({
     sceneTags: z.array(z.string()).optional(),
     foodService: z.enum(['full_kitchen', 'limited_kitchen', 'snacks', 'none_byof']).optional(),
     status: z.enum(['dead', 'chill', 'buzzing', 'packed']).optional(),
-    checkIns: z.number().optional(),
+    clockIns: z.number().optional(),
     capacity: z.number().optional(),
     isPaidLeagueMember: z.boolean().optional(),
     pointBank: z.number().optional(),

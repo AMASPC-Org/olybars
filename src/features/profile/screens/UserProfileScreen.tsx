@@ -269,7 +269,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                 const updates = {
                     stats: {
                         seasonPoints: userProfile.stats?.seasonPoints || 0,
-                        lifetimeCheckins: userProfile.stats?.lifetimeCheckins || 0,
+                        lifetimeClockins: userProfile.stats?.lifetimeClockins || 0,
                         currentStreak: userProfile.stats?.currentStreak || 0,
                         vibeCheckCount: userProfile.stats?.vibeCheckCount || 0,
                         competitionPoints: newPoints
@@ -377,7 +377,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                         <div className="bg-surface p-4 rounded-2xl border border-white/5 shadow-xl">
                             <History className="w-5 h-5 text-blue-400 mb-3" />
                             <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Clock-ins</p>
-                            <p className="text-2xl font-black font-league">{userProfile.stats?.lifetimeCheckins || 0}</p>
+                            <p className="text-2xl font-black font-league">{userProfile.stats?.lifetimeClockins || 0}</p>
                         </div>
                         <div className="bg-surface p-4 rounded-2xl border border-white/5 shadow-xl">
                             <Zap className="w-5 h-5 text-yellow-400 mb-3" />

@@ -1,4 +1,4 @@
-export type SignalType = 'check_in' | 'vibe_report' | 'photo_upload';
+export type SignalType = 'clock_in' | 'vibe_report' | 'photo_upload';
 
 export interface Signal {
     id: string;

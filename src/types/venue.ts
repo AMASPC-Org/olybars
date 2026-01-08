@@ -188,7 +188,7 @@ export interface Venue {
     sceneTags?: SceneTag[]; // [NEW] Scene Tags
 
     status: VenueStatus;
-    checkIns: number;
+    clockIns: number;
     capacity?: number; // [NEW] Total venue capacity for busyness calculations
     isPaidLeagueMember?: boolean;
     nicknames?: string[];
@@ -233,7 +233,7 @@ export interface Venue {
     fullMenu?: MenuItem[];
 
     // Bonus Points
-    checkin_bonus_points?: number;
+    clockin_bonus_points?: number;
     bonus_expires_at?: number;
 
     alertTags?: string[];
@@ -259,6 +259,12 @@ export interface Venue {
     giftCardUrl?: string;
     directMenuUrl?: string; // [NEW] Link to Untappd/DigitalPour/Image
     newsletterUrl?: string; // [NEW] Link to Mailchimp/Newsletter
+    loyalty_signup_url?: string; // [NEW] Link to external loyalty (Toast/Square)
+    hero_item?: {
+        name: string;
+        description: string;
+        photoUrl: string;
+    }; // [NEW] High-margin item for post-clock-in upsell
 
     // Google Places Data
     googleRating?: number;
@@ -332,8 +338,8 @@ export interface Venue {
 
     manualStatus?: VenueStatus;
     manualStatusExpiresAt?: number;
-    manualCheckIns?: number;
-    manualCheckInsExpiresAt?: number;
+    manualClockIns?: number;
+    manualClockInsExpiresAt?: number;
 
     pointBank?: number;
     pointBankLastReset?: number;

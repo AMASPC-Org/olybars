@@ -12,7 +12,8 @@ import { fetchVenues, updateVenueDetails } from '../../../services/venueService'
 import { UserProfile, ActivityLog, Venue } from '../../../types';
 import { AiAccessTab } from '../components/AiAccessTab';
 import { PhotoApprovalCard } from '../components/PhotoApprovalCard';
-import { Camera } from 'lucide-react';
+import { PinCalibrationMap } from '../components/PinCalibrationMap';
+import { Camera, MapPin } from 'lucide-react';
 
 interface AdminDashboardScreenProps {
     userProfile: any;
@@ -32,6 +33,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
     });
     const [searchTerm, setSearchTerm] = useState('');
     const [venueFilter, setVenueFilter] = useState<'all' | 'visible' | 'ghost' | 'archived'>('all');
+    const [calibratingVenue, setCalibratingVenue] = useState<Venue | null>(null);
 
     useEffect(() => {
         const loadDashboard = async () => {
@@ -44,6 +46,19 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
         };
         loadDashboard();
     }, []);
+
+    const handleSaveCalibration = async (coords: { lat: number; lng: number }) => {
+        if (!calibratingVenue) return;
+        try {
+            await updateVenueDetails(calibratingVenue.id, {
+                location: { ...calibratingVenue.location, lat: coords.lat, lng: coords.lng }
+            } as any);
+            queryClient.invalidateQueries({ queryKey: ['venues'] });
+            setCalibratingVenue(null);
+        } catch (error) {
+            console.error('Failed to save calibration', error);
+        }
+    };
 
     const filteredLeagueUsers = leagueUsers
         .filter(u => u.handle?.toLowerCase().includes(searchTerm.toLowerCase()) || u.uid.includes(searchTerm))
@@ -295,6 +310,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                         <th className="p-3 text-center">Paid Member</th>
                                         <th className="p-3 text-center">Game Vibe</th>
                                         <th className="p-3 text-center">Ghost Mode</th>
+                                        <th className="p-3 text-center">Map</th>
                                         <th className="p-3 text-right">Status</th>
                                     </tr>
                                 </thead>
@@ -327,6 +343,15 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                                     title={venue.isVisible !== false ? "Visible Publicly" : "Ghost Mode (Hidden)"}
                                                 >
                                                     {venue.isVisible !== false ? <Eye size={16} /> : <EyeOff size={16} />}
+                                                </button>
+                                            </td>
+                                            <td className="p-3 text-center">
+                                                <button
+                                                    onClick={() => setCalibratingVenue(venue)}
+                                                    className="p-2 hover:bg-primary/20 text-slate-400 hover:text-primary transition-all rounded-lg"
+                                                    title="Calibrate Map Pin"
+                                                >
+                                                    <MapPin size={16} />
                                                 </button>
                                             </td>
                                             <td className="p-3 text-right">
@@ -463,6 +488,19 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
 
                 {activeTab === 'ai' && <AiAccessTab />}
             </div>
+
+            {/* Calibration Modal */}
+            {calibratingVenue && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="w-full max-w-2xl">
+                        <PinCalibrationMap
+                            venue={calibratingVenue}
+                            onSave={handleSaveCalibration}
+                            onCancel={() => setCalibratingVenue(null)}
+                        />
+                    </div>
+                </div>
+            )}
 
             <div className="mt-8 p-4 bg-amber-400/10 border border-amber-400/20 rounded-2xl flex gap-3">
                 <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />

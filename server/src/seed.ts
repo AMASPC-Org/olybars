@@ -28,7 +28,7 @@ async function seedVenues() {
         }
 
         console.warn('⚠️  [WARNING] YOU ARE ABOUT TO UPDATE VENUE DEFINITIONS IN PRODUCTION.');
-        console.warn('⚠️  [WARNING] This will overwrite static fields but PRESERVE runtime data (check-ins, vibe).');
+        console.warn('⚠️  [WARNING] This will overwrite static fields but PRESERVE runtime data (clock-ins, vibe).');
 
         const answer = await question('Are you absolutely sure you want to proceed? (Y/N): ');
         if (answer.toLowerCase() !== 'y') {
@@ -77,7 +77,7 @@ async function seedVenues() {
             if (doc.exists) {
                 // UPDATE: Exclude runtime fields to prevent resetting them
                 const {
-                    checkIns,
+                    clockIns,
                     currentBuzz,
                     status,
                     manualStatus, // If defined in master, we might want to respect it? Usually master doesn't have manualStatus.

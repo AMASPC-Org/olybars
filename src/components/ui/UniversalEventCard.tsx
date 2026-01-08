@@ -9,7 +9,7 @@ interface UniversalEventCardProps {
     title?: string;
     time?: string;
     category?: 'play' | 'live' | 'event' | 'karaoke';
-    onCheckIn?: () => void;
+    onClockIn?: () => void;
     onShare?: () => void;
     onVibeChange?: (vibe: 'dead' | 'chill' | 'buzzing' | 'packed') => void;
     contextSlot?: React.ReactNode;
@@ -22,7 +22,7 @@ export const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
     title,
     time,
     category,
-    onCheckIn,
+    onClockIn,
     onShare,
     onVibeChange,
     contextSlot,
@@ -163,7 +163,7 @@ export const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
                         {/* Participation Actions */}
                         <div className="flex gap-3 pt-2">
                             <button
-                                onClick={onCheckIn}
+                                onClick={onClockIn}
                                 className="flex-[2] bg-primary hover:bg-yellow-400 text-black font-black py-4 rounded-2xl transition-all font-league uppercase text-sm border-2 border-black shadow-[4px_4px_0px_0px_#000] active:translate-y-1 active:shadow-none"
                             >
                                 I'm Here

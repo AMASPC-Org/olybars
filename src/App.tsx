@@ -7,14 +7,14 @@ import { X } from 'lucide-react';
 // --- CONFIG & TYPES ---
 import { queryClient } from './lib/queryClient';
 import {
-  Venue, PointsReason, UserProfile, CheckInRecord, UserAlertPreferences, VenueStatus, ActivityLog, GameStatus
+  Venue, PointsReason, UserProfile, ClockInRecord, UserAlertPreferences, VenueStatus, ActivityLog, GameStatus
 } from './types';
 import { isSystemAdmin } from './types/auth_schema';
 
 // --- REAL SERVICES ---
 import { fetchVenues, updateVenueDetails } from './services/venueService';
 import {
-  saveAlertPreferences, logUserActivity, syncCheckIns,
+  saveAlertPreferences, logUserActivity, syncClockIns,
   fetchUserRank,
   toggleFavorite,
   updateUserProfile,
@@ -62,6 +62,7 @@ import { VenueProfileScreen } from './features/venues/screens/VenueProfileScreen
 import AboutPage from './features/marketing/screens/About';
 import ArtieBioScreen from './features/artie/screens/ArtieBioScreen'; // [NEW] Import
 import { DiscoveryLayout } from './features/venues/screens/DiscoveryLayout';
+import { DiscoveryProvider } from './features/venues/contexts/DiscoveryContext';
 import OwnerPortal from './features/owner/screens/OwnerPortal';
 import { PointHistoryScreen } from './features/profile/screens/PointHistoryScreen';
 import { QRVibeCheckScreen } from './features/vibe-check/screens/QRVibeCheckScreen'; // [NEW] QR Screen
@@ -145,7 +146,7 @@ export default function OlyBarsApp() {
   });
 
   const [userPoints, setUserPoints] = useState(() => parseInt(localStorage.getItem('oly_points') || '0'));
-  const [checkInHistory, setCheckInHistory] = useState<CheckInRecord[]>(() => JSON.parse(localStorage.getItem('oly_checkins') || '[]'));
+  const [clockInHistory, setClockInHistory] = useState<ClockInRecord[]>(() => JSON.parse(localStorage.getItem('oly_clockins') || '[]'));
   const [alertPrefs, setAlertPrefs] = useState<UserAlertPreferences>(() => JSON.parse(localStorage.getItem('oly_prefs') || '{"nightlyDigest":true,"weeklyDigest":true,"followedVenues":[],"interests":[]}'));
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
@@ -210,14 +211,14 @@ export default function OlyBarsApp() {
   }, [userPoints]);
 
   useEffect(() => {
-    localStorage.setItem('oly_checkins', JSON.stringify(checkInHistory));
-  }, [checkInHistory]);
+    localStorage.setItem('oly_clockins', JSON.stringify(clockInHistory));
+  }, [clockInHistory]);
 
   useEffect(() => {
     localStorage.setItem('oly_prefs', JSON.stringify(alertPrefs));
   }, [alertPrefs]);
 
-  // Maker's Trail Survey Trigger: 3 Local Check-ins and Survey Not Done
+  // Maker's Trail Survey Trigger: 3 Local Clock Ins and Survey Not Done
   useEffect(() => {
     if (userProfile.uid !== 'guest' &&
       userProfile.makersTrailProgress &&
@@ -234,7 +235,7 @@ export default function OlyBarsApp() {
 
   const awardPoints = (reason: PointsReason, venueId?: string, hasConsent?: boolean, verificationMethod?: 'gps' | 'qr', bonusPoints: number = 0, skipBackend: boolean = false) => {
     let delta = 0;
-    if (reason === 'checkin' || reason === 'photo') delta = 10;
+    if (reason === 'clockin' || reason === 'photo') delta = 10;
     else if (reason === 'share' || reason === 'social_share') delta = 5;
     else if (reason === 'vibe') delta = hasConsent ? 20 : 5;
 
@@ -319,10 +320,10 @@ export default function OlyBarsApp() {
   const confirmVibeCheck = async (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod: 'gps' | 'qr' = 'gps', gameStatus?: Record<string, GameStatus>, soberFriendlyCheck?: { isGood: boolean; reason?: string }) => {
     const now = Date.now();
 
-    // 1. If not already clocked in, perform a background check-in to unify signals
+    // 1. If not already clocked in, perform a background Clock In to unify signals
     if (!clockedInVenue || clockedInVenue !== venue.id) {
       setClockedInVenue(venue.id);
-      setCheckInHistory(prev => [...prev, { venueId: venue.id, timestamp: now }]);
+      setClockInHistory(prev => [...prev, { venueId: venue.id, timestamp: now }]);
     }
 
     setVibeCheckedVenue(venue.id);
@@ -411,7 +412,9 @@ export default function OlyBarsApp() {
 
   const handleAcceptAgeGate = () => {
     cookieService.set('oly_age_gate', 'true');
+    cookieService.set('oly_terms', 'true');
     setHasAcceptedAgeGate(true);
+    setHasAcceptedTerms(true);
   };
 
   const handleAcceptTerms = () => {
@@ -421,17 +424,17 @@ export default function OlyBarsApp() {
   };
 
   useEffect(() => { localStorage.setItem('oly_points', userPoints.toString()); }, [userPoints]);
-  useEffect(() => { localStorage.setItem('oly_checkins', JSON.stringify(checkInHistory)); }, [checkInHistory]);
+  useEffect(() => { localStorage.setItem('oly_clockins', JSON.stringify(clockInHistory)); }, [clockInHistory]);
   useEffect(() => { localStorage.setItem('oly_profile', JSON.stringify(userProfile)); }, [userProfile]);
   useEffect(() => { localStorage.setItem('oly_prefs', JSON.stringify(alertPrefs)); if (userId !== 'guest') saveAlertPreferences(userId, alertPrefs); }, [alertPrefs]);
 
   const handleLogout = () => {
     localStorage.removeItem('oly_profile');
     localStorage.removeItem('oly_points');
-    localStorage.removeItem('oly_checkins');
+    localStorage.removeItem('oly_clockins');
     setUserProfile({ uid: 'guest', role: 'guest' });
     setUserPoints(1250);
-    setCheckInHistory([]);
+    setClockInHistory([]);
     setShowOwnerDashboard(false);
     window.location.href = '/';
   };
@@ -447,276 +450,278 @@ export default function OlyBarsApp() {
     return <AgeGate onAccept={handleAcceptAgeGate} />;
   }
 
-  if (!hasAcceptedTerms) {
-    return <OnboardingModal isOpen={true} onClose={handleAcceptTerms} userRole="guest" />;
+  if (!hasAcceptedTerms && userProfile.role !== 'guest') {
+    return <OnboardingModal isOpen={true} onClose={handleAcceptTerms} userRole={userProfile.role} />;
   }
 
   return (
     <ErrorBoundary>
       <Router>
-        <ScrollToTop />
-        <div className="h-full bg-background overflow-hidden relative">
-          <Routes>
-            <Route
-              path="*"
-              element={
-                <AppShell
-                  venues={venues}
-                  userPoints={userPoints}
-                  isLeagueMember={userProfile.role !== 'guest'}
-                  alertPrefs={alertPrefs}
-                  setAlertPrefs={setAlertPrefs}
-                  onToggleWeeklyBuzz={handleToggleWeeklyBuzz}
-                  onProfileClick={() => {
-                    if (userProfile.uid === 'guest') {
-                      setLoginMode('user');
+        <DiscoveryProvider>
+          <ScrollToTop />
+          <div className="h-full bg-background overflow-hidden relative">
+            <Routes>
+              <Route
+                path="*"
+                element={
+                  <AppShell
+                    venues={venues}
+                    userPoints={userPoints}
+                    isLeagueMember={userProfile.role !== 'guest'}
+                    alertPrefs={alertPrefs}
+                    setAlertPrefs={setAlertPrefs}
+                    onToggleWeeklyBuzz={handleToggleWeeklyBuzz}
+                    onProfileClick={() => {
+                      if (userProfile.uid === 'guest') {
+                        setLoginMode('user');
+                        setUserSubMode('login');
+                        setShowLoginModal(true);
+                      } else {
+                        // Use document location for SPA feel or navigation handler
+                        window.history.pushState({}, '', '/profile');
+                        // Since we aren't using a router hook at this level, 
+                        // we need to trigger a re-render or use a shared navigation handler.
+                        // However, routes are defined below. 
+                        // To keep it simple and fix the "reload" issue:
+                        const popStateEvent = new PopStateEvent('popstate');
+                        window.dispatchEvent(popStateEvent);
+                      }
+                    }}
+                    onOwnerLoginClick={() => {
+                      setLoginMode('owner');
                       setUserSubMode('login');
                       setShowLoginModal(true);
-                    } else {
-                      // Use document location for SPA feel or navigation handler
-                      window.history.pushState({}, '', '/profile');
-                      // Since we aren't using a router hook at this level, 
-                      // we need to trigger a re-render or use a shared navigation handler.
-                      // However, routes are defined below. 
-                      // To keep it simple and fix the "reload" issue:
-                      const popStateEvent = new PopStateEvent('popstate');
-                      window.dispatchEvent(popStateEvent);
+                    }}
+                    onMemberLoginClick={(mode?: 'login' | 'signup') => {
+                      setLoginMode('user');
+                      if (mode) setUserSubMode(mode);
+                      setShowLoginModal(true);
+                    }}
+                    userRole={userProfile.role}
+                    userHandle={userProfile.handle}
+                    userRank={userRank}
+                    onLogout={handleLogout}
+                    userProfile={userProfile}
+                    onToggleFavorite={handleToggleFavorite}
+                    onClockIn={handleClockIn}
+                    onVibeCheck={handleVibeCheck}
+                    clockedInVenue={clockedInVenue}
+                    onEditVenue={(vid) => {
+                      setOwnerDashboardInitialVenueId(vid);
+                      setOwnerDashboardInitialView('listing');
+                      setShowOwnerDashboard(true);
+                    }}
+                    onVenueDashboardClick={() => setShowOwnerDashboard(true)}
+                    showArtie={showArtie}
+                    setShowArtie={setShowArtie}
+                  />
+                }
+              >
+                <Route element={<DiscoveryLayout />}>
+                  <Route
+                    index
+                    element={
+                      <>
+                        <SEO
+                          title="Pulse & Buzz"
+                          description="Track the real-time vibe of downtown Olympia. See which bars are buzzing right now."
+                        />
+                        <BuzzScreen />
+                      </>
                     }
-                  }}
-                  onOwnerLoginClick={() => {
-                    setLoginMode('owner');
-                    setUserSubMode('login');
-                    setShowLoginModal(true);
-                  }}
-                  onMemberLoginClick={(mode?: 'login' | 'signup') => {
-                    setLoginMode('user');
-                    if (mode) setUserSubMode(mode);
-                    setShowLoginModal(true);
-                  }}
-                  userRole={userProfile.role}
-                  userHandle={userProfile.handle}
-                  userRank={userRank}
-                  onLogout={handleLogout}
-                  userProfile={userProfile}
-                  onToggleFavorite={handleToggleFavorite}
-                  onClockIn={handleClockIn}
-                  onVibeCheck={handleVibeCheck}
-                  clockedInVenue={clockedInVenue}
-                  onEditVenue={(vid) => {
-                    setOwnerDashboardInitialVenueId(vid);
-                    setOwnerDashboardInitialView('listing');
-                    setShowOwnerDashboard(true);
-                  }}
-                  onVenueDashboardClick={() => setShowOwnerDashboard(true)}
-                  showArtie={showArtie}
-                  setShowArtie={setShowArtie}
-                />
-              }
-            >
-              <Route element={<DiscoveryLayout />}>
+                  />
+                  <Route
+                    path="venues/:id"
+                    element={
+                      <VenueProfileScreen />
+                    }
+                  />
+                </Route>
+                <Route path="karaoke" element={<><SEO title="Karaoke Guide" description="Find the best karaoke spots in Olympia tonight." /><KaraokeScreen venues={venues} /></>} />
+                <Route path="play" element={<><SEO title="The Arcade & Arena" description="The central hub for games, events, and activities in Olympia." /><PlayGatewayScreen venues={venues} /></>} />
+                <Route path="trivia" element={<><SEO title="Trivia & Games" description="Your guide to trivia nights and bar games in the 98501." /><TriviaScreen venues={venues} userProfile={userProfile} /></>} />
+                <Route path="live" element={<><SEO title="Live Music" description="Live shows and concerts happening tonight in downtown Olympia." /><LiveMusicScreen venues={venues} /></>} />
+                <Route path="events" element={<><SEO title="Event Wire" description="The chronological feed of everything happening in the Olympia bar scene." /><EventsScreen venues={venues} /></>} />
                 <Route
-                  index
+                  path="league"
                   element={
                     <>
-                      <SEO
-                        title="Pulse & Buzz"
-                        description="Track the real-time vibe of downtown Olympia. See which bars are buzzing right now."
+                      <SEO title="Bar League HQ" description="Join the official Artesian Bar League. Track your points, rankings, and rewards." />
+                      <LeagueHQScreen
+                        venues={venues}
+                        isLeagueMember={userProfile.role !== 'guest'}
+                        onJoinClick={(mode) => {
+                          setUserSubMode(mode || 'login');
+                          setLoginMode('user');
+                          setShowLoginModal(true);
+                        }}
+                        onAskArtie={() => setShowArtie(true)}
                       />
-                      <BuzzScreen />
                     </>
                   }
                 />
+                <Route path="bars" element={<><SEO title="Dives & Drafts" description="The definitive directory of every bar and taproom in Olympia." /><TheSpotsScreen venues={venues} userProfile={userProfile} handleToggleFavorite={handleToggleFavorite} mode="bars" /></>} />
+                <Route path="makers" element={<><SEO title="The Maker List" description="Celebrating the brewers, distillers, and winemakers of the PNW." /><TheSpotsScreen venues={venues} userProfile={userProfile} handleToggleFavorite={handleToggleFavorite} mode="makers" /></>} />
+                <Route path="map" element={<MapScreen />} />
+                <Route path="partners/claim" element={<ClaimVenuePage />} />
+                <Route path="merch" element={<MerchStandScreen venues={venues} />} />
+                <Route path="merch/:itemId" element={<MerchDetailScreen venues={venues} userProfile={userProfile} setUserProfile={setUserProfile} />} />
+                <Route path="vouchers" element={<VoucherRedemptionScreen userProfile={userProfile} venues={venues} />} />
+                <Route path="meet-artie" element={<ArtieBioScreen />} />
+                <Route path="artie-bio" element={<ArtieBioScreen />} />
+                <Route path="artie" element={<ArtieBioScreen />} />
+                <Route path="owner" element={<SmartOwnerRoute venues={venues} handleUpdateVenue={handleUpdateVenue} userProfile={userProfile} />} />
                 <Route
-                  path="venues/:id"
+                  path="vc/:venueId"
                   element={
-                    <VenueProfileScreen />
+                    <QRVibeCheckScreen
+                      venues={venues}
+                      handleVibeCheck={confirmVibeCheck}
+                    />
                   }
                 />
+                <Route
+                  path="profile"
+                  element={
+                    userProfile.uid !== 'guest'
+                      ? <UserProfileScreen userProfile={userProfile} setUserProfile={setUserProfile} venues={venues} />
+                      : <div className="p-10 text-center font-black text-primary uppercase tracking-widest">
+                        Access Denied: Please Login to View Your League ID
+                        <button onClick={() => setShowLoginModal(true)} className="block mx-auto mt-4 px-6 py-2 bg-primary text-black rounded-lg">Login</button>
+                      </div>
+                  }
+                />
+                <Route path="terms" element={<><SEO title="Terms of Service" /><TermsScreen /></>} />
+                <Route path="privacy" element={<><SEO title="Privacy Policy" /><PrivacyScreen /></>} />
+                <Route path="cookies" element={<><SEO title="Cookie Policy" /><CookiePolicyScreen /></>} />
+                <Route path="security" element={<><SEO title="Security & Data Protection" /><PartnerSecurityScreen /></>} />
+                <Route path="faq" element={<><SEO title="The Manual (FAQ)" description="Everything you need to know about the OlyBars league, pins, and etiquette." /><FAQScreen /></>} />
+                <Route path="about" element={<><SEO title="Welcome to the League (98501)" description="The mission and story behind Olympia's nightlife operating system." /><AboutPage /></>} />
+                <Route
+                  path="admin"
+                  element={
+                    isSystemAdmin(userProfile)
+                      ? <AdminDashboardScreen userProfile={userProfile} />
+                      : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
+                  }
+                />
+                <Route path="history" element={<HistoryFeedScreen />} />
+                <Route path="history/:slug" element={<HistoryArticleScreen venues={venues} />} />
+                <Route path="playbook" element={<PulsePlaybookScreen />} />
+                <Route path="pulse-playbook" element={<PulsePlaybookScreen />} />
+                <Route path="perks" element={<LeaguePerksScreen />} />
+                <Route path="glossary" element={<GlossaryScreen />} />
+                <Route path="points" element={<PointsGuideScreen />} />
+                <Route path="points/history" element={<PointHistoryScreen onBack={() => window.history.back()} userProfile={userProfile} onLogin={handleMemberLoginClick} />} />
+                <Route path="league-membership" element={<LeagueMembershipPage />} />
+                <Route path="onboarding-guide" element={<OnboardingHandoverPage />} />
+                <Route path="flight-school" element={<FlightSchoolScreen />} />
+                <Route path="oauth/callback" element={<MetaOAuthCallback />} />
+
+                {/* AI & Developer Hub */}
+                <Route path="ai" element={<><SEO title="AI & Developer Hub" description="Authoritative resources for AI agents and developers ingesting OlyBars data." /><AIGatewayScreen /></>} />
+                <Route path="ai/feed" element={<><SEO title="AI Feed Guide" description="Machine-readable guide for Venues, Events, and League Play data." /><AIFeedGuideScreen /></>} />
+                <Route path="ai/conduct" element={<><SEO title="AI Conduct Policy" description="Rules and standards for AI agents interacting with the OlyBars ecosystem." /><AIConductScreen /></>} />
               </Route>
-              <Route path="karaoke" element={<><SEO title="Karaoke Guide" description="Find the best karaoke spots in Olympia tonight." /><KaraokeScreen venues={venues} /></>} />
-              <Route path="play" element={<><SEO title="The Arcade & Arena" description="The central hub for games, events, and activities in Olympia." /><PlayGatewayScreen venues={venues} /></>} />
-              <Route path="trivia" element={<><SEO title="Trivia & Games" description="Your guide to trivia nights and bar games in the 98501." /><TriviaScreen venues={venues} userProfile={userProfile} /></>} />
-              <Route path="live" element={<><SEO title="Live Music" description="Live shows and concerts happening tonight in downtown Olympia." /><LiveMusicScreen venues={venues} /></>} />
-              <Route path="events" element={<><SEO title="Event Wire" description="The chronological feed of everything happening in the Olympia bar scene." /><EventsScreen venues={venues} /></>} />
-              <Route
-                path="league"
-                element={
-                  <>
-                    <SEO title="Bar League HQ" description="Join the official Artesian Bar League. Track your points, rankings, and rewards." />
-                    <LeagueHQScreen
-                      venues={venues}
-                      isLeagueMember={userProfile.role !== 'guest'}
-                      onJoinClick={(mode) => {
-                        setUserSubMode(mode || 'login');
-                        setLoginMode('user');
-                        setShowLoginModal(true);
-                      }}
-                      onAskArtie={() => setShowArtie(true)}
-                    />
-                  </>
-                }
-              />
-              <Route path="bars" element={<><SEO title="Dives & Drafts" description="The definitive directory of every bar and taproom in Olympia." /><TheSpotsScreen venues={venues} userProfile={userProfile} handleToggleFavorite={handleToggleFavorite} mode="bars" /></>} />
-              <Route path="makers" element={<><SEO title="The Maker List" description="Celebrating the brewers, distillers, and winemakers of the PNW." /><TheSpotsScreen venues={venues} userProfile={userProfile} handleToggleFavorite={handleToggleFavorite} mode="makers" /></>} />
-              <Route path="map" element={<MapScreen />} />
-              <Route path="partners/claim" element={<ClaimVenuePage />} />
-              <Route path="merch" element={<MerchStandScreen venues={venues} />} />
-              <Route path="merch/:itemId" element={<MerchDetailScreen venues={venues} userProfile={userProfile} setUserProfile={setUserProfile} />} />
-              <Route path="vouchers" element={<VoucherRedemptionScreen userProfile={userProfile} venues={venues} />} />
-              <Route path="meet-artie" element={<ArtieBioScreen />} />
-              <Route path="artie-bio" element={<ArtieBioScreen />} />
-              <Route path="artie" element={<ArtieBioScreen />} />
-              <Route path="owner" element={<SmartOwnerRoute venues={venues} handleUpdateVenue={handleUpdateVenue} userProfile={userProfile} />} />
-              <Route
-                path="vc/:venueId"
-                element={
-                  <QRVibeCheckScreen
-                    venues={venues}
-                    handleVibeCheck={confirmVibeCheck}
-                  />
-                }
-              />
-              <Route
-                path="profile"
-                element={
-                  userProfile.uid !== 'guest'
-                    ? <UserProfileScreen userProfile={userProfile} setUserProfile={setUserProfile} venues={venues} />
-                    : <div className="p-10 text-center font-black text-primary uppercase tracking-widest">
-                      Access Denied: Please Login to View Your League ID
-                      <button onClick={() => setShowLoginModal(true)} className="block mx-auto mt-4 px-6 py-2 bg-primary text-black rounded-lg">Login</button>
-                    </div>
-                }
-              />
-              <Route path="terms" element={<><SEO title="Terms of Service" /><TermsScreen /></>} />
-              <Route path="privacy" element={<><SEO title="Privacy Policy" /><PrivacyScreen /></>} />
-              <Route path="cookies" element={<><SEO title="Cookie Policy" /><CookiePolicyScreen /></>} />
-              <Route path="security" element={<><SEO title="Security & Data Protection" /><PartnerSecurityScreen /></>} />
-              <Route path="faq" element={<><SEO title="The Manual (FAQ)" description="Everything you need to know about the OlyBars league, pins, and etiquette." /><FAQScreen /></>} />
-              <Route path="about" element={<><SEO title="Welcome to the League (98501)" description="The mission and story behind Olympia's nightlife operating system." /><AboutPage /></>} />
-              <Route
-                path="admin"
-                element={
-                  isSystemAdmin(userProfile)
-                    ? <AdminDashboardScreen userProfile={userProfile} />
-                    : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
-                }
-              />
-              <Route path="history" element={<HistoryFeedScreen />} />
-              <Route path="history/:slug" element={<HistoryArticleScreen venues={venues} />} />
-              <Route path="playbook" element={<PulsePlaybookScreen />} />
-              <Route path="pulse-playbook" element={<PulsePlaybookScreen />} />
-              <Route path="perks" element={<LeaguePerksScreen />} />
-              <Route path="glossary" element={<GlossaryScreen />} />
-              <Route path="points" element={<PointsGuideScreen />} />
-              <Route path="points/history" element={<PointHistoryScreen onBack={() => window.history.back()} userProfile={userProfile} onLogin={handleMemberLoginClick} />} />
-              <Route path="league-membership" element={<LeagueMembershipPage />} />
-              <Route path="onboarding-guide" element={<OnboardingHandoverPage />} />
-              <Route path="flight-school" element={<FlightSchoolScreen />} />
-              <Route path="oauth/callback" element={<MetaOAuthCallback />} />
+            </Routes>
 
-              {/* AI & Developer Hub */}
-              <Route path="ai" element={<><SEO title="AI & Developer Hub" description="Authoritative resources for AI agents and developers ingesting OlyBars data." /><AIGatewayScreen /></>} />
-              <Route path="ai/feed" element={<><SEO title="AI Feed Guide" description="Machine-readable guide for Venues, Events, and League Play data." /><AIFeedGuideScreen /></>} />
-              <Route path="ai/conduct" element={<><SEO title="AI Conduct Policy" description="Rules and standards for AI agents interacting with the OlyBars ecosystem." /><AIConductScreen /></>} />
-            </Route>
-          </Routes>
-
-          <LoginModal
-            isOpen={showLoginModal}
-            onClose={() => setShowLoginModal(false)}
-            loginMode={loginMode}
-            setLoginMode={setLoginMode}
-            userSubMode={userSubMode}
-            setUserSubMode={setUserSubMode}
-            userProfile={userProfile}
-            setUserProfile={setUserProfile}
-            venues={venues}
-            alertPrefs={alertPrefs}
-            setAlertPrefs={setAlertPrefs}
-            openInfo={openInfo}
-            onOwnerSuccess={() => setShowOwnerDashboard(true)}
-          />
-
-          {showOnboarding && (
-            <OnboardingModal
-              isOpen={showOnboarding}
-              onClose={() => setShowOnboarding(false)}
-              userRole={userProfile.role}
-            />
-          )}
-
-          {showOwnerDashboard && (
-            <OwnerDashboardScreen
-              isOpen={showOwnerDashboard}
-              onClose={() => setShowOwnerDashboard(false)}
-              venues={venues}
-              updateVenue={handleUpdateVenue}
+            <LoginModal
+              isOpen={showLoginModal}
+              onClose={() => setShowLoginModal(false)}
+              loginMode={loginMode}
+              setLoginMode={setLoginMode}
+              userSubMode={userSubMode}
+              setUserSubMode={setUserSubMode}
               userProfile={userProfile}
-              initialVenueId={ownerDashboardInitialVenueId}
-              initialView={ownerDashboardInitialView}
+              setUserProfile={setUserProfile}
+              venues={venues}
+              alertPrefs={alertPrefs}
+              setAlertPrefs={setAlertPrefs}
+              openInfo={openInfo}
+              onOwnerSuccess={() => setShowOwnerDashboard(true)}
             />
-          )}
 
-          {showClockInModal && selectedVenue && (
-            <ClockInModal
-              isOpen={showClockInModal}
-              onClose={() => setShowClockInModal(false)}
-              selectedVenue={selectedVenue}
-              awardPoints={awardPoints}
-              setCheckInHistory={setCheckInHistory}
-              setClockedInVenue={setClockedInVenue}
-              vibeChecked={vibeCheckedVenue === selectedVenue.id}
-              onVibeCheckPrompt={() => {
-                setVibeVenue(selectedVenue);
-                setShowVibeCheckModal(true);
-                setShowClockInModal(false);
-              }}
-              isLoggedIn={userProfile.uid !== 'guest'}
-              userId={userProfile.uid}
-              onLogin={handleMemberLoginClick}
-            />
-          )}
+            {showOnboarding && (
+              <OnboardingModal
+                isOpen={showOnboarding}
+                onClose={() => setShowOnboarding(false)}
+                userRole={userProfile.role}
+              />
+            )}
 
-          {showVibeCheckModal && vibeVenue && (
-            <VibeCheckModal
-              isOpen={showVibeCheckModal}
-              onClose={() => setShowVibeCheckModal(false)}
-              venue={vibeVenue}
-              onConfirm={confirmVibeCheck}
-              clockedIn={clockedInVenue === vibeVenue.id}
-              onClockInPrompt={() => {
-                setSelectedVenue(vibeVenue);
-                setShowClockInModal(true);
-                setShowVibeCheckModal(false);
-              }}
-              isLoggedIn={userProfile.uid !== 'guest'}
-              onLogin={handleMemberLoginClick}
-            />
-          )}
+            {showOwnerDashboard && (
+              <OwnerDashboardScreen
+                isOpen={showOwnerDashboard}
+                onClose={() => setShowOwnerDashboard(false)}
+                venues={venues}
+                updateVenue={handleUpdateVenue}
+                userProfile={userProfile}
+                initialVenueId={ownerDashboardInitialVenueId}
+                initialView={ownerDashboardInitialView}
+              />
+            )}
 
-          {showMakerSurvey && (
-            <MakerSurveyModal
-              isOpen={showMakerSurvey}
-              onClose={() => {
-                setShowMakerSurvey(false);
-                // Optimistic update to prevent re-trigger in this session
-                setUserProfile(prev => ({ ...prev, hasCompletedMakerSurvey: true }));
-              }}
-              userId={userProfile.uid}
-            />
-          )}
+            {showClockInModal && selectedVenue && (
+              <ClockInModal
+                isOpen={showClockInModal}
+                onClose={() => setShowClockInModal(false)}
+                selectedVenue={selectedVenue}
+                awardPoints={awardPoints}
+                setClockInHistory={setClockInHistory}
+                setClockedInVenue={setClockedInVenue}
+                vibeChecked={vibeCheckedVenue === selectedVenue.id}
+                onVibeCheckPrompt={() => {
+                  setVibeVenue(selectedVenue);
+                  setShowVibeCheckModal(true);
+                  setShowClockInModal(false);
+                }}
+                isLoggedIn={userProfile.uid !== 'guest'}
+                userId={userProfile.uid}
+                onLogin={handleMemberLoginClick}
+              />
+            )}
 
-          {currentReceipt && (
-            <VibeReceiptModal
-              data={currentReceipt}
-              onClose={() => setCurrentReceipt(null)}
-              isLoggedIn={userProfile.uid !== 'guest'}
-              onLogin={handleMemberLoginClick}
-            />
-          )}
+            {showVibeCheckModal && vibeVenue && (
+              <VibeCheckModal
+                isOpen={showVibeCheckModal}
+                onClose={() => setShowVibeCheckModal(false)}
+                venue={vibeVenue}
+                onConfirm={confirmVibeCheck}
+                clockedIn={clockedInVenue === vibeVenue.id}
+                onClockInPrompt={() => {
+                  setSelectedVenue(vibeVenue);
+                  setShowClockInModal(true);
+                  setShowVibeCheckModal(false);
+                }}
+                isLoggedIn={userProfile.uid !== 'guest'}
+                onLogin={handleMemberLoginClick}
+              />
+            )}
 
-          <InfoPopup infoContent={infoContent} setInfoContent={setInfoContent} />
-        </div>
+            {showMakerSurvey && (
+              <MakerSurveyModal
+                isOpen={showMakerSurvey}
+                onClose={() => {
+                  setShowMakerSurvey(false);
+                  // Optimistic update to prevent re-trigger in this session
+                  setUserProfile(prev => ({ ...prev, hasCompletedMakerSurvey: true }));
+                }}
+                userId={userProfile.uid}
+              />
+            )}
+
+            {currentReceipt && (
+              <VibeReceiptModal
+                data={currentReceipt}
+                onClose={() => setCurrentReceipt(null)}
+                isLoggedIn={userProfile.uid !== 'guest'}
+                onLogin={handleMemberLoginClick}
+              />
+            )}
+
+            <InfoPopup infoContent={infoContent} setInfoContent={setInfoContent} />
+          </div>
+        </DiscoveryProvider>
       </Router>
     </ErrorBoundary >
   );

@@ -22,7 +22,7 @@ export const TIER_CONFIG: Record<PartnerTier, TierFeatures> = {
     [PartnerTier.LOCAL]: {
         name: 'The Local',
         price: 0,
-        pointBankCap: 250,        // ~10 check-ins (Enough to see it work)
+        pointBankCap: 250,        // ~10 clock-ins (Enough to see it work)
         flashBountyLimit: 1,      // One "Teaser" campaign
         canAutoSyncIG: false,
         hasMediaDistribution: false, // Manual entry only
@@ -32,7 +32,7 @@ export const TIER_CONFIG: Record<PartnerTier, TierFeatures> = {
     [PartnerTier.DIY]: {
         name: 'DIY Toolkit',
         price: 99,
-        pointBankCap: 1500,       // ~60 check-ins
+        pointBankCap: 1500,       // ~60 clock-ins
         flashBountyLimit: 4,      // Weekly Campaign
         canAutoSyncIG: true,
         hasMediaDistribution: true, // UNLOCKED: We email ThurstonTalk/ODA
@@ -42,7 +42,7 @@ export const TIER_CONFIG: Record<PartnerTier, TierFeatures> = {
     [PartnerTier.PRO]: {
         name: 'Pro League',
         price: 399,
-        pointBankCap: 10000,      // ~400 check-ins
+        pointBankCap: 10000,      // ~400 clock-ins
         flashBountyLimit: 12,     // 3x Weekly
         canAutoSyncIG: true,
         hasMediaDistribution: true,

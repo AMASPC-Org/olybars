@@ -14,12 +14,12 @@ export const glossaryTerms: GlossaryCategory[] = [
         terms: [
             { term: 'Artesian Bar League', def: 'The official name of the Olympia-based league, celebrating the city\'s brewing heritage.' },
             { term: 'The Vibe', def: 'The real-time energy state of a venue (Dead, Chill, Buzzing, or Packed).' },
-            { term: 'The Pulse', def: 'The algorithmic "heartbeat" score (0-100) that determines a venue\'s Vibe. It is calculated by weighing real-time Signals: Clock-ins, Vibe Checks, and active Bounties.' },
+            { term: 'The Pulse', def: 'The algorithmic "heartbeat" score (0-100) that determines a venue\'s Vibe. It is calculated by weighing real-time Signals: Clock Ins, Vibe Checks, and active Bounties.' },
             { term: 'Dead', def: 'The venue is extremely quiet with minimal activity. Perfect for a private conversation.' },
             { term: 'Chill', def: 'A relaxed, steady atmosphere. Plenty of seating available.' },
             { term: 'Buzzing', def: 'High energy and significant attendance. The venue is active and energetic.' },
             { term: 'Packed', def: 'The venue is at or near its legal capacity. Expect a full house and a high-energy environment.' },
-            { term: 'Signal', def: 'A data point used to inform The Pulse. Primary signals include user Clock-ins, Vibe Checks, active Happy Hour timers, and administrative updates.' },
+            { term: 'Signal', def: 'A data point used to inform The Pulse. Primary signals include user Clock Ins, Vibe Checks, active Happy Hour timers, and administrative updates.' },
             { term: 'Vibe Check', def: 'A manual "Ground Truth" report submitted by a User or Venue Owner regarding the crowd energy. Critical for accuracy as it accounts for users without location services.' },
             { term: 'Game Vibe Check', def: 'A specific status report regarding the availability of amenities (e.g., "Pool Tables Open," "Karaoke List Full," "Pinball Tournament Starting").' },
             { term: 'Clock In', def: 'The primary scoring action. Players verify their location at an Anchor Venue. Each Clock In acts as a verified attendance signal. Limited to 2 per 12-hour window.' },
@@ -30,6 +30,8 @@ export const glossaryTerms: GlossaryCategory[] = [
             { term: 'Badge', def: 'A digital trophy earned by completing specific sets of visits or challenges.' },
             { term: 'Game Preferences', def: 'A set of player-defined interests (e.g., preferred bar games or scenes) used by Artie to suggest the perfect venue.' },
             { term: 'Venue Capacity', def: 'A static data point representing the legal or practical occupancy of a venue. This serves as the denominator for calculating busyness density.' },
+            { term: 'Double Dip', def: 'A strategy allowing users to earn both OlyBars League Points and venue-specific loyalty points/perks simultaneously.' },
+            { term: 'Tiered Access', def: 'The "Low Friction" onboarding model where visitors Discovery first, and only provide data (Location/Login) contextually when attempting high-value actions.' },
         ]
     },
     {
@@ -43,7 +45,7 @@ export const glossaryTerms: GlossaryCategory[] = [
             { term: 'Super-Admin', def: 'The platform lighthouse (typically ryan@amaspc.com). Has global authorization to manage any venue, override system settings, and enforce fair play standards across the entire AMA Network.' },
             { term: 'Listed Venue', def: 'A physical location (bar/pub) that appears on the OlyBars map but has not yet claimed their profile or joined the League as a Partner.' },
             { term: 'League Partner', def: 'A venue that has claimed their profile and entered into a marketing agreement with the League. Includes all active tiers: Free, DIY, Pro, and Agency.' },
-            { term: 'Artie', def: 'The spirit of the Artesian Well. A permission-gated, multimodal AI agent serving distinct roles: Visitor Concierge, Guest Utility Guide, Player Referee, and Partner Co-Pilot.' },
+            { term: 'Artie', def: 'The spirit of the Artesian Well. A permission-gated, multimodal AI agent serving distinct roles: Visitor Concierge (public feeds), Guest Utility Guide, Player Referee, and Partner Marketing Co-Pilot.' },
             { term: 'Local Maker', def: 'Local artisans (Brewers, Distillers, Ciderys) whose products are featured on the Local Maker\'s Trail.' },
             { term: 'The AMA Network', def: 'Powered by the American Marketing Alliance SPC. A network of event-based sites designed to automate marketing for local businesses.' },
         ]
@@ -84,7 +86,7 @@ export const glossaryTerms: GlossaryCategory[] = [
         terms: [
             { term: 'Vibe Selector', def: 'A filter chip that allows users to sort the city by energy state (PulseEnergyFilter).' },
             { term: 'Scene Selector', def: 'A filter chip for permanent characteristics like "Dive" or "Speakeasy" (VenueSceneFilter).' },
-            { term: 'Play', def: 'A filter category for interactive games (Pool, Darts, Arcade, Pinball). Searchable via the GameFilter chip.' },
+            { term: 'Play', def: 'A filter category for interactive games (Pool, Pinball, Darts, Arcade). Sort order is hardcoded by popularity for 98501 nightlife.' },
             { term: 'Features', def: 'A filter category for venue amenities and hardware (Patio, Firepits, Dog Friendly). Searchable via the AmenityFilter chip.' },
             { term: 'Events', def: 'Activities that only happen at specific times (Trivia Night, Live Music) and are pinned to the Global League Calendar (PulseEventFilter).' }
         ]
@@ -92,7 +94,7 @@ export const glossaryTerms: GlossaryCategory[] = [
     {
         category: 'Economy & Rankings',
         terms: [
-            { term: 'Player Points', def: 'The points earned by a League Player for real-world interactions (Check-ins, Vibe Checks). Stored securely in the Player\'s profile.' },
+            { term: 'Player Points', def: 'The points earned by a League Player for real-world interactions (Clock Ins, Vibe Checks). Stored securely in the Player\'s profile.' },
             { term: 'Venue Point Bank', def: 'The dedicated pool of points owned by a League Partner. Venues "spend" these points to attract traffic by offering Flash Bounties.' },
             { term: 'League Standings', def: 'The city-wide leaderboard showing the current rankings of all League Players and League Teams based on their Season Points.' },
         ]

@@ -5,10 +5,10 @@ import { Venue, GameFeature } from '../../../types';
 interface AmenityCardProps {
     venue: Venue;
     gameFeature: GameFeature;
-    onCheckIn: (venueId: string, amenityId: string) => void;
+    onClockIn: (venueId: string, amenityId: string) => void;
 }
 
-export const AmenityCard: React.FC<AmenityCardProps> = ({ venue, gameFeature, onCheckIn }) => {
+export const AmenityCard: React.FC<AmenityCardProps> = ({ venue, gameFeature, onClockIn }) => {
     const isBuzzing = venue.status === 'buzzing' || (venue.currentBuzz?.score || 0) > 70;
 
     return (
@@ -40,7 +40,7 @@ export const AmenityCard: React.FC<AmenityCardProps> = ({ venue, gameFeature, on
             </div>
 
             <button
-                onClick={() => onCheckIn(venue.id, gameFeature.id)}
+                onClick={() => onClockIn(venue.id, gameFeature.id)}
                 className="w-full bg-slate-900 border border-white/10 hover:border-primary/50 text-white font-black py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 group/btn shadow-lg"
             >
                 <span className="text-[10px] uppercase tracking-widest font-league">Clock In to this {gameFeature.name}</span>

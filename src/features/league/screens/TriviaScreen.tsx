@@ -6,7 +6,7 @@ import { ArtieFieldNote } from '../../artie/components/ArtieFieldNote';
 import { Venue, GameFeature } from '../../../types';
 import { Trophy, Zap, Search as SearchIcon } from 'lucide-react';
 import { AMENITY_LORE } from '../config/playConfig';
-import { performPlayCheckIn } from '../../../services/userService';
+import { performPlayClockIn } from '../../../services/userService';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { VibeReceiptModal } from '../../social/components/VibeReceiptModal';
 import { VibeReceiptData, generateArtieHook } from '../../social/services/VibeReceiptService';
@@ -56,14 +56,14 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile 
     return key ? { title: key.charAt(0).toUpperCase() + key.slice(1), note: AMENITY_LORE[key] } : null;
   }, [searchQuery]);
 
-  const handlePlayCheckIn = async (venueId: string, amenityId: string) => {
+  const handlePlayClockIn = async (venueId: string, amenityId: string) => {
     if (!userProfile || userProfile.uid === 'guest') {
       showToast("Create an OlyBars ID to log clock-ins!", "error");
       return;
     }
 
     try {
-      const result = await performPlayCheckIn(venueId, userProfile.uid, amenityId);
+      const result = await performPlayClockIn(venueId, userProfile.uid, amenityId);
       showToast(result.message, "success");
 
       const venue = venues.find(v => v.id === venueId);
@@ -119,7 +119,7 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile 
                     key={`${venue.id}-${feature.id}-${idx}`}
                     venue={venue}
                     gameFeature={feature}
-                    onCheckIn={handlePlayCheckIn}
+                    onClockIn={handlePlayClockIn}
                   />
                 ))}
               </div>
@@ -150,7 +150,7 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile 
                 time="LIVE NOW"
                 category="play"
                 points={venue.leagueEvent === 'trivia' ? 20 : 15}
-                onCheckIn={() => console.log('Clock-in', venue.id)}
+                onClockIn={() => console.log('Clock-in', venue.id)}
                 onShare={() => console.log('Share', venue.id)}
                 onVibeChange={(v) => console.log('Vibe', venue.id, v)}
                 contextSlot={

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { X, Camera, Share2, MapPin, Info, Loader2, Sparkles, Facebook, Instagram, Music2, Lock } from 'lucide-react';
-import { Venue, CheckInRecord, PointsReason } from '../../../types';
-import { performCheckIn } from '../../../services/userService';
+import { Venue, ClockInRecord, PointsReason } from '../../../types';
+import { performClockIn } from '../../../services/userService';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance } from '../../../utils/geoUtils';
 import { queryClient } from '../../../lib/queryClient';
@@ -11,7 +11,7 @@ interface ClockInModalProps {
     onClose: () => void;
     selectedVenue: Venue | null;
     awardPoints: (reason: PointsReason, venueId?: string, hasConsent?: boolean, verificationMethod?: 'gps' | 'qr', bonusPoints?: number, skipBackend?: boolean) => void;
-    setCheckInHistory: React.Dispatch<React.SetStateAction<CheckInRecord[]>>;
+    setClockInHistory: React.Dispatch<React.SetStateAction<ClockInRecord[]>>;
     setClockedInVenue: React.Dispatch<React.SetStateAction<string | null>>;
     vibeChecked?: boolean;
     onVibeCheckPrompt?: () => void;
@@ -25,7 +25,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     onClose,
     selectedVenue,
     awardPoints,
-    setCheckInHistory,
+    setClockInHistory,
     setClockedInVenue,
     vibeChecked,
     onVibeCheckPrompt,
@@ -36,7 +36,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     const [showCamera, setShowCamera] = useState(false);
     const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
     const [cameraError, setCameraError] = useState(false);
-    const [isCheckingIn, setIsCheckingIn] = useState(false);
+    const [isClockingIn, setIsClockingIn] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const [isSuccess, setIsSuccess] = useState(false);
@@ -105,7 +105,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
             return;
         }
 
-        setIsCheckingIn(true);
+        setIsClockingIn(true);
         setErrorMessage(null);
 
 
@@ -113,43 +113,43 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
             const { latitude, longitude } = coords;
 
             // [HONEST GATE LOGIC]
-            // Attempt generic check-in first
+            // Attempt generic Clock In first
             // If success -> Shadow Success (Guest) or Standard Success (User)
             // If 401/403 -> Shadow Locked (Guest)
-            await performCheckIn(selectedVenue.id, userId, latitude, longitude);
+            await performClockIn(selectedVenue.id, userId, latitude, longitude);
 
             // If we get here, the call succeeded (200 OK)
             if (userId === 'guest') {
                 setShadowVariant('success');
             } else {
-                setCheckInHistory(prev => [...prev, { venueId: selectedVenue.id, timestamp: Date.now() }]);
+                setClockInHistory(prev => [...prev, { venueId: selectedVenue.id, timestamp: Date.now() }]);
                 setClockedInVenue(selectedVenue.id);
                 setIsSuccess(true);
             }
 
             // Always award points locally for UI feedback (skipped for guest if locked, handled below)
-            awardPoints('checkin', selectedVenue.id, allowMarketingUse, 'gps', 0, userId !== 'guest');
+            awardPoints('clockin', selectedVenue.id, allowMarketingUse, 'gps', 0, userId !== 'guest');
 
             // Optimistic UI Update (TanStack Query Cache)
             queryClient.setQueryData(['venues'], (oldVenues: Venue[] | undefined) => {
                 if (!oldVenues) return [];
-                return oldVenues.map(v => v.id === selectedVenue.id ? { ...v, checkIns: (v.checkIns || 0) + 1 } : v);
+                return oldVenues.map(v => v.id === selectedVenue.id ? { ...v, clockIns: (v.clockIns || 0) + 1 } : v);
             });
 
             if (userId !== 'guest' && vibeChecked) {
                 setTimeout(onClose, 3000);
             }
-
+            setIsClockingIn(false);
         } catch (err: any) {
             // Honest Gate: Handle Auth Errors
             if (userId === 'guest' && (err.status === 401 || err.status === 403)) {
                 setShadowVariant('locked');
-                setIsCheckingIn(false);
+                setIsClockingIn(false);
                 return;
             }
 
             setErrorMessage(err.message);
-            setIsCheckingIn(false);
+            setIsClockingIn(false);
         }
     };
 
@@ -174,6 +174,48 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                         </div>
                         <p className="text-[9px] text-primary font-bold uppercase mt-1 italic">Keep it up for a Bonus Badge!</p>
                     </div>
+
+                    {/* Double Dip / Partner Growth Section */}
+                    {(selectedVenue.loyalty_signup_url || selectedVenue.hero_item) && (
+                        <div className="space-y-3 pt-2 text-center">
+                            {/* Flow A: External Loyalty */}
+                            {selectedVenue.loyalty_signup_url && (
+                                <div className="bg-primary/10 border border-primary/30 p-4 rounded-xl relative overflow-hidden group animate-in zoom-in-95 duration-500">
+                                    <div className="absolute top-0 right-0 p-1">
+                                        <Sparkles className="w-3 h-3 text-primary animate-pulse" />
+                                    </div>
+                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1.5">Double Dip Alert</p>
+                                    <h4 className="text-white text-sm font-bold leading-tight mb-3">
+                                        Stack points! Join {selectedVenue.name} Rewards.
+                                    </h4>
+                                    <button
+                                        onClick={() => window.open(selectedVenue.loyalty_signup_url, '_blank')}
+                                        className="w-full bg-primary text-black font-black py-3 rounded-lg text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-yellow-400 transition-colors shadow-lg shadow-primary/10"
+                                    >
+                                        Connect Venue Rewards
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Flow B: Hero Item Upsell */}
+                            {!selectedVenue.loyalty_signup_url && selectedVenue.hero_item && (
+                                <div className="bg-slate-900 border border-white/10 p-3 rounded-xl flex gap-3 text-left animate-in slide-in-from-bottom-2 duration-500">
+                                    <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 border border-white/10">
+                                        <img src={selectedVenue.hero_item.photoUrl} alt={selectedVenue.hero_item.name} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[9px] font-black text-[#FFD700] uppercase tracking-tighter mb-0.5 flex items-center gap-1">
+                                            <Sparkles size={8} /> Artie's Insider Tip
+                                        </p>
+                                        <h4 className="text-white text-xs font-black uppercase truncate leading-none">{selectedVenue.hero_item.name}</h4>
+                                        <p className="text-[8px] text-slate-400 leading-tight line-clamp-2 mt-1 italic">
+                                            {selectedVenue.hero_item.description}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {!vibeChecked && onVibeCheckPrompt ? (
                         <div className="bg-slate-950 p-6 rounded-2xl border border-primary/20 space-y-4 shadow-xl">
@@ -219,12 +261,45 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                         <div className="mt-4 space-y-3">
                             <p className="text-sm text-slate-300 font-medium leading-relaxed">
                                 {isLocked
-                                    ? <>Guest signals are currently limited. Create a League Profile to <span className="text-white font-bold">publish this Check-In</span> and earn your first <span className="text-primary font-black">10 Points</span>.</>
-                                    : <>Thanks for the intel! That check-in was worth <span className="text-primary font-black">10 Points</span>. You are in Guest Mode, so you didn't bank them.</>
+                                    ? <>Guest signals are currently limited. Create a League Profile to <span className="text-white font-bold">publish this Clock In</span> and earn your first <span className="text-primary font-black">10 Points</span>.</>
+                                    : <>Thanks for the intel! That Clock In was worth <span className="text-primary font-black">10 Points</span>. You are in Guest Mode, so you didn't bank them.</>
                                 }
                             </p>
                         </div>
                     </div>
+
+                    {!isLocked && (selectedVenue.loyalty_signup_url || selectedVenue.hero_item) && (
+                        <div className="space-y-3 pt-2 text-center">
+                            {selectedVenue.loyalty_signup_url && (
+                                <div className="bg-primary/10 border border-primary/30 p-4 rounded-xl relative overflow-hidden group">
+                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1.5">Double Dip Alert</p>
+                                    <h4 className="text-white text-xs font-bold leading-tight mb-3">
+                                        Join {selectedVenue.name} Rewards while you're here!
+                                    </h4>
+                                    <button
+                                        onClick={() => window.open(selectedVenue.loyalty_signup_url, '_blank')}
+                                        className="w-full bg-primary text-black font-black py-2 rounded-lg text-[10px] uppercase tracking-wider"
+                                    >
+                                        Connect Venue Rewards
+                                    </button>
+                                </div>
+                            )}
+                            {!selectedVenue.loyalty_signup_url && selectedVenue.hero_item && (
+                                <div className="bg-slate-900 border border-white/10 p-3 rounded-xl flex gap-3 text-left">
+                                    <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-white/10">
+                                        <img src={selectedVenue.hero_item.photoUrl} alt={selectedVenue.hero_item.name} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[9px] font-black text-[#FFD700] uppercase tracking-tighter mb-0.5">Artie's Insider Tip</p>
+                                        <h4 className="text-white text-[10px] font-black uppercase truncate">{selectedVenue.hero_item.name}</h4>
+                                        <p className="text-[8px] text-slate-400 leading-tight line-clamp-2 mt-1">
+                                            {selectedVenue.hero_item.description}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <div className="pt-2">
                         <button
@@ -407,13 +482,13 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
                     <button
                         onClick={confirmClockIn}
-                        disabled={isCheckingIn || !isAtVenue}
+                        disabled={isClockingIn || !isAtVenue}
                         className={`w-full py-4 rounded-lg text-lg font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 outline-none ${isAtVenue
                             ? 'bg-primary text-black shadow-md hover:bg-yellow-400 active:scale-95'
                             : 'bg-slate-700 text-slate-400 cursor-not-allowed'
                             }`}
                     >
-                        {isCheckingIn ? (
+                        {isClockingIn ? (
                             <><Loader2 className="w-5 h-5 animate-spin" /> Verifying...</>
                         ) : (
                             <><MapPin className="w-5 h-5" /> CONFIRM I AM HERE</>

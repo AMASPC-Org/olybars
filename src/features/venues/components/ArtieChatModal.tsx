@@ -95,7 +95,7 @@ const getArtieGreeting = (profile?: UserProfile): ArtieGreeting => {
 
 export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, userProfile, initialVenueId }) => {
     // --- 1. Mode Determination ---
-    const isOpsMode = userProfile && (isSystemAdmin(userProfile) || userProfile.role === 'owner' || userProfile.role === 'manager');
+    const isOpsMode = !((window as any)._artie_force_guest) && userProfile && (isSystemAdmin(userProfile) || userProfile.role === 'owner' || userProfile.role === 'manager');
 
     // --- 2. Hooks (Always call both, control usage via flags) ---
     // Guest Hook

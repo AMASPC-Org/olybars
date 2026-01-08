@@ -59,6 +59,12 @@ export const PartnerManualTab: React.FC = () => {
             icon: Smartphone,
             artie: "Ask Artie: \"Artie, draft a newsletter email about our new mural and Saturday trivia session.\"",
             manual: "NEW: Artie is now a Multimodal Co-Pilot. Use the chat to draft Social Posts, Emails, Community Calendar entries, and Website updates. You can even generate AI image prompts for your social assets. All drafts are saved to your dashboard for final review."
+        },
+        {
+            title: "Conversion Tools (Double Dip)",
+            icon: Smartphone,
+            artie: "Ask Artie: \"Artie, set our loyalty signup link to 'toasttab.com/ourvenue' and our hero item to the 'Artesian Burger'.\"",
+            manual: "NEW: Drive direct ROI by setting your 'Loyalty Signup URL' and 'Hero Item' in the Listing tab. These trigger a 'Double Dip' CTA for users after they Clock In, stacking OlyBars points with your own venue rewards or nudging them toward your highest-margin food items."
         }
     ];
 
