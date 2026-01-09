@@ -2859,8 +2859,8 @@
     "insiderVibe": "The outdoor seating is a must on a sunny day. Their daily happy hour from 2-5pm is one of the better kept secrets on the east side.",
     "address": "1720 4th Ave E, Olympia, WA 98506, USA",
     "location": {
-      "lat": 47.0354703,
-      "lng": -122.8227694
+      "lat": 47.0452294,
+      "lng": -122.8985326
     },
     "isActive": true,
     "isVisible": true,
@@ -3805,24 +3805,285 @@
     }
   },
   {
-    "id": "lucky-eagle-room-188",
-    "name": "Room 188 (Lucky Eagle Casino)",
+    "id": "bobs-bar-grill-yelm",
+    "name": "Bob's Bar & Grill",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "neighborhood",
+      "historical",
+      "wings",
+      "pool_hall"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 80,
+    "vibe": "Laid-back Yelm institution since 1955 with a strong local following.",
+    "insiderVibe": "One of the oldest bars in Yelm. Their 'mango habanero' wings are legendary. It's a true social heartbeat of the town—grab a beer, play some pool, and enjoy the courtyard.",
+    "address": "108 E Yelm Ave, Yelm, WA 98597, USA",
+    "location": {
+      "lat": 46.9417292,
+      "lng": -122.6058268
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "the-local-yelm",
+    "name": "The Local Yelm",
     "venueType": "restaurant_bar",
     "sceneTags": [
+      "elevated_pub_fare",
+      "cocktails",
+      "family_friendly",
+      "locally_sourced"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 90,
+    "vibe": "Family-friendly eatery focused on community and elevated scratch-made comfort.",
+    "insiderVibe": "The 'Chicken Poutine' and hand-cut steaks set the bar high. It's the perfect blend of a neighborhood pub and a quality dining room. Great craft cocktails for the Yelm crowd.",
+    "address": "307 E Yelm Ave, Yelm, WA 98597, USA",
+    "location": {
+      "lat": 46.9400768,
+      "lng": -122.6036737
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "507-taproom-yelm",
+    "name": "507 Taproom & Filling Station",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "craft_beer",
+      "specialty_cider",
+      "industrial_vibe",
+      "21_plus"
+    ],
+    "foodService": "limited_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 70,
+    "vibe": "Vibrant craft beverage hub housed in a former bank with 32 rotating taps.",
+    "insiderVibe": "Housed in a historical bank building. The rotating tap list is massive and ever-changing. Food comes from 'The Grill @507' inside—try the Blue Cheese Smash Burger.",
+    "address": "608 E Yelm Ave, Yelm, WA 98597, USA",
+    "location": {
+      "lat": 46.9385503,
+      "lng": -122.5993195
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "uptown-lounge-yelm",
+    "name": "Uptown Lounge",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "burgers",
+      "cocktails",
+      "21_plus",
+      "piano_bar"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 110,
+    "vibe": "Chic yet casual 21+ destination with award-winning fries and elite cocktails.",
+    "insiderVibe": "Adjacent to the cinema—perfect for a dinner-and-movie night. Famous for Truffle Fries and the 'Smoked Old Fashion.' The hometown burgers are arguably Yelm's finest.",
+    "address": "201 Prairie Park St NE, Yelm, WA 98597, USA",
+    "location": {
+      "lat": 46.9400367,
+      "lng": -122.5993141
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "white-horse-tavern-yelm",
+    "name": "White Horse Tavern",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "dive_bar",
+      "historical",
+      "biker_friendly",
+      "karaoke"
+    ],
+    "foodService": "limited_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 60,
+    "vibe": "Historical downtown tavern with deep roots and a lively biker-friendly patio.",
+    "insiderVibe": "Authentic 1940s character with old slide bars and cabinet coolers. It's a local favorite for karaoke and honest steak tacos. The back patio is a hidden Yelm gem.",
+    "address": "107 E Yelm Ave, Yelm, WA 98597, USA",
+    "location": {
+      "lat": 46.9415523,
+      "lng": -122.6061765
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "tahoma-valley-bar-grill",
+    "name": "Tahoma Valley Bar & Grill",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "golf_course_views",
+      "breakfast",
       "steakhouse",
-      "upscale",
-      "casino"
+      "family_friendly"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 120,
+    "vibe": "Cozy dining with sweeping golf course views and hearty classic comfort.",
+    "insiderVibe": "Located at the golf club. The ribeye and the Bloody Marys are the gold standard here. It's the best breakfast view in Yelm—perfect for a post-round meal.",
+    "address": "15425 Mosman Ave SW, Yelm, WA 98597, USA",
+    "location": {
+      "lat": 46.9415306,
+      "lng": -122.6123414
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "mariachi-alegre-yelm",
+    "name": "Mariachi Alegre",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "mexican",
+      "margaritas",
+      "family_friendly",
+      "authentic"
     ],
     "foodService": "full_kitchen",
     "status": "chill",
     "clockIns": 0,
     "capacity": 100,
-    "vibe": "Premium steakhouse experience and refined atmosphere.",
-    "insiderVibe": "The sophisticated choice at Lucky Eagle. Excellent steaks and a curated wine list for those celebrating a big win.",
-    "address": "12888 188th Ave SW, Rochester, WA 98579, USA",
+    "vibe": "Warm and homey Mexican hospitality with vibrant family atmosphere.",
+    "insiderVibe": "Legendary margaritas and the 'Steak Mariachi' (with bacon and mushrooms) keep people coming back. It's a local favorite for birthday celebrations and consistent flavors.",
+    "address": "717 Yelm Ave E, Yelm, WA 98597, USA",
     "location": {
-      "lat": 46.8140909,
-      "lng": -123.1542509
+      "lat": 46.9335779,
+      "lng": -122.5881996
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "gracious-grape-yelm",
+    "name": "Gracious Grape",
+    "venueType": "winery_tasting",
+    "sceneTags": [
+      "wine_bar",
+      "bottle_shop",
+      "educational",
+      "small_plates"
+    ],
+    "foodService": "snacks",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 45,
+    "vibe": "Sophisticated and approachable wine haven with a Pacific Northwest focus.",
+    "insiderVibe": "Yelm's premier wine destination. They host a 'Book & a Bottle' club and focus on smaller producers. Excellent artisan charcuterie boards to pair with your flight.",
+    "address": "106 Prairie Park St, Yelm, WA 98597, USA",
+    "location": {
+      "lat": 46.93911689999999,
+      "lng": -122.5997074
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "farrellis-yelm",
+    "name": "Farrelli's Pizza (Yelm)",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "pizza",
+      "sports_bar",
+      "family_friendly",
+      "outdoor_seating"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 140,
+    "vibe": "Award-winning pizza and high-energy sports lounge environment.",
+    "insiderVibe": "The local sports hub for families. Famous for Northwest Traditional pizza and their 'Kids Eat Free' nights. The outdoor patio is a top-tier summer spot.",
+    "address": "813 W Yelm Ave, Yelm, WA 98597, USA",
+    "location": {
+      "lat": 46.9475032,
+      "lng": -122.6173418
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "tommys-tavern-yelm",
+    "name": "Tommy's Tavern",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "neighborhood",
+      "live_entertainment",
+      "sports_bar"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 75,
+    "vibe": "A centrally located Yelm staple with high-energy live entertainment and local spirit.",
+    "insiderVibe": "Located in the heart of downtown Yelm. It's a premier spot for picking up the town's vibe, especially on nights with live music or big games. A true local character hangout.",
+    "address": "404 1st St S, Yelm, WA 98597, USA",
+    "location": {
+      "lat": 46.9398069,
+      "lng": -122.6093072
     },
     "isActive": true,
     "isVisible": true,
@@ -4017,8 +4278,8 @@
     "insiderVibe": "Often overlooked but shouldn't be. Their tacos are legit and the atmosphere is always lively and welcoming.",
     "address": "5212 Capitol Blvd SE Unit A, Tumwater, WA 98501, USA",
     "location": {
-      "lat": 46.9986685,
-      "lng": -122.9085388
+      "lat": 47.0005071,
+      "lng": -122.9076942
     },
     "isActive": true,
     "isVisible": true,
