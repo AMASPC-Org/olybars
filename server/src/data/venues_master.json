@@ -2859,8 +2859,8 @@
     "insiderVibe": "The outdoor seating is a must on a sunny day. Their daily happy hour from 2-5pm is one of the better kept secrets on the east side.",
     "address": "1720 4th Ave E, Olympia, WA 98506, USA",
     "location": {
-      "lat": 47.0452294,
-      "lng": -122.8985326
+      "lat": 47.0354703,
+      "lng": -122.8227694
     },
     "isActive": true,
     "isVisible": true,
@@ -2901,35 +2901,6 @@
     }
   },
   {
-    "id": "insert-coin-centralia",
-    "name": "Insert Coin Centralia",
-    "venueType": "arcade_bar",
-    "sceneTags": [
-      "arcade",
-      "retro",
-      "family_friendly",
-      "craft_beer"
-    ],
-    "foodService": "full_kitchen",
-    "status": "chill",
-    "clockIns": 0,
-    "capacity": 150,
-    "vibe": "Nostalgic retro gaming meets modern craft beer and elevated bar fare.",
-    "insiderVibe": "It's worth the drive to Centralia. Over 100 games, a self-pour tap wall, and burgers that actually hold their own. It transforms into 21+ after 11 PM, so plan your child-free session accordingly.",
-    "address": "309 N Tower Ave, Centralia, WA 98531, USA",
-    "location": {
-      "lat": 46.718563,
-      "lng": -122.9537289
-    },
-    "isActive": true,
-    "isVisible": true,
-    "isPaidLeagueMember": false,
-    "currentBuzz": {
-      "score": 0,
-      "lastUpdated": 1767436252598
-    }
-  },
-  {
     "id": "23-kitchens-lacey",
     "name": "23 Kitchens",
     "venueType": "restaurant_bar",
@@ -2952,6 +2923,239 @@
     },
     "isActive": true,
     "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "insert-coin-oly-lacey",
+    "name": "Insert Coin (Olympia/Lacey)",
+    "venueType": "arcade_bar",
+    "sceneTags": [
+      "arcade",
+      "retro",
+      "family_friendly",
+      "craft_beer"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 150,
+    "vibe": "Nostalgic retro gaming meets modern craft beer and elevated bar fare.",
+    "insiderVibe": "The local version of the Centralia legend. Over 100 games, a self-pour tap wall, and burgers that actually hold their own. It transforms into 21+ after 11 PM, so plan your child-free session accordingly.",
+    "address": "3430 Pacific Ave SE Ste D1, Olympia, WA 98501, USA",
+    "location": {
+      "lat": 47.04254,
+      "lng": -122.8470425
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "pints-barn",
+    "name": "Pints Barn",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "neighborhood",
+      "outdoor_patio",
+      "sports"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 120,
+    "vibe": "Rustic charm and local brotherhood; your 'home away from home' in Tumwater.",
+    "insiderVibe": "Order the oversized pretzel with beer cheese—it's a religious experience. The circular bar makes it easy to make friends, and the patio is arguably the best all-season outdoor space in the county.",
+    "address": "114 E St SW, Tumwater, WA 98501, USA",
+    "location": {
+      "lat": 47.01201450000001,
+      "lng": -122.9055804
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "pints-and-quarts",
+    "name": "Pints & Quarts",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "neighborhood",
+      "sports",
+      "taco_tuesday"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 100,
+    "vibe": "Funky, local vibe with plenty of quirky memorabilia and a killer Bloody Mary bar.",
+    "insiderVibe": "Wednesdays are the move—free BBQ with a drink purchase. It's a true neighborhood hub where everyone from military members to working pros and older couples rubs elbows. Very welcoming.",
+    "address": "1230 College St SE, Lacey, WA 98503, USA",
+    "location": {
+      "lat": 47.0361634,
+      "lng": -122.8227104
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "rivers-edge",
+    "name": "River's Edge",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "sports_bar",
+      "golf_course",
+      "breakfast"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 150,
+    "vibe": "Premier sports bar and dining at the Tumwater Valley Golf Club.",
+    "insiderVibe": "The state-of-the-art setup makes it the best place in Tumwater to watch football. Don't sleep on the Dungeness Crab Cakes or their weekend breakfast menu.",
+    "address": "4611 Tumwater Valley Drive SE, Tumwater, WA 98501, USA",
+    "location": {
+      "lat": 47.0064742,
+      "lng": -122.9028415
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "beat-drop-kitchen",
+    "name": "Beat Drop Kitchen & Event Center",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "dance_club",
+      "line_dancing",
+      "karaoke",
+      "latin_night"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 300,
+    "vibe": "All-ages restaurant by day, high-energy dance destination by night.",
+    "insiderVibe": "They have 6,000 square feet of space. Wednesday is for country/line dancing, Friday is Latin/Salsa, and Saturday is the full club experience. The VIP booths with champagne are a nice touch for groups.",
+    "address": "1225 Ruddell Rd SE, Lacey, WA 98503, USA",
+    "location": {
+      "lat": 47.0356406,
+      "lng": -122.8185893
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "cup-of-swords-tavern",
+    "name": "Cup of Swords Tavern",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "renaissance",
+      "mead",
+      "dnd",
+      "pet_friendly"
+    ],
+    "foodService": "none_byof",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 40,
+    "vibe": "A permanent Renaissance Faire taproom where fantasy meets flavor.",
+    "insiderVibe": "Sundays are D&D days. Feel free to 'garb up'—they love it when people come in themed attire. They don't have a kitchen, but they're adjacent to Axis Meads and let you bring in your own food.",
+    "address": "1005 4th Ave E, Olympia, WA 98501, USA",
+    "location": {
+      "lat": 47.0453268,
+      "lng": -122.8896186
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "hops-on-the-hill",
+    "name": "Hops on the Hill",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "bbq",
+      "craft_beer",
+      "bourbon",
+      "trivia"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 100,
+    "vibe": "Texas-style BBQ and craft beer haven in the South Sound.",
+    "insiderVibe": "The brisket is the real deal. Tuesdays are trivia nights, and they're one of the few places in Tumwater with a serious focus on premium bourbons alongside their craft tap list.",
+    "address": "1870 Barnes Blvd SW, Tumwater, WA 98512, USA",
+    "location": {
+      "lat": 47.01913529999999,
+      "lng": -122.9224261
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "the-office-tavern",
+    "name": "The Office Tavern",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "neighborhood",
+      "sports",
+      "21_plus",
+      "outdoor_patio"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 90,
+    "vibe": "The local legend remodeled; friendly, community-focused, and 21+ only.",
+    "insiderVibe": "The 10-foot screen is a sports fan's dream. No kids allowed, ever. Their 'Office Hour' (Happy Hour) runs all day Monday, which is the perfect way to start the week.",
+    "address": "2030 Mottman Road SW, Tumwater, WA 98512, USA",
+    "location": {
+      "lat": 47.0256921,
+      "lng": -122.9281524
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
