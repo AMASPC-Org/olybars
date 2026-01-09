@@ -2859,8 +2859,8 @@
     "insiderVibe": "The outdoor seating is a must on a sunny day. Their daily happy hour from 2-5pm is one of the better kept secrets on the east side.",
     "address": "1720 4th Ave E, Olympia, WA 98506, USA",
     "location": {
-      "lat": 47.0354703,
-      "lng": -122.8227694
+      "lat": 47.0452294,
+      "lng": -122.8985326
     },
     "isActive": true,
     "isVisible": true,
@@ -4331,6 +4331,237 @@
     "location": {
       "lat": 46.9995763,
       "lng": -122.9177918
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "pints-dog-house",
+    "name": "Pints Dog House",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "gourmet_hot_dogs",
+      "family_friendly",
+      "pet_friendly",
+      "craft_beer"
+    ],
+    "foodService": "limited_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 60,
+    "vibe": "Vibrant, Lego-walled haven for gourmet dogs and craft beer.",
+    "insiderVibe": "The kitchen is technically a food truck outside, but the vibe inside is pure fun. Famous for their Field Roast sausages and the Lego wall. It's the perfect spot for families and dog owners alike.",
+    "address": "4444 6th Ave SE Suite 100, Lacey, WA 98503, USA",
+    "location": {
+      "lat": 47.0435447,
+      "lng": -122.8257925
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "coopers-lacey",
+    "name": "Cooper's Food & Drink",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "neighborhood",
+      "cocktails",
+      "pnw_style",
+      "brunch"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 120,
+    "vibe": "Warm and welcoming neighborhood spot with elevated PNW comfort Food.",
+    "insiderVibe": "Locally owned and focused on regional ingredients. The whipped feta dip and their weekend brunch are standout performers. It's classy enough for a date but casual enough for a neighborhood catch-up.",
+    "address": "2400 Marvin Rd NE Suite A, Lacey, WA 98516, USA",
+    "location": {
+      "lat": 47.0690432,
+      "lng": -122.7694053
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "luckys-lacey",
+    "name": "Lucky's Restaurant & Bar",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "breakfast_all_day",
+      "comfort_food",
+      "family_friendly"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 100,
+    "vibe": "Hearty comfort food and a legendary all-day breakfast menu.",
+    "insiderVibe": "The move here is the 'All in One' omelet or the Cinnamon Roll French Toast. It's where you go when you need a real meal in a comfortable, no-pretense environment.",
+    "address": "1401 Marvin Rd NE STE 310, Lacey, WA 98516, USA",
+    "location": {
+      "lat": 47.0600014,
+      "lng": -122.7663652
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "el-itacate-lacey",
+    "name": "El Itacate Mexican Restaurant",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "mexican",
+      "birria",
+      "authentic",
+      "family_friendly"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 80,
+    "vibe": "Authentic Mexican flavors and exceptional family service.",
+    "insiderVibe": "Their birria tacos are some of the most respected in the county. It's a true family-run gem that brings legitimate traditional recipes to the Lacey corridor.",
+    "address": "9018 Martin Way E, Lacey, WA 98516, USA",
+    "location": {
+      "lat": 47.0602206,
+      "lng": -122.7486078
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "log-cabin-olympia",
+    "name": "The Log Cabin Bar & Grill",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "dive_bar",
+      "historical",
+      "burgers",
+      "karaoke"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 100,
+    "vibe": "Rustic charm powerhouse with award-winning sourdough burgers.",
+    "insiderVibe": "A local institution. The sourdough burgers are arguably the best in town. It transforms from a neighborhood grill to a high-energy karaoke hub on the weekends. Real history on the walls and in the wood.",
+    "address": "7035 Pacific Ave SE, Olympia, WA 98503, USA",
+    "location": {
+      "lat": 47.0408383,
+      "lng": -122.7903289
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "percival-creek",
+    "name": "Percival Creek",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "craft_beer",
+      "distillery",
+      "educational",
+      "family_friendly"
+    ],
+    "foodService": "snacks",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 50,
+    "vibe": "Innovative tasting room fueled by the next generation of beverage makers.",
+    "insiderVibe": "Located in the Tumwater Craft District. It's the private label for SPSCC's Craft Brewing and Distilling program. You're literally tasting the future of the industry while supporting student education. Sleek, educational, and very cool.",
+    "address": "4242 Capitol Blvd SE, Tumwater, WA 98501, USA",
+    "location": {
+      "lat": 47.009579,
+      "lng": -122.9054629
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "tumwater-taco",
+    "name": "Tumwater Taco Company",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "mexican",
+      "tequila_focus",
+      "industrial_vibe",
+      "homemade_tortillas"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 90,
+    "vibe": "Stylish, industrial-vibe Mexican destination with elite spirits.",
+    "insiderVibe": "The homemade corn tortillas change the game. Their Quesabirria and private-label tequilas make it far more than just a taco joint. It's the stylish anchor of the Tumwater Craft District scene.",
+    "address": "4242 Capitol Blvd SE Suite 110, Tumwater, WA 98501, USA",
+    "location": {
+      "lat": 47.009579,
+      "lng": -122.9054629
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "wines-by-the-valley",
+    "name": "Wines by the Valley",
+    "venueType": "winery_tasting",
+    "sceneTags": [
+      "wine_bar",
+      "flight_focus",
+      "cozy",
+      "bottle_shop"
+    ],
+    "foodService": "snacks",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 40,
+    "vibe": "Cozy, exploration-focused wine bar in the heart of the Craft District.",
+    "insiderVibe": "Perfect for socializing and exploration. They allow you to bring in food from other Craft District vendors, making it the ultimate local hub for a sophisticated evening wine flight.",
+    "address": "4242 Capitol Blvd SE Suite 140, Tumwater, WA 98501, USA",
+    "location": {
+      "lat": 47.009579,
+      "lng": -122.9054629
     },
     "isActive": true,
     "isVisible": true,
