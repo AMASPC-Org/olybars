@@ -1408,8 +1408,8 @@
       "y": 56
     },
     "location": {
-      "lat": 47.0447176,
-      "lng": -122.9002862
+      "lat": 47.0447222,
+      "lng": -122.9001935
     },
     "address": "404 Washington St SE, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -3156,6 +3156,508 @@
     "isActive": true,
     "isVisible": true,
     "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "state-and-central",
+    "name": "State & Central",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "neighborhood",
+      "workingmans_hill",
+      "burger_joint",
+      "outdoor_seating"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 75,
+    "vibe": "A community hub in the heart of working-class Olympia history.",
+    "insiderVibe": "The 'Juicy Lucy' is the local legend here. Weekend brunch is sneaky good, especially if you snag a spot on the sidewalk patio on a sunny morning. It's the ultimate neighborhood decompression zone.",
+    "address": "1415 State Ave NE, Olympia, WA 98506, USA",
+    "location": {
+      "lat": 47.0467875,
+      "lng": -122.8820143
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "boulevard-tavern",
+    "name": "The Boulevard Tavern",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "dive_bar",
+      "community_hub",
+      "bingo",
+      "covered_patio"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 100,
+    "vibe": "Unpretentious, spacious, and deeply rooted in the Eastside community.",
+    "insiderVibe": "Barstool Bingo on Wednesdays is mandatory local lore. Don't be fooled by the modest exterior; it's huge inside. The covered smoking area and free pool Sundays make it a classic reliable hangout.",
+    "address": "2221 Pacific Ave SE, Olympia, WA 98501, USA",
+    "location": {
+      "lat": 47.0456111,
+      "lng": -122.8694233
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "northwest-beerwerks",
+    "name": "Northwest Beerwerks",
+    "venueType": "taproom",
+    "sceneTags": [
+      "craft_beer",
+      "dog_friendly",
+      "outdoor_patio",
+      "board_games"
+    ],
+    "foodService": "none_byof",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 60,
+    "vibe": "Hip, relaxed taproom vibes in a beautifully renovated vintage home.",
+    "insiderVibe": "With 32 taps and a massive selection of bottles, this is a gearhead's paradise for beer. The outdoor yard is one of the best spots in town to hang with your dog. No kitchen, so check the food truck schedule or BYO.",
+    "address": "420 Steele St SE, Olympia, WA 98501, USA",
+    "location": {
+      "lat": 47.0453474,
+      "lng": -122.8662423
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "town-tavern",
+    "name": "The Town Tavern",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "hole_in_the_wall",
+      "neighborhood",
+      "pool_table",
+      "pull_tabs"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 50,
+    "vibe": "A genuine neighborhood dive where everyone actually knows your name.",
+    "insiderVibe": "The definition of a 'hidden' bar on Pacific. It's got that perfect upbeat vibe with friendly bartenders who don't take any nonsense. Great for a quiet beer or a few rounds of pool away from the downtown noise.",
+    "address": "2020 Pacific Ave SE, Olympia, WA 98501, USA",
+    "location": {
+      "lat": 47.0466842,
+      "lng": -122.8725422
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "viking-lounge",
+    "name": "The Viking Lounge",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "dive_bar",
+      "karaoke",
+      "bingo",
+      "breakfast"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 120,
+    "vibe": "High-energy dive bar with legendary karaoke and one of the best cheap breakfasts in Lacey.",
+    "insiderVibe": "Their margaritas are deceptively strong and remarkably good for a dive. Early bird breakfast (8-10am) is the best way to start a weekday. Stay late for the karaoke crowd—it's always a show.",
+    "address": "6318 Martin Way E, Lacey, WA 98516, USA",
+    "location": {
+      "lat": 47.0506496,
+      "lng": -122.7975329
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "oblarneys-irish-pub",
+    "name": "O'Blarney's Irish Pub",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "irish_pub",
+      "sports_bar",
+      "trivia",
+      "family_friendly"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 180,
+    "vibe": "A massive, vibrant blend of traditional Irish spirits and local sports energy.",
+    "insiderVibe": "The Blarney Burger is an essential Olympia food group. They have a great balance between a quiet family dining area and a high-octane sports bar. Check out their Irish jam sessions for the real authentic feel.",
+    "address": "4411 Martin Way E, Olympia, WA 98516, USA",
+    "location": {
+      "lat": 47.0473849,
+      "lng": -122.8271327
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "firecreek-alehouse",
+    "name": "Firecreek Alehouse",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "golf_course_views",
+      "lodge_style",
+      "prime_rib",
+      "outdoor_seating"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 150,
+    "vibe": "Rustic lodge aesthetics with sweeping views of the Capitol City Golf Club.",
+    "insiderVibe": "The prime rib on Fridays and Saturdays is the main event. It feels like a mountain retreat right in the middle of Lacey. The patio overlooks the greens and is arguably the most peaceful place to have a beer in the county.",
+    "address": "5225 Yelm Hwy SE, Lacey, WA 98503, USA",
+    "location": {
+      "lat": 46.995635,
+      "lng": -122.812601
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "farrellis-pizza-tumwater",
+    "name": "Farrelli's Pizza (Tumwater)",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "wood_fired_pizza",
+      "family_friendly",
+      "trivia",
+      "activity_focus"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 140,
+    "vibe": "Community-focused artisan pizza with a lively, family-friendly bar scene.",
+    "insiderVibe": "Team Trivia on Wednesdays is the big draw and it gets packed. Their fire-pitting technique is no joke—the crust is some of the best in the South Sound. Great for groups and kids (they have a game room).",
+    "address": "111 Tumwater Blvd SE, Tumwater, WA 98501, USA",
+    "location": {
+      "lat": 46.9831967,
+      "lng": -122.9046186
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "farrellis-pizza-lacey",
+    "name": "Farrelli's Pizza (Lacey)",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "wood_fired_pizza",
+      "heritage",
+      "sports",
+      "community_hub"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 130,
+    "vibe": "The original wood-fired pioneer of the region; iconic, warm, and highly social.",
+    "insiderVibe": "This was the first store (est. 1995) and it still holds that original wood-fired energy. They've got pull-tabs and pool on the bar side, making it a favorite for the after-work crowd as much as for families.",
+    "address": "4870 Yelm Highway, Lacey, WA 98503, USA",
+    "location": {
+      "lat": 46.99666999999999,
+      "lng": -122.819916
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "cedar-inn",
+    "name": "The Cedar Inn",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "tavern",
+      "neighborhood",
+      "bloody_marys",
+      "covered_patio"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 85,
+    "vibe": "Welcoming, down-to-earth tavern with a friendly country pulse.",
+    "insiderVibe": "Best Bloody Marys in the Hawks Prairie corridor. It's a classic neighborhood spot where you can grab a Philly cheesesteak and some deep-fried mushrooms while playing a round of darts. It feels like a true community living room.",
+    "address": "9030 Martin Way E, Olympia, WA 98516, USA",
+    "location": {
+      "lat": 47.0605097,
+      "lng": -122.7476951
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "sampan-bar-grill",
+    "name": "Sampan Bar & Grill",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "japanese",
+      "karaoke",
+      "dance_floor",
+      "cocktails"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 110,
+    "vibe": "An energetic fusion of Japanese cuisine and high-spirited nightlife.",
+    "insiderVibe": "You have to try the 'Flaming Lemon Drop'—it's their signature move. A historic landmark since 1978, it's one of the few places in the area where you can transition seamlessly from sushi to a packed dance floor with karaoke.",
+    "address": "922 Hensley St NE, Olympia, WA 98516, USA",
+    "location": {
+      "lat": 47.0539741,
+      "lng": -122.7826308
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "old-99-company-bar-grill",
+    "name": "Old Hwy 99 Company Bar & Grill",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "biker_friendly",
+      "scratch_kitchen",
+      "outdoor_patio",
+      "homestyle"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 150,
+    "vibe": "A massive, welcoming roadside retreat featuring high-quality scratch cooking.",
+    "insiderVibe": "The brisket and chicken fried steak are top-tier. Even though it's technically in Tenino, it's a mandatory stop for the south-county crowd. The metal outdoor building with heaters makes it a great year-round spot for a beer.",
+    "address": "12743 Old Hwy 99 SE, Tenino, WA 98589, USA",
+    "location": {
+      "lat": 46.9030994,
+      "lng": -122.8586036
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "westside-tavern",
+    "name": "The Westside Tavern",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "dive_bar",
+      "comfort_food",
+      "award_winning_burgers",
+      "neighborhood"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 80,
+    "vibe": "A local Olympia dive with a 'Cheers' heart and some of the best pub food in the region.",
+    "insiderVibe": "The 'Slayer Burger' (bacon + avocado) and their award-winning Tavern Burger are non-negotiable. It's owned by the same folks as Hash, so you know the quality is there despite the low-key dive atmosphere. Eclectic, warm, and very local.",
+    "address": "1815 Harrison Ave NW, Olympia, WA 98502, USA",
+    "location": {
+      "lat": 47.0458322,
+      "lng": -122.9243519
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "puget-sound-taps",
+    "name": "Puget Sound Taps",
+    "venueType": "taproom",
+    "sceneTags": [
+      "craft_beer",
+      "pizza",
+      "dog_friendly",
+      "flights"
+    ],
+    "foodService": "snacks_and_pizza",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 70,
+    "vibe": "A locally owned tap house with a massive rotating selection and friendly service.",
+    "insiderVibe": "34 beverages on tap means you'll always find something new. Their pizza is surprisingly legit for a taproom, and their 'Monthly Special Pizza' is always worth a look. Pet-friendly and great for group beers.",
+    "address": "4250 Martin Way E Ste 101, Olympia, WA 98507, USA",
+    "location": {
+      "lat": 47.0483911,
+      "lng": -122.8304187
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "nocturnal-hound",
+    "name": "The Nocturnal Hound",
+    "venueType": "wine_bar",
+    "sceneTags": [
+      "wine_bar",
+      "bottle_shop",
+      "charcuterie",
+      "upscale_casual"
+    ],
+    "foodService": "charcuterie_and_paninis",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 45,
+    "vibe": "A cozy, sophisticated wine bar and bottle shop specializing in local gems.",
+    "insiderVibe": "Opened in 2024, it's the newest crown jewel of Tumwater's social scene. Amazing focus on WA/OR wines, mead, and cider. Their charcuterie boards and burrata are the perfect sophisticated pairing for a quiet rainy evening.",
+    "address": "324 Custer Way SW, Tumwater, WA 98501, USA",
+    "location": {
+      "lat": 47.0169241,
+      "lng": -122.9015834
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "omalleys-lounge",
+    "name": "O'Malley's Lounge",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "sports_bar",
+      "bowling_adjacent",
+      "live_music",
+      "darts"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 130,
+    "vibe": "A laid-back Westside staple attached to the bowling alley, perfect for sports and groups.",
+    "insiderVibe": "Hidden next to Westside Lanes. 16 TVs and two projectors make it one of the most reliable places to catch a game. They have live music frequently and a surprisingly spacious outdoor area for a bowling alley lounge.",
+    "address": "2200 Garfield Ave NW Ste 1, Olympia, WA 98502, USA",
+    "location": {
+      "lat": 47.0472891,
+      "lng": -122.9284169
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "fatsos-bar-grill",
+    "name": "Fatso's Bar & Grill",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "neighborhood",
+      "homestyle_cooking",
+      "clam_chowder",
+      "sports"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 90,
+    "vibe": "Friendly, old-school bar and grill focused on home-cooked favorites and community.",
+    "insiderVibe": "Their clam chowder is award-winning for a reason—don't skip it. It's a very chill, family-owned vibe where the service is as warm as the homemade soups. Great low-key spot for a burger and a game.",
+    "address": "3420 Pacific Ave SE, Olympia, WA 98501, USA",
+    "location": {
+      "lat": 47.0465309,
+      "lng": -122.8522287
+    },
+    "isActive": true,
+    "isVisible": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
