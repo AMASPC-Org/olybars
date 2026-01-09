@@ -12,30 +12,36 @@ import { API_ENDPOINTS } from '../lib/api-config';
  * Fetches the list of venues from the backend.
  * Uses PULSE_CONFIG.WINDOWS.STALE_THRESHOLD for background refresh logic.
  */
-export const fetchVenues = async (): Promise<Venue[]> => {
+export const fetchVenues = async (brief = false): Promise<Venue[]> => {
   try {
-    const response = await fetch(API_ENDPOINTS.VENUES.LIST);
+    const url = brief ? `${API_ENDPOINTS.VENUES.LIST}?brief=true` : API_ENDPOINTS.VENUES.LIST;
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch venues: ${response.statusText}`);
     }
     const venues: Venue[] = await response.json();
-
-    // 1. Client-side Stale Check (Optional trigger for backend refresh via side effect)
-    // The Backend handles the primary logic, but the Frontend verifies freshness.
-    const now = Date.now();
-    venues.forEach(venue => {
-      const lastUpdated = venue.currentBuzz?.lastUpdated || 0;
-      if (now - lastUpdated > PULSE_CONFIG.WINDOWS.STALE_THRESHOLD) {
-        // We could trigger a dedicated background refresh here if needed
-        // but currently the backend handles this on GET /venues.
-      }
-    });
 
     return venues;
   } catch (error) {
     console.error('Error in fetchVenues:', error);
     // Return empty array as fallback to prevent UI crash
     return [];
+  }
+};
+
+/**
+ * Fetch a single venue by ID (Full Data)
+ */
+export const fetchVenueById = async (id: string): Promise<Venue | null> => {
+  try {
+    const response = await fetch(`${API_ENDPOINTS.VENUES.LIST}/${id}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch venue ${id}: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error in fetchVenueById:', error);
+    return null;
   }
 };
 

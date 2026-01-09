@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { fetchVenueById } from '../../../services/venueService';
 import { isVenueOwner, isVenueManager, hasVenueAccess, isSystemAdmin } from '../../../types/auth_schema';
 import { ASSETS } from '../../../components/partners/AssetToggleGrid';
 import {
@@ -20,8 +22,6 @@ import { useToast } from '../../../components/ui/BrandedToast';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles, estimateWalkTime, getZone } from '../../../utils/geoUtils';
 import { ArtieDistanceWarningModal } from '../components/ArtieDistanceWarningModal';
-
-import { useOutletContext } from 'react-router-dom';
 
 interface VenueProfileScreenProps {
     // Props are now provided via useOutletContext
@@ -58,7 +58,19 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { showToast } = useToast();
-    const venue = venues.find(v => v.id === id);
+
+    // 1. Initial Data from Context (Brief Mode)
+    const contextVenue = venues.find(v => v.id === id);
+
+    // 2. Fetch Full Data (Deep Mode) in background
+    const { data: venue = contextVenue, isLoading: isFullLoading } = useQuery({
+        queryKey: ['venue', id],
+        queryFn: () => fetchVenueById(id!),
+        enabled: !!id,
+        initialData: contextVenue,
+        staleTime: 60 * 1000,
+    });
+
     const { coords } = useGeolocation({ shouldPrompt: false });
 
     const [isWarningOpen, setIsWarningOpen] = useState(false);

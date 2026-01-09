@@ -137,13 +137,32 @@ const SmartOwnerRoute = ({ venues, handleUpdateVenue, userProfile }: any) => {
 };
 
 export default function OlyBarsApp() {
-  // --- DATA FETCHING (TanStack Query) ---
+  // --- DATA FETCHING (TanStack Query with Persistence) ---
   const { data: venues = [], isLoading } = useQuery({
-    queryKey: ['venues'],
-    queryFn: fetchVenues,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000,   // 10 minutes
+    queryKey: ['venues-brief'],
+    queryFn: () => fetchVenues(true), // Fetch brief mode for the list
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    initialData: () => {
+      // Warm path: load from localStorage for instant boot
+      const stored = localStorage.getItem('oly_venues_cache');
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (e) {
+          return undefined;
+        }
+      }
+      return undefined;
+    }
   });
+
+  // Sync Venues to LocalStorage for next boot
+  useEffect(() => {
+    if (venues && venues.length > 0) {
+      localStorage.setItem('oly_venues_cache', JSON.stringify(venues));
+    }
+  }, [venues]);
 
   const [userPoints, setUserPoints] = useState(() => parseInt(localStorage.getItem('oly_points') || '0'));
   const [clockInHistory, setClockInHistory] = useState<ClockInRecord[]>(() => JSON.parse(localStorage.getItem('oly_clockins') || '[]'));

@@ -14,7 +14,7 @@ const CACHE_TTL = 60 * 1000;
  * [SECURITY] Zero-Trust Striping
  * Removes sensitive partner data from public objects.
  */
-const stripSensitiveVenueData = (venue: Venue): Venue => {
+const stripSensitiveVenueData = (venue: Venue, brief = false): Venue => {
     const stripped = { ...venue };
 
     // 1. Root level sensitive fields
@@ -28,6 +28,30 @@ const stripSensitiveVenueData = (venue: Venue): Venue => {
             delete (safeItem as any).margin_tier;
             return safeItem as any;
         });
+    }
+
+    // 3. [PERFORMANCE] Brief Mode Stripping
+    if (brief) {
+        const briefFields: (keyof Venue)[] = [
+            'fullMenu',
+            'originStory',
+            'insiderVibe',
+            'soberFriendlyReports',
+            'manualStatus',
+            'manualStatusExpiresAt',
+            'manualClockIns',
+            'manualClockInsExpiresAt',
+            'loyalty_signup_url',
+            'newsletterUrl',
+            'ticketLink',
+            'historySnippet'
+        ];
+        briefFields.forEach(field => delete (stripped as any)[field]);
+
+        // Keep only the primary photo in brief mode
+        if (stripped.photos && stripped.photos.length > 1) {
+            stripped.photos = [stripped.photos[0]];
+        }
     }
 
     return stripped;
@@ -260,7 +284,31 @@ const refreshVenueCache = async (): Promise<Venue[]> => {
     }
 };
 
-export const fetchVenues = async (): Promise<Venue[]> => {
+/**
+ * Fetch a single venue by ID (Full Data)
+ */
+export const getVenueById = async (venueId: string): Promise<Venue | null> => {
+    // Check cache first
+    if (venueCache) {
+        const cached = venueCache.data.find(v => v.id === venueId);
+        if (cached) return applyVirtualDecay(stripSensitiveVenueData(cached, false));
+    }
+
+    try {
+        const doc = await db.collection('venues').doc(venueId).get();
+        if (!doc.exists) return null;
+
+        const data = doc.data();
+        const venue = { id: doc.id, ...data } as Venue;
+
+        return applyVirtualDecay(stripSensitiveVenueData(venue, false));
+    } catch (error) {
+        console.error(`Error fetching venue ${venueId}:`, error);
+        return null;
+    }
+};
+
+export const fetchVenues = async (brief = false): Promise<Venue[]> => {
     const now = Date.now();
 
     // 1. SWR logic: Return cache immediately, refresh in background if stale
@@ -270,12 +318,12 @@ export const fetchVenues = async (): Promise<Venue[]> => {
             // Background refresh
             refreshVenueCache().catch(err => console.error('[Backend] Background cache update failed:', err));
         }
-        return venueCache.data.map(applyVirtualDecay).map(stripSensitiveVenueData);
+        return venueCache.data.map(applyVirtualDecay).map(v => stripSensitiveVenueData(v, brief));
     }
 
     // 2. No cache: Initial load
     const data = await refreshVenueCache();
-    return data.map(applyVirtualDecay).map(stripSensitiveVenueData);
+    return data.map(applyVirtualDecay).map(v => stripSensitiveVenueData(v, brief));
 };
 
 

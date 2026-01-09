@@ -238,7 +238,8 @@ v1Router.get('/health/artie', async (req, res) => {
  */
 v1Router.get('/venues', async (req, res) => {
     try {
-        const venues = await fetchVenues();
+        const brief = req.query.brief === 'true';
+        const venues = await fetchVenues(brief);
         res.setHeader('Cache-Control', 'public, max-age=30'); // Cache for 30s
         res.json(venues);
     } catch (error: any) {
@@ -246,6 +247,23 @@ v1Router.get('/venues', async (req, res) => {
             error: error.message,
             stack: error.stack
         });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route GET /api/venues/:id
+ * @desc Fetch a single venue by ID (Full Data)
+ */
+v1Router.get('/venues/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { getVenueById } = await import('./venueService');
+        const venue = await getVenueById(id);
+        if (!venue) return res.status(404).json({ error: 'Venue not found' });
+        res.json(venue);
+    } catch (error: any) {
+        log('ERROR', 'Error fetching single venue', { venueId: id, error: error.message });
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
