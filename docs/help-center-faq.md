@@ -20,10 +20,10 @@ Welcome to the **Bar League Playbook**—Artie's Guide to the PNW Nightlife OS. 
 Head to the **LEAGUE HQ** tab and look for the "Join the League" CTA. You'll need to create a Handle and set your drink preferences.
 
 ### 2. Why can't I check in?
-Check-ins are limited to **2 per 12-hour window** per WA State LCB alignment. Check-ins also require you to be within 100 meters of the venue (measured via GPS).
+Clock-ins are limited to **2 per 12-hour window** per WA State LCB alignment. Clock-ins also require you to be within 100 meters of the venue (measured via GPS).
 
 ### 3. What is "Buzzing"?
-When a venue receives multiple Vibe Checks or Check-ins within a short period, it turns **Gold** on the map, indicating it is currently high-energy.
+When a venue receives multiple Vibe Checks or Clock-ins within a short period, it turns **Gold** on the map, indicating it is currently high-energy.
 
 ### 4. How do I change my Handle?
 You can update your Handle once every **30 days** in your Profile settings. This ensures League integrity and leaderboard consistency.

@@ -4,11 +4,11 @@
 This log records the successful implementation and activation of the automated Washington State LCB (Liquor and Cannabis Board) compliance guardrails.
 
 ### 1. Technical Implementation: Rule 3
-**Mandate**: Strictly enforce a maximum of 2 check-ins per 12-hour window per user.
-- **Component**: [LcbCompliantCheckin.tsx](file:///c:/Users/USER1/olybars/src/features/venues/screens/LcbCompliantCheckin.tsx)
+**Mandate**: Strictly enforce a maximum of 2 clock-ins per 12-hour window per user.
+- **Component**: [LcbCompliantClockin.tsx](file:///c:/Users/USER1/olybars/src/features/venues/screens/LcbCompliantClockin.tsx)
 - **Logic Verification**:
   ```tsx
-  const canCheckIn = useMemo(() => {
+  const canClockIn = useMemo(() => {
     const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
     const recentCheckIns = checkInTimestamps.filter(ts => ts > twelveHoursAgo);
     return recentCheckIns.length < 2;
@@ -40,9 +40,9 @@ This log records the successful implementation and activation of the automated W
 
 ### 4. Participation vs. Venue Attendance
 To balance user engagement with regulatory safety, OlyBars maintains a strict distinction between **Venue Attendance** and **League Participation**:
-- **Venue Attendance (Check-ins)**: Restricted to 2 check-ins per 12-hour window. These are treated as "visit rewards" and are subject to LCB scrutiny regarding inducements to consume.
+- **Venue Attendance (Clock-ins)**: Restricted to 2 clock-ins per 12-hour window. These are treated as "visit rewards" and are subject to LCB scrutiny regarding inducements to consume.
 - **League Participation (Games/Karaoke)**: Skill-based entertainment activities (Trivia, Karaoke, Karaoke, Arcade) are **not** limited by the 12-hour window.
-- **Verification Logic**: Participation points are tracked separately from check-in timestamps, ensuring that "Performance Rewards" (Skill) are never conflated with "Attendance Rewards" (Visit).
+- **Verification Logic**: Participation points are tracked separately from clock-in timestamps, ensuring that "Performance Rewards" (Skill) are never conflated with "Attendance Rewards" (Visit).
 
 ### 5. Prize & Reward Governance
 To prevent "Free Alcohol" advertising violations (RCW 66.24.700), all OlyBars rewards follow these mandates:

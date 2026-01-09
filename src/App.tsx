@@ -31,7 +31,6 @@ import { TriviaScreen } from './features/league/screens/TriviaScreen';
 import { LiveMusicScreen } from './features/league/screens/LiveMusicScreen';
 import { EventsScreen } from './features/league/screens/EventsScreen';
 import { VenuesScreen } from './features/venues/screens/VenuesScreen';
-import TheSpotsScreen from './features/venues/screens/TheSpotsScreen';
 import { LoginModal } from './features/auth/components/LoginModal';
 import { OwnerDashboardScreen } from './features/owner/screens/OwnerDashboardScreen';
 import { ClockInModal } from './features/venues/components/ClockInModal';
@@ -48,7 +47,7 @@ import { cookieService } from './services/cookieService';
 import { calculateDistance, metersToMiles } from './utils/geoUtils';
 
 // --- RELOCATED SCREENS ---
-import MapScreen from './features/venues/screens/MapScreen';
+
 
 import { LeagueHQScreen } from './features/league/screens/LeagueHQScreen';
 import TermsScreen from './features/marketing/screens/TermsScreen';
@@ -65,6 +64,7 @@ import { DiscoveryLayout } from './features/venues/screens/DiscoveryLayout';
 import { DiscoveryProvider } from './features/venues/contexts/DiscoveryContext';
 import OwnerPortal from './features/owner/screens/OwnerPortal';
 import { PointHistoryScreen } from './features/profile/screens/PointHistoryScreen';
+import SettingsScreen from './features/profile/screens/SettingsScreen';
 import { QRVibeCheckScreen } from './features/vibe-check/screens/QRVibeCheckScreen'; // [NEW] QR Screen
 import MerchStandScreen from './features/merch/screens/MerchStandScreen';
 import MerchDetailScreen from './features/merch/screens/MerchDetailScreen';
@@ -301,7 +301,7 @@ export default function OlyBarsApp() {
     const lastGlobal = userProfile.lastGlobalVibeCheck;
     if (lastGlobal && (now - lastGlobal) < 30 * 60 * 1000) {
       const minsLeft = Math.ceil((30 * 60 * 1000 - (now - lastGlobal)) / 60000);
-      showToast(`Global Cooldown! Wait ${minsLeft}m before checking another vibe.`, 'info');
+      showToast(`Global Cooldown! Wait ${minsLeft}m before clocking another vibe.`, 'info');
       return;
     }
 
@@ -560,9 +560,6 @@ export default function OlyBarsApp() {
                     </>
                   }
                 />
-                <Route path="bars" element={<><SEO title="Dives & Drafts" description="The definitive directory of every bar and taproom in Olympia." /><TheSpotsScreen venues={venues} userProfile={userProfile} handleToggleFavorite={handleToggleFavorite} mode="bars" /></>} />
-                <Route path="makers" element={<><SEO title="The Maker List" description="Celebrating the brewers, distillers, and winemakers of the PNW." /><TheSpotsScreen venues={venues} userProfile={userProfile} handleToggleFavorite={handleToggleFavorite} mode="makers" /></>} />
-                <Route path="map" element={<MapScreen />} />
                 <Route path="partners/claim" element={<ClaimVenuePage />} />
                 <Route path="merch" element={<MerchStandScreen venues={venues} />} />
                 <Route path="merch/:itemId" element={<MerchDetailScreen venues={venues} userProfile={userProfile} setUserProfile={setUserProfile} />} />
@@ -589,6 +586,12 @@ export default function OlyBarsApp() {
                         Access Denied: Please Login to View Your League ID
                         <button onClick={() => setShowLoginModal(true)} className="block mx-auto mt-4 px-6 py-2 bg-primary text-black rounded-lg">Login</button>
                       </div>
+                  }
+                />
+                <Route
+                  path="settings"
+                  element={
+                    <SettingsScreen userProfile={userProfile} setUserProfile={setUserProfile} />
                   }
                 />
                 <Route path="terms" element={<><SEO title="Terms of Service" /><TermsScreen /></>} />

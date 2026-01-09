@@ -24,7 +24,7 @@ This document serves as the single source of truth for the OlyBars system archit
 *   **Cloud Storage**: Used for venue assets and optimized media files.
 
 ### 2.3 Event Bus: Pub/Sub
-*   Decouples writes from heavy processing (e.g., User Check-In -> API Write -> Pub/Sub -> League Engine processing).
+*   Decouples writes from heavy processing (e.g., User Clock-In -> API Write -> Pub/Sub -> League Engine processing).
 
 ### 2.4 Networking & Caching
 *   **Firebase Hosting**: CDN for static assets.
@@ -79,7 +79,7 @@ Bar environments are unique. Our UI must pass the **"Drunk Thumb" Test**:
 ### 6.2 Offline-First (PWA)
 Cell service in Olympia bars (e.g., The Brotherhood basement) is unreliable.
 *   **Strategy**: App loads "stale" data from local storage immediately, then background refreshes.
-*   **Check-ins**: Queued locally if offline, synced when connection returns.
+*   **Clock-ins**: Queued locally if offline, synced when connection returns.
 
 ### 6.3 State Management
 *   **Framework**: React (v18+) + Vite.
@@ -105,14 +105,14 @@ Cell service in Olympia bars (e.g., The Brotherhood basement) is unreliable.
 ### 8.1 The League Engine (Scoring)
 | Action | Points | Frequency Cap | Method |
 | :--- | :--- | :--- | :--- |
-| **Check-In** | 10 pts | 1/venue/12h (2 Global/12h) | Geofence + Device ID |
+| **Clock-In** | 10 pts | 1/venue/12h (2 Global/12h) | Geofence + Device ID |
 | **Vibe Report** | 5 pts | 1/venue/night | User Selection |
 | **Vibe Photo** | 15 pts | 1/venue/night | CV Analysis |
 | **Explorer Bonus** | 50 pts | 5 unique/7 days | System Logic |
 
 ### 8.2 The "Buzz" Algorithm
 Calculates real-time venue activity.
-*   **Inputs**: Hard Check-in (10.0), Vibe Report (3.0).
+*   **Inputs**: Hard Clock-in (10.0), Vibe Report (3.0).
 *   **Decay**: Score drops by 50% every 60 mins without signals.
 *   **States**: Dead (0-10), Chill (11-40), Buzzing (41-100), Packed (101+).
 
@@ -128,6 +128,8 @@ To prevent "The Drowning Effect," visibility is managed via dynamic rotation.
 ## 9. Data Schema (Firestore)
 
 ### 9.1 `venues`
+*   **Ground Truth Anchor**: `venues_master.json` is the definitive source for venue configuration. 
+*   **Alignment Protocol**: Before seeding, venues are aligned with official Google Places listings using `server/src/scripts/align-venue-locations.ts`.
 *   `current_buzz`: { score, label, last_updated }
 *   `happyHourRules`: Array of time-based rules.
 *   `tier_config`: Subscription level features.
@@ -147,5 +149,5 @@ To prevent "The Drowning Effect," visibility is managed via dynamic rotation.
 *   `metadata`: Location, consensus.
 
 ### 9.3 `users`
-*   `stats`: { seasonPoints, lifetimeCheckins, currentStreak }
+*   `stats`: { seasonPoints, lifetimeClockins, currentStreak }
 *   `venuePermissions`: RBAC map { venueId: role }

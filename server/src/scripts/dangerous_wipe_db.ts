@@ -88,7 +88,7 @@ async function resetUsers() {
                 systemRole: 'admin',
                 stats: {
                     seasonPoints: 0,
-                    lifetimeCheckins: 100,
+                    lifetimeClockins: 100,
                     currentStreak: 42,
                     vibeCheckCount: 0,
                     competitionPoints: 0
@@ -103,7 +103,7 @@ async function resetUsers() {
                 systemRole: 'guest', // They are not system admins, just venue owners
                 stats: {
                     seasonPoints: 0,
-                    lifetimeCheckins: 0,
+                    lifetimeClockins: 0,
                     currentStreak: 0,
                     vibeCheckCount: 0,
                     competitionPoints: 0
@@ -118,7 +118,7 @@ async function resetUsers() {
                 systemRole: 'guest',
                 stats: {
                     seasonPoints: 500, // Give some starter points
-                    lifetimeCheckins: 5,
+                    lifetimeClockins: 5,
                     currentStreak: 3,
                     vibeCheckCount: 0,
                     competitionPoints: 0

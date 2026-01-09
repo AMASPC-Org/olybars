@@ -24,6 +24,10 @@ service cloud.firestore {
         getUserData().isAdmin == true
       );
     }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && getUserData().role == 'super-admin';
+    }
     
     function isOwner(venueData) {
       return isAuthenticated() && request.auth.uid == venueData.ownerId;
@@ -44,10 +48,14 @@ service cloud.firestore {
                     !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdmin', 'systemRole'])));
     }
 
-    // Venues: Publicly readable. Writes restricted to Admins, Owners, and Managers.
+    // Venues: Publicly readable. 
+    // CREATION: Super-Admin Only.
+    // UPDATES: Admins, Owners, and Managers.
     match /venues/{venueId} {
       allow read: if true;
-      allow write: if isAdmin() || isOwner(resource.data) || isManager(resource.data);
+      allow create: if isSuperAdmin();
+      allow update: if isAdmin() || isOwner(resource.data) || isManager(resource.data);
+      allow delete: if isSuperAdmin();
 
       // Private Data Sub-collection: Restricted to authorized personnel only.
       // We look up the parent venue document to check ownership/management roles.

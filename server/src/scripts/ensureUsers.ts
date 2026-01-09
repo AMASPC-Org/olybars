@@ -13,21 +13,20 @@ const USERS = [
         venuePermissions: {}
     },
     {
-        // UID taken from seed.ts for Well 80 owner
-        uid: 'KU9KvRYzzrZfVU7BV4gaPYAFlKS2',
+        uid: 'partner-ryan',
         email: 'ryan@americanmarketingalliance.com',
         password: 'Password123',
-        displayName: 'Ryan (Partner)',
-        role: 'owner',
-        homeBase: 'well-80',
-        venuePermissions: { 'well-80': 'owner' }
+        displayName: 'Ryan (Super Admin)',
+        role: 'super-admin',
+        homeBase: null,
+        venuePermissions: { 'hannahs': 'owner' }
     },
     {
         uid: 'player-ryan',
         email: 'ryan.r.rutledge@gmail.com',
         password: 'Password123',
         displayName: 'Ryan (Player)',
-        role: 'user', // Default for player
+        role: 'user',
         homeBase: null,
         venuePermissions: {}
     }
@@ -102,7 +101,7 @@ async function ensureUsers() {
                 updatedAt: Date.now(),
                 ...(user.homeBase ? { homeBase: user.homeBase } : {}),
                 ...(user.venuePermissions ? { venuePermissions: user.venuePermissions } : {}),
-                ...(user.role === 'super-admin' ? { systemRole: 'super-admin' } : {})
+                ...(user.role === 'super-admin' ? { systemRole: 'admin' } : {})
             }, { merge: true });
 
             console.log(`Firestore profile updated for ${user.email}`);

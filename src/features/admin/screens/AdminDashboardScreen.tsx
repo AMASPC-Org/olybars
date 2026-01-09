@@ -375,10 +375,73 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                 )}
 
                 {activeTab === 'users' && (
-                    <div className="flex flex-col items-center justify-center py-20 text-center opacity-50">
-                        <Users className="w-12 h-12 mb-4 text-slate-600" />
-                        <p className="text-sm font-bold uppercase tracking-widest">User Management</p>
-                        <p className="text-[10px] text-slate-500">System Role Management (Coming Soon)</p>
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center bg-black/20 p-3 rounded-xl border border-white/5">
+                            <h2 className="text-lg font-black font-league uppercase">User Directory</h2>
+                            <div className="relative">
+                                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="text"
+                                    placeholder="Search by name, email, or UID..."
+                                    className="bg-slate-800 border-none rounded-lg py-2 pl-9 pr-4 text-xs font-bold text-white focus:ring-1 focus:ring-primary outline-none min-w-[300px]"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="text-[9px] text-slate-500 uppercase tracking-widest border-b border-white/10">
+                                        <th className="p-3">User</th>
+                                        <th className="p-3">UID</th>
+                                        <th className="p-3 text-right">Role</th>
+                                        <th className="p-3 text-right">Points</th>
+                                        <th className="p-3 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {leagueUsers
+                                        .filter(u =>
+                                            u.handle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            u.uid.includes(searchTerm)
+                                        )
+                                        .map((user) => (
+                                            <tr key={user.uid} className="hover:bg-white/5 transition-colors">
+                                                <td className="p-3">
+                                                    <div className="font-bold text-white">{user.handle || 'Guest'}</div>
+                                                    <div className="text-[10px] text-slate-500 lowercase">{user.email || 'No Email'}</div>
+                                                </td>
+                                                <td className="p-3 font-mono text-[9px] text-slate-600">{user.uid}</td>
+                                                <td className="p-3 text-right uppercase font-bold text-[10px]">
+                                                    <span className={`px-2 py-0.5 rounded-full ${user.role === 'super-admin'
+                                                            ? 'bg-red-500/10 text-red-500 border border-red-500/20'
+                                                            : user.role === 'owner'
+                                                                ? 'bg-primary/10 text-primary border border-primary/20'
+                                                                : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                                        }`}>
+                                                        {user.role}
+                                                    </span>
+                                                </td>
+                                                <td className="p-3 text-right font-mono text-primary font-black">
+                                                    {(user.stats?.seasonPoints || 0).toLocaleString()}
+                                                </td>
+                                                <td className="p-3 text-center">
+                                                    <div className={`w-2 h-2 rounded-full mx-auto ${user.email ? 'bg-green-500' : 'bg-slate-700'}`} />
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                            {leagueUsers.length === 0 && (
+                                <div className="text-center py-20 opacity-50">
+                                    <Users className="w-12 h-12 mb-4 mx-auto text-slate-600" />
+                                    <p className="text-sm font-bold uppercase tracking-widest">No users found</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { VenueStatus } from '../../../types';
 import { isSameDay, isAfter, startOfToday } from 'date-fns';
 
-export type FilterKind = 'status' | 'deals' | 'scene' | 'play' | 'features' | 'events' | 'all';
+export type FilterKind = 'status' | 'deals' | 'scene' | 'play' | 'makers' | 'features' | 'events' | 'all';
 
 interface DiscoveryContextType {
     searchQuery: string;
@@ -43,7 +43,19 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const [featureFilter, setFeatureFilter] = useState<string | 'all'>('all');
     const [eventFilter, setEventFilter] = useState<string | 'all'>('all');
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-    const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+
+    // Sync viewMode with URL
+    const [viewMode, setViewModeInternal] = useState<'list' | 'map'>(searchParams.get('view') === 'map' ? 'map' : 'list');
+
+    const setViewMode = useCallback((m: 'list' | 'map') => {
+        setViewModeInternal(m);
+        setSearchParams(prev => {
+            if (m === 'map') prev.set('view', 'map');
+            else prev.delete('view');
+            return prev;
+        });
+    }, [setSearchParams]);
+
     const [mapRegion, setMapRegion] = useState<string>('downtown');
 
     const isToday = useMemo(() => isSameDay(selectedDate, new Date()), [selectedDate]);

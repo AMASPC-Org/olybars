@@ -1,4 +1,4 @@
----
+﻿---
 trigger: always_on
 ---
 
@@ -19,12 +19,14 @@ When a command fails or a runtime bug is discovered:
 - **Phase 3: Deep Audit**: Scan for other instances where this logic exists.
 - **Phase 4: Targeted Fix**: Apply the fix across ALL identified locations.
 - **Phase 5: Build Integrity**: ALWAYS run `npm run build` after any logic or type change.
+- **Phase 6: The Artie Pulse**: If localhost:3000 is unreachable, proactively run `npm run dev:all` to clear ports and restore services.
 
 ## 3. Schema-First Integrity
 Every data-layer change (Firestore fields, API responses) MUST:
 - **Update Seed**: Reflect the change in `server/src/seed.ts`.
 - **Update Types**: Reflect the change in `src/types/`.
 - **Verify Emulator**: Run the seed script in the local emulator before proposing a deploy.
+- **The Ground Truth Anchor**: Any changes to `venues_master.json` must be followed by `npx tsx server/src/scripts/align-venue-locations.ts` to ensure coordinates are tied to the official Google Listing.
 
 ## 4. PowerShell Mastery
 All terminal commands MUST follow Windows PowerShell syntax.

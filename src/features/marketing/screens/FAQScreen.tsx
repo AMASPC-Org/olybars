@@ -1,19 +1,14 @@
 import React, { useState } from 'react';
-import { HelpCircle, ChevronDown, ChevronUp, MessageCircle, ChevronLeft } from 'lucide-react';
+import { HelpCircle, ChevronDown, ChevronUp, MessageCircle, ChevronLeft, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-
-interface FAQItem {
-    question: string;
-    answer: string;
-    category?: string;
-}
+import { manualFAQs, FAQItem } from '../../../data/manual';
 
 const FAQScreen: React.FC = () => {
     const navigate = useNavigate();
     const [openIndex, setOpenIndex] = useState<number | null>(null);
-    const [faqs, setFaqs] = useState<FAQItem[]>([]);
+    const [faqs, setFaqs] = useState<FAQItem[]>(manualFAQs);
     const [loading, setLoading] = useState(true);
 
     React.useEffect(() => {
@@ -21,16 +16,23 @@ const FAQScreen: React.FC = () => {
             try {
                 const q = query(collection(db, 'knowledge'), where('type', '==', 'faq'));
                 const querySnapshot = await getDocs(q);
-                const fetchedFaqs: FAQItem[] = [];
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    fetchedFaqs.push({
-                        question: data.question,
-                        answer: data.answer,
-                        category: data.category
+                if (!querySnapshot.empty) {
+                    const fetchedFaqs: FAQItem[] = [];
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        fetchedFaqs.push({
+                            question: data.question,
+                            answer: data.answer,
+                            category: data.category
+                        });
                     });
-                });
-                setFaqs(fetchedFaqs);
+                    // Merge and unique by question
+                    setFaqs((prev: FAQItem[]) => {
+                        const combined = [...prev, ...fetchedFaqs];
+                        const unique = Array.from(new Map(combined.map(item => [item.question, item])).values());
+                        return unique;
+                    });
+                }
             } catch (error) {
                 console.error("Error fetching FAQs:", error);
             } finally {
@@ -76,42 +78,42 @@ const FAQScreen: React.FC = () => {
             </button>
 
             <div className="max-w-2xl mx-auto space-y-8">
-                <header className="flex items-center gap-4 mb-12">
-                    <div className="bg-primary/20 p-3 rounded-xl">
+                <header className="flex flex-col items-center gap-4 mb-4 text-center">
+                    <div className="bg-primary/20 p-3 rounded-2xl">
                         <HelpCircle className="w-8 h-8 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black uppercase tracking-tighter font-league text-white leading-none">THE ARTESIAN <span className="text-primary block">MANUAL</span></h1>
-                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2">
-                            Manual Protocol v1.2.0 • <button onClick={() => navigate('/glossary')} className="text-primary hover:underline">Glossary</button> • <button onClick={() => navigate('/playbook')} className="text-primary hover:underline">Pulse Logic</button>
+                        <h1 className="text-4xl font-black uppercase tracking-tighter font-league text-white leading-none">THE <span className="text-primary">MANUAL</span></h1>
+                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-2 px-1">
+                            Operational Protocol v1.2.0
                         </p>
                     </div>
-                </header>
 
-                {/* Feature Manifest Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
-                    {[
-                        { title: 'League HQ', desc: 'Sync standings, prizes, and official rules.', status: 'Member Access' },
-                        { title: 'The Wire', desc: 'Chronological citywide event feed.', status: 'Active' },
-                        { title: 'Vibe Map', desc: 'Real-time visual crowd tracking.', status: 'GPS Required' },
-                        { title: 'Pulse Alerts', desc: 'Star a venue to get texted when it hits "Packed" status.', status: 'SMS Req' },
-                    ].map((feature) => (
-                        <div key={feature.title} className="bg-slate-900 border border-white/5 p-5 rounded-2xl group hover:border-primary/30 transition-all">
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="font-league font-black text-lg uppercase tracking-tight text-white group-hover:text-primary transition-colors">{feature.title}</h3>
-                                <span className="text-[8px] font-black uppercase tracking-widest text-slate-500 bg-black/40 px-2 py-0.5 rounded border border-white/5">{feature.status}</span>
-                            </div>
-                            <p className="text-xs text-slate-400 font-medium leading-relaxed">{feature.desc}</p>
-                        </div>
-                    ))}
-                </div>
+                    {/* Quick Actions Bar */}
+                    <div className="flex gap-3 mt-4">
+                        <button
+                            onClick={() => navigate('/glossary')}
+                            className="bg-slate-900 border border-white/10 px-6 py-2.5 rounded-full flex items-center gap-2 hover:border-primary/50 transition-all hover:bg-slate-800"
+                        >
+                            <Info className="w-3.5 h-3.5 text-primary" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Glossary</span>
+                        </button>
+                        <a
+                            href="mailto:support@amaspc.com?subject=OlyBars Support Request"
+                            className="bg-slate-900 border border-white/10 px-6 py-2.5 rounded-full flex items-center gap-2 hover:border-primary/50 transition-all hover:bg-slate-800"
+                        >
+                            <MessageCircle className="w-3.5 h-3.5 text-primary" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Support</span>
+                        </a>
+                    </div>
+                </header>
 
                 <div className="relative mb-8">
                     <div className="absolute inset-0 flex items-center" aria-hidden="true">
                         <div className="w-full border-t border-white/5"></div>
                     </div>
                     <div className="relative flex justify-center">
-                        <span className="px-3 bg-background text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">Common Questions</span>
+                        <span className="px-3 bg-background text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">Reference Database</span>
                     </div>
                 </div>
 
@@ -122,31 +124,40 @@ const FAQScreen: React.FC = () => {
                             <p className="text-xs font-black uppercase tracking-widest text-slate-500">Retrieving Intelligence...</p>
                         </div>
                     ) : faqs.length > 0 ? (
-                        faqs.map((item: FAQItem, idx: number) => (
-                            <div
-                                key={idx}
-                                className="bg-surface border border-white/10 rounded-2xl overflow-hidden transition-all duration-300"
-                            >
-                                <button
-                                    onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
-                                    className="w-full p-5 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
-                                >
-                                    <span className="text-sm font-black uppercase tracking-tight font-league">{item.question}</span>
-                                    {openIndex === idx ? <ChevronUp className="w-5 h-5 text-primary" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
-                                </button>
+                        faqs.map((item: FAQItem, idx: number) => {
+                            const showCategory = idx === 0 || faqs[idx - 1].category !== item.category;
+                            return (
+                                <React.Fragment key={idx}>
+                                    {showCategory && item.category && (
+                                        <div className="pt-6 pb-2">
+                                            <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] px-1">{item.category}</h3>
+                                        </div>
+                                    )}
+                                    <div
+                                        className="bg-surface border border-white/10 rounded-2xl overflow-hidden transition-all duration-300"
+                                    >
+                                        <button
+                                            onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
+                                            className="w-full p-5 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
+                                        >
+                                            <span className="text-sm font-black uppercase tracking-tight font-league">{item.question}</span>
+                                            {openIndex === idx ? <ChevronUp className="w-5 h-5 text-primary" /> : <ChevronDown className="w-5 h-5 text-slate-500" />}
+                                        </button>
 
-                                {openIndex === idx && (
-                                    <div className="px-5 pb-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <p className="text-sm text-slate-400 leading-relaxed font-body">
-                                            {item.answer}
-                                        </p>
+                                        {openIndex === idx && (
+                                            <div className="px-5 pb-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                <p className="text-sm text-slate-400 leading-relaxed font-body">
+                                                    {item.answer}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                        ))
+                                </React.Fragment>
+                            );
+                        })
                     ) : (
                         <div className="text-center py-12 bg-slate-900 rounded-3xl border border-dashed border-white/10">
-                            <p className="text-xs font-black uppercase tracking-widest text-slate-500">The Artesian Manual is currently offline.</p>
+                            <p className="text-xs font-black uppercase tracking-widest text-slate-500">The Manual is currently offline.</p>
                         </div>
                     )}
                 </div>

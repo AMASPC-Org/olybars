@@ -27,6 +27,11 @@ export const ConfigSchema = z.object({
     META_APP_ID: z.string().optional(),
     META_APP_SECRET: z.string().optional(),
     META_REDIRECT_URI: z.string().optional(),
+
+    // Voice Induction (Twilio)
+    TWILIO_ACCOUNT_SID: z.string().optional(),
+    TWILIO_AUTH_TOKEN: z.string().optional(),
+    TWILIO_PHONE_NUMBER: z.string().optional(),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

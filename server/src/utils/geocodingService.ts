@@ -10,8 +10,6 @@ export interface GeocodeResult {
 
 /**
  * Converts a physical address to Latitude and Longitude using Google Maps Geocoding API.
- * @param address The string address to geocode.
- * @returns {Promise<GeocodeResult | null>}
  */
 export async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
     if (!GOOGLE_MAPS_API_KEY) {
@@ -37,6 +35,38 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
         }
     } catch (error) {
         console.error(`[GEOCODE_ERROR] Error geocoding address ${address}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Finds a place's exact location from a name/address query using Google Places API (Find Place).
+ * This is more precise for matching "Official" Google Listings than plain Geocoding.
+ */
+export async function findPlaceLocation(query: string): Promise<GeocodeResult | null> {
+    if (!GOOGLE_MAPS_API_KEY) {
+        console.error('[PLACES_ERROR] Google Maps API Key is missing.');
+        return null;
+    }
+
+    try {
+        const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(query)}&inputtype=textquery&fields=geometry,name,formatted_address&key=${GOOGLE_MAPS_API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.status === 'OK' && data.candidates && data.candidates.length > 0) {
+            const location = data.candidates[0].geometry.location;
+            return {
+                lat: location.lat,
+                lng: location.lng,
+                formattedAddress: data.candidates[0].formatted_address
+            };
+        } else {
+            console.warn(`[PLACES_WARNING] FindPlace failed for ${query}: ${data.status}`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`[PLACES_ERROR] Error finding place ${query}:`, error);
         return null;
     }
 }

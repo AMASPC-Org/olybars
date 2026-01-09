@@ -200,3 +200,36 @@ export const removeVenueMember = async (venueId: string, memberId: string): Prom
     throw error;
   }
 };
+/**
+ * Initiate a phone verification call
+ */
+export const initiatePhoneVerification = async (venueId: string, phoneNumber: string, venueName: string): Promise<{ success: boolean }> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(API_ENDPOINTS.PARTNERS.PHONE_CALL, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ venueId, phoneNumber, venueName }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to initiate verification call');
+  }
+  return await response.json();
+};
+
+/**
+ * Verify the phone code entered by the user
+ */
+export const verifyPhoneCode = async (venueId: string, code: string): Promise<{ success: boolean }> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(API_ENDPOINTS.PARTNERS.PHONE_VERIFY, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ venueId, code }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Verification failed');
+  }
+  return await response.json();
+};

@@ -1,87 +1,133 @@
 import React from 'react';
-import { Flame, Users, Zap, Clock, Star, Info } from 'lucide-react';
+import { Flame, Users, Zap, Clock, Star, Info, MapPin } from 'lucide-react';
 import { PULSE_CONFIG } from '../../../config/pulse';
 
 export const PulseExplainer: React.FC = () => {
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
             {/* Header section explains the overall goal */}
-            <header className="space-y-2">
+            <header className="space-y-3">
                 <div className="flex items-center gap-2 text-primary">
                     <Zap className="w-5 h-5 fill-current" />
-                    <h2 className="text-xl font-black uppercase tracking-tight font-league">How the Pulse Works</h2>
+                    <h2 className="text-2xl font-black uppercase tracking-tight font-league">THE ECOSYSTEM</h2>
                 </div>
+                <p className="text-base text-slate-300 font-bold leading-tight">
+                    One Action. Two Results.
+                </p>
                 <p className="text-sm text-slate-400 font-medium">
-                    The Oly Pulse isn't just a count—it's a real-time "Vibe Engine" that balances recent activity with long-term flow.
+                    The Oly Pulse isn't just a count—it's a real-time "Vibe Engine" powered by your presence.
                 </p>
             </header>
 
-            {/* Metric 1: Buzz Score */}
+            {/* Step 1: The Signal */}
             <section className="bg-slate-900/50 border border-white/5 rounded-2xl p-6 relative overflow-hidden group">
-                <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <Flame className="w-24 h-24" />
+                <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity rotate-12">
+                    <MapPin className="w-24 h-24" />
                 </div>
 
                 <div className="flex items-start gap-4 mb-4">
-                    <div className="bg-orange-500/20 p-3 rounded-xl">
-                        <Flame className="w-6 h-6 text-orange-500" />
+                    <div className="bg-primary/20 p-3 rounded-xl">
+                        <MapPin className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-black uppercase tracking-tight font-league text-white">1. The Buzz Score (Heat)</h3>
-                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">Updated every {PULSE_CONFIG.WINDOWS.STALE_THRESHOLD / 60000} mins</p>
+                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Step 1: The Signal</h3>
+                        <h4 className="text-xl font-black uppercase tracking-tight font-league text-white italic">YOU CLOCK IN</h4>
                     </div>
                 </div>
 
-                <div className="space-y-4 relative z-10">
-                    <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                        Every interaction releases "Heat" at a venue. We sum these up and apply a decay so the status reflects right <span className="text-white font-bold italic">now</span>, not two hours ago.
-                    </p>
+                <p className="text-sm text-slate-400 font-medium leading-relaxed mb-4">
+                    Verifying you are physically at a venue. This is the seed that grows the map.
+                </p>
+            </section>
 
-                    <div className="grid grid-cols-2 gap-3 pb-2">
-                        <div className="bg-black/40 p-3 rounded-xl border border-white/5">
-                            <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">Clock In</span>
-                            <span className="text-xl font-black text-white font-league">+{PULSE_CONFIG.POINTS.CLOCK_IN} Pts</span>
+            {/* RESULTS SPLIT */}
+            <div className="flex justify-center -my-4 relative z-10">
+                <div className="flex flex-col items-center">
+                    <div className="w-1 h-8 bg-gradient-to-b from-primary/50 to-orange-500/50" />
+                    <div className="flex gap-16 -mt-1">
+                        <div className="w-4 h-4 border-b-2 border-l-2 border-orange-500/50 rounded-bl-lg" />
+                        <div className="w-4 h-4 border-b-2 border-r-2 border-yellow-400/50 rounded-br-lg" />
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Step 2: Result A - The Buzz */}
+                <section className="bg-orange-500/5 border border-orange-500/10 rounded-2xl p-6 relative overflow-hidden group">
+                    <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Flame className="w-24 h-24" />
+                    </div>
+
+                    <div className="flex items-start gap-4 mb-4">
+                        <div className="bg-orange-500/20 p-3 rounded-xl">
+                            <Flame className="w-6 h-6 text-orange-500" />
                         </div>
-                        <div className="bg-black/40 p-3 rounded-xl border border-white/5">
-                            <span className="text-[10px] font-black text-slate-500 uppercase block mb-1">Vibe Report</span>
-                            <span className="text-xl font-black text-white font-league">+{PULSE_CONFIG.POINTS.VIBE_REPORT} Pts</span>
+                        <div>
+                            <h3 className="text-[9px] font-black text-orange-500 uppercase tracking-[0.15em] mb-1">Step 2: The Buzz (Map)</h3>
+                            <h4 className="text-lg font-black uppercase tracking-tight font-league text-white leading-tight">THE MAP GETS <br />UPDATED</h4>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 p-3 bg-blue-900/20 rounded-xl border border-blue-500/20">
-                        <Clock className="w-4 h-4 text-blue-400" />
-                        <p className="text-[11px] font-bold text-blue-200">
-                            THE FADE: Scores drop by 50% every {PULSE_CONFIG.WINDOWS.DECAY_HALFLIFE / 3600000} hour.
+                    <div className="space-y-4">
+                        <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                            Your presence validates the vibe. Clock-ins combine with <span className="text-orange-400 font-bold">Density</span> and <span className="text-orange-400 font-bold">Decay</span> to increase the Venue's Heat.
                         </p>
-                    </div>
-                </div>
-            </section>
 
-            {/* Metric 2: Live Headcount */}
-            <section className="bg-slate-900/50 border border-white/5 rounded-2xl p-6 relative overflow-hidden group">
-                <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <Users className="w-24 h-24" />
-                </div>
+                        <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-2">
+                            <div className="flex items-center gap-2">
+                                <Users className="w-3 h-3 text-blue-400" />
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">DENSITY VARIABLE</span>
+                            </div>
+                            <p className="text-[10px] text-slate-500 font-medium leading-normal italic">
+                                Live Occupancy reported by Players impacts the total Buzz Score. The Bar turns "Red/Hot" when it's popping.
+                            </p>
+                        </div>
+                    </div>
+                </section>
 
-                <div className="flex items-start gap-4 mb-4">
-                    <div className="bg-blue-500/20 p-3 rounded-xl">
-                        <Users className="w-6 h-6 text-blue-500" />
+                {/* Step 3: Result B - The League */}
+                <section className="bg-yellow-400/5 border border-yellow-400/10 rounded-2xl p-6 relative overflow-hidden group">
+                    <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <Star className="w-24 h-24" />
                     </div>
-                    <div>
-                        <h3 className="text-lg font-black uppercase tracking-tight font-league text-white">2. Live Headcount</h3>
-                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">{PULSE_CONFIG.WINDOWS.LIVE_HEADCOUNT / 60000} Min Window</p>
-                    </div>
-                </div>
 
-                <div className="space-y-4 relative z-10">
-                    <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                        This is a literal count of unique League Players physically at the venue.
-                    </p>
-                    <div className="p-4 bg-slate-950 rounded-xl border border-white/5 italic text-[11px] text-slate-400">
-                        "{PULSE_CONFIG.DESCRIPTIONS.LIVE_MEANING}"
+                    <div className="flex items-start gap-4 mb-4">
+                        <div className="bg-yellow-400/20 p-3 rounded-xl">
+                            <Star className="w-6 h-6 text-yellow-500" />
+                        </div>
+                        <div>
+                            <h3 className="text-[9px] font-black text-yellow-500 uppercase tracking-[0.15em] mb-1">Step 3: The League (Personal)</h3>
+                            <h4 className="text-lg font-black uppercase tracking-tight font-league text-white leading-tight">YOU GET PAID <br />IN POINTS</h4>
+                        </div>
                     </div>
-                </div>
-            </section>
+
+                    <div className="space-y-4">
+                        <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                            Every data signal you provide has a value. Your points earn you Status, Badges, and Weekly Prizes.
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="bg-black/40 p-3 rounded-xl border border-white/5">
+                                <span className="text-[9px] font-black text-slate-500 uppercase block mb-1">Clock In</span>
+                                <span className="text-sm font-black text-white font-league">+{PULSE_CONFIG.POINTS.CLOCK_IN} Pts</span>
+                            </div>
+                            <div className="bg-black/40 p-3 rounded-xl border border-white/5">
+                                <span className="text-[9px] font-black text-slate-500 uppercase block mb-1">Vibe Check</span>
+                                <span className="text-sm font-black text-white font-league">+{PULSE_CONFIG.POINTS.VIBE_REPORT} Pts</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            {/* FADE NOTICE */}
+            <div className="flex items-center gap-3 p-4 bg-blue-900/10 rounded-2xl border border-blue-500/20">
+                <Clock className="w-5 h-5 text-blue-400 shrink-0" />
+                <p className="text-[11px] font-bold text-blue-200 leading-tight">
+                    BUZZ DECAY: High scores require constant movement. Scores drop by 50% every {PULSE_CONFIG.WINDOWS.DECAY_HALFLIFE / 3600000} hour if no signals are received.
+                </p>
+            </div>
+
 
             {/* Status Thresholds */}
             <section className="space-y-4">

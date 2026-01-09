@@ -411,7 +411,7 @@ To ensure accuracy, every "Active" Vibe Check has a specific TTL (Time To Live) 
 | **Dart Board** | **15 Minutes** | Short turnover time. |
 | **Karaoke Queue** | **30 Minutes** | Queue length changes rapidly. |
 | **Live Band / Set** | **45 Minutes** | Sets usually last 45m-1h. |
-| **Trivia Game** | **90 Minutes** | Long-form event; check-in remains relevant longer. |
+| **Trivia Game** | **90 Minutes** | Long-form event; clock-in remains relevant longer. |
 | **"Packed" Crowd** | **60 Minutes** | Crowds disperse; requires re-verification after an hour. |
 
 ---
@@ -459,19 +459,40 @@ Owners hate "marketing" because it feels like homework. We offer "Bubbles" on th
 
 ---
 
-## 17. Appendix I: The Navigation Hierarchy
-**Purpose: Standardizing component naming and functional zones for the Nightlife OS.**
-
-This hierarchy defines how the OlyBars interface is organized from top to bottom (left to right), ensuring Artie and system architects share a unified mental map of the product surfaces.
-
-| # | UI Name | Technical Name | Logic & Behavioral "Soul" |
-| :--- | :--- | :--- | :--- |
-| **1** | **Sticky Header** | `AppShell` | Contains Logo (Left) and Dynamic Profile Button (Right). The Profile button indicates status (Guest vs. Rank) and opens the League HQ drawer. |
-| **2** | **The Buzz Clock** | `BuzzHero` | **The Hook**: Answers "Is it Happy Hour right now?" instantly. High-contrast status text. |
-| **3** | **The Control Center** | `ControlHub` | **The Dashboard**: The functional core replacing navigation grids. |
-| **3.1** | **God Mode Search** | `UniversalSearch` | **Primary Nav**: Semantic search that queries Venues, Vibes, Amenities (Pool), and Events (Karaoke) simultaneously. |
-| **3.2** | **Time Context** | `DateSelector` | **Planning**: Dropdown to toggle between "Today" (Live Status) and Future Dates (Calendar Planning). |
-| **3.3** | **View Toggle** | `ViewSwitch` | **Preference**: Toggles the main feed between "List View" (Scanning) and "Map View" (Proximity). |
-| **3.4** | **Quick Filters** | `FilterChips` | **Horizontal Scroll**: Top 5 categories (Buzzing, Trivia, etc.) + "More" drawer. |
-| **4** | **The Feed** | `VenueFeed` | **The List**: Vertical scroll of venues. Flash Bounties are pinned to the top (Red Card). Every card features an exposed "Clock In" button. Vertical padding is optimized (pb-12) for mobile density. |
 | **5** | **Artie Chat** | `ChatWidget` | **The Concierge**: Fixed to the Bottom Right. Branded with `artie-head.png`. No other UI elements (like FABs) may overlap this zone. |
+
+---
+
+## 18. Appendix K: The League Economy (Player Rewards)
+
+### 18.1 The Redemption Menu (The Shop)
+*   **What**: A digital catalog where Players trade "Banked Points" for real-world goods.
+*   **Who**: All League Players (Tier 2+) with a positive point balance.
+*   **Where**: Accessed via `League HQ` > `Prizes` Tab.
+*   **Why**: Points must have a "Burn Mechanism" to maintain value and prevent inflation.
+*   **How (The Mechanics)**:
+    1.  **Purchase**: Player selects an item (e.g., "League Trucker Hat" - 500 Pts).
+    2.  **Deduction**: System verifies bank balance and deducts points immediately.
+    3.  **Voucher Generation**: A secure QR Code is generated in the **"My Vouchers"** wallet.
+    4.  **Fulfillment**: Player visits the designated **Pickup Venue** (e.g., Hannah's). Bartender scans the QR code to mark as "Fulfilled" and hands over the item.
+
+### 18.2 The Secret Menu (The Status Perk)
+*   **What**: Unlisted menu items ("Ghost Burgers", "Staff Drinks") available *only* to high-tier players.
+*   **Who**: **Residents** (Tier 3) and **Legends** (Tier 4) ONLY.
+*   **Why**: Drives "Status Signaling" and FOMO (Fear Of Missing Out). Money cannot buy this; only time/loyalty can.
+*   **How (The Mechanics)**:
+    1.  **Unlock**: Player reaches Tier 3 (1,000 Pts).
+    2.  **Visibility**: A new "Secret Menu" tab appears in `Venue Details` for participating partners.
+    3.  **The Ask**: Player orders the specific item code (e.g., "The 98501 Special").
+    4.  **Verification**: Bartender asks to see the **Live Badge**. Player flashes their phone showing the animated Tier Badge. No scanning required—visual verification reduces friction.
+
+### 18.3 The Season Championship (The Competition)
+*   **The Model**: Seasonal Leagues (Spring, Summer, Fall, Winter) ensuring everyone starts fresh.
+*   **The Big Prize**: The #1 Point Leader at 11:59 PM on the Season Finale wins the Grand Prize (Target Value: $500 - $1,500).
+    *   *Examples*: Weekend Getaway, Seahawks Tickets, Cash + Tab.
+*   **The Playoffs**: The final 2 weeks of any season are "The Playoffs."
+    *   **The Surge**: Multipliers increase to 2x/3x to allow for dramatic last-minute upsets.
+*   **Milestone Rewards**: Guaranteed prizes for hitting point thresholds, regardless of rank.
+    *   *Level 10 (1,000 Pts)*: Official League Sticker.
+    *   *Level 20 (2,500 Pts)*: League T-Shirt.
+    *   *Level 50 (5,000 Pts)*: Custom Bar Stool Plaque ("Mayor Status").

@@ -13,9 +13,8 @@ export const Footer = () => {
                 </p>
             </div>
 
-            <div className="flex justify-center gap-4 my-3 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 my-3 text-[7px] font-bold text-slate-600 uppercase tracking-widest">
                 <Link to="/about" className="hover:text-primary transition-colors">About</Link>
-                <Link to="/faq" className="hover:text-primary transition-colors">Playbook</Link>
                 <Link to="/terms" className="hover:text-primary transition-colors">Terms</Link>
                 <Link to="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
                 <Link to="/cookies" className="hover:text-primary transition-colors">Cookies</Link>

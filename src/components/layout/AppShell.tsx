@@ -100,7 +100,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   const searchQuery = searchParams.get('q');
   const [showMenu, setShowMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [forceShowGrid, setForceShowGrid] = useState(false);
 
   const isMapPage = location.pathname === '/map';
 
@@ -167,14 +166,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   const initialVenueId = getVenueIdFromPath();
 
   /* Floating Buttons style with individual borders and gaps */
-  const navItems = [
-    { id: 'pulse', label: 'PULSE', icon: Flame, path: '/' },
-    { id: 'bars', label: 'BARS', icon: Search, path: '/bars' },
-    { id: 'map', label: 'MAP', icon: MapIcon, path: '/map' },
-    { id: 'league', label: 'LEAGUE', icon: Crown, path: '/league' },
-    { id: 'events', label: 'EVENTS', icon: Ticket, path: '/events' },
-    { id: 'play', label: 'PLAY', icon: Brain, path: '/play' },
-  ];
 
   const handleMenuNavigation = (path: string) => {
     navigate(path);
@@ -239,14 +230,6 @@ export const AppShell: React.FC<AppShellProps> = ({
               </div>
 
               <div className="flex items-center gap-4">
-                {isMapPage && (
-                  <button
-                    onClick={() => setForceShowGrid(!forceShowGrid)}
-                    className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 border-2 transition-all ${forceShowGrid ? 'bg-primary text-black border-black' : 'bg-black text-primary border-primary'}`}
-                  >
-                    {forceShowGrid ? 'Hide Hub' : 'Show Hub'}
-                  </button>
-                )}
                 <button
                   onClick={() => setShowMenu(true)}
                   className="text-white hover:text-primary transition-all active:scale-95"
@@ -260,35 +243,6 @@ export const AppShell: React.FC<AppShellProps> = ({
           {/* The Buzz Clock Component - Hidden on Map or during Search */}
           {!isMapPage && !searchQuery && <BuzzClock venues={venues} />}
 
-          {/* Navigation Grid: "Floating Buttons" Style */}
-          <div className={`bg-black border-b border-[#333] backdrop-blur-sm transition-all duration-500 overflow-hidden ${(isScrolled || (isMapPage && !forceShowGrid)) ? 'max-h-0 invisible scale-y-0 opacity-0' : 'max-h-[200px] visible scale-y-100 opacity-100'}`}>
-            <div className={`${isFullWidthPage ? 'max-w-[1600px] mx-auto' : ''} p-1.5 grid ${isFullWidthPage ? 'grid-cols-4 md:grid-cols-6' : 'grid-cols-3'} gap-1.5 bg-black`}>
-              {navItems.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => navigate(tab.path)}
-                  className={`flex flex-col items-center justify-center py-3 px-1 rounded-md transition-all relative overflow-hidden group/nav border ${activeTab === tab.id
-                    ? 'bg-[#FFD700] text-black border-[#FFD700] font-bold shadow-[0_0_10px_rgba(255,215,0,0.4)]'
-                    : tab.id === 'pulse' && pulseStatus === 'buzzing'
-                      ? 'bg-[#1A1D21] text-primary border-primary/50 shadow-[0_0_8px_rgba(251,191,36,0.2)]'
-                      : 'bg-[#1A1D21] border-[#333] text-[#888] hover:border-[#666] hover:text-[#ccc]'
-                    } active:scale-95 active:border-[#FFD700] active:text-[#FFD700]`}
-                >
-                  {tab.id === 'pulse' && (pulseStatus === 'buzzing' || pulseStatus === 'chill') && (
-                    <div className={`absolute top-2 right-2 w-2 h-2 rounded-full ${pulseStatus === 'buzzing' ? 'bg-primary animate-ping' : 'bg-blue-400'}`} />
-                  )}
-
-                  <tab.icon className={`w-4 h-4 mb-1 transition-transform group-hover/nav:scale-110 ${activeTab === tab.id ? 'scale-110' : ''}`} strokeWidth={activeTab === tab.id ? 4 : 3} />
-
-                  <span className={`text-[10px] font-black tracking-widest font-league uppercase leading-none transition-all ${activeTab === tab.id ? 'text-black' : 'group-hover/nav:tracking-[0.15em]'
-                    }`}>
-                    {tab.id === 'pulse' && pulseStatus !== 'quiet' ? pulseStatus : tab.label}
-                  </span>
-
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       )}
 

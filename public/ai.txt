@@ -1,0 +1,5 @@
+# OlyBars.com (AI Ingestion Manifest)
+
+Refer to https://olybars.com/llms.txt for summary.
+Refer to https://olybars.com/llms-full.txt for full site context.
+Refer to https://olybars.com/ai for the Developer/AI Hub.

@@ -53,6 +53,7 @@ export const usePlacesAutocomplete = (onPlaceSelect: (place: google.maps.places.
         if (prediction.isLocal) {
             const v = prediction.venue;
             onPlaceSelect({
+                place_id: v.googlePlaceId,
                 name: v.name,
                 formatted_address: v.address,
                 geometry: {

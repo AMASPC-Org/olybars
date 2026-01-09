@@ -5,6 +5,6 @@ export interface MerchItem {
     description: string;
     price: number;
     imageURL: string;
-    category: 'T-Shirt' | 'Hoodie' | 'Hat' | 'Other';
+    category: 'T-Shirt' | 'Hoodie' | 'Hat' | 'Drink Bounty' | 'Other';
     sizes?: string[];
 }

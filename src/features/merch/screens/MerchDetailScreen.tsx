@@ -28,6 +28,19 @@ const MerchDetailScreen: React.FC<MerchDetailScreenProps> = ({ venues, userProfi
     const handlePurchase = async () => {
         setIsPurchasing(true);
 
+        // Safety Rail: Daily Drink Bounty Limit (1 per 24h)
+        if (item.category === 'Drink Bounty') {
+            const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+            const lastRedemption = userProfile.lastDrinkBountyRedemption || 0;
+            const timeSince = Date.now() - lastRedemption;
+
+            if (timeSince < ONE_DAY_MS) {
+                showToast("Limit Reached: One Drink Bounty per 24 hours.", "error");
+                setIsPurchasing(false);
+                return;
+            }
+        }
+
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -43,7 +56,8 @@ const MerchDetailScreen: React.FC<MerchDetailScreenProps> = ({ venues, userProfi
 
         const updatedProfile = {
             ...userProfile,
-            vouchers: [...(userProfile.vouchers || []), newVoucher]
+            vouchers: [...(userProfile.vouchers || []), newVoucher],
+            lastDrinkBountyRedemption: item.category === 'Drink Bounty' ? Date.now() : userProfile.lastDrinkBountyRedemption
         };
 
         setUserProfile(updatedProfile);

@@ -45,7 +45,7 @@ async function seedAdmin() {
         systemRole: 'admin',
         stats: {
             seasonPoints: 0,
-            lifetimeCheckins: 100,
+            lifetimeClockins: 100,
             currentStreak: 42
         }
     });
@@ -60,7 +60,7 @@ async function seedAdmin() {
         },
         stats: {
             seasonPoints: 50,
-            lifetimeCheckins: 5,
+            lifetimeClockins: 5,
             currentStreak: 1
         }
     });

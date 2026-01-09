@@ -21,4 +21,4 @@ COPY . .
 ENV PORT 8080
 
 # Run the web service on container startup.
-CMD [ "npx", "tsx", "server/src/index.ts" ]
+CMD [ "npm", "start" ]

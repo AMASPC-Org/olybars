@@ -1,4 +1,4 @@
----
+﻿---
 trigger: always_on
 ---
 
@@ -18,6 +18,7 @@ This rule governs the release process, environment security, and infrastructure 
 - **Hosting Targets**:
     - DEV: `firebase deploy --only hosting:dev`
     - PROD: `firebase deploy --only hosting:prod`
+- **Database Sync**: Deployments to DEV/PROD should typically include `npm run seed:dev` or `seed:prod` to maintain configuration parity.
 - **Cloud Run**: Do not change traffic splits or IAM roles without explicit approval.
 
 ## 3. Secret & Backend Hygiene
@@ -32,3 +33,6 @@ This rule governs the release process, environment security, and infrastructure 
 ## 5. Caching & Verification
 - **Verification**: If changes don't reflect, check `Cache-Control`, `ETag`, and require an incognito refresh.
 - **Domains**: Never change custom domain mappings unless explicitly requested.
+
+## 6. PROD Protection
+- **No Direct Seeding**: Never run `npm run seed:prod` or manual database wipes on production without an explicit, multi-turn confirmation from the user.

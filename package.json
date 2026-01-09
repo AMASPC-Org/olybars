@@ -16,8 +16,10 @@
     "smoke:prod": "curl.exe -fI https://olybars.com/ && curl.exe -f https://olybars-backend-26629455103.us-west1.run.app/health && curl.exe -f https://olybars-backend-26629455103.us-west1.run.app/api/venues",
     "artie:sync": "node --import tsx functions/src/scripts/sync-artie-kb.ts",
     "artie:check": "node --import tsx scripts/verify-artie-health.ts",
-    "deploy:dev": "npm run artie:sync && npm run build:dev && node scripts/check-env.js development && firebase deploy --only hosting:dev",
-    "deploy:prod": "npm run artie:sync && npm run build:prod && node scripts/check-env.js production && firebase deploy --only hosting:prod",
+    "seed:dev": "node --import tsx server/src/seed.ts --force-prod",
+    "seed:prod": "node --import tsx server/src/seed.ts --force-prod",
+    "deploy:dev": "npm run artie:sync && npm run seed:dev && npm run build:dev && node scripts/check-env.js development && firebase deploy --only hosting:dev",
+    "deploy:prod": "npm run artie:sync && npm run seed:prod && npm run build:prod && node scripts/check-env.js production && firebase deploy --only hosting:prod",
     "dev:all": "node --import tsx scripts/dev-up.ts",
     "generate-sitemap": "tsx scripts/generate-sitemap.ts"
   },
@@ -45,6 +47,7 @@
     "react-router-dom": "^6.22.0",
     "tailwind-merge": "^3.4.0",
     "tsx": "^4.21.0",
+    "twilio": "^5.11.2",
     "typescript": "^5.9.3",
     "zod": "^4.2.1"
   },

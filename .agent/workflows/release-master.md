@@ -1,5 +1,5 @@
 ---
-description: Mandatory steps for deploying changes to OlyBars environments.
+description: Mandatory steps for deploying changes to OlyBars environments. (Automated)
 ---
 
 # /release-master
@@ -13,8 +13,8 @@ Before any deploy, ensure the full stack builds correctly.
 3. **Frontend**: `npm run build`
 4. **Halt on Failure**: Trigger the "Self-Healing Loop" if build fails.
 
-## 2. Deploy to DEV (Target: olybars-dev)
-1. **Command**: `npm run deploy:dev`
+## 2. Deploy & Sync Data to DEV (Target: olybars-dev)
+1. **Command**: `npm run deploy:dev` (This automatically syncs `venues_master.json` to Firestore).
 2. **Verification**: `npm run smoke:dev`
 3. **Cache Check**: Confirm no console errors on `olybars-dev.web.app`. Use `Invoke-WebRequest -Method Head` to verify ETag/Cache headers if UI is stale.
 
@@ -23,8 +23,8 @@ Before any deploy, ensure the full stack builds correctly.
 - Results of `smoke:dev` must be reported.
 - Environment target must be stated clearly: `PROD` (olybars-prod).
 
-## 4. Deploy to PROD (Target: olybars)
-1. **Command**: `npm run deploy:prod`
+## 4. Deploy & Sync Data to PROD (Target: olybars)
+1. **Command**: `npm run deploy:prod` (This automatically syncs `venues_master.json` to Production Firestore).
 2. **Verification**: `npm run smoke:prod`
 3. **Health**: `curl https://olybars.com/health` (must return 200).
 

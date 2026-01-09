@@ -99,6 +99,19 @@ const VoucherRedemptionScreen: React.FC<VoucherRedemptionScreenProps> = ({ userP
                         </p>
                     </div>
 
+                    {/* Visual Verification Mode (Bartender Friendly) */}
+                    <div className="px-10 pb-10">
+                        <div className="bg-green-500/10 border-2 border-green-500 rounded-2xl p-4 text-center animate-pulse">
+                            <p className="text-[10px] text-green-600 font-black uppercase tracking-widest mb-1">Visual Verification Active</p>
+                            <p className="text-3xl font-black font-mono text-green-600">
+                                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            <p className="text-[8px] text-green-600/70 font-bold uppercase tracking-widest mt-1">
+                                {new Date().toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </p>
+                        </div>
+                    </div>
+
                     {/* Footer Section: User Details */}
                     <div className="p-8 bg-slate-900 text-white">
                         <div className="grid grid-cols-2 gap-8">

@@ -106,8 +106,8 @@ const DiscoveryLayoutContent: React.FC<{
                         </div>
                     )}
 
-                    {/* Zone 3: Control Center (Persistent) */}
-                    <DiscoveryControls venues={venues} />
+                    {/* Zone 3: Control Center (Persistent) - Hide on Profile */}
+                    {!isVenueProfile && <DiscoveryControls venues={venues} />}
 
                     {/* Child Screens (Home Feed or Venue Profile Content) */}
                     <div className="flex-1">

@@ -68,7 +68,7 @@ const PulseMeter = ({ status }: { status: VenueStatus }) => {
   );
 };
 
-type FilterKind = 'status' | 'scene' | 'play' | 'features' | 'events' | 'all';
+type FilterKind = 'status' | 'scene' | 'play' | 'makers' | 'features' | 'events' | 'all';
 
 const STATUS_ORDER: Record<VenueStatus, number> = {
   packed: 0,
@@ -163,6 +163,7 @@ export const BuzzScreen: React.FC = () => {
   const [showPlayMenu, setShowPlayMenu] = useState(false);
   const [showFeatureMenu, setShowFeatureMenu] = useState(false);
   const [showEventMenu, setShowEventMenu] = useState(false);
+  const [showMakersMenu, setShowMakersMenu] = useState(false);
 
   const { coords } = useGeolocation();
 
@@ -261,6 +262,10 @@ export const BuzzScreen: React.FC = () => {
       const q = playFilter.toLowerCase();
       return (v.gameFeatures?.some(f => f.type.toLowerCase().includes(q) || (f.name || '').toLowerCase().includes(q)) ?? false) ||
         (v.amenities?.some(a => a.toLowerCase().includes(q)) ?? false);
+    }
+
+    if (filterKind === 'makers') {
+      return v.isLocalMaker === true;
     }
 
     if (filterKind === 'features' && featureFilter !== 'all') {

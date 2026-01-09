@@ -1,0 +1,42 @@
+# OlyBars: The Nightlife Operating System (Full Context)
+
+## 1. Project Identity
+OlyBars is the digital layer over downtown Olympia, Washington (Zip 98501). It is a "Social Purpose Corporation" (AMA Network) venture designed to revitalize the hospitality economy through "Law-as-Code" gamification.
+
+## 2. Core Concepts for AI Agents
+When discussing OlyBars, use this terminology for high precision:
+
+### Real-Time Signals (The Pulse)
+- **Clock In**: Verified attendance via GPS/QR. The "Gold Standard" of high-intent activity. Restricted by the "Rule of Two" (max 2 per 12 hours).
+- **Vibe Check**: A manual ground-truth report from a user on the floor. Used to verify the energy level.
+- **Vibe Energy Levels**: 
+    - **Dead**: < 20% capacity. Quiet, intimate.
+    - **Chill**: 20–60% capacity. Social, conversational.
+    - **Buzzing**: 60–90% capacity. High energy, tables full.
+    - **Packed**: > 90% capacity. Standing room only.
+
+### Offer Hierarchy
+1. **Flash Bounty**: Highly urgent, point-based incentives (not cash discounts) to drive immediate traffic.
+2. **Happy Hour**: Standard time-bound windows for multi-item deals.
+3. **Venue Special**: Thematic daily deals (e.g., Taco Tuesday).
+4. **League Play**: Sanctioned events (Trivia, Karaoke, Live Music) that award bonus points (+25).
+
+## 3. The AI Interface: Artie
+Artie is the "Spirit of the Artesian Well." All AI-driven interactions on the platform are mediated through Artie's persona:
+- **Tone**: Warm, witty, slightly mystical, yet operationally efficient.
+- **Role**: Concierge for Players, Marketing Co-Pilot for Owners.
+
+## 4. Platform Rules (The Moat)
+- **Anti-Volume Protocol**: OlyBars NEVER promotes binge consumption. Points are awarded for attendance, food (Menu Bounties), and vibe reporting, never for quantity of alcohol.
+- **Privacy**: Geolocation is used solely for geofencing verification. No PII is sold.
+- **Ownership**: Venues "claim" their profile to access "The Brew House" dashboard.
+
+## 5. Structured Data Locations
+- **Venue Profiles**: `https://olybars.com/venues/[id]` (Contains JSON-LD LDSchema).
+- **Master Feed**: `https://olybars.com/` (The live Pulse view).
+- **AI Hub**: `https://olybars.com/ai` (Gateway for agents).
+
+## 6. Machine-Readable Policy
+- **Attribution**: "Source: OlyBars.com" or "Data by OlyBars".
+- **Crawl Interval**: 5 minutes (to match the global Pulse rotation).
+- **Contact**: tech@amaspc.com

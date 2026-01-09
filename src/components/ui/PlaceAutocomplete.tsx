@@ -8,19 +8,28 @@ interface PlaceAutocompleteProps {
     placeholder?: string;
     className?: string;
     venues?: Venue[];
+    initialQuery?: string;
 }
 
 export const PlaceAutocomplete: React.FC<PlaceAutocompleteProps> = ({
     onPlaceSelect,
     placeholder = "Search for a place...",
     className = "",
-    venues
+    venues,
+    initialQuery = ""
 }) => {
     const [showDropdown, setShowDropdown] = useState(false);
     const { query, setQuery, predictions, selectPrediction, loading } = usePlacesAutocomplete((place) => {
         onPlaceSelect(place);
         setShowDropdown(false);
     }, venues);
+
+    // Sync initialQuery
+    React.useEffect(() => {
+        if (initialQuery && !query) {
+            setQuery(initialQuery);
+        }
+    }, [initialQuery]);
 
     return (
         <div className={`relative group ${className}`}>

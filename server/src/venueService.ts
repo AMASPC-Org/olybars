@@ -354,13 +354,13 @@ export const clockIn = async (venueId: string, userId: string, userLat: number, 
         .get();
 
     if (!recentSignals.empty) {
-        const lastCheckIn = recentSignals.docs[0].data() as Signal;
-        const timeSinceLast = timestamp - lastCheckIn.timestamp;
+        const lastClockIn = recentSignals.docs[0].data() as Signal;
+        const timeSinceLast = timestamp - lastClockIn.timestamp;
         const timeDiffSec = timeSinceLast / 1000;
 
         // Impossible Movement Check (Centralized from Frontend)
-        if (venueData.location && lastCheckIn.venueId !== venueId) {
-            const lastVenueDoc = await db.collection('venues').doc(lastCheckIn.venueId).get();
+        if (venueData.location && lastClockIn.venueId !== venueId) {
+            const lastVenueDoc = await db.collection('venues').doc(lastClockIn.venueId).get();
             const lastVenueData = lastVenueDoc.data() as Venue;
 
             if (lastVenueData?.location) {
@@ -386,9 +386,9 @@ export const clockIn = async (venueId: string, userId: string, userLat: number, 
         }
 
         // Same-Venue Throttle
-        if (lastCheckIn.venueId === venueId && timeSinceLast < PULSE_CONFIG.WINDOWS.SAME_VENUE_THROTTLE) {
+        if (lastClockIn.venueId === venueId && timeSinceLast < PULSE_CONFIG.WINDOWS.SAME_VENUE_THROTTLE) {
             const waitTime = (PULSE_CONFIG.WINDOWS.SAME_VENUE_THROTTLE - timeSinceLast) / (60 * 1000);
-            throw new Error(`Already clocked in here recently! Please wait another ${Math.floor(waitTime / 60)} hours and ${Math.ceil(waitTime % 60)} minutes before checking into ${venueData.name} again.`);
+            throw new Error(`Already clocked in here recently! Please wait another ${Math.floor(waitTime / 60)} hours and ${Math.ceil(waitTime % 60)} minutes before clocking into ${venueData.name} again.`);
         }
     }
 
@@ -573,9 +573,9 @@ export const performVibeCheck = async (
 
     // --- SOBER FRIENDLY LOGIC ---
     if (soberFriendlyCheck && venueData.isSoberFriendly) {
-        // 1. Verify GPS & Check-in Signal (Anti-Griefing)
+        // 1. Verify GPS & Clock-in Signal (Anti-Griefing)
         const isGPS = verificationMethod === 'gps';
-        const recentCheckIn = await db.collection('signals')
+        const recentClockIn = await db.collection('signals')
             .where('userId', '==', userId)
             .where('venueId', '==', venueId)
             .where('type', '==', 'clock_in')
@@ -583,7 +583,7 @@ export const performVibeCheck = async (
             .limit(1)
             .get();
 
-        if (isGPS && !recentCheckIn.empty) {
+        if (isGPS && !recentClockIn.empty) {
             const reports = venueData.soberFriendlyReports || [];
 
             // 2. User Cooldown (Anti-Snitch-Griefing: 30 days)
@@ -648,7 +648,7 @@ export const performVibeCheck = async (
 };
 
 /**
- * Handle specific Amenity Check-ins (5 points)
+ * Handle specific Amenity Clock-ins (5 points)
  */
 export const clockInAmenity = async (venueId: string, userId: string, amenityId: string) => {
     const venueDoc = await db.collection('venues').doc(venueId).get();
@@ -767,7 +767,7 @@ export const checkAndAwardBadges = async (userId: string, currentVenueId: string
                 [`badges.${badge.id}`]: badgeProgress
             });
         } else {
-            // Update progress if checkin_set
+            // Update progress if clockin_set
             if (badge.criteria.type === 'clockin_set' && badge.criteria.venueIds) {
                 const visitedCount = badge.criteria.venueIds.filter(vid => uniqueVenues.has(vid)).length;
                 const progress = visitedCount / badge.criteria.venueIds.length;
@@ -826,7 +826,7 @@ export const logUserActivity = async (data: {
             uid: data.userId,
             stats: {
                 seasonPoints: data.points,
-                lifetimeClockins: (data.type === 'checkin' || data.type === 'clockin') ? 1 : 0,
+                lifetimeClockins: (data.type === 'clock_in' || data.type === 'clockin') ? 1 : 0,
                 currentStreak: 0
             },
             role: 'user'
@@ -924,7 +924,7 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         // Fetch the user's role to check for admin bypass
         const userDoc = await db.collection('users').doc(requestingUserId).get();
         const userData = userDoc.data();
-        isAdmin = userData?.role === 'super-admin' || userData?.role === 'admin' || userData?.email === 'ryan@amaspc.com';
+        isAdmin = userData?.role === 'super-admin' || userData?.role === 'admin' || userData?.email === 'ryan@amaspc.com' || userData?.email === 'ryan@americanmarketingalliance.com';
 
         isOwner = venueData.ownerId === requestingUserId;
         isManager = !!venueData.managerIds?.includes(requestingUserId);
@@ -1192,8 +1192,8 @@ export const checkVenueClaimStatus = async (googlePlaceId: string) => {
 /**
  * Onboards a new venue partner by creating or updating a venue and sync with Google.
  */
-export const onboardVenue = async (googlePlaceId: string, ownerId: string) => {
-    console.log(`[ONBOARDING] Starting onboarding for Google Place: ${googlePlaceId} by User: ${ownerId}`);
+export const onboardVenue = async (googlePlaceId: string, ownerId: string, requesterRole?: string) => {
+    console.log(`[ONBOARDING] Starting onboarding for Google Place: ${googlePlaceId} by User: ${ownerId} (Role: ${requesterRole})`);
 
     // 1. Check if venue exists with this placeId
     const status = await checkVenueClaimStatus(googlePlaceId);
@@ -1206,6 +1206,12 @@ export const onboardVenue = async (googlePlaceId: string, ownerId: string) => {
     let venueId = status.venueId;
 
     if (!status.exists) {
+        // [SECURITY] Only Super-Admins can add a NEW venue to the city directory.
+        if (requesterRole !== 'super-admin') {
+            console.warn(`[SECURITY_ALERT] Unauthorized attempt to add a new bar by: ${ownerId}`);
+            throw new Error('Only the OlyBars Super-Admin can add a new bar to the official directory. To request a listing, contact ryan@amaspc.com.');
+        }
+
         // Create full skeleton venue with MVP defaults
         console.log(`[ONBOARDING] Creating new venue for ${googlePlaceId}`);
         const docRef = await db.collection('venues').add({

@@ -13,7 +13,7 @@ You must strictly adhere to the following three Master Specifications. Do not de
 **2. [System_Architecture_Master.md](file:///docs/specs/System_Architecture_Master.md) (The "Brain" & "Body")**
 * **Scope:** Unified technical source of truth. Includes Gamification Logic ("Leafue Engine"), Infrastructure (GCP), Security, and Frontend Standards.
 * **Key Constants:**
-    * Check-in = 10 pts (Cap: 1/venue/12h; Global Max: 2/12h).
+    * Clock-in = 10 pts (Cap: 1/venue/12h; Global Max: 2/12h).
     * Vibe Report = 5 pts.
     * Buzz Decay = 50% every 60 mins.
 * **Safety:** Strictly enforce WSLCB (Liquor Control) compliance. No binge gamification.

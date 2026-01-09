@@ -8,7 +8,7 @@ import {
     Zap, Flame, Beer, Clock, Compass, Tag, Calendar, Gamepad2, Theater, LayoutGrid,
     Target, Gamepad, MoveHorizontal, Disc, Puzzle, Users, Layers, Circle,
     Trophy, Music, HelpCircle, Mic2, Tv, Ticket, Swords, Sparkles, Mic, Trees,
-    Trees as TreesIcon, CircleDot, Dices
+    Trees as TreesIcon, CircleDot, Dices, Hammer
 } from 'lucide-react';
 import { TAXONOMY_PLAY, TAXONOMY_EVENTS } from '../../../data/taxonomy';
 import { Venue, VenueStatus } from '../../../types';
@@ -149,6 +149,18 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                             <Dices className="w-3 h-3" /> Play <ChevronRight className={`w-3 h-3 transition-transform ${showPlayMenu ? 'rotate-90' : ''}`} />
                         </button>
                     </div>
+
+                    {/* MAKERS */}
+                    <button
+                        onClick={() => {
+                            handleInteraction();
+                            setFilterKind('makers');
+                            setShowVibeMenu(false); setShowSceneMenu(false); setShowPlayMenu(false); setShowFeatureMenu(false); setShowEventMenu(false);
+                        }}
+                        className={`${baseChipClasses} ${filterKind === 'makers' ? 'bg-primary text-black border-primary' : 'bg-transparent text-slate-400 border-white/10 hover:border-white/30 hover:text-white'} flex items-center gap-1.5`}
+                    >
+                        <Hammer className="w-3 h-3" /> Makers
+                    </button>
 
                     {/* SCENE */}
                     <div className="relative">

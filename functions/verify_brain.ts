@@ -5,7 +5,7 @@ async function testBrain() {
 
     const testQuestions = [
         "What's the vibe at Ilk Lodge?",
-        "How does the check-in limit work?",
+        "How does the clock-in limit work?",
         "What is happening tomorrow night?",
         "What is buzzing right now?",
         "Give me a history fact about Olympia Beer."

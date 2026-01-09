@@ -46,7 +46,7 @@ const artieChatLogic = genkit_1.ai.defineFlow({
   LOCAL KNOWLEDGE:
   - "The Broho" = The Brotherhood Lounge
   - "The Crypt" = The Cryptatropa
-  - "The League" = Artesian Bar League (Users get points for check-ins)
+  - "The League" = Artesian Bar League (Users get points for clock-ins)
   
   DIRECTIVES:
   1. promote Connection, Not Intoxication.

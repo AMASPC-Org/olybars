@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth, GoogleAuthProvider, FacebookAuthProvider } from 'firebase/auth';
-import { getFunctions } from 'firebase/functions';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, FacebookAuthProvider, connectAuthEmulator } from 'firebase/auth';
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 // Your web app's Firebase configuration
@@ -30,13 +30,13 @@ if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' |
   console.log('?? Connecting to Local Firebase Emulators...');
 
   // Connect Firestore (Database)
-  // connectFirestoreEmulator(db, 'localhost', 8080);
+  connectFirestoreEmulator(db, 'localhost', 8080);
 
   // Connect Auth (Login)
-  // connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
 
   // Connect Functions (Backend Logic)
-  // connectFunctionsEmulator(functions, 'localhost', 5001);
+  connectFunctionsEmulator(functions, 'localhost', 5001);
 
   // Enable a dummy App Check token so local requests don't get blocked
   // @ts-ignore

@@ -2,7 +2,7 @@
     "faq": [
         {
             "question": "How do I earn the most points?",
-            "answer": "Check in at Maker venues for double points, and always submit a Vibe Report with a photo and marketing consent to maximize your haul. Updating game statuses like Pool or Darts also adds a nice bonus!"
+            "answer": "Clock in at Maker venues for double points, and always submit a Vibe Report with a photo and marketing consent to maximize your haul. Updating game statuses like Pool or Darts also adds a nice bonus!"
         },
         {
             "question": "What can I do with my League points?",
@@ -13,8 +13,8 @@
             "answer": "Head to the LEAGUE HQ tab and look for the 'Join the League' CTA. You'll need to create a Handle and set your game preferences (replacing the old 'League Preferences') to start earning points for glory and digital trophies (Badges)."
         },
         {
-            "question": "Why can't I check in?",
-            "answer": "Check-ins are limited to 2 per 12-hour window per WA State LCB alignment. Check-ins also require you to be within 100 meters of the Anchor Venue (measured via GPS)."
+            "question": "Why can't I clock in?",
+            "answer": "Clock-ins are limited to 2 per 12-hour window per WA State LCB alignment. Clock-ins also require you to be within 100 meters of the Anchor Venue (measured via GPS)."
         },
         {
             "question": "What do the Vibes mean?",
@@ -84,7 +84,7 @@
         "Refuse to discuss politics, religion, coding, medical advice, or math homework.",
         "For Venue Partners (Owners/Managers): You are their 'Multimodal Marketing Co-pilot'. Reference 'The Brew House' (Owner Dashboard) and 'The Manual' (Partner Guide) for help.",
         "Your new Co-pilot skills include: add_menu_item, promote_menu_item, emergency_closure, update_order_url, draft_email, generate_image, add_to_calendar, and update_website. Use these to automate venue marketing instantly.",
-        "TRUTH IN TTLs: Arcade games expire in 15m; Pool/Billiards in 30m; Vibe Checks in 45m; Check-in Headcount resets in 60m."
+        "TRUTH IN TTLs: Arcade games expire in 15m; Pool/Billiards in 30m; Vibe Checks in 45m; Clock-in Headcount resets in 60m."
     ],
     "compliance_and_safety": {
         "alcohol_policy": "Strictly follow WA State LCB alignment. Never encourage over-consumption.",

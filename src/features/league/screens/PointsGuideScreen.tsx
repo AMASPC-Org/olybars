@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, Zap, Target, Camera, Share2, Award, Info, Sparkles, Trophy, Star } from 'lucide-react';
+import { ChevronLeft, Zap, Target, Camera, Share2, Award, Info, Sparkles, Trophy, Star, ShieldCheck, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const PointsGuideScreen: React.FC = () => {
@@ -57,14 +57,40 @@ const PointsGuideScreen: React.FC = () => {
             ]
         },
         {
-            category: 'Achievements',
+            category: 'Milestone Rewards (Guaranteed)',
             items: [
                 {
-                    name: 'Badge Unlock',
-                    points: '100 - 500 pts',
-                    desc: 'Complete specific sets like the "Warehouse Warrior" or "Lager Legend".',
+                    name: 'Level 10: League Sticker',
+                    points: '1,000 pts',
+                    desc: 'The mark of a true local. Slap it on your laptop or bumper.',
                     icon: Award,
                     color: 'bg-yellow-500/20 text-yellow-400'
+                },
+                {
+                    name: 'Level 20: The Shirt',
+                    points: '2,500 pts',
+                    desc: 'Limited edition Season 4 Tee. Not sold in stores. Earned only.',
+                    icon: ShieldCheck,
+                    color: 'bg-blue-500/20 text-blue-400'
+                },
+                {
+                    name: 'Level 50: The Plaque',
+                    points: '5,000 pts',
+                    desc: 'Custom Bar Stool Plaque at your favorite HQ. "Mayor of the Bar" status.',
+                    icon: Crown,
+                    color: 'bg-primary/20 text-primary'
+                }
+            ]
+        },
+        {
+            category: 'The Secret Menu',
+            items: [
+                {
+                    name: 'Status Unlocks',
+                    points: 'Tier 3+',
+                    desc: 'Residents (1k+ pts) unlock hidden menu items at partner venues. Flashing your badge gets you the goods.',
+                    icon: Sparkles,
+                    color: 'bg-purple-500/20 text-purple-400'
                 }
             ]
         }

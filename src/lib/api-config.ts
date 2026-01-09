@@ -48,6 +48,8 @@ export const API_ENDPOINTS = {
     },
     PARTNERS: {
         ONBOARD: `${API_BASE_URL}/partners/onboard`,
+        PHONE_CALL: `${API_BASE_URL}/partners/verify/phone/call`,
+        PHONE_VERIFY: `${API_BASE_URL}/partners/verify/phone/verify`,
     },
     USER: {
         ACTIVITY: `${API_BASE_URL}/activity`,

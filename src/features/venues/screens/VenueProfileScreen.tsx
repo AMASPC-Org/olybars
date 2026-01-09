@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { isVenueOwner, isVenueManager, hasVenueAccess } from '../../../types/auth_schema';
+import { isVenueOwner, isVenueManager, hasVenueAccess, isSystemAdmin } from '../../../types/auth_schema';
 import { ASSETS } from '../../../components/partners/AssetToggleGrid';
 import {
     MapPin, Clock, Beer, Trophy, Music, Users,
@@ -9,7 +9,7 @@ import {
     Settings, Instagram, Facebook, Twitter, Mail, Phone,
     Scroll, Sparkles, Feather, Gamepad2, LayoutGrid, CheckCircle2,
     Utensils, ChefHat, Pizza, ShoppingBag, Ban, AlertTriangle,
-    Target, Mic2, HelpCircle, Box, Disc, ExternalLink, X
+    Target, Mic2, HelpCircle, Box, Disc, ExternalLink, X, Crown
 } from 'lucide-react';
 import { formatToAMPM } from '../../../utils/timeUtils';
 import { Venue, UserProfile } from '../../../types';
@@ -239,7 +239,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
         if (!venue) return;
         const shareData = {
             title: `OlyBars - ${venue.name}`,
-            text: `Checking out the vibes at ${venue.name} on OlyBars. Come join the league!`,
+            text: `Clocking in at ${venue.name} on OlyBars. Come join the league!`,
             url: window.location.href,
         };
 
@@ -1054,6 +1054,34 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                             </div>
                             <ChevronRight className="w-5 h-5 text-slate-700" />
                         </div>
+                    </div>
+                )}
+
+                {/* [NEW] Owner Claim Section */}
+                {(!venue.ownerId || isSystemAdmin(userProfile)) && (
+                    <div className="pt-16 mt-16 border-t border-white/5 text-center pb-8 sticky-claim-trigger">
+                        <div className="inline-block p-4 bg-primary/10 rounded-3xl border border-primary/20 mb-6 group hover:scale-110 transition-transform duration-500">
+                            <Crown className="w-10 h-10 text-primary" />
+                        </div>
+                        <h4 className="text-2xl font-black text-white uppercase font-league mb-3 tracking-tighter">Claim Your Venue</h4>
+                        <p className="text-sm text-slate-400 font-medium mb-8 max-w-sm mx-auto leading-relaxed italic">
+                            Are you the owner or manager of <span className="text-primary font-bold">{venue.name}</span>? Claim this listing to manage your vibe, menu, and events in the 98501.
+                        </p>
+                        <button
+                            onClick={() => {
+                                let url = '/partners/claim';
+                                const params = new URLSearchParams();
+                                if (venue.id) params.append('venueId', venue.id);
+                                if (venue.googlePlaceId) params.append('placeId', venue.googlePlaceId);
+                                params.append('name', venue.name);
+                                if (venue.address) params.append('address', venue.address);
+                                if (params.toString()) url += `?${params.toString()}`;
+                                navigate(url);
+                            }}
+                            className="w-full sm:w-auto bg-primary text-black px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-primary/30 font-league"
+                        >
+                            Claim this Bar
+                        </button>
                     </div>
                 )}
             </div>

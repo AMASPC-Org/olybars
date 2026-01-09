@@ -1,32 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Building2, MapPin, Phone, Globe, Check,
     ChevronRight, ArrowLeft, Send, Users,
-    LayoutGrid, Settings2, Info, LogIn, Crown
+    LayoutGrid, Settings2, Info, LogIn, Crown,
+    Zap, Flame, Trophy, ArrowRight, Loader2,
+    ShieldCheck, Instagram
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PlaceAutocomplete } from '../../../components/ui/PlaceAutocomplete';
 import { AssetToggleGrid } from '../../../components/partners/AssetToggleGrid';
 import { Venue, VenueStatus } from '../../../types';
-import { syncVenueWithGoogle, updateVenueDetails, checkVenueClaim, onboardVenue } from '../../../services/venueService';
+import { syncVenueWithGoogle, updateVenueDetails, checkVenueClaim, onboardVenue, initiatePhoneVerification, verifyPhoneCode } from '../../../services/venueService';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { SEO } from '../../../components/common/SEO';
 import { auth } from '../../../lib/firebase';
 
-type OnboardingStep = 'SEARCH' | 'VERIFY' | 'CONFIG' | 'INVITE' | 'SUCCESS';
+type OnboardingStep = 'LANDING' | 'SEARCH' | 'VERIFY' | 'CONFIG' | 'INVITE' | 'SUCCESS';
 
 export default function ClaimVenuePage() {
     const { showToast } = useToast();
-    const [step, setStep] = useState<OnboardingStep>('SEARCH');
+    const [step, setStep] = useState<OnboardingStep>('LANDING');
     const [selectedPlace, setSelectedPlace] = useState<google.maps.places.PlaceResult | null>(null);
     const [venueData, setVenueData] = useState<Partial<Venue> | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isPhoneVerifying, setIsPhoneVerifying] = useState(false);
+    const [enteredCode, setEnteredCode] = useState('');
+    const [isCodeVerified, setIsCodeVerified] = useState(false);
     const [assets, setAssets] = useState<Record<string, boolean>>({});
     const [vibe, setVibe] = useState<VenueStatus>('chill');
     const [managerEmail, setManagerEmail] = useState('');
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
-    const handlePlaceSelect = async (place: google.maps.places.PlaceResult) => {
+    const handlePlaceSelect = React.useCallback(async (place: google.maps.places.PlaceResult) => {
         if (!place.place_id) return;
 
         setSelectedPlace(place);
@@ -38,6 +44,7 @@ export default function ClaimVenuePage() {
             if (claimStatus.isClaimed) {
                 showToast(`${place.name} has already been claimed!`, 'error');
                 setVenueData(null);
+                setStep('SEARCH'); // Fallback to search
                 return;
             }
 
@@ -59,13 +66,41 @@ export default function ClaimVenuePage() {
                 }))
             };
             setVenueData(demoVenue);
+            setStep('SEARCH'); // Move to search so they can see the card
         } catch (error) {
             showToast('COULD NOT RESOLVE VENUE DATA', 'error');
             console.error(error);
         } finally {
             setIsProcessing(false);
         }
-    };
+    }, [showToast]);
+
+    const [autoQuery, setAutoQuery] = useState('');
+
+    // Auto-fill from URL if coming from Venue Profile
+    useEffect(() => {
+        const venueId = searchParams.get('venueId');
+        const placeId = searchParams.get('placeId');
+        const nameParam = searchParams.get('name');
+        const addressParam = searchParams.get('address');
+
+        if ((placeId || venueId) && !selectedPlace && !isProcessing && !venueData) {
+            // If we have a venue ID but no place ID, we might need a fallback, 
+            // but usually we pass both now.
+            handlePlaceSelect({
+                place_id: placeId || venueId,
+                name: nameParam || 'Proposed Venue',
+                formatted_address: addressParam || 'Olympia, WA'
+            } as google.maps.places.PlaceResult);
+
+            // Skip landing if coming from a profile
+            if (step === 'LANDING') setStep('SEARCH');
+        } else if (nameParam && !autoQuery && !selectedPlace) {
+            // Just pre-fill the search box if we don't have a place ID
+            setAutoQuery(nameParam);
+            setStep('SEARCH');
+        }
+    }, [searchParams, handlePlaceSelect, selectedPlace, isProcessing, venueData, autoQuery, step]);
 
     const handleClaimClick = async () => {
         const user = auth.currentUser;
@@ -86,6 +121,48 @@ export default function ClaimVenuePage() {
             setStep('VERIFY');
         } catch (error: any) {
             showToast(error.message || 'CLAIM FAILED', 'error');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handlePhoneVerifyClick = async () => {
+        if (!venueData?.phone || !selectedPlace?.place_id) {
+            showToast("Missing business phone number to verify.", "error");
+            return;
+        }
+
+        setIsProcessing(true);
+        try {
+            await initiatePhoneVerification(
+                selectedPlace.place_id,
+                venueData.phone,
+                venueData.name || 'Venue'
+            );
+            setIsPhoneVerifying(true);
+            showToast("Artie is dialing the business now...", "info");
+        } catch (error: any) {
+            showToast(error.message || "Failed to initiate call.", "error");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleCodeSubmit = async () => {
+        if (!selectedPlace?.place_id || !enteredCode) return;
+
+        setIsProcessing(true);
+        try {
+            const result = await verifyPhoneCode(selectedPlace.place_id, enteredCode);
+            if (result.success) {
+                setIsCodeVerified(true);
+                setIsPhoneVerifying(false);
+                showToast("Identity Verified by Phone Signal!", "success");
+            } else {
+                showToast("Incorrect code. Try again.", "error");
+            }
+        } catch (error: any) {
+            showToast(error.message || "Verification failed.", "error");
         } finally {
             setIsProcessing(false);
         }
@@ -120,26 +197,31 @@ export default function ClaimVenuePage() {
     };
 
     const ProgressBar = () => {
-        const steps: OnboardingStep[] = ['SEARCH', 'VERIFY', 'CONFIG', 'INVITE'];
+        const steps: OnboardingStep[] = ['LANDING', 'SEARCH', 'VERIFY', 'CONFIG', 'INVITE'];
         const currentIndex = steps.indexOf(step);
 
+        if (step === 'LANDING' || step === 'SUCCESS') return null;
+
         return (
-            <div className="flex items-center justify-between mb-12 max-w-md mx-auto">
-                {steps.map((s, i) => (
-                    <React.Fragment key={s}>
-                        <div className={`flex flex-col items-center gap-2 ${i <= currentIndex ? 'text-primary' : 'text-slate-600'}`}>
-                            <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${i < currentIndex ? 'bg-primary border-primary text-black' :
-                                i === currentIndex ? 'border-primary ring-4 ring-primary/20 bg-slate-900' : 'border-slate-800 bg-slate-900'
-                                }`}>
-                                {i < currentIndex ? <Check className="w-6 h-6" /> : <span className="font-black">{i + 1}</span>}
+            <div className="flex items-center justify-between mb-12 max-w-md mx-auto animate-in fade-in duration-700">
+                {steps.slice(1).map((s, i) => {
+                    const stepIndex = i + 1;
+                    return (
+                        <React.Fragment key={s}>
+                            <div className={`flex flex-col items-center gap-2 ${stepIndex <= currentIndex ? 'text-primary' : 'text-slate-600'}`}>
+                                <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${stepIndex < currentIndex ? 'bg-primary border-primary text-black' :
+                                    stepIndex === currentIndex ? 'border-primary ring-4 ring-primary/20 bg-slate-900' : 'border-slate-800 bg-slate-900'
+                                    }`}>
+                                    {stepIndex < currentIndex ? <Check className="w-6 h-6" /> : <span className="font-black">{stepIndex}</span>}
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-widest">{s}</span>
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest">{s}</span>
-                        </div>
-                        {i < steps.length - 1 && (
-                            <div className={`h-[2px] flex-1 mb-6 ${i < currentIndex ? 'bg-primary' : 'bg-slate-800'}`} />
-                        )}
-                    </React.Fragment>
-                ))}
+                            {stepIndex < steps.length - 1 && (
+                                <div className={`h-[2px] flex-1 mb-6 ${stepIndex < currentIndex ? 'bg-primary' : 'bg-slate-800'}`} />
+                            )}
+                        </React.Fragment>
+                    );
+                })}
             </div>
         );
     };
@@ -159,23 +241,139 @@ export default function ClaimVenuePage() {
 
                 <ProgressBar />
 
-                <div className="bg-slate-900/40 border border-white/5 rounded-[2.5rem] p-8 md:p-12 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+                <div className="bg-slate-900/40 border border-white/5 rounded-[2.5rem] p-8 md:p-12 shadow-2xl backdrop-blur-xl relative">
                     {/* Decorative Background Elements */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl" />
-                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-600/5 rounded-full -ml-32 -mb-32 blur-3xl" />
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-600/5 rounded-full -ml-32 -mb-32 blur-3xl pointer-events-none" />
+
+                    {step === 'LANDING' && (
+                        <div className="space-y-12 animate-in fade-in zoom-in-95 duration-700">
+                            <div className="text-center space-y-4">
+                                <h2 className="text-3xl md:text-5xl font-black uppercase font-league leading-none tracking-tighter">
+                                    The Nightlife <span className="text-primary">Operating System</span>
+                                </h2>
+                                <p className="text-slate-400 font-medium max-w-2xl mx-auto italic">
+                                    OlyBars is more than a directory. It's the real-time heartbeat of Olympia's bar scene, powered by the Artesian Bar League.
+                                </p>
+                            </div>
+
+                            {/* [NEW] The "Zero Cost" Hook */}
+                            <div className="bg-primary/10 border-2 border-primary/30 rounded-3xl p-6 text-center space-y-2">
+                                <div className="inline-flex items-center gap-2 text-primary font-black uppercase tracking-widest text-xs">
+                                    <Check className="w-4 h-4" />
+                                    Induction Status: $0 Required
+                                </div>
+                                <h3 className="text-xl font-black uppercase font-league">It's Free to Claim Your Spot</h3>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
+                                    Claiming your profile, managing your hours, and appearing on the live map costs <span className="text-primary">$0</span>.
+                                    Induct your venue into the league today at no risk.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Value Proposition Cards */}
+                                <div className="bg-slate-950/50 border border-white/5 p-6 rounded-3xl space-y-4 hover:border-primary/30 transition-all group">
+                                    <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <Zap className="w-6 h-6 text-primary" />
+                                    </div>
+                                    <h3 className="text-xl font-black uppercase font-league text-white italic">Flash Bounties</h3>
+                                    <p className="text-xs text-slate-500 font-bold leading-relaxed uppercase">
+                                        Slow Tuesday? Drop a 1-hour "Flash Bounty" to the entire league and watch the room fill up instantly.
+                                    </p>
+                                </div>
+
+                                <div className="bg-slate-950/50 border border-white/5 p-6 rounded-3xl space-y-4 hover:border-blue-500/30 transition-all group">
+                                    <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <Flame className="w-6 h-6 text-blue-400" />
+                                    </div>
+                                    <h3 className="text-xl font-black uppercase font-league text-white italic">The Buzz Clock</h3>
+                                    <p className="text-xs text-slate-500 font-bold leading-relaxed uppercase">
+                                        Let the city see your energy levels. From "Chill" to "Packed", we sync your real-time vibe to the map.
+                                    </p>
+                                </div>
+
+                                <div className="bg-slate-950/50 border border-white/5 p-6 rounded-3xl space-y-4 hover:border-purple-500/30 transition-all group">
+                                    <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <LayoutGrid className="w-6 h-6 text-purple-400" />
+                                    </div>
+                                    <h3 className="text-xl font-black uppercase font-league text-white italic">Social Sync Beta</h3>
+                                    <p className="text-xs text-slate-500 font-bold leading-relaxed uppercase">
+                                        "Submit Once, Publish Everywhere." We automate your weekly event graphics and social posts so you don't have to.
+                                    </p>
+                                </div>
+
+                                <div className="bg-slate-950/50 border border-white/5 p-6 rounded-3xl space-y-4 hover:border-emerald-500/30 transition-all group">
+                                    <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <Trophy className="w-6 h-6 text-emerald-400" />
+                                    </div>
+                                    <h3 className="text-xl font-black uppercase font-league text-white italic">League Integration</h3>
+                                    <p className="text-xs text-slate-500 font-bold leading-relaxed uppercase">
+                                        Become a certified League HQ. Host official events and let players earn points for choosing your spot.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="pt-8 space-y-8">
+                                <div className="text-center">
+                                    <button
+                                        onClick={() => setStep('SEARCH')}
+                                        className="bg-primary text-black font-black px-12 py-5 rounded-2xl uppercase tracking-[0.2em] font-league text-lg shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-3"
+                                    >
+                                        Start My Induction
+                                        <ChevronRight className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                <div className="border-t border-white/5 pt-8">
+                                    <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-[0.3em] text-center mb-6">Optional Growth Paths</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="bg-slate-950/30 p-4 rounded-2xl border border-white/5 text-center">
+                                            <p className="text-[10px] text-primary font-black uppercase mb-1">DIY Toolkit</p>
+                                            <p className="text-lg font-black font-league">$99/mo</p>
+                                            <p className="text-[8px] text-slate-500 font-bold uppercase mt-2">Automated Email & PR Agent</p>
+                                        </div>
+                                        <div className="bg-slate-950/30 p-4 rounded-2xl border border-primary/20 text-center ring-1 ring-primary/10">
+                                            <p className="text-[10px] text-blue-400 font-black uppercase mb-1">Pro League</p>
+                                            <p className="text-lg font-black font-league">$399/mo</p>
+                                            <p className="text-[8px] text-slate-500 font-bold uppercase mt-2">IG/FB Write-Sync & 10k Pts</p>
+                                        </div>
+                                        <div className="bg-slate-950/30 p-4 rounded-2xl border border-white/5 text-center">
+                                            <p className="text-[10px] text-emerald-400 font-black uppercase mb-1">Agency Legend</p>
+                                            <p className="text-lg font-black font-league">$799/mo</p>
+                                            <p className="text-[8px] text-slate-500 font-bold uppercase mt-2">Full Management & Keystones</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.4em] text-center">
+                                    No Credit Card Required to Begin Induction
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     {step === 'SEARCH' && (
                         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="text-center">
-                                <h2 className="text-3xl font-black uppercase font-league mb-4">Step 1: The Lazy Search</h2>
+                            <div className="text-center relative">
+                                <button
+                                    onClick={() => setStep('LANDING')}
+                                    className="absolute -top-4 left-0 text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-primary transition-colors flex items-center gap-1"
+                                >
+                                    <ArrowLeft className="w-3 h-3" />
+                                    Show Benefits
+                                </button>
+                                <h2 className="text-3xl font-black uppercase font-league mb-4">Phase 1: Induction Search</h2>
                                 <p className="text-slate-400 font-medium">Find your establishment on Google and we'll handle the rest.</p>
                             </div>
 
-                            <PlaceAutocomplete
-                                onPlaceSelect={handlePlaceSelect}
-                                placeholder="Enter your Bar Name..."
-                                className="max-w-xl mx-auto"
-                            />
+                            {!selectedPlace && (
+                                <PlaceAutocomplete
+                                    onPlaceSelect={handlePlaceSelect}
+                                    placeholder="Enter your Bar Name..."
+                                    initialQuery={autoQuery}
+                                    className="max-w-xl mx-auto"
+                                />
+                            )}
 
                             {isProcessing && (
                                 <div className="flex items-center justify-center gap-3 text-primary font-black uppercase tracking-widest animate-pulse">
@@ -191,10 +389,15 @@ export default function ClaimVenuePage() {
                                     <div className="flex items-start justify-between">
                                         <div className="space-y-1">
                                             <h3 className="text-2xl font-black uppercase font-league leading-tight text-primary">{venueData.name}</h3>
-                                            <p className="text-xs text-slate-500 font-bold tracking-widest uppercase italic">Artesian Manual Preview</p>
+                                            <p className="text-xs text-slate-500 font-bold tracking-widest uppercase italic">Verified Industry Identity</p>
                                         </div>
-                                        <div className="p-3 bg-primary rounded-2xl">
+                                        <div className="p-3 bg-primary rounded-2xl relative">
                                             <Building2 className="w-6 h-6 text-black" />
+                                            {selectedPlace && (
+                                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center border-2 border-slate-950">
+                                                    <Check className="w-2 h-2 text-white" />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
@@ -219,10 +422,24 @@ export default function ClaimVenuePage() {
 
                                     <button
                                         onClick={handleClaimClick}
-                                        className="w-full bg-primary text-black font-black py-4 rounded-2xl uppercase tracking-[0.2em] font-league text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all mt-4"
+                                        className="w-full bg-primary text-black font-black py-4 rounded-2xl uppercase tracking-[0.2em] font-league text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all mt-4 flex items-center justify-center gap-3"
                                     >
-                                        This is Me — Claim Now
+                                        {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Crown className="w-5 h-5" />}
+                                        Induct My Venue
                                     </button>
+
+                                    {selectedPlace && (
+                                        <button
+                                            onClick={() => {
+                                                setSelectedPlace(null);
+                                                setVenueData(null);
+                                                setAutoQuery('');
+                                            }}
+                                            className="w-full text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-white transition-colors py-2"
+                                        >
+                                            Not my venue — back to search
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -231,7 +448,7 @@ export default function ClaimVenuePage() {
                     {step === 'VERIFY' && (
                         <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-500">
                             <div className="text-center">
-                                <h2 className="text-3xl font-black uppercase font-league mb-4">Step 2: The "Pit" Stop</h2>
+                                <h2 className="text-3xl font-black uppercase font-league mb-4">Phase 2: Data Verification</h2>
                                 <p className="text-slate-400 font-medium">Is this intel accurate? Confirm or fix the bad scrapes.</p>
                             </div>
 
@@ -283,15 +500,120 @@ export default function ClaimVenuePage() {
                                     </div>
 
                                     <div className="pt-4 space-y-4">
-                                        <button
-                                            onClick={handleVerificationConfirm}
-                                            className="w-full bg-primary text-black font-black py-4 rounded-2xl uppercase tracking-[0.2em] font-league text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all"
-                                        >
-                                            Looks Good — Move On
-                                        </button>
-                                        <button className="w-full bg-slate-800/50 text-slate-400 font-black py-4 rounded-2xl uppercase tracking-[0.2em] font-league text-sm border border-white/5 hover:text-white hover:bg-slate-800 transition-all">
-                                            Edit Details
-                                        </button>
+                                        {!auth.currentUser ? (
+                                            <div className="bg-primary/10 border-2 border-primary/30 rounded-3xl p-8 text-center space-y-6">
+                                                <LogIn className="w-12 h-12 text-primary mx-auto mb-2" />
+                                                <h3 className="text-xl font-black uppercase font-league tracking-tighter">Identity Required</h3>
+                                                <p className="text-xs text-slate-400 font-medium italic leading-relaxed">
+                                                    We need to be sure who is claiming this establishment. Please sign in to link your personal identity to the business profile.
+                                                </p>
+                                                <button
+                                                    onClick={() => navigate('/auth')}
+                                                    className="w-full bg-primary text-black font-black py-4 rounded-2xl uppercase tracking-[0.2em] font-league text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                                                >
+                                                    Sign In to Verify
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-slate-900/80 border border-emerald-500/20 rounded-3xl p-8 space-y-8 relative overflow-hidden group">
+                                                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                                    <ShieldCheck className="w-32 h-32 text-emerald-500" />
+                                                </div>
+
+                                                <div className="space-y-2 relative">
+                                                    <div className="flex items-center gap-2 text-emerald-400">
+                                                        <ShieldCheck className="w-5 h-5" />
+                                                        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Security Induction</span>
+                                                    </div>
+                                                    <h3 className="text-xl font-black uppercase font-league leading-none">Best Practice Verification</h3>
+                                                </div>
+
+                                                <div className="space-y-4 relative">
+                                                    {/* Verification Options */}
+                                                    <button className="w-full flex items-center justify-between p-4 bg-slate-950/50 border border-white/5 rounded-2xl hover:border-emerald-500/30 transition-all text-left group/opt">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-slate-500 group-hover/opt:text-emerald-400 transition-colors">
+                                                                <Instagram className="w-5 h-5" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-black uppercase font-league tracking-tight">Sync Instagram</p>
+                                                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Connect your Business Account</p>
+                                                            </div>
+                                                        </div>
+                                                        <ChevronRight className="w-4 h-4 text-slate-700" />
+                                                    </button>
+
+                                                    <button
+                                                        onClick={handlePhoneVerifyClick}
+                                                        disabled={isCodeVerified || isPhoneVerifying || isProcessing}
+                                                        className={`w-full flex items-center justify-between p-4 bg-slate-950/50 border border-white/5 rounded-2xl hover:border-emerald-500/30 transition-all text-left group/opt ${isCodeVerified ? 'opacity-50 cursor-default border-emerald-500/50' : ''}`}
+                                                    >
+                                                        <div className="flex items-center gap-4">
+                                                            <div className={`w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-slate-500 ${isPhoneVerifying ? 'animate-pulse text-emerald-400' : ''} ${isCodeVerified ? 'text-emerald-500' : 'group-hover/opt:text-emerald-400'} transition-colors`}>
+                                                                <Phone className="w-5 h-5" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-black uppercase font-league tracking-tight">Phone Signal</p>
+                                                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
+                                                                    {isCodeVerified ? 'Verified by Voice' : 'Verify via Business Phone'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        {isCodeVerified ? <Check className="w-4 h-4 text-emerald-500" /> : <ChevronRight className="w-4 h-4 text-slate-700" />}
+                                                    </button>
+
+                                                    {isPhoneVerifying && (
+                                                        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-300">
+                                                            <div className="text-center space-y-2">
+                                                                <div className="flex items-center justify-center gap-2">
+                                                                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
+                                                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">Artie is calling...</p>
+                                                                </div>
+                                                                <p className="text-xs text-slate-400 font-medium italic">Listen for the 4-digit code and enter it below.</p>
+                                                            </div>
+                                                            <div className="flex gap-2 justify-center">
+                                                                <input
+                                                                    type="text"
+                                                                    maxLength={4}
+                                                                    placeholder="0000"
+                                                                    value={enteredCode}
+                                                                    onChange={(e) => setEnteredCode(e.target.value.replace(/[^0-9]/g, ''))}
+                                                                    className="bg-slate-950 border-2 border-emerald-500/20 rounded-xl px-4 py-3 text-2xl font-black tracking-[0.5em] text-center text-emerald-400 focus:border-emerald-500/50 outline-none w-32"
+                                                                />
+                                                                <button
+                                                                    onClick={handleCodeSubmit}
+                                                                    disabled={enteredCode.length !== 4 || isProcessing}
+                                                                    className="bg-emerald-500 text-black font-black px-6 rounded-xl uppercase font-league tracking-widest shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                                                                >
+                                                                    Verify
+                                                                </button>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => setIsPhoneVerifying(false)}
+                                                                className="w-full text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors"
+                                                            >
+                                                                Cancel Call
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="pt-4 space-y-4">
+                                                        <button
+                                                            onClick={handleVerificationConfirm}
+                                                            className="w-full bg-emerald-500 text-black font-black py-4 rounded-2xl uppercase tracking-[0.2em] font-league text-lg shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+                                                        >
+                                                            Looks Good — Move On
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setStep('SEARCH')}
+                                                            className="w-full bg-slate-800/50 text-slate-400 font-black py-4 rounded-2xl uppercase tracking-[0.2em] font-league text-sm border border-white/5 hover:text-white hover:bg-slate-800 transition-all"
+                                                        >
+                                                            Back to Search
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -301,7 +623,7 @@ export default function ClaimVenuePage() {
                     {step === 'CONFIG' && (
                         <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-500">
                             <div className="text-center">
-                                <h2 className="text-3xl font-black uppercase font-league mb-4">Step 3: The "Vibe" & Assets</h2>
+                                <h2 className="text-3xl font-black uppercase font-league mb-4">Phase 3: Scene & Vibe Calibration</h2>
                                 <p className="text-slate-400 font-medium">Configure your presence on the Open Play Network.</p>
                             </div>
 
@@ -369,7 +691,7 @@ export default function ClaimVenuePage() {
                     {step === 'INVITE' && (
                         <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-500">
                             <div className="text-center">
-                                <h2 className="text-3xl font-black uppercase font-league mb-4">Step 4: The "Chris" Handoff</h2>
+                                <h2 className="text-3xl font-black uppercase font-league mb-4">Phase 4: Management Handoff</h2>
                                 <p className="text-slate-400 font-medium">Who manages your events or marketing? Invite your pit bosses.</p>
                             </div>
 

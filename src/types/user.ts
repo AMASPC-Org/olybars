@@ -5,6 +5,8 @@ export type UserRole = 'guest' | 'user' | 'manager' | 'owner' | 'admin' | 'super
 export interface NotificationSettings {
     allow_league_intel: boolean;   // Master toggle for gameplay hints/events
     allow_pulse_alerts: boolean;   // Master toggle for "Packed" alerts
+    vibe_alive_alerts: boolean;    // "Tell me when the Vibe is Alive"
+    favorite_deal_alerts: boolean; // "Alert me when a Favorite drops a Deal"
     quiet_hours_start: string;     // Default "23:00"
     quiet_hours_end: string;       // Default "08:00"
 }
@@ -103,4 +105,5 @@ export interface UserProfile {
     makersTrailProgress?: number; // 0-5
     hasCompletedMakerSurvey?: boolean;
     vouchers?: UserVoucher[];
+    lastDrinkBountyRedemption?: number; // Timestamp of last alcohol-related redemption
 }

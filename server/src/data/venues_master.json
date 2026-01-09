@@ -10,7 +10,7 @@
     ],
     "foodService": "full_kitchen",
     "status": "buzzing",
-    "checkIns": 0,
+    "clockIns": 0,
     "capacity": 150,
     "isPaidLeagueMember": true,
     "vibe": "Home of Artie and built on the Artesian Well",
@@ -27,8 +27,8 @@
       "y": 85
     },
     "location": {
-      "lat": 47.045402,
-      "lng": -122.895869
+      "lat": 47.0454125,
+      "lng": -122.8958611
     },
     "address": "514 4th Ave E, Olympia, WA 98501, USA",
     "isActive": true,
@@ -175,7 +175,7 @@
     ],
     "foodService": "limited_kitchen",
     "status": "chill",
-    "checkIns": 0,
+    "clockIns": 0,
     "capacity": 60,
     "vibe": "Twin Peaks meets Skate Rat",
     "insiderVibe": "Pat Jansen is a legend. He ran the brewing at Three Mags, then Matchless, now this. The vibe is 'Twin Peaks meets Skate Rat.' It's cool without trying. And the burgers? Greasy, smashy perfection. This is the soul of downtown brewing.",
@@ -189,8 +189,8 @@
       "y": 72
     },
     "location": {
-      "lat": 47.043854,
-      "lng": -122.89666
+      "lat": 47.0438219,
+      "lng": -122.8966382
     },
     "address": "515 Jefferson St SE, Olympia, WA 98501, USA",
     "isActive": true,
@@ -219,7 +219,7 @@
     "sceneTags": [],
     "foodService": "full_kitchen",
     "status": "buzzing",
-    "checkIns": 0,
+    "clockIns": 0,
     "capacity": 100,
     "vibe": "The Community Hub & NA Pioneers",
     "insiderVibe": "The center of the 'Sober Squad' league track. Home of 'Self Care' non-alcoholic beer and Scherler Sundays.",
@@ -234,8 +234,8 @@
       "y": 65
     },
     "location": {
-      "lat": 47.043153,
-      "lng": -122.898526
+      "lat": 47.0431532,
+      "lng": -122.8985261
     },
     "address": "600 Franklin St SE STE 105, Olympia, WA 98501, USA",
     "isActive": true,
@@ -264,7 +264,7 @@
     "sceneTags": [],
     "foodService": "none_byof",
     "status": "chill",
-    "checkIns": 0,
+    "clockIns": 0,
     "capacity": 30,
     "vibe": "The Teeny Tiny Taproom",
     "insiderVibe": "The Teeny Tiny Taproom is the definition of cool. It's barely a room. You sit on the patio, you drink cider that tastes like actual apples, not candy. It's legit. No frills, just product.",
@@ -280,8 +280,8 @@
       "y": 40
     },
     "location": {
-      "lat": 47.045669,
-      "lng": -122.893349
+      "lat": 47.0456449,
+      "lng": -122.8933449
     },
     "address": "728 4th Ave E, Olympia, WA 98506, USA",
     "isActive": true,
@@ -311,7 +311,7 @@
     ],
     "foodService": "snacks",
     "status": "chill",
-    "checkIns": 0,
+    "clockIns": 0,
     "capacity": 40,
     "vibe": "The Urban Cellar",
     "insiderVibe": "A sleek, industrial cellar feel inside the 222 Market. Perfect for a sophisticated evening flight.",
@@ -325,8 +325,8 @@
       "y": 45
     },
     "location": {
-      "lat": 47.046434,
-      "lng": -122.901569
+      "lat": 47.0463706,
+      "lng": -122.9017466
     },
     "address": "222 Capitol Way N, Olympia, WA 98501, USA",
     "isActive": true,
@@ -354,7 +354,7 @@
     "sceneTags": [],
     "foodService": "snacks",
     "status": "buzzing",
-    "checkIns": 0,
+    "clockIns": 0,
     "capacity": 100,
     "vibe": "The Hype Beast; 80s Synth-Pop Vibes",
     "insiderVibe": "The branding is incredible. Best cans in the county. The vibe in the taproom is industrial but energetic. It feels like a place where beer nerds congregate. It's legit.",
@@ -368,8 +368,8 @@
       "y": 15
     },
     "location": {
-      "lat": 46.970873,
-      "lng": -122.884999
+      "lat": 46.9709605,
+      "lng": -122.8848636
     },
     "address": "8036 River Dr SE #208, Tumwater, WA 98501, USA",
     "isActive": true,
@@ -397,7 +397,7 @@
     "sceneTags": [],
     "foodService": "none_byof",
     "status": "chill",
-    "checkIns": 0,
+    "clockIns": 0,
     "capacity": 60,
     "vibe": "Approachably dangerous, family founded",
     "insiderVibe": "The Strawberry Golden is a gateway drug for my wine drinkers. It's sophisticated enough, not cloyingly sweet. It allows a wine drinker to participate in a brewery crawl without grimacing.",
@@ -411,8 +411,8 @@
       "y": 16
     },
     "location": {
-      "lat": 46.970596,
-      "lng": -122.884697
+      "lat": 46.9705735,
+      "lng": -122.8846254
     },
     "address": "8036 River Dr SE #203, Tumwater, WA 98501, USA",
     "isActive": true,
@@ -460,14 +460,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 20,
       "y": 90
     },
     "location": {
-      "lat": 47.017772,
-      "lng": -122.925447
+      "lat": 47.0256942,
+      "lng": -122.9340321
     },
     "address": "2442 Mottman Rd SW, Tumwater, WA 98512, USA",
     "phone": "(360) 915-7798",
@@ -526,7 +526,7 @@
     "sceneTags": [],
     "foodService": "full_kitchen",
     "status": "buzzing",
-    "checkIns": 0,
+    "clockIns": 0,
     "vibe": "The District Anchor; Aberdeen Grit",
     "insiderVibe": "Aberdeen grit in a polished Tumwater building. Rowdy in a good way, designed for loud laughs and big groups.",
     "originStory": "A martial arts-loving brewery from Aberdeen that decided to conquer the valley. They are the new anchor of the Tumwater Craft District.",
@@ -540,7 +540,7 @@
     },
     "location": {
       "lat": 47.009579,
-      "lng": -122.905463
+      "lng": -122.9054629
     },
     "address": "4242 Capitol Blvd SE Suite 100, Olympia, WA 98502, USA",
     "isActive": true,
@@ -568,7 +568,7 @@
     "sceneTags": [],
     "foodService": "snacks",
     "status": "chill",
-    "checkIns": 0,
+    "clockIns": 0,
     "vibe": "The Outpost; precision and brotherhood",
     "insiderVibe": "It's in a warehouse district in Lacey. It's not 'cool' in the hipster sense, but it's honest. It's where you go after a shift. I respect it. No pretense.",
     "originStory": "Founded by Casey Sobol and Jason Stoltz, two career firefighters who spent their downtime perfecting recipes, this Lacey brewery is built on service, precision, and the brotherhood of the firehouse. It's an unpretentious warehouse taproom where the 'My Dog Scout Stout' has won more medals than most generals.",
@@ -581,8 +581,8 @@
       "y": 15
     },
     "location": {
-      "lat": 47.075868,
-      "lng": -122.763229
+      "lat": 47.0758683,
+      "lng": -122.7632286
     },
     "address": "8343 Hogum Bay Ln NE, Lacey, WA 98516, USA",
     "isActive": true,
@@ -612,7 +612,7 @@
     ],
     "foodService": "snacks",
     "status": "chill",
-    "checkIns": 0,
+    "clockIns": 0,
     "vibe": "The Pilgrimage; Rugged and Authentic",
     "insiderVibe": "A world-class educational stop. The bacon whiskey is a conversation starter, but the gin is the real deal.",
     "originStory": "John Bourdon built a shrine to Tenino's stone-carving history. Grain-to-glass ruggedness fueled by locally grown grain and cooled by rainwater.",
@@ -625,8 +625,8 @@
       "y": 10
     },
     "location": {
-      "lat": 46.869615,
-      "lng": -122.903386
+      "lat": 46.8696146,
+      "lng": -122.9033859
     },
     "address": "842 Wright Rd SE, Tenino, WA 98589, USA",
     "isActive": true,
@@ -654,7 +654,7 @@
     "sceneTags": [],
     "foodService": "full_kitchen",
     "status": "buzzing",
-    "checkIns": 0,
+    "clockIns": 0,
     "vibe": "The Monument; Sovereign Spirits",
     "insiderVibe": "It took an act of Congress to build this. A monument to sovereignty and spirits, partnering with Heritage to build a state-of-the-art facility.",
     "originStory": "The Chehalis Tribe fought to repeal an 1834 law banning distilleries on tribal land. It is a massive facility dedicated to craft and heritage.",
@@ -667,8 +667,8 @@
       "y": 10
     },
     "location": {
-      "lat": 46.801865,
-      "lng": -123.015511
+      "lat": 46.80186459999999,
+      "lng": -123.0155105
     },
     "address": "19770 Sargent Rd SW, Rochester, WA 98579, USA",
     "isActive": true,
@@ -698,7 +698,7 @@
     ],
     "foodService": "none_byof",
     "status": "chill",
-    "checkIns": 0,
+    "clockIns": 0,
     "vibe": "The Rare Drop; Spiced Honey Adventures",
     "insiderVibe": " Spicy habanero and ginger meads that drink like cocktails. Located in the heart of Lacey's industrial zone.",
     "originStory": "Born from the back room of the legendary Skep & Skein. Dave Ross crafts meads that destroy the cloyingly sweet stereotype.",
@@ -711,8 +711,8 @@
       "y": 22
     },
     "location": {
-      "lat": 47.070649,
-      "lng": -122.780222
+      "lat": 47.07206,
+      "lng": -122.7566436
     },
     "address": "2633 Willamette Dr NE suite b, Lacey, WA 98516, USA",
     "isActive": true,
@@ -742,7 +742,7 @@
     ],
     "foodService": "snacks",
     "status": "chill",
-    "checkIns": 0,
+    "clockIns": 0,
     "vibe": "The Industrial Anchor; Serious chemistry",
     "insiderVibe": "High quality product. Josh knows his chemistry. It appeals to the 'Wine Snob' demographic.",
     "originStory": "Josh Stottlemyer traded web development for winemaking, setting up shop in a Lacey industrial park to prove you don't need a chateau to make world-class Syrah. It's a serious winery for serious wine drinkers, stripping away the pretension to focus entirely on what's in the glass.",
@@ -755,8 +755,8 @@
       "y": 25
     },
     "location": {
-      "lat": 47.072335,
-      "lng": -122.756721
+      "lat": 47.0723435,
+      "lng": -122.7567125
     },
     "address": "2641 Willamette Dr NE ste e, Lacey, WA 98516, USA",
     "isActive": true,
@@ -786,7 +786,7 @@
     ],
     "foodService": "snacks",
     "status": "chill",
-    "checkIns": 0,
+    "clockIns": 0,
     "vibe": "The Hideaway; Stagecoach-stop fantasy",
     "insiderVibe": "Jim Myers (a dentist with a cowboy soul) transformed a potato barn into an 1800s New Orleans brothel-themed tasting room.",
     "originStory": "Operating in the Nisqually Valley, this is a stagecoach-stop fantasy come to life, pouring big, bold Washington reds.",
@@ -828,7 +828,7 @@
     "sceneTags": [],
     "foodService": "none_byof",
     "status": "chill",
-    "checkIns": 0,
+    "clockIns": 0,
     "vibe": "The Easter Egg; Scavenger Hunt Target",
     "insiderVibe": "We can't send people to them. They don't exist as a venue. But we can gamify the hunt. 'Find the Elk'—extra points for checking in a pint of Elk Pond at a partner bar. It encourages exploration of other venues.",
     "originStory": "The 'Ghost Brewery' of Olympia. The Wilkinson family built a dedicated micro-brewery on their property in 2023, but they don't open their doors to the public. You have to hunt for their kegs at local taverns like Pints Barn or Character's Corner to taste their 'Gold Craft' creations.",
@@ -898,14 +898,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 45,
       "y": 55
     },
     "location": {
-      "lat": 47.04838,
-      "lng": -122.90227
+      "lat": 47.0454467,
+      "lng": -122.9019352
     },
     "address": "119 Capitol Way N, Olympia, WA 98501, USA",
     "website": "https://thebrotherhoodlounge.com/",
@@ -980,14 +980,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 40,
       "y": 50
     },
     "location": {
-      "lat": 47.045408,
-      "lng": -122.897171
+      "lat": 47.0453072,
+      "lng": -122.89715
     },
     "address": "418 4th Ave E, Olympia, WA 98501, USA",
     "gameFeatures": [
@@ -1053,7 +1053,7 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 60,
       "y": 60
@@ -1061,8 +1061,8 @@
     "address": "410 4th Ave E, Olympia, WA 98501, USA",
     "website": "http://www.theeastsideclub.com/",
     "location": {
-      "lat": 47.0461,
-      "lng": -122.8933
+      "lat": 47.0452717,
+      "lng": -122.8975314
     },
     "gameFeatures": [
       {
@@ -1109,14 +1109,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 35,
       "y": 45
     },
     "location": {
-      "lat": 47.045053,
-      "lng": -122.900817
+      "lat": 47.0450485,
+      "lng": -122.9008224
     },
     "address": "118 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -1155,14 +1155,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 42,
       "y": 52
     },
     "location": {
-      "lat": 47.043006,
-      "lng": -122.901831
+      "lat": 47.043079,
+      "lng": -122.9019064
     },
     "address": "109 Legion Way SW, Olympia, WA 98501, USA",
     "phone": "(360) 915-9262",
@@ -1278,14 +1278,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 38,
       "y": 48
     },
     "location": {
-      "lat": 47.04543,
-      "lng": -122.89714
+      "lat": 47.0450454,
+      "lng": -122.8969984
     },
     "address": "421 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -1320,14 +1320,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 41,
       "y": 51
     },
     "location": {
-      "lat": 47.04487,
-      "lng": -122.898593
+      "lat": 47.0448704,
+      "lng": -122.8985933
     },
     "address": "311 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -1361,14 +1361,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 44,
       "y": 54
     },
     "location": {
-      "lat": 47.044722,
-      "lng": -122.900194
+      "lat": 47.0447222,
+      "lng": -122.9001935
     },
     "address": "404 Washington St SE, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -1402,14 +1402,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 46,
       "y": 56
     },
     "location": {
-      "lat": 47.044722,
-      "lng": -122.900194
+      "lat": 47.0447176,
+      "lng": -122.9002862
     },
     "address": "404 Washington St SE, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -1441,14 +1441,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 30,
       "y": 40
     },
     "location": {
-      "lat": 47.046883,
-      "lng": -122.902828
+      "lat": 47.0468829,
+      "lng": -122.9028278
     },
     "address": "312 Columbia St NW, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -1487,14 +1487,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 28,
       "y": 38
     },
     "location": {
-      "lat": 47.040638,
-      "lng": -122.902593
+      "lat": 47.04065250000001,
+      "lng": -122.9025023
     },
     "address": "825 Columbia St SW, Olympia, WA 98501, USA",
     "phone": "(360) 357-9464",
@@ -1601,14 +1601,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 50,
       "y": 60
     },
     "location": {
-      "lat": 47.04424,
-      "lng": -122.900204
+      "lat": 47.0442392,
+      "lng": -122.9002223
     },
     "address": "430 Washington St SE, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -1647,14 +1647,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 52,
       "y": 62
     },
     "location": {
-      "lat": 47.045,
-      "lng": -122.9004
+      "lat": 47.0474688,
+      "lng": -122.9034684
     },
     "address": "401 Columbia St NW, Olympia, WA 98501, USA",
     "phone": "(360) 754-6208",
@@ -1724,14 +1724,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 55,
       "y": 55
     },
     "location": {
-      "lat": 47.045686,
-      "lng": -122.901435
+      "lat": 47.0456863,
+      "lng": -122.9014348
     },
     "address": "109 State Ave NE, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -1787,14 +1787,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 60,
       "y": 50
     },
     "location": {
-      "lat": 47.046914,
-      "lng": -122.902151
+      "lat": 47.046916,
+      "lng": -122.9021593
     },
     "address": "311 Capitol Way N, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -1828,7 +1828,7 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 45,
       "y": 45
@@ -1875,14 +1875,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 50,
       "y": 50
     },
     "location": {
-      "lat": 47.04383,
-      "lng": -122.902591
+      "lat": 47.0438886,
+      "lng": -122.9025985
     },
     "address": "123 5th Ave SW, Olympia, WA 98501, USA",
     "phone": "(360) 357-3768",
@@ -2035,14 +2035,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 48,
       "y": 48
     },
     "location": {
-      "lat": 47.045479,
-      "lng": -122.893117
+      "lat": 47.04548200000001,
+      "lng": -122.8946206
     },
     "address": "620 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -2076,14 +2076,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 49,
       "y": 49
     },
     "location": {
-      "lat": 47.0453,
-      "lng": -122.897272
+      "lat": 47.045299,
+      "lng": -122.8972718
     },
     "address": "414 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -2108,14 +2108,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 47,
       "y": 47
     },
     "location": {
-      "lat": 47.042228,
-      "lng": -122.900771
+      "lat": 47.042285,
+      "lng": -122.9008163
     },
     "address": "107 7th Ave SE suite 101, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -2156,14 +2156,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 43,
       "y": 43
     },
     "location": {
-      "lat": 47.042798,
-      "lng": -122.903609
+      "lat": 47.0427984,
+      "lng": -122.9036089
     },
     "address": "610 Water St SW, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -2197,14 +2197,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 39,
       "y": 39
     },
     "location": {
-      "lat": 47.046809,
-      "lng": -122.902642
+      "lat": 47.0484888,
+      "lng": -122.9033385
     },
     "address": "202 Columbia St NW, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -2227,14 +2227,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 37,
       "y": 37
     },
     "location": {
-      "lat": 47.043662,
-      "lng": -122.861062
+      "lat": 47.0436623,
+      "lng": -122.8610616
     },
     "address": "2752 Pacific Ave SE, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -2275,13 +2275,13 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 35,
       "y": 35
     },
     "location": {
-      "lat": 47.043863,
+      "lat": 47.0438628,
       "lng": -122.901298
     },
     "address": "514 Capitol Way S, Olympia, WA 98501, USA",
@@ -2292,6 +2292,43 @@
     "currentBuzz": {
       "score": 0,
       "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "the-china-clipper",
+    "name": "The China Clipper",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "dive",
+      "lgbtq",
+      "karaoke"
+    ],
+    "foodService": "none_byof",
+    "tier_config": {
+      "is_directory_listed": true,
+      "is_league_eligible": true
+    },
+    "attributes": {
+      "has_manned_bar": true,
+      "minors_allowed": false,
+      "noise_level": "Loud/Music"
+    },
+    "vibe": "Iconic dive & legendary karaoke.",
+    "status": "chill",
+    "geoLoop": "Downtown_Walkable",
+    "isActive": true,
+    "isVisible": true,
+    "clockIns": 0,
+    "location": {
+      "lat": 47.0454764,
+      "lng": -122.8977899
+    },
+    "address": "402 4th Ave E, Olympia, WA 98501, United States",
+    "physicalRoom": true,
+    "isPaidLeagueMember": true,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252597
     }
   },
   {
@@ -2316,14 +2353,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 33,
       "y": 33
     },
     "location": {
-      "lat": 47.045307,
-      "lng": -122.897736
+      "lat": 47.0452605,
+      "lng": -122.8976951
     },
     "address": "404 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -2357,14 +2394,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 31,
       "y": 31
     },
     "location": {
-      "lat": 47.04586,
-      "lng": -122.89667
+      "lat": 47.0457568,
+      "lng": -122.8995825
     },
     "address": "416 State Ave NE, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -2413,14 +2450,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 29,
       "y": 29
     },
     "location": {
-      "lat": 47.045112,
-      "lng": -122.899922
+      "lat": 47.0451086,
+      "lng": -122.8999249
     },
     "address": "210 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -2439,11 +2476,11 @@
     "sceneTags": [],
     "foodService": "none_byof",
     "status": "dead",
-    "checkIns": 0,
+    "clockIns": 0,
     "vibe": "Ghost",
     "location": {
-      "lat": 47.046434,
-      "lng": -122.901569
+      "lat": 47.0464335,
+      "lng": -122.9015693
     },
     "address": "222 Capitol Way N, Olympia, WA 98501, USA",
     "isActive": false,
@@ -2467,11 +2504,11 @@
     "sceneTags": [],
     "foodService": "none_byof",
     "status": "dead",
-    "checkIns": 0,
+    "clockIns": 0,
     "vibe": "Ghost",
     "location": {
       "lat": 47.009579,
-      "lng": -122.905463
+      "lng": -122.9054629
     },
     "address": "4242 Capitol Blvd SE suite 111, Tumwater, WA 98501, USA",
     "isActive": false,
@@ -2497,11 +2534,11 @@
     ],
     "foodService": "none_byof",
     "status": "dead",
-    "checkIns": 0,
+    "clockIns": 0,
     "vibe": "Ghost",
     "location": {
-      "lat": 47.070649,
-      "lng": -122.780222
+      "lat": 47.0706486,
+      "lng": -122.7802216
     },
     "address": "2625 Reinhardt Ln NE Suite D, Lacey, WA 98516, USA",
     "isActive": false,
@@ -2526,11 +2563,11 @@
     ],
     "foodService": "none_byof",
     "status": "dead",
-    "checkIns": 0,
+    "clockIns": 0,
     "vibe": "Ghost",
     "location": {
-      "lat": 46.826059,
-      "lng": -122.955023
+      "lat": 46.8260541,
+      "lng": -122.9550442
     },
     "address": "3442 180th Ave SW, Tenino, WA 98589, USA",
     "isActive": false,
@@ -2573,14 +2610,14 @@
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
-    "checkIns": 0,
+    "clockIns": 0,
     "coordinates": {
       "x": 30,
       "y": 30
     },
     "location": {
-      "lat": 47.044238,
-      "lng": -122.901569
+      "lat": 47.04439980000001,
+      "lng": -122.9029953
     },
     "address": "407 Columbia St SW, Olympia, WA 98501, USA",
     "phone": "(360) 754-4414",
@@ -2636,6 +2673,174 @@
       ]
     },
     "isPaidLeagueMember": true,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "1886",
+    "name": "1886",
+    "venueType": "restaurant_bar",
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 100,
+    "vibe": "Historic and elevated dining with a dedicated bar.",
+    "location": {
+      "lat": 47.043895,
+      "lng": -122.9056458
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "the-pig-bar",
+    "name": "The Pig Bar",
+    "venueType": "bar_pub",
+    "foodService": "limited_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 50,
+    "vibe": "A local favorite for drinks and a solid bar menu.",
+    "location": {
+      "lat": 47.0435126,
+      "lng": -122.8943541
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "the-oyster-house",
+    "name": "The Oyster House",
+    "venueType": "restaurant_bar",
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 150,
+    "vibe": "Waterfront dining with a legendary oyster bar.",
+    "location": {
+      "lat": 47.04473,
+      "lng": -122.9052567
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "skep-and-skein",
+    "name": "Skep and Skein",
+    "venueType": "bar_pub",
+    "foodService": "none_byof",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 60,
+    "vibe": "Mead, cider, and beer in a cozy, intellectual atmosphere.",
+    "location": {
+      "lat": 47.046526,
+      "lng": -122.9277153
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "two-mile-house",
+    "name": "Two Mile House",
+    "venueType": "bar_pub",
+    "foodService": "limited_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 80,
+    "vibe": "Classic neighborhood bar with local roots.",
+    "location": {
+      "lat": 47.0469163,
+      "lng": -122.9555463
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "buzzs-bar-and-grill",
+    "name": "Buzz's Bar and Grill",
+    "venueType": "bar_pub",
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 100,
+    "vibe": "Rowdy, fun, and serves some of the best bar food in town.",
+    "location": {
+      "lat": 47.0467639,
+      "lng": -122.9881223
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "the-iron-rabbit",
+    "name": "The Iron Rabbit",
+    "venueType": "restaurant_bar",
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 120,
+    "vibe": "Gastropub excellence with a fantastic cocktail program.",
+    "location": {
+      "lat": 47.0456879,
+      "lng": -122.9274592
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "cascadia",
+    "name": "Cascadia Grill",
+    "venueType": "restaurant_bar",
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 90,
+    "vibe": "Eclectic menu and a warm, woody bar atmosphere.",
+    "location": {
+      "lat": 47.044894,
+      "lng": -122.9031394
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
       "lastUpdated": 1767436252598

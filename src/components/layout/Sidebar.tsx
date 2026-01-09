@@ -3,22 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import {
     X,
     User,
-    Map as MapIcon,
-    Search,
-    Ticket,
     Crown,
-    ShoppingBag,
     Info,
     HelpCircle,
     Shield,
     Eye,
     LogOut,
     ChevronRight,
-    QrCode,
     Zap,
     Bot,
     Coffee,
-    ExternalLink,
     BookOpen,
     LayoutDashboard,
     Beer,
@@ -26,8 +20,6 @@ import {
     Percent,
     List,
     Store,
-    ToggleLeft,
-    ToggleRight,
     Activity
 } from 'lucide-react';
 import { UserProfile, UserRole } from '../../types';
@@ -108,48 +100,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 space-y-8">
-                {/* 2. Primary: Discovery */}
-                <div className="space-y-3">
-                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">Discovery</h3>
-
-                    <button onClick={() => handleNavigation('/map')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center gap-4 hover:border-primary/50 transition-all active:scale-[0.98]">
-                        <MapIcon className="w-5 h-5 text-blue-400" />
-                        <span className="text-sm font-black uppercase text-white tracking-wide">Beer Map</span>
-                    </button>
-
-                    <button onClick={() => handleNavigation('/bars')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center gap-4 hover:border-primary/50 transition-all active:scale-[0.98]">
-                        <Search className="w-5 h-5 text-emerald-400" />
-                        <span className="text-sm font-black uppercase text-white tracking-wide">Find Venues</span>
-                    </button>
-
-                    <button onClick={() => handleNavigation('/makers')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center gap-4 hover:border-primary/50 transition-all active:scale-[0.98]">
-                        <Store className="w-5 h-5 text-amber-400" />
-                        <span className="text-sm font-black uppercase text-white tracking-wide">Local Makers</span>
-                    </button>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <button onClick={() => handleNavigation('/events')} className="bg-slate-900 border border-white/5 p-4 rounded-xl flex flex-col items-center gap-2 hover:border-primary/50 transition-all active:scale-[0.98]">
-                            <Ticket className="w-6 h-6 text-purple-400" />
-                            <span className="text-[10px] font-black uppercase text-white">Events</span>
-                        </button>
-                        <button onClick={() => handleNavigation('/league')} className="bg-slate-900 border border-white/5 p-4 rounded-xl flex flex-col items-center gap-2 hover:border-primary/50 transition-all active:scale-[0.98]">
-                            <Crown className="w-6 h-6 text-yellow-400" />
-                            <span className="text-[10px] font-black uppercase text-white">League</span>
-                        </button>
-                    </div>
-                </div>
-
-                {/* 3. Secondary: Utility */}
-                <div className="space-y-3">
-                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-1">More Vibes</h3>
-
-                    <button onClick={() => handleNavigation('/merch')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-blue-400/50 transition-all active:scale-[0.98] group">
-                        <div className="flex items-center gap-4">
-                            <ShoppingBag className="w-5 h-5 text-blue-400" />
-                            <span className="text-sm font-black uppercase text-white tracking-wide">Merch Stand</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-blue-400" />
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                {/* 1. Main Navigation */}
+                <div className="space-y-2">
+                    <button onClick={() => handleNavigation('/league')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center gap-4 hover:border-primary/50 transition-all active:scale-[0.98]">
+                        <Crown className="w-6 h-6 text-yellow-400" />
+                        <span className="text-sm font-black uppercase text-white tracking-wide">League</span>
                     </button>
 
                     <button onClick={() => handleNavigation('/playbook')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-yellow-400/50 transition-all active:scale-[0.98] group">
@@ -159,12 +115,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         </div>
                         <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-yellow-400" />
                     </button>
+                </div>
 
+                <div className="h-px bg-white/5 mx-2" />
+
+                {/* 2. Manual & Glossary */}
+                <div className="space-y-2">
                     <button onClick={() => handleNavigation('/faq')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
                         <div className="flex items-center gap-4">
                             <HelpCircle className="w-5 h-5 text-slate-400" />
-                            <span className="text-sm font-black uppercase text-white tracking-wide">The Manual (FAQ)</span>
+                            <span className="text-sm font-black uppercase text-white tracking-wide">The Manual</span>
                         </div>
+                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
+                    </button>
+
+                    <button onClick={() => handleNavigation('/glossary')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
+                        <div className="flex items-center gap-4">
+                            <Info className="w-5 h-5 text-slate-400" />
+                            <span className="text-sm font-black uppercase text-white tracking-wide">Glossary</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
+                    </button>
+                </div>
+
+                <div className="h-px bg-white/5 mx-2" />
+
+                {/* 3. Settings & Legal */}
+                <div className="space-y-2">
+                    <button onClick={() => handleNavigation('/settings')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
+                        <div className="flex items-center gap-4">
+                            <Activity className="w-5 h-5 text-slate-400" />
+                            <span className="text-sm font-black uppercase text-white tracking-wide">Settings</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
+                    </button>
+
+                    <button onClick={() => handleNavigation('/meet-artie')} className="w-full bg-slate-900/50 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
+                        <div className="flex items-center gap-4">
+                            <Bot className="w-4 h-4 text-primary" />
+                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Meet Artie</span>
+                        </div>
+                        <ChevronRight className="w-3 h-3 text-slate-700 group-hover:text-primary" />
                     </button>
 
                     {/* Collapsible Legal */}
@@ -313,7 +304,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                     <button onClick={() => handleNavigation('/faq')} className="w-full bg-black/40 border border-white/5 p-4 rounded-xl flex items-center gap-4 hover:border-primary/50 transition-all active:scale-[0.98]">
                         <HelpCircle className="w-5 h-5 text-slate-500" />
-                        <span className="text-xs font-black uppercase text-slate-400 tracking-wide">The Manual (Help)</span>
+                        <span className="text-xs font-black uppercase text-slate-400 tracking-wide">The Manual</span>
                     </button>
                 </div>
 

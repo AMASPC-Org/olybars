@@ -46,7 +46,7 @@ export const VenueMap: React.FC<VenueMapProps> = ({
             zoom: zoom || target.zoom,
             disableDefaultUI: true,
             zoomControl: true,
-            mapId: '6b4fa3a2419c825a',
+            clickableIcons: false, // Prevents POI clicks
             styles: darkMapStyle
         });
         setMap(initialMap);
@@ -75,44 +75,35 @@ export const VenueMap: React.FC<VenueMapProps> = ({
         markersRef.current.forEach(m => m.setMap(null));
         markersRef.current = [];
 
-        const BEER_MUG_PATH = "M4,3h12v15c0,2.2-1.8,4-4,4H8c-2.2,0-4-1.8-4-4V3z M16,6h2c1.7,0,3,1.3,3,3v4c0,1.7-1.3,3-3,3h-2";
-
         venues.forEach(venue => {
             if (!venue.location?.lat || !venue.location?.lng) return;
             if (venue.isActive === false) return;
 
             const isLeagueAnchor = venue.tier_config?.is_league_eligible;
             const isBuzzing = venue.status === 'buzzing';
+            const iconColor = isLeagueAnchor ? "#fbbf24" : "#94a3b8";
 
-            const showBeerMug = venue.establishmentType === 'Bar Only' ||
-                venue.establishmentType === 'Bar & Restaurant' ||
-                (!venue.establishmentType && isLeagueAnchor);
-
-            const marker = new google.maps.marker.AdvancedMarkerElement({
+            // Standard Marker implementation since mapId overrides styles
+            const marker = new google.maps.Marker({
                 position: { lat: venue.location.lat, lng: venue.location.lng },
                 map: map,
                 title: venue.name,
-                content: (() => {
-                    const div = document.createElement('div');
-                    div.className = "custom-marker";
-                    const iconColor = isLeagueAnchor ? "#fbbf24" : "#64748b";
-                    const badgeHtml = (venue.clockIns && venue.clockIns > 0)
-                        ? `<div style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; border: 2px solid #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10;">${venue.clockIns}</div>`
-                        : '';
-
-                    div.innerHTML = showBeerMug
-                        ? `<div style="position: relative; color: ${iconColor}; filter: drop-shadow(0 0 4px rgba(0,0,0,0.5));">
-                 ${badgeHtml}
-                 <svg viewBox="0 0 24 24" width="${isBuzzing ? 32 : 24}" height="${isBuzzing ? 32 : 24}" fill="currentColor" stroke="#000" stroke-width="1.5">
-                   <path d="${BEER_MUG_PATH}"></path>
-                 </svg>
-                 <div style="background: rgba(15, 23, 42, 0.8); color: white; padding: 2px 6px; border-radius: 4px; font-size: ${isLeagueAnchor ? '11px' : '9px'}; font-weight: 900; white-space: nowrap; margin-top: -4px;">${venue.name}</div>
-               </div>`
-                        : `<div style="position: relative; width: 12px; height: 12px; background: ${iconColor}; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
-                 ${badgeHtml}
-                </div>`;
-                    return div;
-                })()
+                icon: {
+                    path: "M4,3h12v15c0,2.2-1.8,4-4,4H8c-2.2,0-4-1.8-4-4V3z M16,6h2c1.7,0,3,1.3,3,3v4c0,1.7-1.3,3-3,3h-2",
+                    fillColor: iconColor,
+                    fillOpacity: 1,
+                    strokeWeight: 1.5,
+                    strokeColor: "#000",
+                    scale: isBuzzing ? 1.5 : 1,
+                    anchor: new google.maps.Point(12, 12),
+                },
+                label: {
+                    text: venue.name,
+                    color: "white",
+                    fontSize: "10px",
+                    fontWeight: "900",
+                    className: "marker-label-bg" // We can style this in CSS for the background
+                }
             });
 
             marker.addListener('click', () => {
@@ -121,7 +112,7 @@ export const VenueMap: React.FC<VenueMapProps> = ({
 
             markersRef.current.push(marker);
 
-            // Pulse logic logic
+            // Pulse logic
             const recentActivity = venue.clockIns && venue.clockIns > 0;
             const recentVibeCheck = venue.currentBuzz?.lastUpdated && (Date.now() - venue.currentBuzz.lastUpdated) < 3600000;
 
@@ -142,6 +133,7 @@ export const VenueMap: React.FC<VenueMapProps> = ({
 
     }, [map, venues, status]);
 
+
     return (
         <div className={`relative w-full overflow-hidden ${className}`} style={{ height }}>
             <div ref={mapRef} className="w-full h-full" />
@@ -156,11 +148,65 @@ export const VenueMap: React.FC<VenueMapProps> = ({
 };
 
 const darkMapStyle = [
-    { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
-    { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
-    { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
-    { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#fbbf24" }] },
-    { featureType: "poi", stylers: [{ visibility: "off" }] },
-    { featureType: "road", elementType: "geometry", stylers: [{ color: "#334155" }] },
-    { featureType: "water", elementType: "geometry", stylers: [{ color: "#020617" }] },
+    {
+        featureType: "all",
+        elementType: "labels.icon",
+        stylers: [{ visibility: "off" }]
+    },
+    {
+        featureType: "poi",
+        elementType: "all",
+        stylers: [{ visibility: "off" }]
+    },
+    {
+        featureType: "transit",
+        elementType: "all",
+        stylers: [{ visibility: "off" }]
+    },
+    {
+        featureType: "poi.business",
+        stylers: [{ visibility: "off" }]
+    },
+    {
+        featureType: "poi.medical",
+        stylers: [{ visibility: "off" }]
+    },
+    {
+        featureType: "poi.school",
+        stylers: [{ visibility: "off" }]
+    },
+    {
+        featureType: "poi.park",
+        elementType: "labels",
+        stylers: [{ visibility: "off" }]
+    },
+    {
+        featureType: "geometry",
+        stylers: [{ color: "#0f172a" }]
+    },
+    {
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [{ color: "#334155" }]
+    },
+    {
+        featureType: "water",
+        elementType: "geometry",
+        stylers: [{ color: "#020617" }]
+    },
+    {
+        elementType: "labels.text.stroke",
+        stylers: [{ color: "#0f172a" }]
+    },
+    {
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#94a3b8" }]
+    },
+    {
+        featureType: "administrative.locality",
+        elementType: "labels.text.fill",
+        stylers: [{ color: "#fbbf24" }]
+    }
 ];
+
+

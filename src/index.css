@@ -101,3 +101,17 @@
   );
   animation: shimmer 3s infinite;
 }
+
+/* 7. MAP MARKER STYLING */
+.marker-label-bg {
+  background: rgba(15, 23, 42, 0.9);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Roboto Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  white-space: nowrap;
+  transform: translateY(-20px);
+}

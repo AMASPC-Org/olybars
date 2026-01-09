@@ -1,6 +1,9 @@
 User-agent: *
 Allow: /
 Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /ai.txt
+Allow: /.well-known/ai-agents.txt
 
 # [SECURITY] Block aggressive/low-value scrapers
 User-agent: GPTBot

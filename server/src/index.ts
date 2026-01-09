@@ -573,11 +573,51 @@ v1Router.post('/partners/onboard', verifyToken, async (req: any, res) => {
 
     try {
         const { onboardVenue } = await import('./venueService');
-        const result = await onboardVenue(googlePlaceId, req.user.uid);
+        const result = await onboardVenue(googlePlaceId, req.user.uid, req.user.role);
         res.json(result);
     } catch (error: any) {
-        log('ERROR', 'Failed to onboard partner venue', { googlePlaceId, userId: req.user.uid, error: error.message });
+        log('ERROR', 'Failed to onboard partner venue', { googlePlaceId, userId: req.user.uid, role: req.user.role, error: error.message });
         res.status(400).json({ error: error.message || 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route POST /api/partners/verify/phone/call
+ * @desc Initiate a verification call
+ */
+v1Router.post('/partners/verify/phone/call', verifyToken, async (req: any, res) => {
+    const { venueId, phoneNumber, venueName } = req.body;
+    if (!venueId || !phoneNumber || !venueName) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        const { VoiceService } = await import('./services/VoiceService');
+        await VoiceService.initiateVerificationCall(venueId, phoneNumber, venueName);
+        res.json({ success: true, message: 'Call initiated' });
+    } catch (error: any) {
+        log('ERROR', 'Phone verification call failed', { venueId, error: error.message });
+        res.status(500).json({ error: 'Failed to initiate call' });
+    }
+});
+
+/**
+ * @route POST /api/partners/verify/phone/verify
+ * @desc Verify the 4-digit code
+ */
+v1Router.post('/partners/verify/phone/verify', verifyToken, async (req: any, res) => {
+    const { venueId, code } = req.body;
+    if (!venueId || !code) {
+        return res.status(400).json({ error: 'Missing venueId or code' });
+    }
+
+    try {
+        const { VoiceService } = await import('./services/VoiceService');
+        const isValid = await VoiceService.verifyPhoneCode(venueId, code);
+        res.json({ success: isValid });
+    } catch (error: any) {
+        log('ERROR', 'Phone code verification failed', { venueId, error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
@@ -795,7 +835,7 @@ v1Router.patch('/users/:uid', verifyToken, async (req, res) => {
             const now = Date.now();
 
             // Super-admins/Admin bypass (Ryan's email)
-            const isPrivileged = userData?.role === 'super-admin' || userData?.email === 'ryan@amaspc.com';
+            const isPrivileged = userData?.role === 'super-admin' || userData?.email === 'ryan@amaspc.com' || userData?.email === 'ryan@americanmarketingalliance.com';
 
             if ((now - lastChanged) < thirtyDaysInMs && !isPrivileged) {
                 const daysLeft = Math.ceil((thirtyDaysInMs - (now - lastChanged)) / (24 * 60 * 60 * 1000));

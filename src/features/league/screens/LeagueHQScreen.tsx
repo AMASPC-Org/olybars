@@ -201,29 +201,83 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
         );
       case 'prizes':
         return (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-league text-white uppercase tracking-tight px-2">Prize Pool</h2>
-            <div className="grid grid-cols-1 gap-4">
-              {[
-                { title: "Season Grand Prize", prize: "$500 Cash + Well 80 VIP Card", requirement: "1st Place Overall", icon: Trophy },
-                { title: "The Silver Chalice", prize: "$200 Gift Pack", requirement: "2nd Place Overall", icon: Gift },
-                { title: "Bronze Medallion", prize: "Limited Edition League Tee", requirement: "3rd Place Overall", icon: Star },
-                { title: "Venue MVP", prize: "Free Appetizer (Nightly)", requirement: "Most Points at a specific HQ", icon: Zap },
-                { title: "Mayor of the Bar", prize: "Custom Bar Stool Plaque", requirement: "Most Clock Ins (Monthly)", icon: Crown },
-              ].map((p, i) => (
-                <div key={i} className="bg-slate-900/50 border border-white/5 p-5 rounded-2xl flex items-center gap-5 group hover:border-primary/20 transition-all">
-                  <div className="bg-slate-800 p-3 rounded-xl border-2 border-slate-700 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all">
-                    <p.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-league font-black text-white text-lg uppercase leading-none mb-1">{p.title}</h3>
-                    <p className="text-primary font-bold text-sm mb-1">{p.prize}</p>
-                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{p.requirement}</p>
+          <div className="space-y-8">
+            {/* Season Championship Section */}
+            <div>
+              <div className="flex justify-between items-center px-2 mb-4">
+                <h2 className="text-3xl font-league text-white uppercase tracking-tight">The Championship</h2>
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest animate-pulse">High Stakes</span>
+              </div>
+
+              {/* Grand Prize Hero Card */}
+              <div className="bg-gradient-to-br from-primary/20 to-slate-900 border border-primary/50 p-6 rounded-3xl relative overflow-hidden group mb-4">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Trophy size={120} />
+                </div>
+                <div className="relative z-10">
+                  <div className="bg-primary text-black text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-3">Grand Prize</div>
+                  <h3 className="font-league font-black text-3xl uppercase text-white mb-1">The Golden Mic + $500</h3>
+                  <p className="text-primary font-bold text-sm uppercase tracking-wide mb-4">Awarded to the #1 Point Leader</p>
+                  <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                    <Clock size={12} />
+                    <span>Season Ends Feb 28, 2026</span>
                   </div>
                 </div>
-              ))}
-              <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-xl text-center">
-                <p className="text-[10px] uppercase font-black text-primary tracking-widest">Season 4 Ends: Feb 28, 2026</p>
+              </div>
+
+              {/* Runner Ups */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-slate-900/50 border border-white/5 p-4 rounded-2xl">
+                  <div className="text-slate-400 mb-2"><Gift size={20} /></div>
+                  <h4 className="font-league font-black text-white text-lg uppercase leading-none">Silver Chalice</h4>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">2nd Place • $200 Gift Pack</p>
+                </div>
+                <div className="bg-slate-900/50 border border-white/5 p-4 rounded-2xl">
+                  <div className="text-slate-400 mb-2"><Star size={20} /></div>
+                  <h4 className="font-league font-black text-white text-lg uppercase leading-none">Bronze Medal</h4>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">3rd Place • League Tee</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Milestone Rewards Section */}
+            <div>
+              <div className="flex justify-between items-center px-2 mb-4">
+                <h2 className="text-2xl font-league text-white uppercase tracking-tight">Milestone Rewards</h2>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Guaranteed</span>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { title: "Official League Sticker", points: "1,000 Pts", level: "Level 10", icon: Zap },
+                  { title: "League T-Shirt", points: "2,500 Pts", level: "Level 20", icon: ShieldCheck },
+                  { title: "Mayor Plaque (Custom)", points: "5,000 Pts", level: "Level 50", icon: Crown },
+                ].map((m, i) => (
+                  <div key={i} className="bg-slate-900/30 border border-white/5 p-4 rounded-xl flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-slate-800 p-2 rounded-lg text-slate-400">
+                        <m.icon size={18} />
+                      </div>
+                      <div>
+                        <h4 className="font-league font-black text-white uppercase text-sm">{m.title}</h4>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{m.level} • {m.points}</p>
+                      </div>
+                    </div>
+                    <button className="text-[10px] font-black text-slate-600 uppercase border border-slate-700 px-3 py-1 rounded hover:bg-white hover:text-black transition-colors">
+                      View
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl flex gap-3 items-start">
+                <div className="bg-blue-500/20 p-2 rounded-lg shrink-0">
+                  <Gift size={16} className="text-blue-400" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-blue-400 uppercase mb-1">Redemption Menu</h4>
+                  <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+                    Use your banked points to buy these items instantly at any HQ venue.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

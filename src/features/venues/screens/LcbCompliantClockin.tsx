@@ -9,13 +9,13 @@ interface Deal {
 }
 
 /**
- * LcbCompliantCheckin
+ * LcbCompliantClockin
  * 
  * COMPLIANCE METRICS:
  * 1. Rule 3: Max 2 clock-ins per 12-hour window.
  * 2. Happy Hour Sorting: Prioritize by TimeRemaining, push >4h to bottom.
  */
-export const LcbCompliantCheckin: React.FC = () => {
+export const LcbCompliantClockin: React.FC = () => {
   const [clockInTimestamps, setClockInTimestamps] = useState<number[]>([]);
 
   // Rule 3: Enforcement Logic

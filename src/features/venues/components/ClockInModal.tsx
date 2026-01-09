@@ -256,15 +256,20 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
                     <div>
                         <h2 className="text-2xl font-black text-white uppercase tracking-tighter font-league italic">
-                            {isLocked ? 'Signal Ready' : 'Pulse Updated'}
+                            {isLocked ? 'Signal Ready' : 'Vibe Updated!'}
                         </h2>
                         <div className="mt-4 space-y-3">
                             <p className="text-sm text-slate-300 font-medium leading-relaxed">
                                 {isLocked
                                     ? <>Guest signals are currently limited. Create a League Profile to <span className="text-white font-bold">publish this Clock In</span> and earn your first <span className="text-primary font-black">10 Points</span>.</>
-                                    : <>Thanks for the intel! That Clock In was worth <span className="text-primary font-black">10 Points</span>. You are in Guest Mode, so you didn't bank them.</>
+                                    : <>Thanks! You just <span className="text-primary font-black">updated the Vibe</span> for everyone. You generated <span className="text-white font-bold">10 Points</span>, but you aren't in the League yet.</>
                                 }
                             </p>
+                            {!isLocked && (
+                                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-tight bg-slate-900 px-3 py-2 rounded-lg border border-white/5">
+                                    Join the League to <span className="text-primary">claim these points</span>, or they disappear at midnight.
+                                </p>
+                            )}
                         </div>
                     </div>
 
