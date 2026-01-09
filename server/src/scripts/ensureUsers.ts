@@ -16,10 +16,10 @@ const USERS = [
         uid: 'partner-ryan',
         email: 'ryan@americanmarketingalliance.com',
         password: 'Password123',
-        displayName: 'Ryan (Super Admin)',
-        role: 'super-admin',
+        displayName: 'Ryan (Venue Owner Experience)',
+        role: 'owner',
         homeBase: null,
-        venuePermissions: { 'hannahs': 'owner' }
+        venuePermissions: {}
     },
     {
         uid: 'player-ryan',

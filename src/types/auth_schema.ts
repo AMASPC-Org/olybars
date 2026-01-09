@@ -67,6 +67,5 @@ export const isSystemAdmin = (user: { systemRole?: SystemRole; role?: string; em
     return user.systemRole === 'admin' ||
         user.role === 'admin' ||
         user.role === 'super-admin' ||
-        user.email === 'ryan@amaspc.com' ||
-        user.email === 'ryan@americanmarketingalliance.com';
+        user.email === 'ryan@amaspc.com';
 };

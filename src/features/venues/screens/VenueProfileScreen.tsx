@@ -1058,7 +1058,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                 )}
 
                 {/* [NEW] Owner Claim Section */}
-                {(!venue.ownerId || isSystemAdmin(userProfile)) && (
+                {(!venue.ownerId || isSystemAdmin(userProfile) || !userProfile || userProfile.uid === 'guest') && (
                     <div className="pt-16 mt-16 border-t border-white/5 text-center pb-8 sticky-claim-trigger">
                         <div className="inline-block p-4 bg-primary/10 rounded-3xl border border-primary/20 mb-6 group hover:scale-110 transition-transform duration-500">
                             <Crown className="w-10 h-10 text-primary" />

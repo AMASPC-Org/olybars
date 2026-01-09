@@ -924,7 +924,7 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         // Fetch the user's role to check for admin bypass
         const userDoc = await db.collection('users').doc(requestingUserId).get();
         const userData = userDoc.data();
-        isAdmin = userData?.role === 'super-admin' || userData?.role === 'admin' || userData?.email === 'ryan@amaspc.com' || userData?.email === 'ryan@americanmarketingalliance.com';
+        isAdmin = userData?.role === 'super-admin' || userData?.role === 'admin' || userData?.email === 'ryan@amaspc.com';
 
         isOwner = venueData.ownerId === requestingUserId;
         isManager = !!venueData.managerIds?.includes(requestingUserId);

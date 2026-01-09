@@ -835,7 +835,7 @@ v1Router.patch('/users/:uid', verifyToken, async (req, res) => {
             const now = Date.now();
 
             // Super-admins/Admin bypass (Ryan's email)
-            const isPrivileged = userData?.role === 'super-admin' || userData?.email === 'ryan@amaspc.com' || userData?.email === 'ryan@americanmarketingalliance.com';
+            const isPrivileged = userData?.role === 'super-admin' || userData?.email === 'ryan@amaspc.com';
 
             if ((now - lastChanged) < thirtyDaysInMs && !isPrivileged) {
                 const daysLeft = Math.ceil((thirtyDaysInMs - (now - lastChanged)) / (24 * 60 * 60 * 1000));

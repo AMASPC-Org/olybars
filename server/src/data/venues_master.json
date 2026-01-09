@@ -2005,10 +2005,6 @@
         "Karaoke with DJ Mike"
       ]
     },
-    "ownerId": "KU9KvRYzzrZfVU7BV4gaPYAFlKS2",
-    "managerIds": [
-      "KU9KvRYzzrZfVU7BV4gaPYAFlKS2"
-    ],
     "hasGameVibeCheckEnabled": true,
     "liveGameStatus": {}
   },
@@ -2837,6 +2833,122 @@
     "location": {
       "lat": 47.044894,
       "lng": -122.9031394
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "charro-mexican-restaurant",
+    "name": "Charro Mexican Restaurant",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "mexican",
+      "outdoor_seating",
+      "family_friendly"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 80,
+    "vibe": "Authentic Mexican flavors in a vibrant, artistic space.",
+    "insiderVibe": "The outdoor seating is a must on a sunny day. Their daily happy hour from 2-5pm is one of the better kept secrets on the east side.",
+    "address": "1720 4th Ave E, Olympia, WA 98506, USA",
+    "location": {
+      "lat": 47.0452294,
+      "lng": -122.8985326
+    },
+    "isActive": true,
+    "isVisible": true,
+    "hasOutdoorSeating": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "chelsea-farms-oyster-bar",
+    "name": "Chelsea Farms Oyster Bar",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "seafood",
+      "oysters",
+      "cocktails",
+      "upscale_casual"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 60,
+    "vibe": "Tide-to-table excellence in a chic, marine-inspired market space.",
+    "insiderVibe": "Second-generation shellfish farmers who know exactly what they're doing. The 21+ lounge area is perfect for escaping the market bustle for a focused cocktail and a dozen Chelsea Gems.",
+    "address": "222 Capitol Way N, Olympia, WA 98501, USA",
+    "location": {
+      "lat": 47.0464209,
+      "lng": -122.901616
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "insert-coin-centralia",
+    "name": "Insert Coin Centralia",
+    "venueType": "arcade_bar",
+    "sceneTags": [
+      "arcade",
+      "retro",
+      "family_friendly",
+      "craft_beer"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 150,
+    "vibe": "Nostalgic retro gaming meets modern craft beer and elevated bar fare.",
+    "insiderVibe": "It's worth the drive to Centralia. Over 100 games, a self-pour tap wall, and burgers that actually hold their own. It transforms into 21+ after 11 PM, so plan your child-free session accordingly.",
+    "address": "309 N Tower Ave, Centralia, WA 98531, USA",
+    "location": {
+      "lat": 46.718563,
+      "lng": -122.9537289
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "23-kitchens-lacey",
+    "name": "23 Kitchens",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "pickleball",
+      "sports",
+      "rooftop_bar",
+      "activity_focus"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 200,
+    "vibe": "The ultimate sports and socialization hub, featuring pickleball, rotisserie-style eats, and a self-serve tap wall.",
+    "insiderVibe": "The rooftop bar is the real MVP here. They use vertical rotisserie ovens since they have no fryers, so expect great sandwiches and tacos instead of the usual greasy appetizers. Plus, 11 pickleball courts means the energy is always high.",
+    "address": "2440 Marvin Road NE, Lacey, WA 98516, USA",
+    "location": {
+      "lat": 47.06892999999999,
+      "lng": -122.7679621
     },
     "isActive": true,
     "isVisible": true,
