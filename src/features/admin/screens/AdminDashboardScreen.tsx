@@ -27,8 +27,8 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
     const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
 
     const { data: venues = [] } = useQuery({
-        queryKey: ['venues'],
-        queryFn: fetchVenues,
+        queryKey: ['venues-brief'],
+        queryFn: () => fetchVenues(true),
         enabled: activeTab === 'venues' || activeTab === 'overview',
     });
     const [searchTerm, setSearchTerm] = useState('');
@@ -53,7 +53,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
             await updateVenueDetails(calibratingVenue.id, {
                 location: { ...calibratingVenue.location, lat: coords.lat, lng: coords.lng }
             } as any);
-            queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['venues-brief'] });
             setCalibratingVenue(null);
         } catch (error) {
             console.error('Failed to save calibration', error);
@@ -76,61 +76,61 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
 
     const onToggleVenueMembership = async (venueId: string, currentStatus: boolean) => {
         // Optimistic Update
-        queryClient.setQueryData(['venues'], (old: Venue[] | undefined) => {
+        queryClient.setQueryData(['venues-brief'], (old: Venue[] | undefined) => {
             return old?.map(v => v.id === venueId ? { ...v, isPaidLeagueMember: !currentStatus } : v);
         });
 
         try {
             await updateVenueDetails(venueId, { isPaidLeagueMember: !currentStatus });
-            queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['venues-brief'] });
         } catch (error) {
             console.error('Failed to toggle membership', error);
-            queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['venues-brief'] });
         }
     };
 
     const onToggleVisibility = async (venueId: string, currentStatus: boolean) => {
         // Optimistic Update
-        queryClient.setQueryData(['venues'], (old: Venue[] | undefined) => {
+        queryClient.setQueryData(['venues-brief'], (old: Venue[] | undefined) => {
             return old?.map(v => v.id === venueId ? { ...v, isVisible: !currentStatus } : v);
         });
 
         try {
             await updateVenueDetails(venueId, { isVisible: !currentStatus });
-            queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['venues-brief'] });
         } catch (error) {
             console.error('Failed to toggle visibility', error);
-            queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['venues-brief'] });
         }
     };
 
     const onToggleActivity = async (venueId: string, currentStatus: boolean) => {
         // Optimistic Update
-        queryClient.setQueryData(['venues'], (old: Venue[] | undefined) => {
+        queryClient.setQueryData(['venues-brief'], (old: Venue[] | undefined) => {
             return old?.map(v => v.id === venueId ? { ...v, isActive: !currentStatus } : v);
         });
 
         try {
             await updateVenueDetails(venueId, { isActive: !currentStatus });
-            queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['venues-brief'] });
         } catch (error) {
             console.error('Failed to toggle activity', error);
-            queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['venues-brief'] });
         }
     };
 
     const onToggleGameVibe = async (venueId: string, currentStatus: boolean) => {
         // Optimistic Update
-        queryClient.setQueryData(['venues'], (old: Venue[] | undefined) => {
+        queryClient.setQueryData(['venues-brief'], (old: Venue[] | undefined) => {
             return old?.map(v => v.id === venueId ? { ...v, hasGameVibeCheckEnabled: !currentStatus } : v);
         });
 
         try {
             await updateVenueDetails(venueId, { hasGameVibeCheckEnabled: !currentStatus });
-            queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['venues-brief'] });
         } catch (error) {
             console.error('Failed to toggle game vibe', error);
-            queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['venues-brief'] });
         }
     };
     const handleApprovePhoto = async (venueId: string, photoId: string) => {
@@ -143,7 +143,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
 
         try {
             await updateVenueDetails(venueId, { photos: updatedPhotos });
-            queryClient.invalidateQueries({ queryKey: ['venues'] });
+            queryClient.invalidateQueries({ queryKey: ['venues-brief'] });
         } catch (error) {
             console.error('Failed to approve photo', error);
         }
@@ -417,10 +417,10 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                                 <td className="p-3 font-mono text-[9px] text-slate-600">{user.uid}</td>
                                                 <td className="p-3 text-right uppercase font-bold text-[10px]">
                                                     <span className={`px-2 py-0.5 rounded-full ${user.role === 'super-admin'
-                                                            ? 'bg-red-500/10 text-red-500 border border-red-500/20'
-                                                            : user.role === 'owner'
-                                                                ? 'bg-primary/10 text-primary border border-primary/20'
-                                                                : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                                        ? 'bg-red-500/10 text-red-500 border border-red-500/20'
+                                                        : user.role === 'owner'
+                                                            ? 'bg-primary/10 text-primary border border-primary/20'
+                                                            : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                                                         }`}>
                                                         {user.role}
                                                     </span>

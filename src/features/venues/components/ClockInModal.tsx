@@ -131,7 +131,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
             awardPoints('clockin', selectedVenue.id, allowMarketingUse, 'gps', 0, userId !== 'guest');
 
             // Optimistic UI Update (TanStack Query Cache)
-            queryClient.setQueryData(['venues'], (oldVenues: Venue[] | undefined) => {
+            queryClient.setQueryData(['venues-brief'], (oldVenues: Venue[] | undefined) => {
                 if (!oldVenues) return [];
                 return oldVenues.map(v => v.id === selectedVenue.id ? { ...v, clockIns: (v.clockIns || 0) + 1 } : v);
             });

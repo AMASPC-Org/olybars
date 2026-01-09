@@ -283,7 +283,7 @@ export default function OlyBarsApp() {
 
   const handleUpdateVenue = async (venueId: string, updates: Partial<Venue>) => {
     // 1. Optimistic UI Update (TanStack Query Cache)
-    queryClient.setQueryData(['venues'], (oldVenues: Venue[] | undefined) => {
+    queryClient.setQueryData(['venues-brief'], (oldVenues: Venue[] | undefined) => {
       if (!oldVenues) return [];
       return oldVenues.map(v => v.id === venueId ? { ...v, ...updates } : v);
     });
@@ -295,7 +295,7 @@ export default function OlyBarsApp() {
       console.error('[OlyBars] Failed to persist venue update:', err);
       showToast(err.message || 'Connection issue: Update might not be permanent.', 'error');
       // Invalidate on error to revert to server state
-      queryClient.invalidateQueries({ queryKey: ['venues'] });
+      queryClient.invalidateQueries({ queryKey: ['venues-brief'] });
       throw err; // Re-throw so callers can manage their own UI state (e.g. isSaving)
     }
   };
