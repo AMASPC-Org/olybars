@@ -1408,8 +1408,8 @@
       "y": 56
     },
     "location": {
-      "lat": 47.0447222,
-      "lng": -122.9001935
+      "lat": 47.0447176,
+      "lng": -122.9002862
     },
     "address": "404 Washington St SE, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -1447,8 +1447,8 @@
       "y": 40
     },
     "location": {
-      "lat": 47.0468829,
-      "lng": -122.9028278
+      "lat": 47.0469447,
+      "lng": -122.9028351
     },
     "address": "312 Columbia St NW, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -3225,7 +3225,7 @@
   {
     "id": "northwest-beerwerks",
     "name": "Northwest Beerwerks",
-    "venueType": "taproom",
+    "venueType": "bar_pub",
     "sceneTags": [
       "craft_beer",
       "dog_friendly",
@@ -3549,14 +3549,14 @@
   {
     "id": "puget-sound-taps",
     "name": "Puget Sound Taps",
-    "venueType": "taproom",
+    "venueType": "bar_pub",
     "sceneTags": [
       "craft_beer",
       "pizza",
       "dog_friendly",
       "flights"
     ],
-    "foodService": "snacks_and_pizza",
+    "foodService": "limited_kitchen",
     "status": "chill",
     "clockIns": 0,
     "capacity": 70,
@@ -3579,14 +3579,14 @@
   {
     "id": "nocturnal-hound",
     "name": "The Nocturnal Hound",
-    "venueType": "wine_bar",
+    "venueType": "winery_tasting",
     "sceneTags": [
       "wine_bar",
       "bottle_shop",
       "charcuterie",
       "upscale_casual"
     ],
-    "foodService": "charcuterie_and_paninis",
+    "foodService": "limited_kitchen",
     "status": "chill",
     "clockIns": 0,
     "capacity": 45,
@@ -3655,6 +3655,682 @@
     "location": {
       "lat": 47.0465309,
       "lng": -122.8522287
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "red-wind-pealos",
+    "name": "Pealo's Bar (Nisqually Red Wind Casino)",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "casino",
+      "cocktails",
+      "upscale"
+    ],
+    "foodService": "snacks",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 50,
+    "vibe": "Sophisticated cocktails in the heart of the Red Wind action.",
+    "insiderVibe": "The centerpiece of the casino. Perfect for high-end spirits and watching the floor energy from a plush seat.",
+    "address": "12819 Yelm Hwy SE, Olympia, WA 98513, USA",
+    "location": {
+      "lat": 47.0000996,
+      "lng": -122.6675914
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "red-wind-coho",
+    "name": "Coho Sports Lounge (Nisqually Red Wind Casino)",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "sports_bar",
+      "casino",
+      "betting"
+    ],
+    "foodService": "limited_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 100,
+    "vibe": "The South Sound's premier casino sports destination.",
+    "insiderVibe": "Wall-to-wall screens and a dedicated sportsbook vibe. If you want to watch the game while surrounded by casino energy, this is the spot.",
+    "address": "12819 Yelm Hwy SE, Olympia, WA 98513, USA",
+    "location": {
+      "lat": 47.0000996,
+      "lng": -122.6675914
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "red-wind-river-water",
+    "name": "River Water Bar and Grille (Nisqually Red Wind Casino)",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "seafood",
+      "steakhouse",
+      "casino"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 150,
+    "vibe": "Elegant dining featuring Northwest favorites and casino luxury.",
+    "insiderVibe": "Their seafood selection is impressive. It brings a touch of fine dining to the casino floor without losing the approachable Northwest feel.",
+    "address": "12819 Yelm Hwy SE, Olympia, WA 98513, USA",
+    "location": {
+      "lat": 47.0000996,
+      "lng": -122.6675914
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "lucky-eagle-legends",
+    "name": "Legends Sports Bar (Lucky Eagle Casino)",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "sports_bar",
+      "casino",
+      "activity_focus"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 120,
+    "vibe": "High-energy sports gaming and classic bar favorites.",
+    "insiderVibe": "The local hub for major fight nights and game days. Great energy and quick service for those on a hot streak.",
+    "address": "12888 188th Ave SW, Rochester, WA 98579, USA",
+    "location": {
+      "lat": 46.8140909,
+      "lng": -123.1542509
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "lucky-eagle-crafthouse",
+    "name": "Crafthouse Wood Fired Pizza (Lucky Eagle Casino)",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "pizza",
+      "casino",
+      "craft_beer"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 80,
+    "vibe": "Artisanal wood-fired pizza and a solid craft tap list.",
+    "insiderVibe": "Surprisingly high-quality pizza for a casino environment. It's the perfect spot for a more relaxed meal away from the slots.",
+    "address": "12888 188th Ave SW, Rochester, WA 98579, USA",
+    "location": {
+      "lat": 46.8140909,
+      "lng": -123.1542509
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "lucky-eagle-room-188",
+    "name": "Room 188 (Lucky Eagle Casino)",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "steakhouse",
+      "upscale",
+      "casino"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 100,
+    "vibe": "Premium steakhouse experience and refined atmosphere.",
+    "insiderVibe": "The sophisticated choice at Lucky Eagle. Excellent steaks and a curated wine list for those celebrating a big win.",
+    "address": "12888 188th Ave SW, Rochester, WA 98579, USA",
+    "location": {
+      "lat": 46.8140909,
+      "lng": -123.1542509
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "fortune-casino-riverbend",
+    "name": "The Riverbend Restaurant (Fortune Casino)",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "casino",
+      "family_friendly",
+      "asian_fusion"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 90,
+    "vibe": "Diverse menu and classic casino hospitality in Lacey.",
+    "insiderVibe": "One of the few spots in Lacey where you can get a full menu of Asian-inspired dishes and classic American fare until late. Very friendly service.",
+    "address": "8318 Quinault Dr NE, Lacey, WA 98516, USA",
+    "location": {
+      "lat": 47.0627886,
+      "lng": -122.7624272
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "littlerock-saloon",
+    "name": "Littlerock Saloon",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "saloon",
+      "dive_bar",
+      "neighborhood"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 60,
+    "vibe": "A true rustic saloon with deep roots in the Littlerock community.",
+    "insiderVibe": "If you want that authentic out-in-the-country feel, this is it. Honest drinks, friendly locals, and a vibe that hasn't changed in decades.",
+    "address": "6524 128th Ave SW, Olympia, WA 98512, USA",
+    "location": {
+      "lat": 46.9019958,
+      "lng": -123.0214526
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "mextiza-by-el-serape",
+    "name": "MEXTIZA By: El Serape",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "mexican",
+      "cocktails",
+      "family_friendly"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 100,
+    "vibe": "Elevated Mexican dining experience with a modern Lacey twist.",
+    "insiderVibe": "Formerly the Lacey El Serape, now rebranded as Mextiza. It still has the legendary recipes but with a fresh, updated energy and an expanded cocktail program.",
+    "address": "8200 Quinault Dr NE, Lacey, WA 98516, USA",
+    "location": {
+      "lat": 47.0476417,
+      "lng": -122.8346699
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "mayan-pacific",
+    "name": "The Mayan Family Mexican Restaurant (Pacific Ave)",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "mexican",
+      "family_friendly",
+      "neighborhood"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 110,
+    "vibe": "Classic family hospitality and hearty Mexican tradition on Pacific Ave.",
+    "insiderVibe": "A local institution. The portions are huge and the salsa has that exact consistent heat that locals have loved for years.",
+    "address": "4520 Pacific Ave SE, Lacey, WA 98503, USA",
+    "location": {
+      "lat": 47.0378972,
+      "lng": -122.8249439
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "mayan-yelm",
+    "name": "The Mayan Family Mexican Restaurant (Yelm Hwy)",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "mexican",
+      "family_friendly",
+      "neighborhood"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 100,
+    "vibe": "Warm, welcoming Mexican dining center in the Yelm Hwy corridor.",
+    "insiderVibe": "A favorite for the south Lacey/Tumwater crowd. It carries that same consistent Mayan quality and is always a reliable spot for a large group.",
+    "address": "4820 Yelm Hwy SE, Lacey, WA 98503, USA",
+    "location": {
+      "lat": 46.9974107,
+      "lng": -122.8199886
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "mayan-marvin",
+    "name": "The Mayan Family Mexican Restaurant (Marvin Rd)",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "mexican",
+      "family_friendly",
+      "neighborhood"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 120,
+    "vibe": "Authentic Mexican flavors serving the Hawks Prairie community.",
+    "insiderVibe": "Perfectly situated for the north Lacey commuters. It's the newest of the three and maintains the high standard of the Mayan brand.",
+    "address": "8125 Marvin Rd NE, Lacey, WA 98516, USA",
+    "location": {
+      "lat": 47.0657505,
+      "lng": -122.7656366
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "la-patrona-tumwater",
+    "name": "La Patrona",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "mexican",
+      "vibrant",
+      "family_friendly"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 85,
+    "vibe": "A vibrant and authentic taste of Mexico in the heart of Tumwater.",
+    "insiderVibe": "Often overlooked but shouldn't be. Their tacos are legit and the atmosphere is always lively and welcoming.",
+    "address": "5212 Capitol Blvd SE Unit A, Tumwater, WA 98501, USA",
+    "location": {
+      "lat": 46.9986685,
+      "lng": -122.9085388
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "ram-lacey",
+    "name": "The Ram Restaurant & Brewery (Lacey)",
+    "venueType": "brewery_taproom",
+    "sceneTags": [
+      "sports_bar",
+      "family_friendly",
+      "craft_beer",
+      "burgers"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 180,
+    "vibe": "A sprawling sports hub with local brews and award-winning burgers.",
+    "insiderVibe": "The 'Buttface Amber' is the classic move here. It's a massive space that can handle the biggest sports crowds in Lacey. Consistent and reliable.",
+    "address": "8100 Freedom Ln NE, Lacey, WA 98516, USA",
+    "location": {
+      "lat": 47.0620424,
+      "lng": -122.7689471
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "ricardos-lacey",
+    "name": "Ricardo's Kitchen and Bar",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "steakhouse",
+      "upscale",
+      "cocktails"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 120,
+    "vibe": "Sophisticated dining and exceptional dry-aged beef in the heart of Lacey.",
+    "insiderVibe": "Rick Nelsen's masterpiece. The dry-aged 'Sexy Beef' is the best steak in the county, period. The bar program is equally sophisticated.",
+    "address": "676 Woodland Square Loop SE, Lacey, WA 98503, USA",
+    "location": {
+      "lat": 47.0418641,
+      "lng": -122.825761
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "plaza-jalisco-tumwater",
+    "name": "Plaza Jalisco",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "mexican",
+      "family_friendly",
+      "neighborhood"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 100,
+    "vibe": "Authentic and welcoming Mexican tradition in the Tumwater corridor.",
+    "insiderVibe": "A reliable neighborhood staple for years. It's a classic spot where you can always count on consistent food and friendly service.",
+    "address": "5212 Capitol Blvd SE, Tumwater, WA 98501, USA",
+    "location": {
+      "lat": 47.0005071,
+      "lng": -122.9076942
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "nisqually-bar-grill",
+    "name": "Nisqually Bar & Grill",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "sports_bar",
+      "family_friendly",
+      "comfort_food"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 130,
+    "vibe": "A welcoming blend of family grill and high-energy local pub.",
+    "insiderVibe": "Directly off I-5 exit 114. The sports memorabilia collection is incredible, and the 19 beers on tap make it a premier stop for travelers and locals alike.",
+    "address": "10323 Martin Way E, Olympia, WA 98516, USA",
+    "location": {
+      "lat": 47.0666017,
+      "lng": -122.7201947
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "the-mark-olympia",
+    "name": "The Mark",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "italian",
+      "upscale",
+      "cocktails",
+      "patio"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 70,
+    "vibe": "Intimate, artistic Italian dining with deep roots and authentic Roman style.",
+    "insiderVibe": "A woman-owned gem since 2001. The Roman-style pizza and curated Italian wine list are unmatched. It's cash-only, so come prepared for manual elegance.",
+    "address": "407 Columbia Street SW, Olympia, WA 98501, USA",
+    "location": {
+      "lat": 47.04439980000001,
+      "lng": -122.9029953
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "valentinas-lounge",
+    "name": "Valentina's Lounge",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "latin_fusion",
+      "upscale",
+      "cocktails",
+      "vibrant"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 60,
+    "vibe": "A romantic, vibrant Latin-inspired escape in the heart of downtown.",
+    "insiderVibe": "The intimate seating around fireplaces and fountains makes it arguably the best date night spot in Olympia. The tequila and mezcal program is elite.",
+    "address": "325 4th Ave E, Olympia, WA 98501, USA",
+    "location": {
+      "lat": 47.0450333,
+      "lng": -122.8981941
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "row-olympia",
+    "name": "Row",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "waterfront",
+      "seafood",
+      "upscale_casual",
+      "outdoor_seating"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 140,
+    "vibe": "Vibrant waterfront dining at the edge of historic Percival Landing.",
+    "insiderVibe": "The waterfront patio is the best place to be in the summer. Their seafood focus and local craft bar program capture the essence of the South Sound perfectly.",
+    "address": "208 State Ave NW, Olympia, WA 98501, USA",
+    "location": {
+      "lat": 47.0457683,
+      "lng": -122.9038764
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "stack-571-olympia",
+    "name": "Stack 571 Burger & Whiskey Bar",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "burgers",
+      "whiskey_focus",
+      "upscale_casual"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 150,
+    "vibe": "A refined burger experience with a global whiskey library.",
+    "insiderVibe": "The 'Stackhouse' is the anchor of the mall's dining wing. Gourmet burgers and a whiskey selection that rivals anything downtown. The waffle fries with gorgonzola sauce are a local legend.",
+    "address": "625 Black Lake Blvd SW Suite 530, Olympia, WA 98502, USA",
+    "location": {
+      "lat": 47.0425476,
+      "lng": -122.9351798
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "landmark-tavern-tenino",
+    "name": "Landmark Tavern",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "tavern",
+      "historical",
+      "neighborhood"
+    ],
+    "foodService": "snacks",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 70,
+    "vibe": "An authentic hometown bar in Tenino with legacy spanning over a century.",
+    "insiderVibe": "Established in 1906, it still feels like the town's heartbeat. It holds its history in its wood and its stories. Perfect for a beer after exploring the Tenino quarries.",
+    "address": "313 Hodgden St S, Tenino, WA 98589, USA",
+    "location": {
+      "lat": 46.8568906,
+      "lng": -122.8538492
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "hops-n-drops-lacey",
+    "name": "Hops n Drops (Lacey)",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "family_dining",
+      "cocktails",
+      "burgers"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 140,
+    "vibe": "A neighborhood gathering place known for its icy real-fruit drinks and hearty energy.",
+    "insiderVibe": "The 'Icy Drops' are served in glasses that are literally made of ice. It's a high-energy community hub that's as good for families as it is for neighbors grabbing a drink.",
+    "address": "4739 Avery Lane SE, Lacey, WA 98503, USA",
+    "location": {
+      "lat": 46.9986176,
+      "lng": -122.823641
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "brick-on-trosper",
+    "name": "The Brick on Trosper",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "sports_bar",
+      "pizza",
+      "family_friendly"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 150,
+    "vibe": "A sprawling sports and family hub with a legendary brick oven.",
+    "insiderVibe": "The 'Thick as a Brick' pizza is mandatory. It's the ultimate Tumwater hangout for a game or a large family meal. Welcoming, rustic, and always busy.",
+    "address": "709 Trosper Road SW, Tumwater, WA 98512, USA",
+    "location": {
+      "lat": 46.9995763,
+      "lng": -122.9177918
     },
     "isActive": true,
     "isVisible": true,
