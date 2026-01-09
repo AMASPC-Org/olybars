@@ -2859,8 +2859,8 @@
     "insiderVibe": "The outdoor seating is a must on a sunny day. Their daily happy hour from 2-5pm is one of the better kept secrets on the east side.",
     "address": "1720 4th Ave E, Olympia, WA 98506, USA",
     "location": {
-      "lat": 47.0452294,
-      "lng": -122.8985326
+      "lat": 47.0354703,
+      "lng": -122.8227694
     },
     "isActive": true,
     "isVisible": true,
@@ -4562,6 +4562,121 @@
     "location": {
       "lat": 47.009579,
       "lng": -122.9054629
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "characters-corner",
+    "name": "Character's Corner",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "sports_bar",
+      "neighborhood",
+      "karaoke",
+      "breakfast"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 85,
+    "vibe": "Cozy culinary destination with a relaxed sports bar energy in NW Olympia.",
+    "insiderVibe": "A favorite for locals after a hike. Their sausage gravy over biscuits is authentic and their 'pudding shots' are a unique local legend. Truly a neighborhood character.",
+    "address": "6620 Sexton Dr NW, Olympia, WA 98502, USA",
+    "location": {
+      "lat": 47.07961359999999,
+      "lng": -123.0212786
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "tugboat-annies",
+    "name": "Tugboat Annie's",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "waterfront",
+      "seafood",
+      "kayak_rentals",
+      "family_friendly"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 150,
+    "vibe": "Casual waterfront landmark featuring Budd Inlet views and nautical charm.",
+    "insiderVibe": "A staple since 1999. You can rent a kayak directly from the dock and come back for their massive 'Barge Burger.' The sunset views over Westbay are unmatched.",
+    "address": "2100 Westbay Drive NW, Olympia, WA 98502, USA",
+    "location": {
+      "lat": 47.0646058,
+      "lng": -122.9161232
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "emperors-palace-west",
+    "name": "Emperor's Palace (Westside)",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "chinese_cuisine",
+      "cocktails",
+      "family_friendly"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 120,
+    "vibe": "Traditional Chinese excellence serving the Westside community for decades.",
+    "insiderVibe": "Serving since 1980. Their Hong Kong style roast pork is hand-prepared daily and the house-made cocktails add a fun kick to the traditional dining experience.",
+    "address": "400 Cooper Point Rd SW, Olympia, WA 98502, USA",
+    "location": {
+      "lat": 47.045404,
+      "lng": -122.940875
+    },
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "taylor-station",
+    "name": "Taylor Station Restaurant & Lounge",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "historical",
+      "steakhouse",
+      "neighborhood",
+      "seafood"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 110,
+    "vibe": "Authentic local comfort and fresh seafood in a cozy historical setting.",
+    "insiderVibe": "The destination for fresh local razor clams and steamer oysters. It's a no-frills local powerhouse where the prime rib and the cozy lounge are always a hit.",
+    "address": "62 SE Lynch Rd, Shelton, WA 98584, USA",
+    "location": {
+      "lat": 47.14221389999999,
+      "lng": -123.0941057
     },
     "isActive": true,
     "isVisible": true,
