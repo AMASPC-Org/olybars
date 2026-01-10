@@ -1,0 +1,119 @@
+{
+  "identity": {
+    "name": "Hannah's Bar & Grill",
+    "type": "Bar & Grill",
+    "established_year": 1987
+  },
+  "features": {
+    "has_pool": true,
+    "has_darts": false,
+    "has_karaoke": true,
+    "has_trivia": true,
+    "has_open_mic": true,
+    "has_live_music": false,
+    "has_dance_floor": false,
+    "has_jukebox": true,
+    "has_arcade_games": true,
+    "has_food": true,
+    "has_outdoor_seating": false,
+    "has_wifi": false
+  },
+  "weekly_schedule": [
+    {
+      "day": "Monday",
+      "open_time": "11:00",
+      "close_time": "02:00",
+      "events": []
+    },
+    {
+      "day": "Tuesday",
+      "open_time": "11:00",
+      "close_time": "02:00",
+      "events": [
+        {
+          "name": "Open Mic Night",
+          "type": "Open Mic",
+          "start_time": "19:00",
+          "frequency": "Monthly",
+          "recurrence_note": "1st Tuesday of Month"
+        }
+      ]
+    },
+    {
+      "day": "Wednesday",
+      "open_time": "11:00",
+      "close_time": "02:00",
+      "events": [
+        {
+          "name": "Trivia",
+          "type": "Trivia",
+          "start_time": "19:00",
+          "frequency": "Weekly",
+          "recurrence_note": "Every Week"
+        }
+      ]
+    },
+    {
+      "day": "Thursday",
+      "open_time": "11:00",
+      "close_time": "02:00",
+      "events": [
+        {
+          "name": "Karaoke",
+          "type": "Karaoke",
+          "start_time": "19:00",
+          "frequency": "Weekly",
+          "recurrence_note": "Every Week"
+        }
+      ]
+    },
+    {
+      "day": "Friday",
+      "open_time": "11:00",
+      "close_time": "02:00",
+      "events": [
+        {
+          "name": "Karaoke",
+          "type": "Karaoke",
+          "start_time": "20:00",
+          "frequency": "Weekly",
+          "recurrence_note": "Every Week"
+        }
+      ]
+    },
+    {
+      "day": "Saturday",
+      "open_time": "11:00",
+      "close_time": "02:00",
+      "events": [
+        {
+          "name": "Karaoke",
+          "type": "Karaoke",
+          "start_time": "20:00",
+          "frequency": "Weekly",
+          "recurrence_note": "Every Week"
+        }
+      ]
+    },
+    {
+      "day": "Sunday",
+      "open_time": "11:00",
+      "close_time": "02:00",
+      "events": []
+    }
+  ],
+  "menu_highlights": {
+    "hero_item": "Hannah's Heart Stopper",
+    "breakfast_service_level": "Limited",
+    "kitchen_status": "Full"
+  },
+  "vibe": {
+    "headline": "The Friendliest Bar In Town",
+    "insider_tip": "Ask for Ali to cook your burger!",
+    "audience_tags": [
+      "casual",
+      "games",
+      "karaoke"
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, MapPin, Navigation, Car, CloudRain, Sun, AlertTriangle, Sparkles } from 'lucide-react';
+import { X, MapPin, Navigation, Car, CloudRain, Sun, AlertTriangle, Sparkles, ShieldCheck, HardHat, Info } from 'lucide-react';
 import { weatherService, WeatherCondition } from '../../../services/weatherService';
 import { getUberDeepLink, getLyftDeepLink, getUberWebLink } from '../../../utils/transportUtils';
 
@@ -39,24 +39,50 @@ export const ArtieDistanceWarningModal: React.FC<ArtieDistanceWarningModalProps>
     if (!isOpen) return null;
 
     const getWarningMessage = () => {
+        // High Distance (> 1.5 miles): Safe Drive Focus
+        if (distanceMiles > 1.5) {
+            return {
+                title: "Keep the Night Legendary",
+                subtitle: "That's a drive. Grab a ride instead?",
+                icon: <ShieldCheck className="w-12 h-12 text-primary" />,
+                safeDriveNotice: true
+            };
+        }
+
+        // Mid Distance (Long Walk > 0.5 miles)
+        if (distanceMiles > 0.5) {
+            return {
+                title: "That's a bit of a hike",
+                subtitle: "Protect your vibe, grab a ride.",
+                icon: <MapPin className="w-12 h-12 text-primary" />,
+                safeDriveNotice: false
+            };
+        }
+
+        // Weather Focused
         if (weather === 'raining') {
             return {
-                title: "It's pouring. Don't be a hero.",
-                subtitle: "Call a car.",
-                icon: <CloudRain className="w-12 h-12 text-blue-400" />
+                title: "It's pouring out there",
+                subtitle: "Stay dry, call a car.",
+                icon: <CloudRain className="w-12 h-12 text-blue-400" />,
+                safeDriveNotice: false
             };
         }
-        if (weather === 'sunny') {
+
+        if (weather === 'sunny' && walkTimeMins < 10) {
             return {
-                title: "It's a nice walk...",
-                subtitle: `...but it'll take you ${walkTimeMins} mins.`,
-                icon: <Sun className="w-12 h-12 text-yellow-400" />
+                title: "Smooth Sailing",
+                subtitle: `Just a ${walkTimeMins} min stroll away.`,
+                icon: <Sun className="w-12 h-12 text-yellow-400" />,
+                safeDriveNotice: false
             };
         }
+
         return {
-            title: "The Buzz Kill Warning",
-            subtitle: "That's a bit of a trek for right now.",
-            icon: <AlertTriangle className="w-12 h-12 text-primary" />
+            title: "Plan Your Move",
+            subtitle: "Make it a safe one.",
+            icon: <Navigation className="w-12 h-12 text-primary" />,
+            safeDriveNotice: false
         };
     };
 
@@ -66,8 +92,6 @@ export const ArtieDistanceWarningModal: React.FC<ArtieDistanceWarningModalProps>
         const url = type === 'uber'
             ? getUberDeepLink(destinationAddress, destinationCoords.lat, destinationCoords.lng)
             : getLyftDeepLink(destinationCoords.lat, destinationCoords.lng);
-
-        // Try deep link, fallback to web if it fails (using a timeout for simplicity)
         window.location.href = url;
     };
 
@@ -86,10 +110,10 @@ export const ArtieDistanceWarningModal: React.FC<ArtieDistanceWarningModalProps>
                     </div>
 
                     <div className="space-y-2">
-                        <h2 className="text-xl font-black text-white uppercase italic tracking-wide">
+                        <h2 className="text-xl font-black text-white uppercase italic tracking-wide leading-tight">
                             {warning.title}
                         </h2>
-                        <p className="text-sm font-bold text-primary italic uppercase tracking-widest">
+                        <p className="text-xs font-bold text-primary italic uppercase tracking-widest">
                             {warning.subtitle}
                         </p>
                     </div>
@@ -97,18 +121,28 @@ export const ArtieDistanceWarningModal: React.FC<ArtieDistanceWarningModalProps>
                     <div className="bg-black/40 rounded-2xl p-4 border border-white/5 space-y-2">
                         <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-500 tracking-widest">
                             <span>Distance</span>
-                            <span>Est. Walk</span>
+                            <span>{distanceMiles > 0.5 ? 'Est. Uber' : 'Est. Walk'}</span>
                         </div>
                         <div className="flex justify-between items-center text-lg font-black text-white italic">
                             <span>{distanceMiles.toFixed(1)} miles</span>
-                            <span>{walkTimeMins} mins</span>
+                            <span>{distanceMiles > 1.5 ? '~5-8 mins' : `${walkTimeMins} mins`}</span>
                         </div>
                     </div>
 
-                    {userZone && destinationZone && userZone !== destinationZone && (
+                    {warning.safeDriveNotice ? (
+                        <div className="p-4 bg-red-500/10 rounded-2xl border border-red-500/20 space-y-3">
+                            <div className="flex items-center gap-2 text-red-400">
+                                <AlertTriangle size={14} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Safe Drive Warning</span>
+                            </div>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight leading-relaxed text-left">
+                                If you're planning on having more than one, please don't get behind the wheel. We've got Uber and Lyft ready to go.
+                            </p>
+                        </div>
+                    ) : userZone && destinationZone && userZone !== destinationZone && (
                         <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-3">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
-                                Crossing from <span className="text-white">{userZone}</span> to <span className="text-white">{destinationZone}</span> triggers a Buzz Kill alert.
+                                Traveling from <span className="text-white">{userZone}</span> to <span className="text-white">{destinationZone}</span>.
                             </p>
                         </div>
                     )}
@@ -126,9 +160,13 @@ export const ArtieDistanceWarningModal: React.FC<ArtieDistanceWarningModalProps>
                             onClick={onClose}
                             className="w-full py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-white/10 transition-all"
                         >
-                            I'll be a hero (Walk)
+                            {distanceMiles > 1.5 ? "I'm the DD (Drive)" : "I'll be a hero (Walk)"}
                         </button>
                     </div>
+
+                    <p className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter">
+                        OlyBars favors safe rides. Red Cab: (360) 357-3333
+                    </p>
                 </div>
 
                 <button

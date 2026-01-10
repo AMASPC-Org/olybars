@@ -1,0 +1,138 @@
+{
+  "identity": {
+    "name": "The Brotherhood Lounge",
+    "type": "Bar",
+    "established_year": null,
+    "website_url": "https://thebrotherhoodlounge.com/",
+    "social_links": {
+      "facebook": "https://www.facebook.com/thebroho/",
+      "instagram": "https://www.instagram.com/thebrotherhoodlounge/",
+      "other": null
+    }
+  },
+  "features": {
+    "has_pool": true,
+    "has_darts": false,
+    "has_karaoke": false,
+    "has_trivia": false,
+    "has_open_mic": false,
+    "has_live_music": true,
+    "has_dance_floor": true,
+    "has_jukebox": true,
+    "has_arcade_games": true,
+    "has_food": false,
+    "has_outdoor_seating": true,
+    "has_wifi": false
+  },
+  "weekly_schedule": [
+    {
+      "day": "Sunday",
+      "open_time": "15:00",
+      "close_time": "02:00",
+      "events": [
+        {
+          "name": "Movie Night",
+          "type": "Movie",
+          "start_time": "19:00",
+          "frequency": "Weekly",
+          "recurrence_note": null,
+          "description": null,
+          "external_url": null
+        },
+        {
+          "name": "DJ Wildman James",
+          "type": "DJ",
+          "start_time": "21:00",
+          "frequency": "Monthly",
+          "recurrence_note": "Last Sunday of every month",
+          "description": "garage, punk, psychedelic, etc.",
+          "external_url": null
+        }
+      ]
+    },
+    {
+      "day": "Monday",
+      "open_time": "16:00",
+      "close_time": "02:00",
+      "events": []
+    },
+    {
+      "day": "Tuesday",
+      "open_time": "16:00",
+      "close_time": "02:00",
+      "events": [
+        {
+          "name": "StoryOly",
+          "type": "Storytelling",
+          "start_time": "19:00",
+          "frequency": "Monthly",
+          "recurrence_note": "Third Tuesday of the month",
+          "description": "Olympia’s premiere Story Slam event. Community members come together every month to share",
+          "external_url": "http://Storyoly.com"
+        }
+      ]
+    },
+    {
+      "day": "Wednesday",
+      "open_time": "16:00",
+      "close_time": "02:00",
+      "events": []
+    },
+    {
+      "day": "Thursday",
+      "open_time": "16:00",
+      "close_time": "02:00",
+      "events": []
+    },
+    {
+      "day": "Friday",
+      "open_time": "16:00",
+      "close_time": "02:00",
+      "events": []
+    },
+    {
+      "day": "Saturday",
+      "open_time": "16:00",
+      "close_time": "02:00",
+      "events": []
+    }
+  ],
+  "happy_hour": {
+    "has_happy_hour": true,
+    "schedule": "Everyday 15:00-19:00",
+    "drinks_special": "$3.5 wells, $5 micro-brew pints, $3 Rainier pints",
+    "food_special": null
+  },
+  "inventory": {
+    "local_makers_featured": [
+      "Whitewood Cider",
+      "Headless Mumby",
+      "Three Magnets",
+      "Timber City"
+    ],
+    "signature_drinks": []
+  },
+  "menu_highlights": {
+    "hero_item": null,
+    "breakfast_service_level": "None",
+    "kitchen_status": "None"
+  },
+  "vibe": {
+    "headline": "Dark bar with an excellent musical tradition, brimming with the nicest folks & award winning ales.",
+    "insider_tip": "Cash Only",
+    "audience_tags": [
+      "locals",
+      "music-lovers",
+      "casual"
+    ]
+  },
+  "metadata": {
+    "confidence_score": 0.95,
+    "data_sources": [
+      "raw_intel.txt",
+      "Google Search",
+      "Facebook"
+    ],
+    "verification_notes": "Combined website info with Google and FB data.  Opening time discrepancy resolved by trusting Website. Added local makers based on beer menu.  Pool and Arcade confirmed via website and photo."
+  }
+}

@@ -388,6 +388,17 @@ export interface Venue {
     // [NEW] Social Engine
     social_auto_sync: boolean;
     auto_sync_sources?: ('facebook' | 'instagram' | 'website')[];
+
+    // [NEW] AI Refinery Draft
+    ai_draft_profile?: {
+        identity: { name: string; type: string; established_year?: number };
+        features: Record<string, boolean>;
+        weekly_schedule: any[];
+        menu_highlights: any;
+        vibe: any;
+        synced_at: any;
+        status: 'needs_review' | 'approved' | 'rejected';
+    };
 }
 
 export interface AmenityDetail {

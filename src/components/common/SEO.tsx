@@ -9,10 +9,11 @@ interface SEOProps {
     ogImage?: string;
     ogType?: 'website' | 'article' | 'profile';
     canonical?: string;
+    jsonLd?: any;
 }
 
 const DEFAULT_TITLE = 'OlyBars | The Nightlife OS';
-const DEFAULT_DESC = 'OlyBars is the nightlife OS for Olympia — live happy hours, bar league, and real-time heatmap of downtown vibes.';
+const DEFAULT_DESC = 'OlyBars is the Bar Discovery Network for All of Thurston County — live happy hours, bar league, and real-time heatmap of local vibes.';
 const DEFAULT_OG_IMAGE = 'https://olybars.com/og-image.png';
 
 export const SEO: React.FC<SEOProps> = ({
@@ -22,7 +23,8 @@ export const SEO: React.FC<SEOProps> = ({
     ogDescription,
     ogImage,
     ogType = 'website',
-    canonical
+    canonical,
+    jsonLd
 }) => {
     const location = useLocation();
     const siteTitle = title ? `${title} | OlyBars` : DEFAULT_TITLE;
@@ -76,7 +78,21 @@ export const SEO: React.FC<SEOProps> = ({
             document.head.appendChild(link);
         }
 
-    }, [siteTitle, siteDesc, ogTitle, ogDescription, ogImage, ogType, canonical, location.pathname]);
+        // 5. Update JSON-LD
+        let scriptTag = document.querySelector('script[type="application/ld+json"]#json-ld');
+        if (jsonLd) {
+            if (!scriptTag) {
+                scriptTag = document.createElement('script');
+                scriptTag.setAttribute('type', 'application/ld+json');
+                scriptTag.setAttribute('id', 'json-ld');
+                document.head.appendChild(scriptTag);
+            }
+            scriptTag.textContent = JSON.stringify(jsonLd);
+        } else if (scriptTag) {
+            scriptTag.remove();
+        }
+
+    }, [siteTitle, siteDesc, ogTitle, ogDescription, ogImage, ogType, canonical, location.pathname, jsonLd]);
 
     return null; // This component doesn't render anything UI-wise
 };

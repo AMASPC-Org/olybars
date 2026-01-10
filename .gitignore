@@ -42,3 +42,8 @@ yarn-error.log*
 .tsbuildinfo
 
 .tsbuildinfo
+
+# refinery secrets
+refinery/service-account.json
+refinery/service-account.json.json
+debug_env.ts

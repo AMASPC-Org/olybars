@@ -139,7 +139,7 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
       title="The Citywire"
       subtitle="Chronological Citywide Feed"
       activeCategory="events"
-      artieTip="The 98501 is always on. Featured events and weekly rituals, all in one timelines."
+      artieTip="Thurston County is always on. Featured events and weekly rituals, all in one timeline."
       onSearchChange={setSearchQuery}
       searchPlaceholder="Search the wire..."
     >

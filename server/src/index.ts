@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import { config } from './config';
-import { fetchVenues, clockIn } from './venueService';
+import { fetchVenues, clockIn, getVenueById } from './venueService';
 import { isAiBot, getBotName } from './utils/botDetector';
 import { verifyToken, requireRole, requireVenueAccess, verifyAppCheck, identifyUser } from './middleware/authMiddleware';
 import {
@@ -258,7 +258,6 @@ v1Router.get('/venues', async (req, res) => {
 v1Router.get('/venues/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const { getVenueById } = await import('./venueService');
         const venue = await getVenueById(id);
         if (!venue) return res.status(404).json({ error: 'Venue not found' });
         res.json(venue);
@@ -1394,7 +1393,7 @@ app.use('/api', v1Router); // Fallback for legacy frontend
 // Flash Bounty Activator (Lazy Cron)
 setInterval(async () => {
     try {
-        const { syncFlashBounties } = await import('./venueService.js');
+        const { syncFlashBounties } = await import('./venueService');
         await syncFlashBounties();
     } catch (e) {
         console.error('[ACTIVATOR] Failed to sync Flash Bountys:', e);

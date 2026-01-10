@@ -1,0 +1,19 @@
+{
+  "name": "refinery",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "refine": "tsx src/refine.ts",
+    "sync": "tsx src/sync.ts"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^13.6.0",
+    "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.1"
+  }
+}

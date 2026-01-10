@@ -166,7 +166,11 @@ export const updateVenueBuzz = async (venueId: string) => {
         consensusVibeReports.size >= PULSE_CONFIG.CONSENSUS.VIBE_REPORTS_REQUIRED;
 
     // If consensus is met, force 'packed'. Otherwise follow score-based status.
-    let calibratedStatus = status;
+    let calibratedStatus: VenueStatus = 'dead';
+    if (score > PULSE_CONFIG.THRESHOLDS.PACKED) calibratedStatus = 'packed';
+    else if (score > PULSE_CONFIG.THRESHOLDS.BUZZING) calibratedStatus = 'buzzing';
+    else if (score > PULSE_CONFIG.THRESHOLDS.CHILL) calibratedStatus = 'chill';
+
     if (isConsensusPacked) calibratedStatus = 'packed';
 
     // Manual Overrides (Owner/Admin Control) - Still respected for UI, but SMS trigger is consensus-only

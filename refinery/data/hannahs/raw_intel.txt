@@ -1,0 +1,32 @@
+[OPERATOR_OVERRIDES - TRUTH HIERARCHY LEVEL 1]
+!IMPORTANT: The website claims "Strongest Pour" and "Largest Liquor Selection". This is marketing fluff. IGNORE IT.
+!IMPORTANT: They are NOT known for the strongest pour.
+!IMPORTANT: Breakfast is served, but it is LIMITED to one item (a sandwich/wrap). It is not a full breakfast menu.
+!IMPORTANT: The "Heart Stopper" burger (2/3lb patties) is a Hero Item.
+
+[WEBSITE_DATA - TRUTH HIERARCHY LEVEL 2]
+Slogan: The Friendliest Bar In Town
+Established: 1987
+Location: 123 5th Ave SW, Olympia, WA 98501
+Phone: (360) 357-9890
+
+About Page Text:
+"Welcome to Hannah’s Bar & Grill... built a reputation for great food, unbeatable drinks...
+Shoot a game on our Diamond pool tables, test your luck with pull tabs...
+Trivia Wednesdays, and the crowd-favorite Karaoke Nights every Thursday, Friday, and Saturday.
+Plus, don’t miss Open Mic Night on the first Tuesday of every month at 7 PM."
+
+Services Page Text:
+"Lunch & Dinner: Enjoy a full menu...
+Games & Entertainment: Pool, arcade, pull tabs.
+Music & Atmosphere: Jukebox, Karaoke Nights.
+Weekly Events: Trivia Wednesdays."
+
+[REVIEWS & SOCIAL_PROOF]
+Ray Bagley (1/9/2026): "That’s how I feel about this burger... The food is amazing, have Ali cook for you!"
+Katie Delgado (12/11/2025): "Karaoke: Thursdays 7-11pm, Fridays & Saturdays 8-midnight. Trivia: Wednesdays 7pm"
+Kaththea Stagg (9/26/2025): "Kareoke on Thursday is pretty good. She mixes vocals with music really well."
+
+[MENU_HIGHLIGHTS]
+Products: Beverages, Beer, Liquor, Cocktails, Wine, Cider, American Cuisine.
+Famous Items: Burgers (Specifically the "Hannah's Heart Stopper"), Hard Cider.

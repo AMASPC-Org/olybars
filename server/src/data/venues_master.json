@@ -4917,34 +4917,5 @@
       "score": 0,
       "lastUpdated": 1767436252598
     }
-  },
-  {
-    "id": "taylor-station",
-    "name": "Taylor Station Restaurant & Lounge",
-    "venueType": "restaurant_bar",
-    "sceneTags": [
-      "historical",
-      "steakhouse",
-      "neighborhood",
-      "seafood"
-    ],
-    "foodService": "full_kitchen",
-    "status": "chill",
-    "clockIns": 0,
-    "capacity": 110,
-    "vibe": "Authentic local comfort and fresh seafood in a cozy historical setting.",
-    "insiderVibe": "The destination for fresh local razor clams and steamer oysters. It's a no-frills local powerhouse where the prime rib and the cozy lounge are always a hit.",
-    "address": "62 SE Lynch Rd, Shelton, WA 98584, USA",
-    "location": {
-      "lat": 47.14221389999999,
-      "lng": -123.0941057
-    },
-    "isActive": true,
-    "isVisible": true,
-    "isPaidLeagueMember": false,
-    "currentBuzz": {
-      "score": 0,
-      "lastUpdated": 1767436252598
-    }
   }
 ]

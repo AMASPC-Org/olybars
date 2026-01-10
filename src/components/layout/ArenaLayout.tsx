@@ -89,7 +89,7 @@ export const ArenaLayout: React.FC<ArenaLayoutProps> = ({
                             <Calendar size={12} strokeWidth={3} /> Tonight
                         </button>
                         <button className="bg-white/5 text-slate-400 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-white/5 hover:border-primary/50 transition-colors">
-                            <MapPin size={12} strokeWidth={3} /> DWTN OLY
+                            <MapPin size={12} strokeWidth={3} /> CITYWIDE
                         </button>
                         <button className="bg-white/5 text-slate-400 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-white/5 hover:border-primary/50 transition-colors">
                             <Search size={12} strokeWidth={3} /> {activeCategory.toUpperCase()}

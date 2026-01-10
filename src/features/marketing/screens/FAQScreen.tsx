@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '../../../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { manualFAQs, FAQItem } from '../../../data/manual';
+import { SEO } from '../../../components/common/SEO';
 
 const FAQScreen: React.FC = () => {
     const navigate = useNavigate();
@@ -43,10 +44,10 @@ const FAQScreen: React.FC = () => {
         fetchFaqs();
     }, []);
 
-    const generateFAQSchema = () => {
+    const getFAQSchema = () => {
         if (faqs.length === 0) return null;
 
-        const schema = {
+        const faqSchema = {
             "@context": "https://schema.org",
             "@type": "FAQPage",
             "mainEntity": faqs.map((item: FAQItem) => ({
@@ -59,16 +60,35 @@ const FAQScreen: React.FC = () => {
             }))
         };
 
-        return (
-            <script type="application/ld+json">
-                {JSON.stringify(schema)}
-            </script>
-        );
+        const breadcrumbSchema = {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": "https://olybars.com/"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "Manual",
+                    "item": "https://olybars.com/faq"
+                }
+            ]
+        };
+
+        return [faqSchema, breadcrumbSchema];
     };
 
     return (
         <div className="min-h-screen bg-background text-white p-6 pb-24 font-body">
-            {generateFAQSchema()}
+            <SEO
+                title="The Manual (FAQ)"
+                description="Everything you need to know about OlyBars, the Artesian Bar League, and Thurston County nightlife protocol."
+                jsonLd={getFAQSchema()}
+            />
             <button
                 onClick={() => navigate(-1)}
                 className="flex items-center gap-2 text-primary mb-8 hover:opacity-80 transition-opacity uppercase font-black tracking-widest text-xs"

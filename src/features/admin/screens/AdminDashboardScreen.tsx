@@ -13,6 +13,7 @@ import { UserProfile, ActivityLog, Venue } from '../../../types';
 import { AiAccessTab } from '../components/AiAccessTab';
 import { PhotoApprovalCard } from '../components/PhotoApprovalCard';
 import { PinCalibrationMap } from '../components/PinCalibrationMap';
+import { RefineryQueue } from '../components/RefineryQueue';
 import { Camera, MapPin } from 'lucide-react';
 
 interface AdminDashboardScreenProps {
@@ -21,7 +22,7 @@ interface AdminDashboardScreenProps {
 
 export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ userProfile }) => {
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'venues' | 'league' | 'system' | 'ai' | 'photos'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'venues' | 'league' | 'system' | 'ai' | 'photos' | 'refinery'>('overview');
     const [systemStats, setSystemStats] = useState({ totalUsers: 0, activeUsers: 0, totalPoints: 0 });
     const [leagueUsers, setLeagueUsers] = useState<UserProfile[]>([]);
     const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
@@ -212,7 +213,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
 
             {/* Tabs */}
             <div className="flex gap-2 mb-6 bg-black/40 p-1 rounded-xl overflow-x-auto">
-                {(['overview', 'users', 'venues', 'photos', 'league', 'system', 'ai'] as const).map((tab) => (
+                {(['overview', 'users', 'venues', 'photos', 'refinery', 'league', 'system', 'ai'] as const).map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -548,6 +549,8 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                         )}
                     </div>
                 )}
+
+                {activeTab === 'refinery' && <RefineryQueue venues={venues} />}
 
                 {activeTab === 'ai' && <AiAccessTab />}
             </div>

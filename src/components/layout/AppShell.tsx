@@ -247,7 +247,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       )}
 
       {/* Main Content (Outlet) */}
-      <div className="flex-1 overflow-y-auto relative flex flex-col">
+      <main id="main-content" className="flex-1 overflow-y-auto relative flex flex-col">
         <div>
           <Outlet context={{
             venues,
@@ -268,7 +268,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           }} />
         </div>
         {location.pathname !== '/map' && <Footer />}
-      </div>
+      </main>
 
       {/* Footer / League Bar */}
       <div className={`sticky bottom-0 w-full ${isFullWidthPage ? 'max-w-none' : 'max-w-md'} bg-black border-t-4 border-primary z-20 shadow-2xl transition-all duration-500`}>

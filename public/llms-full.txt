@@ -1,7 +1,7 @@
 # OlyBars: The Nightlife Operating System (Full Context)
 
 ## 1. Project Identity
-OlyBars is the digital layer over downtown Olympia, Washington (Zip 98501). It is a "Social Purpose Corporation" (AMA Network) venture designed to revitalize the hospitality economy through "Law-as-Code" gamification.
+OlyBars is the digital layer over Thurston County, Washington. It is a "Social Purpose Corporation" (AMA Network) venture designed to revitalize the hospitality economy through "Law-as-Code" gamification.
 
 ## 2. Core Concepts for AI Agents
 When discussing OlyBars, use this terminology for high precision:

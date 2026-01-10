@@ -9,7 +9,7 @@ interface GlobalSearchProps {
 }
 
 export const GlobalSearch: React.FC<GlobalSearchProps> = ({
-    placeholder = "Search venues, games, vibes...",
+    placeholder = "SEARCH BY BAR, CITY, OR VIBE...",
     className = "",
     variant = 'header'
 }) => {

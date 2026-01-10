@@ -4,7 +4,7 @@ import { useDiscovery } from '../contexts/DiscoveryContext';
 import { GlobalSearch } from '../../../components/features/search/GlobalSearch';
 import { DateContextSelector } from '../../../components/features/search/DateContextSelector';
 import {
-    ChevronRight, List, Map as MapIcon,
+    ChevronRight, List, Map as MapIcon, MapPin,
     Zap, Flame, Beer, Clock, Compass, Tag, Calendar, Gamepad2, Theater, LayoutGrid,
     Target, Gamepad, MoveHorizontal, Disc, Puzzle, Users, Layers, Circle,
     Trophy, Music, HelpCircle, Mic2, Tv, Ticket, Swords, Sparkles, Mic, Trees,
@@ -28,7 +28,8 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
         eventFilter, setEventFilter,
         selectedDate, setSelectedDate,
         viewMode, setViewMode,
-        clearAllFilters
+        clearAllFilters,
+        mapRegion, setMapRegion
     } = useDiscovery();
 
     const navigate = useNavigate();
@@ -58,11 +59,31 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
             <div className="flex flex-col gap-2">
                 {/* Top Row: Date Selector & Map/List Toggle */}
                 <div className="flex justify-between items-center py-1">
-                    <div onClick={() => { handleInteraction(); }}>
-                        <DateContextSelector
-                            selectedDate={selectedDate}
-                            onDateChange={setSelectedDate}
-                        />
+                    <div className="flex flex-col gap-1">
+                        <div onClick={() => { handleInteraction(); }}>
+                            <DateContextSelector
+                                selectedDate={selectedDate}
+                                onDateChange={setSelectedDate}
+                            />
+                        </div>
+                        {/* Smart Header: Location context */}
+                        <div className="flex items-center gap-1.5 px-1 animate-in fade-in slide-in-from-left-2 duration-700">
+                            <MapPin size={12} className="text-primary" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                Near: <span className="text-white">{mapRegion.toUpperCase()}</span>
+                            </span>
+                            <button
+                                onClick={() => {
+                                    handleInteraction();
+                                    const regions = ['downtown', 'lacey', 'tumwater', 'yelm', 'all'];
+                                    const idx = regions.indexOf(mapRegion);
+                                    setMapRegion(idx === -1 ? 'downtown' : regions[(idx + 1) % regions.length]);
+                                }}
+                                className="text-[10px] font-black uppercase tracking-widest text-primary underline decoration-primary/30 underline-offset-2 hover:text-white transition-colors"
+                            >
+                                (Change)
+                            </button>
+                        </div>
                     </div>
                     <button
                         onClick={() => {
@@ -78,7 +99,7 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                 {/* Middle Row: Search Bar */}
                 <div className="w-full">
                     <GlobalSearch
-                        placeholder="SEARCH BARS, VIBES, OR DEALS..."
+                        placeholder="SEARCH BY BAR, CITY, OR VIBE..."
                         variant="hero"
                         className="!bg-transparent !shadow-none border-white/10 focus-within:!border-primary/50"
                     />

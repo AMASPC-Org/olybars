@@ -543,7 +543,7 @@ export default function OlyBarsApp() {
                       <>
                         <SEO
                           title="Pulse & Buzz"
-                          description="Track the real-time vibe of downtown Olympia. See which bars are buzzing right now."
+                          description="Track the real-time vibe of Thurston County. See which bars are buzzing right now."
                         />
                         <BuzzScreen />
                       </>
@@ -556,11 +556,11 @@ export default function OlyBarsApp() {
                     }
                   />
                 </Route>
-                <Route path="karaoke" element={<><SEO title="Karaoke Guide" description="Find the best karaoke spots in Olympia tonight." /><KaraokeScreen venues={venues} /></>} />
-                <Route path="play" element={<><SEO title="The Arcade & Arena" description="The central hub for games, events, and activities in Olympia." /><PlayGatewayScreen venues={venues} /></>} />
-                <Route path="trivia" element={<><SEO title="Trivia & Games" description="Your guide to trivia nights and bar games in the 98501." /><TriviaScreen venues={venues} userProfile={userProfile} /></>} />
-                <Route path="live" element={<><SEO title="Live Music" description="Live shows and concerts happening tonight in downtown Olympia." /><LiveMusicScreen venues={venues} /></>} />
-                <Route path="events" element={<><SEO title="Event Wire" description="The chronological feed of everything happening in the Olympia bar scene." /><EventsScreen venues={venues} /></>} />
+                <Route path="karaoke" element={<><SEO title="Karaoke Guide" description="Find the best karaoke spots in Thurston County tonight." /><KaraokeScreen venues={venues} /></>} />
+                <Route path="play" element={<><SEO title="The Arcade & Arena" description="The central hub for games, events, and activities in Thurston County." /><PlayGatewayScreen venues={venues} /></>} />
+                <Route path="trivia" element={<><SEO title="Trivia & Games" description="Your guide to trivia nights and bar games in Thurston County." /><TriviaScreen venues={venues} userProfile={userProfile} /></>} />
+                <Route path="live" element={<><SEO title="Live Music" description="Live shows and concerts happening tonight in Thurston County." /><LiveMusicScreen venues={venues} /></>} />
+                <Route path="events" element={<><SEO title="Event Wire" description="The chronological feed of everything happening in the Thurston County bar scene." /><EventsScreen venues={venues} /></>} />
                 <Route
                   path="league"
                   element={
@@ -618,7 +618,7 @@ export default function OlyBarsApp() {
                 <Route path="cookies" element={<><SEO title="Cookie Policy" /><CookiePolicyScreen /></>} />
                 <Route path="security" element={<><SEO title="Security & Data Protection" /><PartnerSecurityScreen /></>} />
                 <Route path="faq" element={<><SEO title="The Manual (FAQ)" description="Everything you need to know about the OlyBars league, pins, and etiquette." /><FAQScreen /></>} />
-                <Route path="about" element={<><SEO title="Welcome to the League (98501)" description="The mission and story behind Olympia's nightlife operating system." /><AboutPage /></>} />
+                <Route path="about" element={<><SEO title="Welcome to the League (Thurston County)" description="The mission and story behind Thurston County's nightlife operating system." /><AboutPage /></>} />
                 <Route
                   path="admin"
                   element={

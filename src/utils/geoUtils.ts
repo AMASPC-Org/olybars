@@ -56,3 +56,5 @@ export const isZoneCrossed = (lat1: number, lng1: number, lat2: number, lng2: nu
     const zone2 = getZone(lat2, lng2);
     return zone1 !== zone2 && zone1 !== 'Unknown' && zone2 !== 'Unknown';
 };
+
+

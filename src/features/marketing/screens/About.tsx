@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Venue } from '../../../types';
 import { fetchVenues } from '../../../services/venueService';
 import { isVenueOpen } from '../../../utils/venueUtils';
+import { SEO } from '../../../components/common/SEO';
 
 // Assets
 import heroArena from '../../../assets/hero-arena.png';
@@ -84,6 +85,30 @@ const AboutPage = () => {
 
     return (
         <div className="min-h-full bg-background text-white p-6 pb-24 font-body animate-in fade-in duration-500">
+            <SEO
+                title="About The League"
+                description="OlyBars is the Nightlife Operating System for Thurston County. Join the Artesian Bar League and discover local makers."
+                jsonLd={{
+                    "@context": "https://schema.org",
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        {
+                            "@type": "ListItem",
+                            "position": 1,
+                            "name": "Home",
+                            "item": "https://olybars.com/"
+                        },
+                        {
+                            "@type": "ListItem",
+                            "position": 2,
+                            "name": "About",
+                            "item": "https://olybars.com/about"
+                        }
+                    ]
+                }}
+            />
+            {/* Structural SEO: Visual H1 is sometimes stylized, providing a clear reference point */}
+            <h1 className="sr-only">About OlyBars & The Artesian Bar League in Thurston County</h1>
             {/* Contact Modal */}
             {showContact && (
                 <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-6" onClick={() => setShowContact(false)}>
@@ -166,7 +191,7 @@ const AboutPage = () => {
                 <div className="relative h-[35vh] md:h-[45vh] overflow-hidden">
                     <img
                         src={heroArena}
-                        alt="The Arena - Downtown Olympia"
+                        alt="The Arena - Thurston County"
                         className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
@@ -196,10 +221,10 @@ const AboutPage = () => {
                     </div>
 
                     <div className="bg-surface/40 backdrop-blur-sm border border-white/5 p-8 rounded-[2.5rem] relative overflow-hidden group">
-                        <h3 className="text-white font-black text-2xl uppercase tracking-tight mb-4 font-league italic">YOUR ALL-ACCESS PASS TO OLYMPIA</h3>
+                        <h3 className="text-white font-black text-2xl uppercase tracking-tight mb-4 font-league italic">YOUR ALL-ACCESS PASS TO THURSTON COUNTY</h3>
                         <div className="space-y-4 text-slate-300 leading-relaxed text-sm font-body">
                             <p>
-                                OlyBars is the central nervous system of the 98501. Whether you're looking for a quiet corner for a craft cocktail or a packed house for a Friday night set, we give you the live intel to make the choice.
+                                OlyBars is the central nervous system of Thurston County. Whether you're looking for a quiet corner for a craft cocktail or a packed house for a Friday night set, we give you the live intel to make the choice.
                             </p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
                                 <div className="flex items-center gap-3 text-white font-black uppercase text-[10px] tracking-widest">
@@ -311,7 +336,7 @@ const AboutPage = () => {
                         <h3 className="text-white font-black text-2xl uppercase tracking-tight mb-4 font-league italic">REVITALIZING THROUGH COMMUNITY</h3>
                         <div className="space-y-4 text-slate-300 leading-relaxed text-sm font-body">
                             <p>
-                                The <strong>Artesian Bar League</strong> was born from a simple realization: when our local venues thrive, our city comes alive. We are a community-first organization dedicated to supporting the bars, restaurants, and makers that define Olympia.
+                                The <strong>Artesian Bar League</strong> was born from a simple realization: when our local venues thrive, our city comes alive. We cover independent bars across Thurston County, with the heart in Downtown Olympia.
                             </p>
                             <p className="font-bold text-white italic bg-primary/10 border-l-2 border-primary px-3 py-2">
                                 We believe in the "Artesian Energy" of the 98501.
@@ -436,7 +461,7 @@ const AboutPage = () => {
                 {/* Footer Attribution */}
                 <footer className="pt-12 pb-8 text-center">
                     <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.4em] font-league">
-                        EST. 98501 • OLYMPIA, WA
+                        EST. 98501 • THURSTON COUNTY • WA
                     </p>
                 </footer>
             </div>
