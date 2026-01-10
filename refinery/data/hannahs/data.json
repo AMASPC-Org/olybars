@@ -1,8 +1,13 @@
 {
   "identity": {
-    "name": "Hannah's Bar & Grill",
+    "name": "Hannah's Bar & Grille",
     "type": "Bar & Grill",
-    "established_year": 1987
+    "established_year": 1987,
+    "website_url": "https://hannahsoly.com/",
+    "social_links": {
+      "facebook": "https://www.facebook.com/hannahsoly/",
+      "instagram": null
+    }
   },
   "features": {
     "has_pool": true,
@@ -15,7 +20,7 @@
     "has_jukebox": true,
     "has_arcade_games": true,
     "has_food": true,
-    "has_outdoor_seating": false,
+    "has_outdoor_seating": true,
     "has_wifi": false
   },
   "weekly_schedule": [
@@ -35,7 +40,8 @@
           "type": "Open Mic",
           "start_time": "19:00",
           "frequency": "Monthly",
-          "recurrence_note": "1st Tuesday of Month"
+          "recurrence_note": "1st Tuesday",
+          "external_url": null
         }
       ]
     },
@@ -49,7 +55,8 @@
           "type": "Trivia",
           "start_time": "19:00",
           "frequency": "Weekly",
-          "recurrence_note": "Every Week"
+          "recurrence_note": null,
+          "external_url": null
         }
       ]
     },
@@ -63,7 +70,8 @@
           "type": "Karaoke",
           "start_time": "19:00",
           "frequency": "Weekly",
-          "recurrence_note": "Every Week"
+          "recurrence_note": null,
+          "external_url": null
         }
       ]
     },
@@ -77,7 +85,9 @@
           "type": "Karaoke",
           "start_time": "20:00",
           "frequency": "Weekly",
-          "recurrence_note": "Every Week"
+          "recurrence_note": null,
+          "description": null,
+          "external_url": null
         }
       ]
     },
@@ -91,7 +101,9 @@
           "type": "Karaoke",
           "start_time": "20:00",
           "frequency": "Weekly",
-          "recurrence_note": "Every Week"
+          "recurrence_note": null,
+          "description": null,
+          "external_url": null
         }
       ]
     },
@@ -102,18 +114,38 @@
       "events": []
     }
   ],
+  "happy_hour": {
+    "has_happy_hour": false,
+    "schedule": null,
+    "drinks_special": null,
+    "food_special": null
+  },
+  "inventory": {
+    "local_makers_featured": [],
+    "signature_drinks": []
+  },
   "menu_highlights": {
     "hero_item": "Hannah's Heart Stopper",
     "breakfast_service_level": "Limited",
-    "kitchen_status": "Full"
+    "kitchen_status": "Full Menu"
   },
   "vibe": {
-    "headline": "The Friendliest Bar In Town",
-    "insider_tip": "Ask for Ali to cook your burger!",
+    "headline": "The Friendliest Bar In Town with Karaoke and Diamond Pool Tables",
+    "insider_tip": "Ask for Ali to cook your burger.",
     "audience_tags": [
       "casual",
-      "games",
-      "karaoke"
+      "karaoke",
+      "pool",
+      "sports"
     ]
+  },
+  "metadata": {
+    "confidence_score": 0.99,
+    "data_sources": [
+      "Google Places API",
+      "Website",
+      "Review Scraped"
+    ],
+    "verification_notes": "Data scrubbed with high confidence, cross-verified with multiple sources. Hours of operation are per Google Places API. Features and events were confirmed by website and reviews."
   }
 }

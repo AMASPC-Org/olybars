@@ -2,57 +2,87 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as fs from 'fs';
 import * as path from 'path';
 import 'dotenv/config';
+import { fileURLToPath } from 'url';
 import { schemaInstructions } from './schema.js';
 import { REFINERY_CONSTITUTION } from './rules.js';
-import { fileURLToPath } from 'url';
+import { GooglePlacesService } from './services/GooglePlacesService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const placesService = new GooglePlacesService();
 
-// Initialize Model with System Instructions and Google Search Tool
 const model = genAI.getGenerativeModel({
   model: 'gemini-2.0-flash-exp',
-  systemInstruction: {
-    parts: [{ text: REFINERY_CONSTITUTION + '\n' + schemaInstructions }],
-    role: 'system'
-  },
+  systemInstruction: REFINERY_CONSTITUTION,
   // @ts-ignore
   tools: [{ googleSearch: {} }],
-  generationConfig: { responseMimeType: 'application/json' }
+  generationConfig: {
+    responseMimeType: 'application/json'
+  }
 });
 
 async function refineVenue(venueSlug: string) {
   const venuePath = path.join(__dirname, '../data', venueSlug);
 
   if (!fs.existsSync(venuePath)) {
-    console.error('? Error: Folder not found at ' + venuePath);
+    console.error('Error: Folder not found at ' + venuePath);
     return;
   }
 
-  console.log('?? Refining Data for: ' + venueSlug + '...');
+  console.log('🏭 Refining Data for: ' + venueSlug + ' (V7 Surveyor Mode)...');
 
-  // Prepare the Prompt (User Data only)
-  const files = fs.readdirSync(venuePath);
+  // STEP 1: THE SURVEYOR (Google Places API)
+  let googleData = null;
+  const placesDumpPath = path.join(venuePath, 'google_places_dump.json');
+
+  try {
+    // Convert slug to readable name (e.g. hannahs -> Hannah's Olympia)
+    const searchQuery = venueSlug.replace(/_/g, ' ') + ' Olympia WA';
+    console.log('   🗺️  Surveying Google Places for: ' + searchQuery);
+
+    const placeId = await placesService.findPlaceId(searchQuery);
+
+    if (placeId) {
+      googleData = await placesService.getPlaceDetails(placeId);
+      fs.writeFileSync(placesDumpPath, JSON.stringify(googleData, null, 2));
+      console.log('   ✅ Google Places Data Acquired & Saved.');
+    } else {
+      console.log('   ⚠️  Place ID not found via API.');
+    }
+  } catch (err) {
+    console.error('   ❌ Google Places API Error:', err);
+  }
+
+  // STEP 2: THE DETECTIVE (Gemini + Local Files)
+  // FIX: Sort files to ensure chronological order for 'Rolling Canon' logic
+  const files = fs.readdirSync(venuePath).sort();
   const promptParts: any[] = [];
+
+  promptParts.push({ text: schemaInstructions });
+
+  // Feed Google Data as Hard Fact
+  if (googleData) {
+    promptParts.push({
+      text: '[OFFICIAL GOOGLE PLACES API DATA - HIGH CONFIDENCE]\n' + JSON.stringify(googleData)
+    });
+  }
 
   let foundContent = false;
 
   for (const file of files) {
     const filePath = path.join(venuePath, file);
 
-    // Ignore output files and hidden files
-    if (file === 'data.json' || file === 'raw_error_output.txt' || file.startsWith('.')) continue;
+    // Skip the output files to avoid feedback loops
+    if (file === 'data.json' || file === 'google_places_dump.json') continue;
 
-    // Ingest Text Files (Raw Intel)
     if (file.endsWith('.txt')) {
       const textContent = fs.readFileSync(filePath, 'utf-8');
       promptParts.push({ text: '[INPUT SOURCE: ' + file + ']\n' + textContent });
       foundContent = true;
-      console.log('   ?? Loaded Text: ' + file);
+      console.log('   📄 Loaded Text: ' + file);
     }
-    // Ingest Images (Menus/Vibe)
     else if (file.match(/\.(png|jpg|jpeg|webp)$/i)) {
       const imageBuffer = fs.readFileSync(filePath);
       const base64Image = imageBuffer.toString('base64');
@@ -63,17 +93,16 @@ async function refineVenue(venueSlug: string) {
         }
       });
       foundContent = true;
-      console.log('   ?? Loaded Image: ' + file);
+      console.log('   📸 Loaded Image: ' + file);
     }
   }
 
-  if (!foundContent) {
-    console.log("??  No text or images found in folder. Please add raw_intel.txt or images.");
+  if (!foundContent && !googleData) {
+    console.log('Warning: No content found in ' + venuePath);
     return;
   }
 
   try {
-    console.log("? Analyzing with Gemini 2.0 (Reading images + Googling facts)...");
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: promptParts }]
     });
@@ -81,12 +110,12 @@ async function refineVenue(venueSlug: string) {
     const response = result.response;
     let jsonOutput = response.text().trim();
 
-    // Clean up markdown markers if present (some models still include them)
+    // Clean up markdown markers if present
     if (jsonOutput.startsWith('```')) {
       jsonOutput = jsonOutput.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
     }
 
-    // Find the actual JSON object bounds
+    // Find the actual JSON object bounds to avoid trailing text or multiple objects
     const firstBrace = jsonOutput.indexOf('{');
     if (firstBrace !== -1) {
       let braceCount = 0;
@@ -107,30 +136,18 @@ async function refineVenue(venueSlug: string) {
     }
 
     try {
-      // Validate and Save
       JSON.parse(jsonOutput);
       fs.writeFileSync(path.join(venuePath, 'data.json'), jsonOutput);
-      console.log('? Success! Profile saved to ' + venueSlug + '/data.json');
-
-      // Cleanup error log if it exists from a previous failed run
-      const errorLogPath = path.join(venuePath, 'raw_error_output.txt');
-      if (fs.existsSync(errorLogPath)) {
-        fs.unlinkSync(errorLogPath);
-      }
+      console.log('✅ Success! Profile saved to data.json');
     } catch (parseErr) {
-      console.error('? JSON Parse Error. Raw output was:', jsonOutput);
+      console.error('❌ JSON Parse Error. Raw output was:', jsonOutput);
       fs.writeFileSync(path.join(venuePath, 'raw_error_output.txt'), jsonOutput);
     }
 
-    if (response.candidates && response.candidates[0].groundingMetadata) {
-      console.log('?? Grounding Sources Used:', response.candidates[0].groundingMetadata.searchEntryPoint);
-    }
-
   } catch (error) {
-    console.error('? AI Error:', error);
+    console.error('Refine Error:', error);
   }
 }
 
-// Default run
 const venueArg = process.argv[2] || 'hannahs';
 refineVenue(venueArg);

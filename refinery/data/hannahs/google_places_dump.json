@@ -1,0 +1,220 @@
+{
+  "nationalPhoneNumber": "(360) 357-9890",
+  "formattedAddress": "123 5th Ave SW, Olympia, WA 98501, USA",
+  "location": {
+    "latitude": 47.0438298,
+    "longitude": -122.90259080000001
+  },
+  "rating": 3.8,
+  "websiteUri": "https://hannahsoly.com/",
+  "businessStatus": "OPERATIONAL",
+  "priceLevel": "PRICE_LEVEL_INEXPENSIVE",
+  "userRatingCount": 175,
+  "displayName": {
+    "text": "Hannah's Bar & Grille",
+    "languageCode": "en"
+  },
+  "servesBeer": true,
+  "currentOpeningHours": {
+    "openNow": false,
+    "periods": [
+      {
+        "open": {
+          "day": 0,
+          "hour": 11,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 11
+          }
+        },
+        "close": {
+          "day": 1,
+          "hour": 2,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 12
+          }
+        }
+      },
+      {
+        "open": {
+          "day": 1,
+          "hour": 11,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 12
+          }
+        },
+        "close": {
+          "day": 2,
+          "hour": 2,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 13
+          }
+        }
+      },
+      {
+        "open": {
+          "day": 2,
+          "hour": 11,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 13
+          }
+        },
+        "close": {
+          "day": 3,
+          "hour": 2,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 14
+          }
+        }
+      },
+      {
+        "open": {
+          "day": 3,
+          "hour": 11,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 14
+          }
+        },
+        "close": {
+          "day": 4,
+          "hour": 2,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 15
+          }
+        }
+      },
+      {
+        "open": {
+          "day": 4,
+          "hour": 11,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 15
+          }
+        },
+        "close": {
+          "day": 5,
+          "hour": 2,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 16
+          }
+        }
+      },
+      {
+        "open": {
+          "day": 5,
+          "hour": 11,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 16
+          }
+        },
+        "close": {
+          "day": 5,
+          "hour": 23,
+          "minute": 59,
+          "truncated": true,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 16
+          }
+        }
+      },
+      {
+        "open": {
+          "day": 6,
+          "hour": 0,
+          "minute": 0,
+          "truncated": true,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 10
+          }
+        },
+        "close": {
+          "day": 6,
+          "hour": 2,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 10
+          }
+        }
+      },
+      {
+        "open": {
+          "day": 6,
+          "hour": 11,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 10
+          }
+        },
+        "close": {
+          "day": 0,
+          "hour": 2,
+          "minute": 0,
+          "date": {
+            "year": 2026,
+            "month": 1,
+            "day": 11
+          }
+        }
+      }
+    ],
+    "weekdayDescriptions": [
+      "Monday: 11:00 AM – 2:00 AM",
+      "Tuesday: 11:00 AM – 2:00 AM",
+      "Wednesday: 11:00 AM – 2:00 AM",
+      "Thursday: 11:00 AM – 2:00 AM",
+      "Friday: 11:00 AM – 2:00 AM",
+      "Saturday: 11:00 AM – 2:00 AM",
+      "Sunday: 11:00 AM – 2:00 AM"
+    ],
+    "nextOpenTime": "2026-01-10T19:00:00Z"
+  },
+  "outdoorSeating": false,
+  "servesCocktails": true,
+  "goodForWatchingSports": true,
+  "paymentOptions": {
+    "acceptsCreditCards": true,
+    "acceptsDebitCards": true,
+    "acceptsCashOnly": false,
+    "acceptsNfc": true
+  }
+}

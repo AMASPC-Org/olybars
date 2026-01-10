@@ -28,9 +28,9 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
     const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
 
     const { data: venues = [] } = useQuery({
-        queryKey: ['venues-brief'],
-        queryFn: () => fetchVenues(true),
-        enabled: activeTab === 'venues' || activeTab === 'overview',
+        queryKey: ['venues-full', activeTab],
+        queryFn: () => fetchVenues(activeTab === 'refinery' ? false : true),
+        enabled: activeTab === 'venues' || activeTab === 'overview' || activeTab === 'refinery',
     });
     const [searchTerm, setSearchTerm] = useState('');
     const [venueFilter, setVenueFilter] = useState<'all' | 'visible' | 'ghost' | 'archived'>('all');

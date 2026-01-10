@@ -391,11 +391,71 @@ export interface Venue {
 
     // [NEW] AI Refinery Draft
     ai_draft_profile?: {
-        identity: { name: string; type: string; established_year?: number };
-        features: Record<string, boolean>;
-        weekly_schedule: any[];
-        menu_highlights: any;
-        vibe: any;
+        identity: {
+            name: string;
+            type: string;
+            established_year?: number;
+            website_url?: string;
+            social_links?: {
+                facebook?: string;
+                instagram?: string;
+            };
+        };
+        features: {
+            has_pool?: boolean;
+            has_darts?: boolean;
+            has_karaoke?: boolean;
+            has_trivia?: boolean;
+            has_open_mic?: boolean;
+            has_live_music?: boolean;
+            has_dance_floor?: boolean;
+            has_jukebox?: boolean;
+            has_arcade_games?: boolean;
+            has_food?: boolean;
+            has_outdoor_seating?: boolean;
+            has_wifi?: boolean;
+        };
+        weekly_schedule: Array<{
+            day: string;
+            open_time?: string;
+            close_time?: string;
+            events: Array<{
+                name: string;
+                type: string;
+                start_time: string;
+                frequency: string;
+                recurrence_note: string;
+                description?: string;
+                external_url?: string;
+            }>;
+        }>;
+        happy_hour?: {
+            has_happy_hour: boolean;
+            schedule?: string;
+            drinks_special?: string;
+            food_special?: string;
+        };
+        inventory?: {
+            local_makers_featured: string[];
+            signature_drinks: string[];
+        };
+        menu_highlights?: {
+            hero_item?: string;
+            breakfast_service_level?: 'Full' | 'Limited' | 'None';
+            kitchen_status?: string;
+        };
+        vibe: {
+            headline: string;
+            insider_tip: string;
+            audience_tags: string[];
+        };
+        metadata: {
+            confidence_score: number;
+            data_sources: string[];
+            verification_notes?: string;
+            location?: { lat: number; lng: number };
+            coordinates?: { x: number; y: number };
+        };
         synced_at: any;
         status: 'needs_review' | 'approved' | 'rejected';
     };

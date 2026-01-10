@@ -44,7 +44,8 @@ const stripSensitiveVenueData = (venue: Venue, brief = false): Venue => {
             'loyalty_signup_url',
             'newsletterUrl',
             'ticketLink',
-            'historySnippet'
+            'historySnippet',
+            'ai_draft_profile'
         ];
         briefFields.forEach(field => delete (stripped as any)[field]);
 
@@ -1009,7 +1010,9 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'manualClockIns', 'manualClockInsExpiresAt',
         'happyHour', 'happyHourSpecials', 'happyHourSimple',
         'tier_config', 'hasGameVibeCheckEnabled',
-        'fullMenu' // [PHASE 1] Menu Module
+        'fullMenu', // [PHASE 1] Menu Module
+        'ai_draft_profile', // [PHASE 2] Data Refinery
+        'location', 'coordinates', 'hasOutdoorSeating'
     ];
 
     const playerFields: (keyof Venue)[] = ['status', 'liveGameStatus', 'photos'];

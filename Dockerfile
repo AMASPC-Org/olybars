@@ -19,6 +19,7 @@ COPY . .
 # Service must listen to $PORT environment variable.
 # This variable is set by Cloud Run.
 ENV PORT 8080
+ENV NODE_ENV production
 
 # Run the web service on container startup.
 CMD [ "npm", "start" ]

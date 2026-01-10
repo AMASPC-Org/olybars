@@ -240,8 +240,8 @@ export const AppShell: React.FC<AppShellProps> = ({
             </div>
           </div>
 
-          {/* The Buzz Clock Component - Hidden on Map or during Search */}
-          {!isMapPage && !searchQuery && <BuzzClock venues={venues} />}
+          {/* The Buzz Clock Component - Hidden on Map, during Search, on League Membership, or for Super Admins on Admin/Owner pages */}
+          {!isMapPage && !searchQuery && location.pathname !== '/league-membership' && !(isSystemAdmin(userProfile) && (location.pathname === '/admin' || location.pathname === '/owner')) && <BuzzClock venues={venues} />}
 
         </div>
       )}
