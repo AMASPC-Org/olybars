@@ -17,7 +17,8 @@ interface VenueMapProps {
 const REGION_TARGETS: Record<string, { lat: number; lng: number; zoom: number }> = {
     westside: { lat: 47.0435, lng: -122.9310, zoom: 14 },
     downtown: { lat: 47.0425, lng: -122.9007, zoom: 15 },
-    eastside: { lat: 47.0425, lng: -122.8680, zoom: 14 }
+    eastside: { lat: 47.0425, lng: -122.8680, zoom: 14 },
+    all: { lat: 47.0425, lng: -122.9007, zoom: 12 }
 };
 
 export const VenueMap: React.FC<VenueMapProps> = ({

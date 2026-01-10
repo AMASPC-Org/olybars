@@ -5,6 +5,7 @@ export const MapRegionSelector: React.FC = () => {
     const { mapRegion, setMapRegion } = useDiscovery();
 
     const regions = [
+        { id: 'all', label: 'All' },
         { id: 'westside', label: 'Westside' },
         { id: 'downtown', label: 'Downtown' },
         { id: 'eastside', label: 'Eastside' },

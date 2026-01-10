@@ -144,7 +144,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
     }, [flightItems]);
 
     // AI SEO: Generate Schema.org JSON-LD
-    const generateLDSchema = () => {
+    const getLDSchema = () => {
         if (!venue) return null;
 
         const baseSchema: any = {
@@ -154,10 +154,9 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
             "image": venue.photos?.[0]?.url,
             "address": {
                 "@type": "PostalAddress",
-                "streetAddress": venue.address || "Downtown Olympia",
-                "addressLocality": "Olympia",
+                "streetAddress": venue.address || "Thurston County",
+                "addressLocality": venue.address?.includes('Lacey') ? 'Lacey' : venue.address?.includes('Tumwater') ? 'Tumwater' : 'Olympia',
                 "addressRegion": "WA",
-                "postalCode": "98501",
                 "addressCountry": "US"
             },
             "url": window.location.href,
@@ -177,7 +176,6 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
             "eventStatus": isVenueOpen(venue) ? "https://schema.org/EventScheduled" : "https://schema.org/EventCancelled"
         };
 
-        // Add Events
         const events: any[] = [];
         if (venue.leagueEvent) {
             events.push({
@@ -235,16 +233,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
             ]
         };
 
-        return (
-            <>
-                <script type="application/ld+json">
-                    {JSON.stringify(baseSchema)}
-                </script>
-                <script type="application/ld+json">
-                    {JSON.stringify(breadcrumbSchema)}
-                </script>
-            </>
-        );
+        return [baseSchema, breadcrumbSchema];
     };
 
     const handleShare = async () => {
@@ -311,11 +300,22 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
             {/* AI SEO: Metadata & JSON-LD */}
             <SEO
                 title={venue.name}
-                description={venue.insiderVibe || `Explore ${venue.name} in downtown Olympia. Live vibes, happy hours, and league play.`}
+                description={venue.insiderVibe || `Explore ${venue.name} in Thurston County. Live vibes, happy hours, and league play.`}
                 ogImage={venue.photos?.[0]?.url}
                 ogType="profile"
+                jsonLd={getLDSchema()}
             />
-            {generateLDSchema()}
+
+            {/* Simple Back Button */}
+            <div className="px-6 pt-6">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-2 text-primary mb-4 hover:opacity-80 transition-opacity uppercase font-black tracking-widest text-xs"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                    Back
+                </button>
+            </div>
 
             {/* Hero Header */}
             <div className="relative h-64 overflow-hidden">

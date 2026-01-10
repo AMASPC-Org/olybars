@@ -56,7 +56,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         });
     }, [setSearchParams]);
 
-    const [mapRegion, setMapRegion] = useState<string>('downtown');
+    const [mapRegion, setMapRegion] = useState<string>('all');
 
     const isToday = useMemo(() => isSameDay(selectedDate, new Date()), [selectedDate]);
 

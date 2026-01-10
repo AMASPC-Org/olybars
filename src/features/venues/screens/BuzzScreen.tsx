@@ -17,6 +17,7 @@ import { TAXONOMY_PLAY, TAXONOMY_FEATURES, TAXONOMY_EVENTS } from '../../../data
 import { isSameDay, format } from 'date-fns';
 import { useDiscovery } from '../contexts/DiscoveryContext';
 import { VenueMap } from '../components/VenueMap';
+import { SEO } from '../../../components/common/SEO';
 
 const SkeletonCard = () => (
   <div className="bg-surface rounded-xl border border-slate-800 p-4 shadow-lg animate-pulse">
@@ -155,9 +156,9 @@ export const BuzzScreen: React.FC = () => {
     eventFilter, setEventFilter,
     selectedDate, setSelectedDate,
     viewMode, setViewMode,
-    isToday, clearAllFilters
+    isToday, clearAllFilters,
+    mapRegion // Get mapRegion here
   } = useDiscovery();
-
   const [showPulseMenu, setShowPulseMenu] = useState(false);
   const [showSceneMenu, setShowSceneMenu] = useState(false);
   const [showPlayMenu, setShowPlayMenu] = useState(false);
@@ -165,15 +166,35 @@ export const BuzzScreen: React.FC = () => {
   const [showEventMenu, setShowEventMenu] = useState(false);
   const [showMakersMenu, setShowMakersMenu] = useState(false);
 
-  const { coords } = useGeolocation();
+  const { coords, requestLocation } = useGeolocation({ shouldPrompt: true });
+
+  // Auto-request location on mount
+  React.useEffect(() => {
+    requestLocation();
+  }, [requestLocation]);
 
   // Rotation Logic (shifts every 5 minutes) ensures global fairness
   const rotationOffset = React.useMemo(() => {
     const rotationInterval = 5 * 60 * 1000;
     return Math.floor(Date.now() / rotationInterval);
   }, []);
-
   const applyFilter = useCallback((v: Venue): boolean => {
+    // Region Filter (Mental Model: "Near: [Region]")
+    if (mapRegion !== 'all') {
+      const regionMap: Record<string, string> = {
+        'downtown': 'Downtown_Walkable',
+        'tumwater': 'Warehouse_Tumwater',
+        'lacey': 'Destination_Quest', // Simplification for MVP
+        'yelm': 'Destination_Quest'
+      };
+
+      const targetLoop = regionMap[mapRegion];
+      if (targetLoop && v.geoLoop !== targetLoop) {
+        // If it's a search, we might ignore region, but for default list we enforce it
+        if (!searchQuery) return false;
+      }
+    }
+
     // Search Filter ("God Mode")
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -308,13 +329,13 @@ export const BuzzScreen: React.FC = () => {
     // Global Visibility Check
     if (v.tier_config?.is_directory_listed === false || v.isActive === false) return false;
 
-    // Home Pulse Specific: Hide closed bars unless part of the league or has flash bounty
+    // Home Pulse Specific: Hide closed bars unless part of the league or has flash bounty (List view only)
     const open = isVenueOpen(v);
     const hasActiveBounty = !!(v.activeFlashBounty?.isActive && (v.activeFlashBounty.endTime || 0) > Date.now());
-    if (!open && !v.isPaidLeagueMember && !hasActiveBounty) return false;
+    if (viewMode !== 'map' && !open && !v.isPaidLeagueMember && !hasActiveBounty) return false;
 
     return true;
-  }, [searchQuery, filterKind, statusFilter, sceneFilter, playFilter, featureFilter, eventFilter, selectedDate]);
+  }, [searchQuery, filterKind, statusFilter, sceneFilter, playFilter, featureFilter, eventFilter, selectedDate, mapRegion]);
 
   const venuesWithDistance = React.useMemo(() => venues.map(v => ({
     ...v,
@@ -326,6 +347,16 @@ export const BuzzScreen: React.FC = () => {
   const filteredVenues = React.useMemo(() => [...venuesWithDistance]
     .filter(applyFilter)
     .sort((a, b) => {
+      // 0. Distance-based Auto-sort (If known and within 15 miles)
+      if (!searchQuery && coords && a.distance !== null && b.distance !== null) {
+        const within15Miles = a.distance <= 15 || b.distance <= 15;
+        if (within15Miles) {
+          if (a.distance !== b.distance) {
+            return (a.distance || 0) - (b.distance || 0);
+          }
+        }
+      }
+
       // 0. Deals Sort (Syncs with Buzz Clock)
       if (filterKind === 'deals') {
         const now = new Date();
@@ -504,26 +535,22 @@ export const BuzzScreen: React.FC = () => {
   const baseChipClasses = 'px-3 py-1.5 text-xs font-bold rounded-full border transition-all whitespace-nowrap';
 
 
-  const generateOrgSchema = () => {
-    const schema = {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "OlyBars",
-      "url": "https://olybars.com",
-      "logo": "https://olybars.com/og-image.png",
-      "description": "The Nightlife Operating System for Olympia, WA.",
-      "sameAs": ["https://instagram.com/olybars"]
-    };
-    return (
-      <script type="application/ld+json">
-        {JSON.stringify(schema)}
-      </script>
-    );
-  };
-
   return (
     <div className="bg-background min-h-screen pb-24 font-sans text-slate-100">
-      {generateOrgSchema()}
+      <SEO
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "OlyBars",
+          "url": "https://olybars.com",
+          "logo": "https://olybars.com/og-image.png",
+          "description": "The Nightlife Operating System for Thurston County, WA.",
+          "sameAs": ["https://instagram.com/olybars"]
+        }}
+      />
+
+      {/* Structural SEO: H1 accessibility */}
+      <h1 className="sr-only">OlyBars Pulse: Real-Time Thurston County Nightlife Vibe Map</h1>
 
       <div className="space-y-6">
         <div className="relative group/list px-4">

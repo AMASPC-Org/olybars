@@ -27,7 +27,7 @@ export function loadLocalEnv() {
         const fullPath = path.resolve(REPO_ROOT, file);
         if (fs.existsSync(fullPath)) {
             console.log(`📡 [CONFIG] Loading local environment: ${file} (Root-Anchored)`);
-            dotenv.config({ path: fullPath });
+            dotenv.config({ path: fullPath, override: true });
             filesLoaded++;
         }
     });
