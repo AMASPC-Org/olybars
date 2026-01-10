@@ -1474,19 +1474,23 @@ export const syncFlashBounties = async () => {
         // we'll fetch venues that have scheduled deals or just use a collectionGroup query if allowed.
         // For simplicity in this environment, we'll use collectionGroup for 'scheduledDeals'.
 
-        const pendingDeals = await db.collectionGroup('scheduledDeals')
+        const pendingDealsSnapshot = await db.collectionGroup('scheduledDeals')
             .where('status', '==', 'PENDING')
-            .where('startTime', '<=', now)
             .get();
 
-        if (pendingDeals.empty) {
+        const pendingDeals = pendingDealsSnapshot.docs.filter(doc => {
+            const deal = doc.data();
+            return deal.startTime <= now;
+        });
+
+        if (pendingDeals.length === 0) {
             return { processed: 0 };
         }
 
         const batch = db.batch();
         let processed = 0;
 
-        for (const dealDoc of pendingDeals.docs) {
+        for (const dealDoc of pendingDeals) {
             const deal = dealDoc.data();
             const venueId = deal.venueId;
             const dealId = dealDoc.id;
