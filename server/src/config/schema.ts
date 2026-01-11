@@ -36,5 +36,5 @@ export const ConfigSchema = z.object({
 
 export type Config = z.infer<typeof ConfigSchema>;
 
-export const isProduction = () => process.env.NODE_ENV === 'production';
-export const isLocal = () => !process.env.K_SERVICE; // K_SERVICE is set in Cloud Run
+export const isProduction = () => process.env.NODE_ENV === 'production' || !!process.env.K_SERVICE;
+export const isLocal = () => !process.env.K_SERVICE;
