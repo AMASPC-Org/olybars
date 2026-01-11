@@ -121,13 +121,13 @@ export const useArtieOps = () => {
                 newMessage.text = "Welcome back! I'm ready to help. What's the mission?";
                 setMessages([newMessage]);
                 setCurrentBubbles([
-                    { id: '1', label: '⚡ Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
-                    { id: '2', label: '📅 Add Event', value: 'skill_add_event', icon: '📅' },
-                    { id: '3', label: '📱 Social Post', value: 'skill_social_post', icon: '📱' },
-                    { id: '4', label: '✉️ Draft Email', value: 'skill_email_draft', icon: '✉️' },
-                    { id: '5', label: '🗓️ Calendar Post', value: 'skill_calendar_post', icon: '🗓️' },
-                    { id: '6', label: '🌐 Web Content', value: 'skill_website_content', icon: '🌐' },
-                    { id: '7', label: '🎨 Gen Image', value: 'skill_generate_image', icon: '🎨' }
+                    { id: '1', label: 'Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
+                    { id: '2', label: 'Add Event', value: 'skill_add_event', icon: '📅' },
+                    { id: '3', label: 'Social Post', value: 'skill_social_post', icon: '📱' },
+                    { id: '4', label: 'Draft Email', value: 'skill_email_draft', icon: '✉️' },
+                    { id: '5', label: 'Calendar Post', value: 'skill_calendar_post', icon: '🗓️' },
+                    { id: '6', label: 'Web Content', value: 'skill_website_content', icon: '🌐' },
+                    { id: '7', label: 'Gen Image', value: 'skill_generate_image', icon: '🎨' }
                 ]);
                 break;
 
@@ -210,9 +210,9 @@ export const useArtieOps = () => {
                 newMessage.text = `I've drafted this for you:\n\n"${draft}"\n\nSave to your marketing dashboard?`;
                 setMessages(prev => [...prev, newMessage]);
                 setCurrentBubbles([
-                    { id: 'confirm', label: '🚀 Save Draft', value: 'confirm_post' },
-                    { id: 'gen_img', label: '🎨 Gen Image', value: 'skill_generate_image' },
-                    { id: 'cancel', label: '❌ Cancel', value: 'cancel' }
+                    { id: 'confirm', label: 'Save Draft', value: 'confirm_post', icon: '🚀' },
+                    { id: 'gen_img', label: 'Gen Image', value: 'skill_generate_image', icon: '🎨' },
+                    { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
                 ]);
                 break;
 
@@ -311,10 +311,10 @@ export const useArtieOps = () => {
                 newMessage.text = "I'm on it. To get the perfect result, I need a little intel. \n\nWhat is this image for?";
                 setMessages(prev => [...prev, newMessage]);
                 setCurrentBubbles([
-                    { id: '1', label: '📱 Social Media', value: 'purpose_social' },
-                    { id: '2', label: '🌐 Website', value: 'purpose_web' },
-                    { id: '3', label: '📄 Print Flyer', value: 'purpose_print' },
-                    { id: '4', label: '👑 Member Only', value: 'purpose_exclusive' }
+                    { id: '1', label: 'Social Media', value: 'purpose_social', icon: '📱' },
+                    { id: '2', label: 'Website', value: 'purpose_web', icon: '🌐' },
+                    { id: '3', label: 'Print Flyer', value: 'purpose_print', icon: '📄' },
+                    { id: '4', label: 'Member Only', value: 'purpose_exclusive', icon: '👑' }
                 ]);
                 break;
 
@@ -326,10 +326,10 @@ export const useArtieOps = () => {
                 newMessage.text = `Got it, a ${payload}. \n\nWhat's the main goal of this asset?`;
                 setMessages(prev => [...prev, newMessage]);
                 setCurrentBubbles([
-                    { id: '1', label: '📅 Promote Event', value: 'goal_event' },
-                    { id: '2', label: '🍔 Showcase Menu', value: 'goal_menu' },
-                    { id: '3', label: '✨ Daily Vibe', value: 'goal_vibe' },
-                    { id: '4', label: '🤝 Hiring/Team', value: 'goal_hiring' }
+                    { id: '1', label: 'Promote Event', value: 'goal_event', icon: '📅' },
+                    { id: '2', label: 'Showcase Menu', value: 'goal_menu', icon: '🍔' },
+                    { id: '3', label: 'Daily Vibe', value: 'goal_vibe', icon: '✨' },
+                    { id: '4', label: 'Hiring/Team', value: 'goal_hiring', icon: '🤝' }
                 ]);
                 break;
 
@@ -469,9 +469,9 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                         newMessage.text = `Looks valid. I've drafted this:\n\n"${payload}"\n\nStarting: NOW\nDuration: 1 Hour\n\nPost to the Buzz Clock?`;
                         setMessages(prev => [...prev, newMessage]);
                         setCurrentBubbles([
-                            { id: 'confirm', label: '🚀 Post It', value: 'confirm_post' },
-                            { id: 'edit', label: '✏️ Edit', value: 'skill_flash_deal' }, // Loop back
-                            { id: 'cancel', label: '❌ Cancel', value: 'cancel' }
+                            { id: 'confirm', label: 'Post It', value: 'confirm_post', icon: '🚀' },
+                            { id: 'edit', label: 'Edit', value: 'skill_flash_deal', icon: '✏️' }, // Loop back
+                            { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
                         ]);
                     }
                 }
@@ -516,9 +516,9 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                 newMessage.text = "Visual assets are staged. Shall I draft the high-engagement social copy to go with this visual?";
                 setMessages(prev => [...prev, newMessage]);
                 setCurrentBubbles([
-                    { id: 'draft_copy', label: '✍️ Draft Ad Copy', value: 'skill_ad_copy' },
-                    { id: 'edit_vis', label: '🎨 Edit Visual', value: 'skill_generate_image' },
-                    { id: 'finish', label: '✅ All Done', value: 'completed' }
+                    { id: 'draft_copy', label: 'Draft Ad Copy', value: 'skill_ad_copy', icon: '✍️' },
+                    { id: 'edit_vis', label: 'Edit Visual', value: 'skill_generate_image', icon: '🎨' },
+                    { id: 'finish', label: 'All Done', value: 'completed', icon: '✅' }
                 ]);
                 break;
 
@@ -532,8 +532,8 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                 newMessage.text = `Here is your suggested ad copy:\n\n---\n${adCopy}\n---\n\nWould you like to save this draft to your marketing suite?`;
                 setMessages(prev => [...prev, newMessage]);
                 setCurrentBubbles([
-                    { id: 'save_copy', label: '🚀 Save Copy', value: 'completed' },
-                    { id: 'edit_copy', label: '✏️ Edit', value: 'skill_social_post' }
+                    { id: 'save_copy', label: 'Save Copy', value: 'completed', icon: '🚀' },
+                    { id: 'edit_copy', label: 'Edit', value: 'skill_social_post', icon: '✏️' }
                 ]);
                 setIsLoading(false);
                 break;
@@ -557,13 +557,13 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                 newMessage.text = "Cancelled. What else?";
                 setMessages(prev => [...prev, newMessage]);
                 setCurrentBubbles([
-                    { id: '1', label: '⚡ Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
-                    { id: '2', label: '📅 Add Event', value: 'skill_add_event', icon: '📅' },
-                    { id: '3', label: '📱 Social Post', value: 'skill_social_post', icon: '📱' },
-                    { id: '4', label: '✉️ Draft Email', value: 'skill_email_draft', icon: '✉️' },
-                    { id: '5', label: '🗓️ Calendar Post', value: 'skill_calendar_post', icon: '🗓️' },
-                    { id: '6', label: '🌐 Web Content', value: 'skill_website_content', icon: '🌐' },
-                    { id: '7', label: '🎨 Gen Image', value: 'skill_generate_image', icon: '🎨' }
+                    { id: '1', label: 'Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
+                    { id: '2', label: 'Add Event', value: 'skill_add_event', icon: '📅' },
+                    { id: '3', label: 'Social Post', value: 'skill_social_post', icon: '📱' },
+                    { id: '4', label: 'Draft Email', value: 'skill_email_draft', icon: '✉️' },
+                    { id: '5', label: 'Calendar Post', value: 'skill_calendar_post', icon: '🗓️' },
+                    { id: '6', label: 'Web Content', value: 'skill_website_content', icon: '🌐' },
+                    { id: '7', label: 'Gen Image', value: 'skill_generate_image', icon: '🎨' }
                 ]);
                 break;
 

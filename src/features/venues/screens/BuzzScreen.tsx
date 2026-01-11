@@ -650,7 +650,7 @@ export const BuzzScreen: React.FC = () => {
                           <div className={`mt-2 flex items-center gap-1.5 p-2 rounded-lg border ${hasActiveBounty ? 'bg-red-500 text-white border-red-400 font-black' : 'text-red-500 border-transparent'}`}>
                             <Zap size={hasActiveBounty ? 12 : 10} className={`${hasActiveBounty ? 'fill-white' : 'fill-red-500'}`} />
                             <span className={`text-[10px] uppercase tracking-tighter line-clamp-1 ${hasActiveBounty ? 'font-black' : 'font-bold'}`}>
-                              {hasActiveBounty ? 'FLASH BOUNTY: ' : ''}{bountyTitle}
+                              {hasActiveBounty ? 'FLASH BOUNTY: ' : ''}{bountyTitle.replace(/⚡/g, '').trim()}
                             </span>
                           </div>
                         )}

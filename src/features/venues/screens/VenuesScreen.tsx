@@ -84,6 +84,14 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                     v.venueType === 'brewery_taproom'
                 );
             }
+            else if (activeTag === 'Tasting') {
+                result = result.filter(v =>
+                    v.venueType === 'winery_tasting' ||
+                    v.makerType === 'Winery' ||
+                    v.makerType === 'Distillery' ||
+                    v.sceneTags?.includes('wine_focus')
+                );
+            }
             else if (activeTag === 'Trivia') result = result.filter(v => v.leagueEvent === 'trivia');
             // Check Vibe Tags
             else {
@@ -107,7 +115,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
         }
 
         // 4. Global Visibility
-        result = result.filter(v => v.tier_config.is_directory_listed);
+        result = result.filter(v => v.tier_config?.is_directory_listed !== false);
 
         // 5. Sorting
         result.sort((a, b) => {
@@ -230,7 +238,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
 
                     <div className="flex items-center justify-between">
                         <div className="flex gap-2">
-                            {['Makers', 'Trivia', 'Deals', 'Dive', 'Speakeasy', 'Sports', 'Patio', 'Cocktails', 'Wine', 'Tiki', 'LGBTQ+'].map(tag => (
+                            {['Makers', 'Tasting', 'Trivia', 'Deals', 'Dive', 'Speakeasy', 'Sports', 'Patio', 'Cocktails', 'Wine', 'Tiki', 'LGBTQ+'].map(tag => (
                                 <button
                                     key={tag}
                                     onClick={() => setActiveTag(activeTag === tag ? null : tag)}

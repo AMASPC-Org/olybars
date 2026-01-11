@@ -1,5 +1,50 @@
 [
   {
+    "id": "anthonys-hearthfire",
+    "name": "Anthony's Hearthfire Grill",
+    "venueType": "restaurant_bar",
+    "sceneTags": [
+      "patio_garden",
+      "upscale",
+      "scenic"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "clockIns": 0,
+    "capacity": 200,
+    "isPaidLeagueMember": true,
+    "vibe": "Upscale waterfront dining with hearthfire grilling",
+    "insiderVibe": "The best view of Budd Inlet in town. Restaurant first, bar second. Ideal for a high-end celebration or a scenic happy hour on the water.",
+    "originStory": "Part of the family-owned Anthony's Restaurants, the Hearthfire Grill focuses on wood-fire grilling and showcasing the best of the Pacific Northwest waterfront.",
+    "address": "1675 Marine Dr NE, Olympia, WA 98501",
+    "location": {
+      "lat": 47.054412,
+      "lng": -122.903125
+    },
+    "phone": "(360) 705-3473",
+    "website": "https://www.anthonys.com/restaurant/anthonys-hearthfire-grill-olympia/",
+    "isActive": true,
+    "isVisible": true,
+    "tier_config": {
+      "is_directory_listed": true,
+      "is_league_eligible": true
+    },
+    "privateSpaces": [
+      {
+        "name": "The Waterfront Nook",
+        "capacity": 8,
+        "description": "An intimate, scenic spot right by the window with a direct view of the marina.",
+        "bookingLink": "https://www.anthonys.com/restaurant/anthonys-hearthfire-grill-olympia/"
+      },
+      {
+        "name": "Hearthfire Event Room",
+        "capacity": 30,
+        "description": "Full private room with hearthfire access and custom catering options.",
+        "bookingLink": "https://www.anthonys.com/restaurant/anthonys-hearthfire-grill-olympia/"
+      }
+    ]
+  },
+  {
     "id": "well-80",
     "name": "Well 80 Artesian Brewing",
     "venueType": "brewery_taproom",
@@ -22,6 +67,14 @@
     "isVerifiedMaker": true,
     "isLocalMaker": true,
     "physicalRoom": true,
+    "privateSpaces": [
+      {
+        "name": "The King Leopold Room",
+        "capacity": 40,
+        "description": "A semi-private dining area perfect for large groups, dedicated to the history of the Artesian well.",
+        "bookingLink": "https://well80.com/reservations"
+      }
+    ],
     "coordinates": {
       "x": 55,
       "y": 85
@@ -3835,7 +3888,7 @@
   },
   {
     "id": "the-local-yelm",
-    "name": "The Local Yelm",
+    "name": "The Local",
     "venueType": "restaurant_bar",
     "sceneTags": [
       "elevated_pub_fare",
@@ -4278,8 +4331,8 @@
     "insiderVibe": "Often overlooked but shouldn't be. Their tacos are legit and the atmosphere is always lively and welcoming.",
     "address": "5212 Capitol Blvd SE Unit A, Tumwater, WA 98501, USA",
     "location": {
-      "lat": 47.0005071,
-      "lng": -122.9076942
+      "lat": 46.9986685,
+      "lng": -122.9085388
     },
     "isActive": true,
     "isVisible": true,
@@ -4916,6 +4969,222 @@
     "currentBuzz": {
       "score": 0,
       "lastUpdated": 1767436252598
+    }
+  },
+  {
+    "id": "dos-hermanos-olympia",
+    "name": "Dos Hermanos Mexican Kitchen",
+    "venueType": "restaurant",
+    "sceneTags": [
+      "mexican",
+      "authentic"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "vibe": "Authentic Mexican flavors in the heart of downtown.",
+    "insiderVibe": "Located inside the 222 Market, this is where you go for legit street tacos and family-owned warmth. It's vibrant, fresh, and consistently award-winning.",
+    "originStory": "A family-owned gem that brought the true taste of Mexico to Olympia, quickly becoming a staple of the 222 Market community and winning the hearts (and stomachs) of locals.",
+    "geoLoop": "Downtown_Walkable",
+    "address": "222 Capitol Way N STE 108, Olympia, WA 98501, USA",
+    "website": "https://doshermanos.net/",
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    },
+    "location": {
+      "lat": 47.0464041,
+      "lng": -122.9015125
+    }
+  },
+  {
+    "id": "octapas-cafe",
+    "name": "Octapas Cafe",
+    "venueType": "restaurant",
+    "sceneTags": [
+      "tapas",
+      "cocktails",
+      "live_music"
+    ],
+    "foodService": "full_kitchen",
+    "status": "buzzing",
+    "vibe": "Eclectic, artsy, and flavorful.",
+    "insiderVibe": "The heart of Water Street. Great tapas, inventive cocktails, and a stage that frequently hosts local talent. It's where the artsy crowd gathers for a good bite and better vibes.",
+    "originStory": "A local favorite that transitioned into a larger space on Water Street, continuing its legacy of community-focused dining and musical celebration.",
+    "geoLoop": "Downtown_Walkable",
+    "address": "610 Water St SW, Olympia, WA 98501, USA",
+    "website": "https://octapascafe.com/",
+    "instagram": "https://www.instagram.com/octapascafe/",
+    "facebook": "https://www.facebook.com/octapascafe/",
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    },
+    "location": {
+      "lat": 47.0427984,
+      "lng": -122.9036089
+    }
+  },
+  {
+    "id": "oly-taproom",
+    "name": "Oly Taproom",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "craft_beer",
+      "patio"
+    ],
+    "foodService": "full_kitchen",
+    "status": "buzzing",
+    "vibe": "The Waterfront Craft King.",
+    "insiderVibe": "21+ only. Best selection of craft beer on tap in the city. The pizza is low-key great, and the patio is dog-friendly and perfect for people-watching on Columbia.",
+    "originStory": "Established as Olympia's premier specialty beer shop and taproom, it's the go-to spot for anyone who takes their hops seriously but their atmosphere relaxing.",
+    "geoLoop": "Downtown_Walkable",
+    "address": "312 Columbia St NW, Olympia, WA 98501, USA",
+    "website": "http://olytaproom.com/",
+    "instagram": "https://www.instagram.com/olytaproom/",
+    "facebook": "https://www.facebook.com/olytaproom/",
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    },
+    "location": {
+      "lat": 47.0469447,
+      "lng": -122.9028351
+    }
+  },
+  {
+    "id": "briggs-taphouse",
+    "name": "Briggs Taphouse",
+    "venueType": "bar_pub",
+    "sceneTags": [
+      "craft_beer",
+      "community"
+    ],
+    "foodService": "full_kitchen",
+    "status": "chill",
+    "vibe": "Community craft beer hub.",
+    "insiderVibe": "Located in the Briggs Village area, it's the perfect neighborhood spot for a pint and a burger. Welcoming, family-friendly, and a great rotation of PNW taps.",
+    "originStory": "Built to serve the growing SE Olympia community, Briggs Taphouse has quickly become the 'Third Place' for the neighborhood.",
+    "geoLoop": "Destination_Quest",
+    "address": "4528 Maple Ln SE #105, Olympia, WA 98501, USA",
+    "isActive": true,
+    "isVisible": true,
+    "isPaidLeagueMember": false,
+    "currentBuzz": {
+      "score": 0,
+      "lastUpdated": 1767436252598
+    },
+    "location": {
+      "lat": 47.0050853,
+      "lng": -122.8812561
+    }
+  },
+  {
+    "id": "eagles-olympia",
+    "name": "Eagles Olympia (FOE #21)",
+    "venueType": "private_club",
+    "membershipRequired": true,
+    "guestPolicy": "Guests must be signed in by a member. 3 guests max per member.",
+    "phone": "(360) 357-3722",
+    "website": "https://olympiafoe.com/",
+    "address": "805 4th Ave E, Olympia, WA 98506",
+    "location": {
+      "lat": 47.0453919,
+      "lng": -122.8926101
+    },
+    "hours": {
+      "monday": "16:00 - 00:00",
+      "tuesday": "16:00 - 00:00",
+      "wednesday": "16:00 - 00:00",
+      "thursday": "16:00 - 00:00",
+      "friday": "12:00 - 01:00",
+      "saturday": "12:00 - 01:00",
+      "sunday": "12:00 - 22:00"
+    },
+    "vibe": "The Olympia Aerie of the Fraternal Order of Eagles has been a pillar of the South Puget Sound community for over 125 years.",
+    "description": "Our social club includes a full bar, dart boards, pool tables, a stage, a karaoke machine and sound system, jukebox, and a dance floor. We regularly host live music, bingo, raffles, karaoke, drag shows, and more.",
+    "insiderVibe": "We are located on the corner of 4th Avenue and Plum Street in downtown Olympia. As a volunteer-run organization, our Aerie can be what we as members want it to be.",
+    "isActive": true,
+    "isVisible": true,
+    "tier_config": {
+      "is_directory_listed": true,
+      "is_league_eligible": true
+    }
+  },
+  {
+    "id": "the-wine-loft",
+    "name": "The Wine Loft",
+    "venueType": "winery_tasting",
+    "sceneTags": [
+      "wine_focus"
+    ],
+    "isCinderella": true,
+    "cinderellaHours": "Sat 12:00 - 17:00",
+    "hours": {
+      "saturday": "12:00 - 17:00"
+    },
+    "address": "401 Capitol Way S, Olympia, WA 98501",
+    "location": {
+      "lat": 47.0442392,
+      "lng": -122.9002223
+    },
+    "isActive": true,
+    "isVisible": true,
+    "tier_config": {
+      "is_directory_listed": true,
+      "is_league_eligible": false
+    }
+  },
+  {
+    "id": "south-bay-pub",
+    "name": "South Bay Pub & Eatery",
+    "venueType": "bar_pub",
+    "address": "3323 S Bay Rd NE, Olympia, WA 98506",
+    "phone": "(360) 456-0809",
+    "hours": {
+      "monday": "11:00 - 23:00",
+      "tuesday": "11:00 - 23:00",
+      "wednesday": "11:00 - 23:00",
+      "thursday": "11:00 - 23:00",
+      "friday": "08:00 - 02:00",
+      "saturday": "08:00 - 02:00",
+      "sunday": "08:00 - 23:00"
+    },
+    "vibe": "Neighborhood pub and eatery known for its community feel and diverse menu.",
+    "isActive": true,
+    "isVisible": true,
+    "tier_config": {
+      "is_directory_listed": true,
+      "is_league_eligible": true
+    },
+    "location": {
+      "lat": 47.0795779,
+      "lng": -122.8479857
+    }
+  },
+  {
+    "id": "crafthouse-rochester",
+    "name": "CraftHouse Wood Fired Pizza (Lucky Eagle)",
+    "venueType": "restaurant_bar",
+    "address": "12888 188th Ave SW, Rochester, WA 98579",
+    "vibe": "QUESTIONABLE status. Search points to CraftHouse Wood Fired Pizza at Lucky Eagle Casino.",
+    "isActive": true,
+    "isVisible": true,
+    "tier_config": {
+      "is_directory_listed": true,
+      "is_league_eligible": true
+    },
+    "location": {
+      "lat": 46.8140909,
+      "lng": -123.1542509
     }
   }
 ]

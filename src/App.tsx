@@ -85,6 +85,7 @@ import LeagueMembershipPage from './features/marketing/LeagueMembershipPage';
 import OnboardingHandoverPage from './features/marketing/screens/OnboardingHandoverPage';
 import { FlightSchoolScreen } from './features/flights/screens/FlightSchoolScreen'; // [NEW] Flight School Import
 import { MetaOAuthCallback } from './features/owner/components/MetaOAuthCallback'; // [NEW] Meta OAuth Callback
+import { BackRoomScreen } from './features/venues/screens/BackRoomScreen'; // [NEW]
 
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
@@ -550,9 +551,27 @@ export default function OlyBarsApp() {
                     }
                   />
                   <Route
+                    path="venues"
+                    element={
+                      <>
+                        <SEO title="Bar Directory" description="The complete index of bars, taprooms, and lounges in Thurston County." />
+                        <VenuesScreen venues={venues} />
+                      </>
+                    }
+                  />
+                  <Route
                     path="venues/:id"
                     element={
                       <VenueProfileScreen />
+                    }
+                  />
+                  <Route
+                    path="back-room"
+                    element={
+                      <>
+                        <SEO title="The Back Room" description="Private inventory for squads & parties." />
+                        <BackRoomScreen />
+                      </>
                     }
                   />
                 </Route>

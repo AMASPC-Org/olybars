@@ -22,6 +22,7 @@ import { useToast } from '../../../components/ui/BrandedToast';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles, estimateWalkTime, getZone } from '../../../utils/geoUtils';
 import { ArtieDistanceWarningModal } from '../components/ArtieDistanceWarningModal';
+import { GatekeeperModal } from '../components/GatekeeperModal';
 
 interface VenueProfileScreenProps {
     // Props are now provided via useOutletContext
@@ -76,6 +77,16 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
     const [isWarningOpen, setIsWarningOpen] = useState(false);
     const [distanceInfo, setDistanceInfo] = useState({ miles: 0, mins: 0 });
     const [zones, setZones] = useState({ user: '', destination: '' });
+
+    // Membership Gating
+    const [isGatekeeperOpen, setIsGatekeeperOpen] = useState(false);
+    const [isMembershipVerified, setIsMembershipVerified] = useState(false);
+
+    useEffect(() => {
+        if (venue?.membershipRequired && !isMembershipVerified) {
+            setIsGatekeeperOpen(true);
+        }
+    }, [venue, isMembershipVerified]);
 
     const onToggleFavorite = (venueId: string) => {
         const isCurrentlyFavorite = userProfile.favorites?.includes(venueId);
@@ -452,7 +463,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                                 )}
                             </div>
                             <h4 className="text-xl font-black text-white uppercase font-league leading-none mb-1 tracking-tight">
-                                {venue.activeFlashBounty?.title || venue.deal}
+                                {(venue.activeFlashBounty?.title || venue.deal)?.replace(/⚡/g, '').trim()}
                             </h4>
                             <p className="text-sm font-bold text-red-100/80 leading-snug">
                                 {venue.activeFlashBounty?.description || 'Limited time offer! Get down here now to claim your bonus.'}
@@ -615,8 +626,10 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                     <div className="flex gap-3">
                         <button
                             onClick={() => handleClockIn(venue)}
-                            disabled={clockedInVenue === venue.id}
-                            className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/10 ${clockedInVenue === venue.id ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-primary text-black hover:scale-[1.02] active:scale-95'
+                            disabled={clockedInVenue === venue.id || (venue.membershipRequired && !isMembershipVerified)}
+                            className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/10 ${(clockedInVenue === venue.id || (venue.membershipRequired && !isMembershipVerified))
+                                    ? 'bg-slate-800 text-slate-500 border border-slate-700'
+                                    : 'bg-primary text-black hover:scale-[1.02] active:scale-95'
                                 }`}
                         >
                             <MapPin className="w-4 h-4" />
@@ -624,7 +637,9 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                         </button>
                         <button
                             onClick={() => handleVibeCheck(venue)}
-                            className="flex-1 py-4 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex flex-col items-center justify-center text-slate-100 hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 shadow-xl"
+                            disabled={venue.membershipRequired && !isMembershipVerified}
+                            className={`flex-1 py-4 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex flex-col items-center justify-center text-slate-100 hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 shadow-xl ${(venue.membershipRequired && !isMembershipVerified) ? 'opacity-50 grayscale cursor-not-allowed' : ''
+                                }`}
                         >
                             <div className="flex items-center gap-2">
                                 <Zap className="w-4 h-4 text-primary" />
@@ -1226,6 +1241,17 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                     destinationZone={zones.destination}
                 />
             )}
+
+            {/* Gatekeeper Modal for Private Clubs */}
+            <GatekeeperModal
+                isOpen={isGatekeeperOpen}
+                onClose={() => setIsGatekeeperOpen(false)}
+                onAcknowledge={() => {
+                    setIsMembershipVerified(true);
+                    setIsGatekeeperOpen(false);
+                }}
+                venue={venue}
+            />
         </div>
     );
 };

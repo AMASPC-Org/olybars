@@ -61,7 +61,7 @@ export interface ScheduledDeal {
     createdAt?: any; // Firestore serverTimestamp
 }
 
-export type VenueType = 'bar_pub' | 'restaurant_bar' | 'brewery_taproom' | 'lounge_club' | 'arcade_bar' | 'brewpub';
+export type VenueType = 'bar_pub' | 'restaurant_bar' | 'brewery_taproom' | 'lounge_club' | 'arcade_bar' | 'brewpub' | 'private_club' | 'winery_tasting';
 
 // [PHASE 1] Menu Module Schema
 export enum MenuItemType {
@@ -148,7 +148,6 @@ export type SceneTag =
 export type FoodServiceLevel = 'none_byof' | 'snacks' | 'limited_kitchen' | 'full_kitchen';
 
 export type GameFeatureStatus = 'active' | 'out_of_order';
-
 export interface GameFeature {
     id: string; // e.g. "pinball_godzilla" or just "pool_table_1"
     type: 'arcade_game' | 'pinball_machine' | 'pool_table' | 'darts' | 'skeeball' | 'shuffleboard' | 'foosball' | 'cornhole' | 'beer_pong' | 'trivia' | 'karaoke' | 'giant_jenga' | 'console_gaming' | 'unknown';
@@ -158,6 +157,13 @@ export interface GameFeature {
     highlight?: boolean; // If true, show in summary tags
     description?: string; // [NEW] For artie lore or condition notes
     isLeaguePartner?: boolean; // [NEW] For tracking league assets
+}
+
+export interface PrivateSpace {
+    name: string;
+    capacity: number;
+    description: string;
+    bookingLink?: string;
 }
 
 export interface GameStatus {
@@ -373,6 +379,7 @@ export interface Venue {
     isDogFriendly?: boolean;
     hasOutdoorSeating?: boolean;
     hasPrivateRoom?: boolean;
+    privateSpaces?: PrivateSpace[];
     reservations?: string;
     reservationUrl?: string;
     openingTime?: string;
@@ -459,6 +466,12 @@ export interface Venue {
         synced_at: any;
         status: 'needs_review' | 'approved' | 'rejected';
     };
+
+    // [BETA BATTALION] Membership & Cinderella Protocols
+    membershipRequired?: boolean;
+    guestPolicy?: string; // e.g. "Guests must be signed in by a member. 3 guests max."
+    isCinderella?: boolean; // Time-gated visibility
+    cinderellaHours?: string; // Optional override if different from venue.hours
 }
 
 export interface AmenityDetail {

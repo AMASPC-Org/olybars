@@ -320,15 +320,16 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
               </div>
               <div className="bg-slate-900/50 border border-slate-700/50 p-5 rounded-2xl">
                 <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #2: Points & Limits</h3>
-                <p className="font-bold text-slate-400 text-sm leading-relaxed">Max two (2) Clock Ins per 12-hour period. No purchase necessary to earn points. Ghosting (clocking in without being present) is prohibited.</p>
+                <p className="font-bold text-slate-400 text-sm leading-relaxed">Max two (2) Clock Ins per 12-hour period. Ghosting (clocking in without being present) is prohibited. Retail check-ins require 15 minutes on-premises to count.</p>
               </div>
               <div className="bg-slate-900/50 border border-slate-700/50 p-5 rounded-2xl">
                 <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #3: The Vibe Check</h3>
                 <p className="font-bold text-slate-400 text-sm leading-relaxed">Vibe photos must be taken on-site. Dark/blurry/irrelevant photos will be rejected by Artie and points revoked.</p>
               </div>
               <div className="bg-slate-900/50 border border-slate-700/50 p-5 rounded-2xl">
-                <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #4: Fair Play</h3>
-                <p className="font-bold text-slate-400 text-sm leading-relaxed">Any attempt to spoof GPS or automate Clock Ins results in a permanent ban. Play fair, drink responsibly.</p>
+                <h3 className="font-league text-primary text-xl font-black uppercase tracking-tight mb-2">Rule #4: No Purchase Necessary</h3>
+                <p className="font-bold text-slate-400 text-sm leading-relaxed italic mb-2">"While OlyBars requires no purchase, State Law regarding private clubs supersedes League Rules."</p>
+                <p className="font-bold text-slate-400 text-sm leading-relaxed text-red-500/80">You must legally be allowed to enter the premises to earn points. 'Sneaking in' is a ban-able offense. Play fair, drink responsibly.</p>
               </div>
 
               {/* [NEW] Points Guide Link */}

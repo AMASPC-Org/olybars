@@ -280,6 +280,7 @@ While OlyBars builds a global community, we proactively drive users into the **P
     *   **Chill**: 20-60% Capacity. Conversational, date vibes.
     *   **Buzzing**: 60-90% Capacity. Tables full, high energy.
     *   **Packed**: > 90% Capacity. Standing room only. [Triggers SMS to Starred Users].
+*   **The Back Room**: A directory of private spaces, nooks, and rental rooms within OlyBars venues. "Get a room."
 *   **The Weekly Pulse**: The official Artesian Bar League newsletter.
 *   **The Brew House**: The Partner Portal. The dashboard where Venue Owners manage their profile, listings, events, and **Flash Bounty** activations.
 *   **Venue Capacity**: A static data point representing the legal or practical occupancy of a venue. This serves as the baseline for determining density and busyness levels.

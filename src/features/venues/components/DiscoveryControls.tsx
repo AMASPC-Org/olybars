@@ -8,7 +8,7 @@ import {
     Zap, Flame, Beer, Clock, Compass, Tag, Calendar, Gamepad2, Theater, LayoutGrid,
     Target, Gamepad, MoveHorizontal, Disc, Puzzle, Users, Layers, Circle,
     Trophy, Music, HelpCircle, Mic2, Tv, Ticket, Swords, Sparkles, Mic, Trees,
-    Trees as TreesIcon, CircleDot, Dices, Hammer
+    Trees as TreesIcon, CircleDot, Dices, Hammer, Key, Martini, Wine
 } from 'lucide-react';
 import { TAXONOMY_PLAY, TAXONOMY_EVENTS } from '../../../data/taxonomy';
 import { Venue, VenueStatus } from '../../../types';
@@ -216,10 +216,10 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                         <div className="flex flex-wrap gap-2">
                             {/* VIBE OPTIONS */}
                             {showVibeMenu && [
-                                { id: 'packed', label: '⚡ Packed', icon: Zap },
-                                { id: 'buzzing', label: '🔥 Buzzing', icon: Flame },
-                                { id: 'chill', label: '🍺 Chill', icon: Beer },
-                                { id: 'dead', label: '💀 Dead', icon: Clock }
+                                { id: 'packed', label: 'Packed', icon: Zap },
+                                { id: 'buzzing', label: 'Buzzing', icon: Flame },
+                                { id: 'chill', label: 'Chill', icon: Beer },
+                                { id: 'dead', label: 'Dead', icon: Clock }
                             ].map(option => (
                                 <button
                                     key={option.id}
@@ -229,20 +229,21 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                                         setFilterKind('status');
                                         setShowVibeMenu(false);
                                     }}
-                                    className={`px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 ${statusFilter === option.id && filterKind === 'status' ? 'border-primary text-primary' : ''}`}
+                                    className={`px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2 ${statusFilter === option.id && filterKind === 'status' ? 'border-primary text-primary' : ''}`}
                                 >
+                                    {option.icon && <option.icon className="w-3.5 h-3.5" />}
                                     {option.label}
                                 </button>
                             ))}
 
                             {/* SCENE OPTIONS */}
                             {showSceneMenu && [
-                                { id: 'dive', label: '🍺 Dive Bar' },
-                                { id: 'sports', label: '🏆 Sports Bar' },
-                                { id: 'speakeasy', label: '🗝️ Speakeasy' },
-                                { id: 'cocktail', label: '🍸 Cocktails' },
-                                { id: 'wine', label: '🍷 Wine & Tapas' },
-                                { id: 'brewery', label: '🍻 Brewery' }
+                                { id: 'dive', label: 'Dive Bar', icon: Beer },
+                                { id: 'sports', label: 'Sports Bar', icon: Trophy },
+                                { id: 'speakeasy', label: 'Speakeasy', icon: Key },
+                                { id: 'cocktail', label: 'Cocktails', icon: Martini },
+                                { id: 'wine', label: 'Wine & Tapas', icon: Wine },
+                                { id: 'brewery', label: 'Brewery', icon: Beer }
                             ].map(option => (
                                 <button
                                     key={option.id}
@@ -252,8 +253,9 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                                         setFilterKind('scene');
                                         setShowSceneMenu(false);
                                     }}
-                                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95"
+                                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2"
                                 >
+                                    {option.icon && <option.icon className="w-3.5 h-3.5" />}
                                     {option.label}
                                 </button>
                             ))}

@@ -13,7 +13,8 @@ async function seedAdmin() {
             let userRecord;
             try {
                 userRecord = await auth.getUserByEmail(email);
-                console.log(`${email} already exists in Auth.`);
+                console.log(`${email} already exists in Auth. Updating password...`);
+                await auth.updateUser(userRecord.uid, { password });
             } catch (e) {
                 userRecord = await auth.createUser({
                     email,

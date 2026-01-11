@@ -132,6 +132,7 @@ To prevent "The Drowning Effect," visibility is managed via dynamic rotation.
 *   **Alignment Protocol**: Before seeding, venues are aligned with official Google Places listings using `server/src/scripts/align-venue-locations.ts`.
 *   `current_buzz`: { score, label, last_updated }
 *   `happyHourRules`: Array of time-based rules.
+*   `privateSpaces`: Array of `{ name, capacity, description, bookingLink }`.
 *   `tier_config`: Subscription level features.
 
 #### 9.1.1 `private_data` (Sub-collection)

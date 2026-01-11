@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { Zap, Map, Trophy, Menu } from 'lucide-react';
+import { Zap, Map, Trophy, Key } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
 const navItems = [
   { to: '/', text: 'Buzz', icon: Zap },
+  { to: '/back-room', text: 'Back Room', icon: Key },
   { to: '/map', text: 'Map', icon: Map },
   { to: '/league', text: 'League', icon: Trophy },
 ];

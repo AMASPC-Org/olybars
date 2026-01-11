@@ -58,6 +58,11 @@ export const manualFAQs: FAQItem[] = [
         "category": "The League",
         "answer": "A Ghost Score is points you've generated as a Guest but haven't 'Claimed'. Join the League before midnight to bank your Ghost Score into your permanent account."
     },
+    {
+        "question": "Can I earn points at Private Clubs?",
+        "category": "The League",
+        "answer": "Yes, but you must be a member or a legal guest. WSLCB regulations for private clubs (like the Eagles or Elks) supersede League rules. If you cannot legally enter, you cannot earn points."
+    },
 
     // Category C: The Community
     {

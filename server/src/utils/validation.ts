@@ -194,6 +194,10 @@ export const VenueUpdateSchema = z.object({
         userId: z.string().optional(),
     })).optional(),
     social_auto_sync: z.boolean().optional(),
+    membershipRequired: z.boolean().optional(),
+    guestPolicy: z.string().optional(),
+    isCinderella: z.boolean().optional(),
+    cinderellaHours: z.string().optional(),
 });
 
 export const VenueOnboardSchema = z.object({
@@ -302,5 +306,9 @@ export const VenueSchema = z.object({
             autoPublishEnabled: z.boolean().optional(),
         }).optional()
     }).optional(),
-    social_auto_sync: z.boolean().optional()
+    social_auto_sync: z.boolean().optional(),
+    membershipRequired: z.boolean().optional(),
+    guestPolicy: z.string().optional(),
+    isCinderella: z.boolean().optional(),
+    cinderellaHours: z.string().optional(),
 });
