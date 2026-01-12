@@ -1,11 +1,11 @@
 steps:
   # Step 1: Build the Container Image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io//olybars-backend', '.']
+    args: ['build', '-t', 'gcr.io/ama-ecosystem-prod/olybars-backend', '.']
 
   # Step 2: Push the Image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io//olybars-backend']
+    args: ['push', 'gcr.io/ama-ecosystem-prod/olybars-backend']
 
   # Step 3: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -15,16 +15,16 @@ steps:
       - 'deploy'
       - 'olybars-backend'
       - '--image'
-      - 'gcr.io//olybars-backend'
+      - 'gcr.io/ama-ecosystem-prod/olybars-backend'
       - '--region'
       - 'us-west1'
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
 
-# CRITICAL FIX: Explicitly set logging to Cloud Logging
+# Keep logging config to satisfy the service account requirement
 options:
   logging: CLOUD_LOGGING_ONLY
 
 images:
-  - 'gcr.io//olybars-backend'
+  - 'gcr.io/ama-ecosystem-prod/olybars-backend'
