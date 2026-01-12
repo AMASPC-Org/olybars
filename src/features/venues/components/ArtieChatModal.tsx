@@ -429,10 +429,12 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                 <div className="bg-primary/10 border-b border-primary/20 p-4 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="bg-primary p-0.5 rounded-xl shadow-lg shadow-primary/20 overflow-hidden w-14 h-14 flex items-center justify-center">
-                            <img src={artieLogo} className="w-full h-full object-cover scale-110" alt="Artie Wells" />
+                            <img src={artieLogo} className="w-full h-full object-cover scale-110" alt={isOpsMode ? "Schmidt" : "Artie"} />
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-white uppercase tracking-tight font-league">Artie Wells</h3>
+                            <h3 className="text-xl font-black text-white uppercase tracking-tight font-league">
+                                {isOpsMode ? "Schmidt" : "Artie"}
+                            </h3>
                             <div className="flex items-center gap-1.5">
                                 <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                                 <span className="text-[9px] text-primary font-bold uppercase tracking-widest">{greeting?.status || "Online & Pouring"}</span>

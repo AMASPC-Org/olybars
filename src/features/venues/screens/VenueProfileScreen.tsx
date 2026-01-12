@@ -11,7 +11,7 @@ import {
     Settings, Instagram, Facebook, Twitter, Mail, Phone,
     Scroll, Sparkles, Feather, Gamepad2, LayoutGrid, CheckCircle2,
     Utensils, ChefHat, Pizza, ShoppingBag, Ban, AlertTriangle,
-    Target, Mic2, HelpCircle, Box, Disc, ExternalLink, X, Crown
+    Target, Mic2, HelpCircle, Box, Disc, ExternalLink, X, Crown, Key
 } from 'lucide-react';
 import { formatToAMPM } from '../../../utils/timeUtils';
 import { Venue, UserProfile } from '../../../types';
@@ -628,8 +628,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                             onClick={() => handleClockIn(venue)}
                             disabled={clockedInVenue === venue.id || (venue.membershipRequired && !isMembershipVerified)}
                             className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/10 ${(clockedInVenue === venue.id || (venue.membershipRequired && !isMembershipVerified))
-                                    ? 'bg-slate-800 text-slate-500 border border-slate-700'
-                                    : 'bg-primary text-black hover:scale-[1.02] active:scale-95'
+                                ? 'bg-slate-800 text-slate-500 border border-slate-700'
+                                : 'bg-primary text-black hover:scale-[1.02] active:scale-95'
                                 }`}
                         >
                             <MapPin className="w-4 h-4" />
@@ -1018,7 +1018,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                 </div>
 
                 {/* Policies & Access Detail [NEW] */}
-                {(venue.reservations || venue.hasPrivateRoom || venue.openingTime) && (
+                {(venue.reservations || venue.hasPrivateRoom || (venue.privateSpaces && venue.privateSpaces.length > 0) || venue.openingTime) && (
                     <div className="space-y-4">
                         <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">Policies & Reservations</h3>
                         <div className="bg-surface border border-white/5 rounded-2xl p-4 space-y-4">
@@ -1051,12 +1051,27 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                                     </div>
                                 </div>
                             )}
-                            {venue.hasPrivateRoom && (
+                            {(venue.hasPrivateRoom || (venue.privateSpaces && venue.privateSpaces.length > 0)) && (
                                 <div className="flex items-center gap-3">
-                                    <Shield className="w-4 h-4 text-primary" />
-                                    <div>
-                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Private Space</span>
-                                        <p className="text-xs font-bold text-white uppercase">Available for Booking</p>
+                                    <Key className="w-4 h-4 text-primary" />
+                                    <div className="flex-1">
+                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">The Back Room</span>
+                                        <p className="text-xs font-bold text-white uppercase">
+                                            {venue.privateSpaces?.length
+                                                ? `${venue.privateSpaces.length} Private Space${venue.privateSpaces.length > 1 ? 's' : ''} Available`
+                                                : 'Private Space Available'}
+                                        </p>
+                                        {venue.privateSpaces?.length ? (
+                                            <button
+                                                onClick={() => navigate(`/back-room?venueId=${venue.id}`)}
+                                                className="mt-2 inline-flex items-center gap-2 bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all"
+                                            >
+                                                <ExternalLink size={10} />
+                                                View Spaces
+                                            </button>
+                                        ) : (
+                                            <p className="text-[9px] text-slate-400 italic mt-1">Direct booking available at venue</p>
+                                        )}
                                     </div>
                                 </div>
                             )}

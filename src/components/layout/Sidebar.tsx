@@ -19,7 +19,9 @@ import {
     Scan,
     Percent,
     List,
+    PlusCircle,
     Store,
+    Key,
     Activity
 } from 'lucide-react';
 import { UserProfile, UserRole } from '../../types';
@@ -114,6 +116,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <span className="text-sm font-black uppercase text-white tracking-wide">The Pulse Playbook</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-yellow-400" />
+                    </button>
+
+                    <button onClick={() => handleNavigation('/back-room')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
+                        <div className="flex items-center gap-4">
+                            <Key className="w-5 h-5 text-primary" />
+                            <span className="text-sm font-black uppercase text-white tracking-wide">The Back Room</span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
                     </button>
                 </div>
 

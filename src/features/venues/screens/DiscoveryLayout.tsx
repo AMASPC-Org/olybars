@@ -81,6 +81,7 @@ const DiscoveryLayoutContent: React.FC<{
         const location = useLocation();
         const { isToday, searchQuery, selectedDate } = useDiscovery();
         const isVenueProfile = location.pathname.includes('/venues/');
+        const isBackRoom = location.pathname === '/back-room';
 
         return (
             <div className="flex flex-col min-h-screen">
@@ -92,22 +93,22 @@ const DiscoveryLayoutContent: React.FC<{
                 />
 
                 <div className="space-y-6">
-                    {/* Zone 2: The Buzz Clock (Hero) - Only if Today, no search, and NOT a profile */}
-                    {isToday && !searchQuery && !isVenueProfile && (
+                    {/* Zone 2: The Buzz Clock (Hero) - Only if Today, no search, NOT a profile, and NOT the back room */}
+                    {isToday && !searchQuery && !isVenueProfile && !isBackRoom && (
                         <div className="animate-in fade-in slide-in-from-top-4 duration-700">
                             <BuzzClock venues={venues} />
                         </div>
                     )}
 
-                    {!isToday && (
+                    {!isToday && !isBackRoom && (
                         <div className="p-8 text-center bg-surface/30 border-y border-white/5 backdrop-blur-sm">
                             <h3 className="text-2xl font-black text-primary uppercase font-league tracking-widest mb-2 italic">Future View</h3>
                             <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Showing events and schedules for {format(selectedDate, 'eeee, MMM do')}</p>
                         </div>
                     )}
 
-                    {/* Zone 3: Control Center (Persistent) - Hide on Profile */}
-                    {!isVenueProfile && <DiscoveryControls venues={venues} />}
+                    {/* Zone 3: Control Center (Persistent) - Hide on Profile and Back Room */}
+                    {!isVenueProfile && !isBackRoom && <DiscoveryControls venues={venues} />}
 
                     {/* Child Screens (Home Feed or Venue Profile Content) */}
                     <div className="flex-1">

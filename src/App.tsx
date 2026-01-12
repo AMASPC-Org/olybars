@@ -142,20 +142,8 @@ export default function OlyBarsApp() {
   const { data: venues = [], isLoading } = useQuery({
     queryKey: ['venues-brief'],
     queryFn: () => fetchVenues(true), // Fetch brief mode for the list
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    initialData: () => {
-      // Warm path: load from localStorage for instant boot
-      const stored = localStorage.getItem('oly_venues_cache');
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch (e) {
-          return undefined;
-        }
-      }
-      return undefined;
-    }
   });
 
   // Sync Venues to LocalStorage for next boot

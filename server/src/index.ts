@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
@@ -184,7 +184,7 @@ app.get('/', (req, res) => {
     res.send(`
     <body style="background: #0f172a; color: #fbbf24; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0;">
       <h1 style="font-size: 3rem; margin-bottom: 0;">OLYBARS BACKEND</h1>
-      <p style="color: #94a3b8; font-size: 1.2rem;">Artie Relay is Online! 🍻</p>
+      <p style="color: #94a3b8; font-size: 1.2rem;">Artie Relay is Online! ðŸ»</p>
       <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="margin-top: 2rem; padding: 1rem 2rem; background: #fbbf24; color: #000; text-decoration: none; font-weight: bold; border-radius: 0.5rem;">Launch Frontend</a>
     </body>
   `);
@@ -358,7 +358,7 @@ v1Router.post('/requests', verifyAppCheck, verifyHoneypot, blockAggressiveBots, 
         log('INFO', `[ADMIN_REQUEST] received: ${type}`, requestData);
 
         // Simulate Email Notification
-        console.log(`\n📨 --- EMAIL SIMULATION ---`);
+        console.log(`\nðŸ“¨ --- EMAIL SIMULATION ---`);
         console.log(`To: ryan@amaspc.com`);
         console.log(`Subject: New ${type} Request`);
         console.log(`From: Artie (System)`);
@@ -1118,7 +1118,18 @@ v1Router.post('/chat', identifyUser, artieRateLimiter, verifyHoneypot, blockAggr
 
         // Import the logic dynamically to keep dependencies clean
         const { artieChatLogic } = await import('../../functions/src/flows/artieChat');
-        const result = await artieChatLogic({ history: history || [], question, userId, userRole: realRole });
+        const { schmidtChatLogic } = await import('../../functions/src/flows/schmidtChat');
+        // [SCHMIDT SWITCH] Dynamic Agent Routing
+        let result;
+        const isOwner = ['owner', 'manager', 'admin', 'super-admin'].includes(realRole);
+        
+        if (isOwner) {
+            console.log(`[ROUTER] 👔 User ${userId} is ${realRole} -> Activating SCHMIDT.`);
+            result = await schmidtChatLogic({ history: history || [], question, userId, userRole: realRole });
+        } else {
+            console.log(`[ROUTER] 🧢 User ${userId} is ${realRole} -> Activating ARTIE.`);
+            result = await artieChatLogic({ history: history || [], question, userId, userRole: realRole });
+        }
 
         // Check if result is a stream (it will be for successful generatations)
         if (typeof result !== 'string' && (result as any).stream) {
@@ -1369,7 +1380,7 @@ v1Router.post('/utils/send-email', verifyToken, async (req, res) => {
 
     try {
         // Log the dispatch (Simulating real mailer)
-        console.log(`\n📨 --- BACKEND EMAIL DISPATCH ---`);
+        console.log(`\nðŸ“¨ --- BACKEND EMAIL DISPATCH ---`);
         console.log(`From: ${fromName || 'OlyBars Admin'}`);
         console.log(`To: ${Array.isArray(to) ? to.join(', ') : to}`);
         console.log(`Subject: ${subject}`);
@@ -1403,3 +1414,4 @@ setInterval(async () => {
 app.listen(port, () => {
     log('INFO', `Flash Boarding... OlyBars Server running on port ${port} in ${config.NODE_ENV} mode.`);
 });
+

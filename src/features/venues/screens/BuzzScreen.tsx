@@ -217,7 +217,8 @@ export const BuzzScreen: React.FC = () => {
         (v.sceneTags?.some(tag => tag.replace('_', ' ').toLowerCase().includes(q)) ?? false) ||
         (v.isAllAges && 'all ages'.includes(q)) ||
         (v.isDogFriendly && 'dog friendly'.includes(q)) ||
-        (v.hasOutdoorSeating && 'patio'.includes(q));
+        (v.hasOutdoorSeating && 'patio'.includes(q)) ||
+        ((v.privateSpaces && v.privateSpaces.length > 0) && (q.includes('private') || q.includes('room') || q.includes('back room')));
 
       const isMatch = nameMatch || eventMatch || playMatch || featureMatch;
 

@@ -60,7 +60,9 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                 (q.includes('kids') && v.isAllAges) ||
                 (q.includes('outdoor') && v.hasOutdoorSeating) ||
                 (q.includes('patio') && v.hasOutdoorSeating) ||
-                (q.includes('private') && v.hasPrivateRoom)
+                (q.includes('private') && (v.hasPrivateRoom || (v.privateSpaces && v.privateSpaces.length > 0))) ||
+                (q.includes('room') && (v.privateSpaces && v.privateSpaces.length > 0)) ||
+                (q.includes('back room') && (v.privateSpaces && v.privateSpaces.length > 0))
             );
         }
 

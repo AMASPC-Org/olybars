@@ -3,8 +3,10 @@ import admin from 'firebase-admin';
 import { config } from './config';
 
 // Safety Switch: Ensure we don't accidentally target Production from Local
-if (process.env.NODE_ENV === 'development' && !process.env.FIRESTORE_EMULATOR_HOST) {
+const isCloudIntention = process.argv.includes('--cloud') || process.argv.includes('--force-prod');
+if (process.env.NODE_ENV === 'development' && !process.env.FIRESTORE_EMULATOR_HOST && !isCloudIntention) {
     console.error('❌ [FATAL] Attempting to connect to Production DB from Local Environment without Emulator. Aborting.');
+    console.error('Use --cloud to intentionally target the remote database.');
     process.exit(1);
 }
 

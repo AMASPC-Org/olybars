@@ -23,6 +23,7 @@ import { PhotoApprovalCard } from '../../admin/components/PhotoApprovalCard';
 import { Camera } from 'lucide-react';
 import { MenuManagementTab } from '../components/MenuManagementTab';
 import { PartnerManualTab } from '../components/PartnerManualTab';
+import { BackRoomManagementTab } from '../components/BackRoomManagementTab';
 import { Book } from 'lucide-react';
 
 interface OwnerDashboardProps {
@@ -82,7 +83,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const [dealDescription, setDealDescription] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
     const [showArtieCommands, setShowArtieCommands] = useState(false);
-    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'menu' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports' | 'manual'>(initialView as any); // Added 'menu' and 'manual'
+    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'menu' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports' | 'manual' | 'backroom'>(initialView as any); // Added 'menu', 'manual', 'backroom'
     const [hourlyReport, setHourlyReport] = useState<any>(null);
     const [selectedReportDate, setSelectedReportDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [statsPeriod, setStatsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
@@ -524,6 +525,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                     Listing
                 </button>
                 <button
+                    onClick={() => setDashboardView('backroom')}
+                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'backroom' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                >
+                    Back Room
+                </button>
+                <button
                     onClick={() => setDashboardView('menu')}
                     className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'menu' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
                 >
@@ -963,6 +970,13 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         venues={venues}
                         onUpdate={updateVenue}
                         userProfile={userProfile}
+                    />
+                )}
+
+                {myVenue && dashboardView === 'backroom' && (
+                    <BackRoomManagementTab
+                        venue={myVenue}
+                        onUpdate={(updates) => updateVenue(myVenue.id, updates)}
                     />
                 )}
 

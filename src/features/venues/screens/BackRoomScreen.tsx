@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import {
     Key, Users, Info, ChevronRight, ExternalLink, MapPin,
     Sparkles, Bot, ShieldCheck, Heart
@@ -9,6 +9,9 @@ import { SEO } from '../../../components/common/SEO';
 
 export const BackRoomScreen: React.FC = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const venueIdFilter = searchParams.get('venueId');
+
     // Supporting both props and context for maximum flexibility
     const context = useOutletContext<{
         venues: Venue[];
@@ -17,7 +20,7 @@ export const BackRoomScreen: React.FC = () => {
     const venues = context?.venues || [];
 
     const roomsWithVenue = useMemo(() => {
-        return venues.flatMap(v =>
+        const allRooms = venues.flatMap(v =>
             (v.privateSpaces || []).map(space => ({
                 ...space,
                 venueId: v.id,
@@ -27,7 +30,12 @@ export const BackRoomScreen: React.FC = () => {
                 venuePhoto: v.photos?.[0]?.url
             }))
         );
-    }, [venues]);
+
+        if (venueIdFilter) {
+            return allRooms.filter(r => r.venueId === venueIdFilter);
+        }
+        return allRooms;
+    }, [venues, venueIdFilter]);
 
     return (
         <div className="bg-background min-h-screen pb-32 font-sans text-slate-100">
@@ -50,8 +58,18 @@ export const BackRoomScreen: React.FC = () => {
                     THE <span className="text-primary">BACK ROOM</span>
                 </h1>
                 <p className="text-sm font-bold text-slate-400 uppercase tracking-widest italic animate-in fade-in slide-in-from-bottom-6 duration-1000">
-                    Private inventory for squads & parties
+                    {venueIdFilter && roomsWithVenue.length > 0
+                        ? `Exclusive inventory for ${roomsWithVenue[0].venueName}`
+                        : 'Private inventory for squads & parties'}
                 </p>
+                {venueIdFilter && (
+                    <button
+                        onClick={() => navigate('/back-room')}
+                        className="mt-4 text-[10px] font-black uppercase text-primary tracking-widest hover:underline"
+                    >
+                        View All Rooms
+                    </button>
+                )}
             </div>
 
             {/* Main Content */}

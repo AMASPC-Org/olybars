@@ -12,7 +12,7 @@ interface Message {
 export const ArtieChatWidget: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
-        { role: 'model', content: "Hey. I'm Artie Wells. I keep the tap lines clean and the data honest. What you looking for?" }
+        { role: 'model', content: "Hey. I'm Artie. I keep the tap lines clean and the data honest. What you looking for?" }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -88,7 +88,7 @@ export const ArtieChatWidget: React.FC = () => {
                                 <Sparkles size={18} />
                             </div>
                             <div>
-                                <h3 className="text-white font-league text-xl font-bold tracking-wide leading-none">ARTIE WELLS</h3>
+                                <h3 className="text-white font-league text-xl font-bold tracking-wide leading-none">ARTIE</h3>
                                 <p className="text-xs text-slate-400 font-body">98501 Original</p>
                             </div>
                         </div>

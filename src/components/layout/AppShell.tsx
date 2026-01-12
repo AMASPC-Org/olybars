@@ -189,7 +189,7 @@ export const AppShell: React.FC<AppShellProps> = ({
     '/venue-handover'
   ].includes(location.pathname);
 
-  const isDiscoveryFlow = location.pathname === '/' || location.pathname.startsWith('/venues/');
+  const isDiscoveryFlow = location.pathname === '/' || location.pathname.startsWith('/venues/') || location.pathname === '/back-room';
 
   return (
     <div className={`h-full bg-background text-white font-sans mx-auto relative shadow-2xl overflow-hidden flex flex-col transition-all duration-500 ${isFullWidthPage
@@ -240,8 +240,12 @@ export const AppShell: React.FC<AppShellProps> = ({
             </div>
           </div>
 
-          {/* The Buzz Clock Component - Hidden on Map, during Search, on League Membership, or for Super Admins on Admin/Owner pages */}
-          {!isMapPage && !searchQuery && location.pathname !== '/league-membership' && !(isSystemAdmin(userProfile) && (location.pathname === '/admin' || location.pathname === '/owner')) && <BuzzClock venues={venues} />}
+          {/* The Buzz Clock Component - Hidden on Map, during Search, on League Membership, or on administrative/profile pages */}
+          {!isMapPage &&
+            !searchQuery &&
+            !['/league-membership', '/profile', '/settings', '/owner', '/admin', '/back-room'].includes(location.pathname) &&
+            <BuzzClock venues={venues} />
+          }
 
         </div>
       )}

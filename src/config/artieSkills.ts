@@ -278,5 +278,21 @@ Confirm the details before saving.`,
             { name: 'prompt', description: 'The image generation prompt', required: true }
         ],
         actionTemplate: '[ACTION]: {"skill": "generate_image", "params": {"prompt": "{{prompt}}"}}'
+    },
+    promote_private_space: {
+        id: 'promote_private_space',
+        name: 'Promote Private Space',
+        description: 'Create a social post or announcement for a specific private room or booth.',
+        category: 'CONTENT_ENGINE',
+        protocol: `
+1. Identify the private space to promote (from the venue listing).
+2. Ask about the target audience (Parties, Business meetings, Squads).
+3. Draft a post highlighting capacity and unique features (AV, private bar).
+4. COMPLIANCE: Safe ride mention mandatory for party/squad promos.`,
+        params: [
+            { name: 'space_name', description: 'Name of the private space', required: true },
+            { name: 'copy', description: 'The generated caption text', required: true }
+        ],
+        actionTemplate: '[ACTION]: {"skill": "promote_private_space", "params": {"space_name": "{{space_name}}", "copy": "{{copy}}"}}'
     }
 };

@@ -74,5 +74,13 @@ export const ARTIE_TOOLS = [
             },
             required: ['skill_id']
         }
+    },
+    {
+        name: 'lookup_weather',
+        description: 'Get the current weather conditions in Olympia, WA to filter venue recommendations (Indoor/Outdoor).',
+        parameters: {
+            type: 'object',
+            properties: {}
+        }
     }
 ];

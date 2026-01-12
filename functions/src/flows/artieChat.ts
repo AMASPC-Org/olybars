@@ -139,6 +139,10 @@ Rule: DO NOT use[ACTION] until details are complete.
                     else if (name === 'leagueLeaderboard') result = await leagueLeaderboard({ ...args, userId });
                     else if (name === 'eventDiscovery') result = await eventDiscovery(args);
                     else if (name === 'makerSpotlight') result = await makerSpotlight(args);
+                    else if (name === 'lookup_weather') {
+                        const { weatherService } = await import('../services/weatherService');
+                        result = await weatherService.getCurrentWeather();
+                    }
                 } catch (toolError: any) {
                     result = { error: toolError.message };
                 }

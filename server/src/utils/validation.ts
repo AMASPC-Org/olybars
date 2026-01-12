@@ -198,6 +198,12 @@ export const VenueUpdateSchema = z.object({
     guestPolicy: z.string().optional(),
     isCinderella: z.boolean().optional(),
     cinderellaHours: z.string().optional(),
+    privateSpaces: z.array(z.object({
+        name: z.string(),
+        capacity: z.number(),
+        description: z.string(),
+        bookingLink: z.string().url().optional().or(z.literal(''))
+    })).optional(),
 });
 
 export const VenueOnboardSchema = z.object({
@@ -311,4 +317,10 @@ export const VenueSchema = z.object({
     guestPolicy: z.string().optional(),
     isCinderella: z.boolean().optional(),
     cinderellaHours: z.string().optional(),
+    privateSpaces: z.array(z.object({
+        name: z.string(),
+        capacity: z.number(),
+        description: z.string(),
+        bookingLink: z.string().url().optional().or(z.literal(''))
+    })).optional(),
 });

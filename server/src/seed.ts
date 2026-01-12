@@ -37,10 +37,16 @@ async function seedVenues() {
         }
     } else if (isLocal) {
         if (!process.env.FIRESTORE_EMULATOR_HOST) {
-            console.error('❌ [ERROR] NO EMULATOR DETECTED. Aborting.');
-            process.exit(1);
+            // Allow cloud seeding for non-production environments (e.g. dev syncing)
+            if (process.env.NODE_ENV !== 'production' && process.argv.includes('--cloud')) {
+                console.log(`📡 [CLOUD] TARGETING REMOTE PROJECT: ${config.GOOGLE_CLOUD_PROJECT}`);
+            } else {
+                console.error('❌ [ERROR] NO EMULATOR DETECTED. Use --cloud to target remote DB or start emulator.');
+                process.exit(1);
+            }
+        } else {
+            console.log('📡 [LOCAL] Connected to Emulator. Proceeding with idempotent seed.');
         }
-        console.log('📡 [LOCAL] Connected to Emulator. Proceeding with idempotent seed.');
     }
 
     console.log('Starting "The Iron Seed" (Idempotent + Validated)...');
