@@ -1,0 +1,28 @@
+steps:
+  # Step 1: Build the Container Image
+  # We use the root Dockerfile to package the backend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/olybars-backend', '.']
+
+  # Step 2: Push the Image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/olybars-backend']
+
+  # Step 3: Deploy to Cloud Run
+  # We use the image we just pushed, ensuring consistency
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'olybars-backend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/olybars-backend'
+      - '--region'
+      - 'us-west1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated' # Ensure public API access (verify if this matches your security model)
+
+images:
+  - 'gcr.io/$PROJECT_ID/olybars-backend'

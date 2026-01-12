@@ -2,12 +2,7 @@ node_modules
 dist
 .git
 .env
-.env.*
-.DS_Store
-Thumbs.db
-coverage
-.firebaserc
-firebase.json
-firestore.rules
-storage.rules
-functions/node_modules
+.firebase
+.github
+tests
+_archive
