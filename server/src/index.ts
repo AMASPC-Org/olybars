@@ -197,6 +197,7 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
     res.json({
         status: 'popping',
+        verified: 'CI_TRIGGER_WORKS',
         timestamp: Date.now(),
         env: config.NODE_ENV,
         version: '1.0.0-hardened'
@@ -1122,7 +1123,7 @@ v1Router.post('/chat', identifyUser, artieRateLimiter, verifyHoneypot, blockAggr
         // [SCHMIDT SWITCH] Dynamic Agent Routing
         let result;
         const isOwner = ['owner', 'manager', 'admin', 'super-admin'].includes(realRole);
-        
+
         if (isOwner) {
             console.log(`[ROUTER] 👔 User ${userId} is ${realRole} -> Activating SCHMIDT.`);
             result = await schmidtChatLogic({ history: history || [], question, userId, userRole: realRole });
