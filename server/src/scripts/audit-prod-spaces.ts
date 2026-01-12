@@ -1,36 +1,31 @@
 
-import { db } from '../firebaseAdmin';
+import { db } from '../firebaseAdmin.js';
 
-const TARGET_VENUES = [
-    'hannahs',
-    'well-80',
-    'anthonys-hearthfire',
-    'the-mark-olympia'
-];
+const auditProdSpaces = async () => {
+    try {
+        console.log('\n🔍 AUDIT: Scanning ALL VENUES for Private Spaces (Production)\n');
+        console.log('--------------------------------------------------');
 
-async function audit() {
-    console.log("🔍 AUDITING PROD VENUES...");
+        const venuesSnapshot = await db.collection('venues').get();
 
-    for (const id of TARGET_VENUES) {
-        const doc = await db.collection('venues').doc(id).get();
-        if (!doc.exists) {
-            console.log(`❌ ${id}: Document not found.`);
-            continue;
-        }
+        venuesSnapshot.docs.forEach(doc => {
+            const data = doc.data();
+            const spaces = data.privateSpaces || [];
 
-        const data = doc.data();
-        const spaces = data?.privateSpaces || [];
+            if (spaces.length > 0) {
+                console.log(`\n📍 VENUE: ${data.name} (${doc.id})`);
+                console.log(`   ⚠️ privateSpaces FOUND (${spaces.length}):`);
+                spaces.forEach((s: any) => {
+                    console.log(`      - ${s.name} (Cap: ${s.capacity})`);
+                });
+            }
+        });
 
-        console.log(`\n📍 VENUE: ${data?.name} (${id})`);
-        if (spaces.length === 0) {
-            console.log(`   ✅ privateSpaces: [] (EMPTY)`);
-        } else {
-            console.log(`   ⚠️ privateSpaces FOUND (${spaces.length}):`);
-            spaces.forEach((s: any) => {
-                console.log(`      - ${s.name} (Cap: ${s.capacity})`);
-            });
-        }
+        console.log('\n--------------------------------------------------');
+        console.log('✅ Audit Complete.');
+    } catch (error) {
+        console.error('❌ Audit Failed:', error);
     }
-}
+};
 
-audit().catch(console.error);
+auditProdSpaces();

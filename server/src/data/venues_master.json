@@ -29,20 +29,7 @@
       "is_directory_listed": true,
       "is_league_eligible": true
     },
-    "privateSpaces": [
-      {
-        "name": "The Waterfront Nook",
-        "capacity": 8,
-        "description": "An intimate, scenic spot right by the window with a direct view of the marina.",
-        "bookingLink": "https://www.anthonys.com/restaurant/anthonys-hearthfire-grill-olympia/"
-      },
-      {
-        "name": "Hearthfire Event Room",
-        "capacity": 30,
-        "description": "Full private room with hearthfire access and custom catering options.",
-        "bookingLink": "https://www.anthonys.com/restaurant/anthonys-hearthfire-grill-olympia/"
-      }
-    ]
+    "privateSpaces": []
   },
   {
     "id": "well-80",
@@ -69,10 +56,15 @@
     "physicalRoom": true,
     "privateSpaces": [
       {
-        "name": "The King Leopold Room",
+        "name": "Back Barrel Room",
         "capacity": 40,
-        "description": "A semi-private dining area perfect for large groups, dedicated to the history of the Artesian well.",
-        "bookingLink": "https://well80.com/reservations"
+        "description": "A semi-private space behind the main bar, perfect for casual gatherings.",
+        "amenities": [
+          "TV",
+          "Long Tables"
+        ],
+        "price_range": "$$",
+        "bookingLink": "https://well80.com/private-events"
       }
     ],
     "coordinates": {
