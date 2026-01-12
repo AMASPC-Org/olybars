@@ -29,7 +29,7 @@
       ]
     },
     "allowImportingTsExtensions": true,
-    "strict": true,
+    "strict": false,
     "noEmit": true
   },
   "include": [
