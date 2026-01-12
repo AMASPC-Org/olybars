@@ -60,6 +60,7 @@
     transform: scale(1);
     opacity: 0.8;
   }
+
   100% {
     transform: scale(3.5);
     opacity: 0;
@@ -80,8 +81,13 @@
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .shimmer-sweep {
@@ -93,12 +99,10 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.05),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.05),
+      transparent);
   animation: shimmer 3s infinite;
 }
 
@@ -114,4 +118,44 @@
   border: 1px solid rgba(251, 191, 36, 0.3);
   white-space: nowrap;
   transform: translateY(-20px);
+}
+
+/* 8. FLUID TYPOGRAPHY & OVERLAYS (Added 2026-01-12) */
+.display-title-fluid {
+  /* Dynamic font size: Minimum 24px, Preferred 6vw, Maximum 40px */
+  font-size: clamp(24px, 6vw, 40px);
+
+  /* Layout & Wrapping */
+  line-height: 1.1;
+  /* Tight line height for display fonts */
+  white-space: normal;
+  /* ALLOWS WRAPPING (Fixes the issue) */
+  overflow: visible;
+  /* No hiding text */
+  text-overflow: clip;
+  /* No ellipses */
+  text-align: center;
+  /* Matches your centered style */
+
+  /* Spacing */
+  padding-left: 1rem;
+  padding-right: 1rem;
+  width: 100%;
+}
+
+.text-overlay-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  /* Pushes content to bottom */
+
+  /* Ensure background protects text legibility */
+  background: linear-gradient(to top, rgba(15, 23, 42, 1) 0%, rgba(15, 23, 42, 0.8) 60%, rgba(15, 23, 42, 0) 100%);
+
+  /* Layout constraints */
+  width: 100%;
+  padding-bottom: 1.5rem;
+  /* Space for the button */
+  min-height: 50%;
+  /* Ensure gradient covers enough of the image */
 }

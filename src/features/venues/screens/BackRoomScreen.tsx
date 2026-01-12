@@ -87,38 +87,37 @@ export const BackRoomScreen: React.FC = () => {
                                 className="bg-surface border-2 border-slate-800 rounded-[2.5rem] overflow-hidden hover:border-primary/50 transition-all group shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700"
                                 style={{ animationDelay: `${idx * 150}ms` }}
                             >
-                                <div className="relative h-48 overflow-hidden">
+                                <div className="relative min-h-[16rem] overflow-hidden text-center">
                                     <img
                                         src={room.venuePhoto || 'https://images.unsplash.com/photo-1574096079513-d8259312b785?w=500&auto=format&fit=crop'}
                                         alt={room.name}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60"
+                                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-60"
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-transparent" />
 
-                                    {/* Venue Badge */}
-                                    <div className="absolute bottom-4 left-6 flex items-center gap-2">
-                                        <div className="bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 rounded-full text-center">
-                                            <span className="text-[9px] font-black text-white uppercase tracking-widest leading-none block">{room.venueName}</span>
+                                    {/* FLUID OVERLAY: Replaces old gradient and header stack */}
+                                    <div className="text-overlay-container relative z-10 pt-24">
+                                        <div className="flex justify-center mb-2">
+                                            <div className="bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 rounded-full">
+                                                <span className="text-[9px] font-black text-white uppercase tracking-widest leading-none block">{room.venueName}</span>
+                                            </div>
                                         </div>
+
+                                        <h2 className="display-title-fluid text-white font-league uppercase italic">
+                                            {room.name}
+                                        </h2>
+
+                                        <div className="flex items-center justify-center gap-2 text-slate-300 mt-2 mb-2">
+                                            <Users size={14} className="text-primary" />
+                                            <span className="text-xs font-bold uppercase tracking-wide">Capacity: {room.capacity} Squad Members</span>
+                                        </div>
+
+                                        <p className="text-sm text-slate-400 leading-relaxed font-medium mb-1 px-6 line-clamp-2 italic">
+                                            "{room.description}"
+                                        </p>
                                     </div>
                                 </div>
 
-                                <div className="px-8 pb-8 -mt-4">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div>
-                                            <h2 className="text-3xl font-black uppercase font-league italic leading-tight group-hover:text-primary transition-colors text-white">
-                                                {room.name}
-                                            </h2>
-                                            <div className="flex items-center gap-2 text-slate-500 mt-1">
-                                                <Users size={14} className="text-primary" />
-                                                <span className="text-xs font-bold uppercase tracking-wide">Capacity: {room.capacity} Squad Members</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <p className="text-sm text-slate-400 leading-relaxed font-medium mb-6 line-clamp-2 italic">
-                                        "{room.description}"
-                                    </p>
+                                <div className="px-6 pb-6 pt-4 bg-surface">
 
                                     <div className="flex flex-col gap-3">
                                         {room.bookingLink ? (
