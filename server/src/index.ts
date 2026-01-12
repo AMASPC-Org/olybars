@@ -197,7 +197,6 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
     res.json({
         status: 'popping',
-        verified: 'CI_TRIGGER_WORKS',
         timestamp: Date.now(),
         env: config.NODE_ENV,
         version: '1.0.0-hardened'
