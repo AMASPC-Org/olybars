@@ -1,0 +1,7 @@
+name: SMOKE TEST
+on: [push]
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "GITHUB IS LISTENING"
