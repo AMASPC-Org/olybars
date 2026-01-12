@@ -239,14 +239,14 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                 await opsArtie.processAction('SUBMIT_IMAGE_CONTEXT', userText, venueId);
             } else {
                 // General chat fallback for partners
-                await guestArtie.sendMessage(userText, userProfile?.uid, userProfile?.role, hpValue);
+                await guestArtie.sendMessage(userText, userProfile?.uid, userProfile?.role, hpValue, 'Schmidt');
             }
         } else {
             // Guest Mode: Send to LLM
             setPendingAction(null);
             setSuggestions([]);
             setActionStatus('idle');
-            await guestArtie.sendMessage(userText, userProfile?.uid, userProfile?.role, hpValue);
+            await guestArtie.sendMessage(userText, userProfile?.uid, userProfile?.role, hpValue, 'Artie');
         }
     };
 

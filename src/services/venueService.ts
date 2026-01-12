@@ -14,7 +14,10 @@ import { API_ENDPOINTS } from '../lib/api-config';
  */
 export const fetchVenues = async (brief = false): Promise<Venue[]> => {
   try {
-    const url = brief ? `${API_ENDPOINTS.VENUES.LIST}?brief=true` : API_ENDPOINTS.VENUES.LIST;
+    const timestamp = Date.now();
+    const url = brief
+      ? `${API_ENDPOINTS.VENUES.LIST}?brief=true&_t=${timestamp}`
+      : `${API_ENDPOINTS.VENUES.LIST}?_t=${timestamp}`;
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch venues: ${response.statusText}`);

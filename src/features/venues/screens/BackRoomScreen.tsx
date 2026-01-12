@@ -15,6 +15,7 @@ export const BackRoomScreen: React.FC = () => {
     // Supporting both props and context for maximum flexibility
     const context = useOutletContext<{
         venues: Venue[];
+        userProfile?: UserProfile;
     }>();
 
     const venues = context?.venues || [];
@@ -153,6 +154,9 @@ export const BackRoomScreen: React.FC = () => {
                     </div>
                 )}
 
+                {/* CTA for Venue Owners */}
+                <PrivateSpaceCTA userProfile={context?.userProfile} />
+
                 {/* Info Card */}
                 <div className="mt-12 bg-primary/5 border border-primary/20 rounded-3xl p-8 text-center space-y-4">
                     <ShieldCheck className="w-8 h-8 text-primary mx-auto" />
@@ -171,6 +175,66 @@ export const BackRoomScreen: React.FC = () => {
                     <span className="text-[10px] font-black tracking-[0.3em] uppercase italic px-4">Powered by Well 80</span>
                     <div className="h-[1px] flex-1 bg-slate-800" />
                 </div>
+            </div>
+        </div>
+    );
+};
+
+const PrivateSpaceCTA: React.FC<{ userProfile?: UserProfile }> = ({ userProfile }) => {
+    const navigate = useNavigate();
+
+    // 1. OWNER: Manage Inventory
+    if (userProfile?.role === 'owner' || userProfile?.role === 'manager') {
+        return (
+            <div className="mt-8 mx-6 bg-gradient-to-r from-slate-900 to-slate-800 border border-primary/30 rounded-3xl p-6 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -z-10 transition-all group-hover:bg-primary/20" />
+
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-primary/20 p-3 rounded-full text-primary">
+                            <Key size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-white italic uppercase">Got a Hidden Gem?</h3>
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wide">
+                                Add your private space to The Back Room inventory.
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => navigate('/owner')}
+                        className="w-full md:w-auto px-6 py-3 bg-primary text-black font-black uppercase tracking-widest text-xs rounded-xl hover:bg-white transition-colors shadow-lg active:scale-95 whitespace-nowrap"
+                    >
+                        Manage My Back Room
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // 2. PUBLIC / PLAYER: Claim or Join
+    return (
+        <div className="mt-8 mx-6 bg-slate-900/50 border border-slate-700/50 rounded-3xl p-6 relative overflow-hidden">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="bg-slate-800 p-3 rounded-full text-slate-400">
+                        <Sparkles size={24} />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-black text-white italic uppercase">Host a Private Space?</h3>
+                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">
+                            {userProfile
+                                ? "Claim your venue to list your room."
+                                : "Log in or claim your venue to list your room."}
+                        </p>
+                    </div>
+                </div>
+                <button
+                    onClick={() => navigate(userProfile ? '/claim' : '/login')}
+                    className="w-full md:w-auto px-6 py-3 bg-slate-800 text-white border border-slate-700 font-black uppercase tracking-widest text-xs rounded-xl hover:bg-primary hover:text-black hover:border-primary transition-all shadow-lg active:scale-95 whitespace-nowrap"
+                >
+                    {userProfile ? "Claim Venue Listing" : "Log In / Claim"}
+                </button>
             </div>
         </div>
     );

@@ -14,7 +14,7 @@ export function useArtie() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const sendMessage = async (prompt: string, userId?: string, userRole?: string, hpValue?: string) => {
+    const sendMessage = async (prompt: string, userId?: string, userRole?: string, hpValue?: string, botName: string = 'Artie') => {
         if (!prompt.trim()) return;
 
         setIsLoading(true);
@@ -47,7 +47,7 @@ export function useArtie() {
             });
 
             if (!response.ok) {
-                throw new Error(`Artie connection failed: ${response.statusText}`);
+                throw new Error(`${botName} connection failed: ${response.statusText}`);
             }
 
             const contentType = response.headers.get('Content-Type');
@@ -91,7 +91,7 @@ export function useArtie() {
                         }
                     } catch (streamErr) {
                         // [STREAM_RESILIENCE] Gracefully handle network/stream interruptions
-                        console.warn("Artie stream interrupted. Keeping partial response.", streamErr);
+                        console.warn(`${botName} stream interrupted. Keeping partial response.`, streamErr);
                         // The loop breaks, we keep what we have in accumulatedContent
                     } finally {
                         reader.releaseLock();
@@ -100,8 +100,8 @@ export function useArtie() {
             }
 
         } catch (err: any) {
-            console.error("Artie hook failure:", err);
-            setError(err.message || "Artie is having trouble connecting to the hive mind.");
+            console.error(`${botName} hook failure:`, err);
+            setError(err.message || `${botName} is having trouble connecting to the hive mind.`);
         } finally {
             setIsLoading(false);
         }
