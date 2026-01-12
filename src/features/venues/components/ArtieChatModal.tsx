@@ -8,6 +8,7 @@ import { useToast } from '../../../components/ui/BrandedToast';
 import { useNavigate } from 'react-router-dom';
 import { UserProfile, isSystemAdmin, hasVenueAccess } from '../../../types';
 import artieLogo from '../../../assets/Artie-Only-Logo.png';
+import schmidtLogo from '../../../assets/Schmidt-Only-Logo (40 x 40 px).png';
 
 interface ArtieChatModalProps {
     isOpen: boolean;
@@ -429,7 +430,11 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                 <div className="bg-primary/10 border-b border-primary/20 p-4 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="bg-primary p-0.5 rounded-xl shadow-lg shadow-primary/20 overflow-hidden w-14 h-14 flex items-center justify-center">
-                            <img src={artieLogo} className="w-full h-full object-cover scale-110" alt={isOpsMode ? "Schmidt" : "Artie"} />
+                            <img
+                                src={isOpsMode ? schmidtLogo : artieLogo}
+                                className="w-full h-full object-cover scale-110"
+                                alt={isOpsMode ? "Schmidt" : "Artie"}
+                            />
                         </div>
                         <div>
                             <h3 className="text-xl font-black text-white uppercase tracking-tight font-league">
@@ -504,6 +509,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                             <QuickReplyChips
                                 options={opsArtie.currentBubbles}
                                 onSelect={handleChipSelect}
+                                maxVisible={3}
                             />
                         </div>
                     )}
@@ -612,7 +618,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                                                     opsArtie.opsState === 'image_gen_audience' ? "Who's the audience?" :
                                                                         opsArtie.opsState === 'image_gen_specials' ? "Any specials/deals?" :
                                                                             opsArtie.opsState === 'image_gen_context' ? "Extra context/vibe..." :
-                                                                                "Ask Artie..."
+                                                                                "Ask Coach..."
                                 ) : "Ask Artie...")}
                                 className={`w-full bg-transparent px-3 text-sm text-white outline-none placeholder:text-slate-600 font-medium ${isListening ? 'animate-pulse' : ''}`}
                             />

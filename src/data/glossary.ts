@@ -45,7 +45,8 @@ export const glossaryTerms: GlossaryCategory[] = [
             { term: 'Super-Admin', def: 'The platform lighthouse (typically ryan@amaspc.com). Has global authorization to manage any venue, override system settings, and enforce fair play standards across the entire AMA Network.' },
             { term: 'Listed Venue', def: 'A physical location (bar/pub) that appears on the OlyBars map but has not yet claimed their profile or joined the League as a Partner.' },
             { term: 'League Partner', def: 'A venue that has claimed their profile and entered into a marketing agreement with the League. Includes all active tiers: Free, DIY, Pro, and Agency.' },
-            { term: 'Artie', def: 'The spirit of the Artesian Well. A permission-gated, multimodal AI agent serving distinct roles: Visitor Concierge (public feeds), Guest Utility Guide, Player Referee, and Partner Marketing Co-Pilot.' },
+            { term: 'Artie', def: 'The spirit of the Artesian Well. A permission-gated, multimodal AI agent serving as the public concierge and guide.' },
+            { term: 'Schmidt', def: 'The Coach. A business-focused AI persona available only to Venue Owners. Schmidt handles analytics, margins, and operational tasks.' },
             { term: 'Local Maker', def: 'Local artisans (Brewers, Distillers, Ciderys) whose products are featured on the Local Maker\'s Trail.' },
             { term: 'The AMA Network', def: 'Powered by the American Marketing Alliance SPC. A network of event-based sites designed to automate marketing for local businesses.' },
         ]
@@ -54,6 +55,7 @@ export const glossaryTerms: GlossaryCategory[] = [
         category: 'Features & Tools',
         terms: [
             { term: 'The Manual', def: 'The official Help Center and FAQ knowledge base for OlyBars.com.' },
+            { term: 'The Back Room', def: 'A dedicated directory of private spaces, nooks, and rental rooms within OlyBars venues. "Get a room."' },
             { term: 'The Brew House', def: 'The Partner Portal. The dashboard where Venue Owners manage their profile, listings, events, menus, and Flash Bounty activations.' },
             { term: 'The 60-Second Handover', def: 'The streamlined onboarding process for a Venue Owner to claim a Listed Venue and convert it into a League Partner.' },
             { term: 'Partner Status', def: 'The active subscription tier of a League Partner: Free (Claimed), DIY Toolkit, Pro League, or Agency Legend.' },

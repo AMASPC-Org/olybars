@@ -57,7 +57,7 @@ OlyBars operates on a permission-gated hierarchy to ensure data integrity and co
 > [!NOTE]
 > **Super-Admin Access**: `ryan@amaspc.com` maintains master oversight. Use the `/api/admin/setup-super` endpoint with the `MASTER_SETUP_KEY` for manual elevation.
 
-### 2.3 The AI Concierge: "Artie"
+### 2.3 The AI Concierge: "Artie" & "Schmidt"
 Role: The friendly, witty, slightly mystical "Spirit of the Well."
 
 #### A. For Players: The Guide (including Visitor Mode)
@@ -66,7 +66,12 @@ Role: The friendly, witty, slightly mystical "Spirit of the Well."
 *   **Visitor Mode**: When accessed from public discovery feeds, Artie defaults to a "Visitor Concierge" persona. For Administrators, this mode suppresses Ops/Owner tools to ensure a consistent, role-agnostic guide experience for public-facing discovery.
 *   **Compliance Guardrails**: Artie shifts to "Guardian Mode" if users exhibit behavior suggesting over-consumption, suggesting food or water.
 
-#### B. For Partners: The Multimodal Marketing Co-Pilot
+#### B. For Partners: "Schmidt" (The Coach)
+While Artie is the "Spirit," **Schmidt** is the "Coach." Schmidt is the business-facing persona exclusive to Venue Owners.
+*   **Tone**: Analytical, direct, results-oriented. "Let's look at the stats."
+*   **Role**: Analyzes margin logic, suggests operational improvements, and handles the "boring" stuff (hours, compliance).
+
+#### C. The Multimodal Marketing Co-Pilot
 *   **Marketing Suite**: Drafts social copy, emails, and website updates. High-margin ideation based on menu analysis.
 *   **Visual Asset Design**: Generates high-quality image prompts for marketing content (Powered by Gemini 3.0 Flash).
 *   **Automation**: Suggests Flash Bounties based on inventory/time, and ensures compliance.
@@ -205,6 +210,7 @@ Artie is the "Spirit of the Artesian Well," serving as the LLM-powered engine fo
 *   **📅 Event Secretary**: Converts simple prompts or links into structured calendar events with AI-generated descriptions.
 *   **🛡️ Compliance Guardian**: Automatically pivots non-compliant marketing language (e.g., "Flash Deal" -> "Flash Bounty").
 *   **🔍 Local RAG**: Real-time awareness of Olympia venues, maker culture, and the Artesian Bar League rulebook.
+*   **🌍 World Awareness (MCP)**: Now equipped with real-time **Weather** (for patio vs. indoor recommendations) and **Google Places** (for granular location details and opening hours).
 *   **📱 Marketing Co-Pilot**: Multi-channel drafting (Social, Email, Web) and Image Generation Prompts. [NEW]
 *   **🔗 Meta Social Engine**: Bi-directional sync for Instagram/Facebook posts and events.
 
@@ -262,6 +268,7 @@ While OlyBars builds a global community, we proactively drive users into the **P
 *   **Guest**: A User who has authenticated (logged in) but has not yet joined the League.
 *   **League Player**: A registered patron (User) who has officially joined the League. Players earn points, track progress, and unlock digital trophies (Badges). (Formerly referred to as Member).
 *   **Venue Owner**: The human operator authorized to manage a venue's profile. This is the person who performs the login action to access The Brew House.
+*   **Schmidt**: The analytical, business-focused AI persona ("Coach Mode") designed exclusively for Venue Owners. Schmidt handles data, margins, and operational compliance.
 *   **Super-Admin**: The platform lighthouse (typically `ryan@amaspc.com`). Has global authorization to manage any venue, override system settings, and enforce fair play standard across the entire AMA Network.
 *   **Listed Venue**: A physical location (bar/pub) that appears on the OlyBars map but has not yet claimed their profile or joined the League as a Partner.
 *   **League Partner**: A venue that has claimed their profile and entered into a marketing agreement with the League. Includes all active tiers: Free, DIY, Pro, and Agency.
@@ -280,7 +287,7 @@ While OlyBars builds a global community, we proactively drive users into the **P
     *   **Chill**: 20-60% Capacity. Conversational, date vibes.
     *   **Buzzing**: 60-90% Capacity. Tables full, high energy.
     *   **Packed**: > 90% Capacity. Standing room only. [Triggers SMS to Starred Users].
-*   **The Back Room**: A directory of private spaces, nooks, and rental rooms within OlyBars venues. "Get a room."
+*   **The Back Room**: A dedicated directory of private spaces, nooks, and rental rooms within OlyBars venues. Used for booking private parties or finding quiet corners. "Get a room."
 *   **The Weekly Pulse**: The official Artesian Bar League newsletter.
 *   **The Brew House**: The Partner Portal. The dashboard where Venue Owners manage their profile, listings, events, and **Flash Bounty** activations.
 *   **Venue Capacity**: A static data point representing the legal or practical occupancy of a venue. This serves as the baseline for determining density and busyness levels.

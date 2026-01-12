@@ -349,7 +349,13 @@ export const AppShell: React.FC<AppShellProps> = ({
       />
 
       {/* Artie Floating Action Button */}
-      <ArtieHoverIcon onClick={() => setShowArtie?.(true)} />
+      <ArtieHoverIcon
+        onClick={() => {
+          (window as any)._artie_force_guest = false;
+          setShowArtie?.(true);
+        }}
+        userProfile={userProfile}
+      />
 
       {/* Artie Chat Modal */}
       <ArtieChatModal

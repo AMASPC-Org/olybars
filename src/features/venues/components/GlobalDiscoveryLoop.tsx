@@ -87,7 +87,7 @@ export const GlobalDiscoveryLoop: React.FC<GlobalDiscoveryLoopProps> = ({
 
             {/* Global Pivot (The Artie Catch-All) */}
             <button
-                onClick={() => onAskArtie('visitor')}
+                onClick={() => onAskArtie()}
                 className="w-full bg-slate-900/50 hover:bg-slate-900 border border-white/10 hover:border-primary/50 p-5 rounded-2xl flex items-center gap-4 group transition-all"
             >
                 <div className="bg-oly-navy p-1 rounded-xl border border-oly-gold/30 group-hover:border-oly-gold group-hover:bg-black transition-all overflow-hidden w-12 h-12 flex-shrink-0">

@@ -44,7 +44,7 @@ export class GeminiService {
             model,
             contents,
             systemInstruction: { parts: [{ text: instruction }] },
-            tools: tools ? [{ function_declarations: tools }] : undefined,   
+            tools: tools ? [{ function_declarations: tools }] : undefined,
             cachedContent,
             config: { temperature }
         });
@@ -58,7 +58,7 @@ export class GeminiService {
             model,
             contents,
             systemInstruction: { parts: [{ text: instruction }] },
-            tools: tools ? [{ function_declarations: tools }] : undefined,   
+            tools: tools ? [{ function_declarations: tools }] : undefined,
             cachedContent,
             config: { temperature }
         });
@@ -105,7 +105,7 @@ export class GeminiService {
         return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
     }
 
-    async analyzeEvent(event: any): Promise<{ confidenceScore: number; issues: string[]; lcbWarning: boolean; suggestions: string[]; summary: string }> { 
+    async analyzeEvent(event: any): Promise<{ confidenceScore: number; issues: string[]; lcbWarning: boolean; suggestions: string[]; summary: string }> {
         // Event Analysis uses Artie as the "Guardian"
         const prompt = `You are Artie, the Event Quality Guardian for OlyBars.
         Analyze this event submission for completeness, excitement ("Vibe"), and LCB Compliance.
@@ -141,14 +141,14 @@ export class GeminiService {
         });
 
         let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (!text) throw new Error("Artie failed to analyze event.");        
+        if (!text) throw new Error("Artie failed to analyze event.");
 
         text = text.replace(/```json\n?|```/g, '').trim();
 
         try {
             return JSON.parse(text);
         } catch (e) {
-            console.error("JSON Parse Error on Artie Analysis:", text);      
+            console.error("JSON Parse Error on Artie Analysis:", text);
             return {
                 confidenceScore: 0,
                 issues: ["Failed to parse AI response"],
@@ -164,13 +164,14 @@ export class GeminiService {
     }
 
     // [UPDATED] Uses SCHMIDT Persona for Business Logic
-    async generateManagerSuggestion(stats: any, venue: any): Promise<any> {  
+    async generateManagerSuggestion(stats: any, venue: any): Promise<any> {
         const prompt = `
         TASK: Analyze venue performance and suggest a "Yield Management" action.
 
         CONTEXT:
         Venue Vibe: ${venue.insiderVibe || venue.description}
         Amenities: ${venue.amenityDetails?.map((a: any) => a.name).join(', ')}
+        Private Spaces: ${venue.privateSpaces?.map((s: any) => `${s.name} (${s.capacity})`).join(', ') || 'None'}
         Last 14 Days Activity: ${JSON.stringify(stats)}
         Point Bank Balance: ${venue.pointBank || 5000}
 
@@ -207,13 +208,13 @@ export class GeminiService {
         });
 
         let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (!text) throw new Error("Schmidt failed to generate suggestion.");  
+        if (!text) throw new Error("Schmidt failed to generate suggestion.");
         text = text.replace(/```json\n?|```/g, '').trim();
 
         try {
             return JSON.parse(text);
         } catch (e) {
-            console.error("JSON Parse Error on Schmidt Suggestion:", text);    
+            console.error("JSON Parse Error on Schmidt Suggestion:", text);
             return null;
         }
     }

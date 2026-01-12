@@ -1012,7 +1012,11 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'tier_config', 'hasGameVibeCheckEnabled',
         'fullMenu', // [PHASE 1] Menu Module
         'ai_draft_profile', // [PHASE 2] Data Refinery
-        'location', 'coordinates', 'hasOutdoorSeating'
+        'location', 'coordinates', 'hasOutdoorSeating',
+        'privateSpaces', 'hasPrivateRoom', // [FIX] Whitelist private spaces
+        'isCinderella', 'cinderellaHours',
+        'guestPolicy', 'membershipRequired',
+        'social_auto_sync'
     ];
 
     const playerFields: (keyof Venue)[] = ['status', 'liveGameStatus', 'photos'];
