@@ -15,9 +15,9 @@ const question = (query: string) => new Promise<string>(resolve => rl.question(q
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function seedVenues() {
-    const isProd = config.NODE_ENV === 'production';
-    const isLocal = !process.env.K_SERVICE;
     const forceProd = process.argv.includes('--force-prod');
+    const isProd = config.NODE_ENV === 'production' || forceProd;
+    const isLocal = !process.env.K_SERVICE;
 
     console.log(`\n🚀 [IRON SEED] Environment: ${config.NODE_ENV.toUpperCase()}`);
 

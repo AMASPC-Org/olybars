@@ -82,6 +82,7 @@ const DiscoveryLayoutContent: React.FC<{
         const { isToday, searchQuery, selectedDate } = useDiscovery();
         const isVenueProfile = location.pathname.includes('/venues/');
         const isBackRoom = location.pathname === '/back-room';
+        const isClaimPage = location.pathname.startsWith('/partners/claim');
 
         return (
             <div className="flex flex-col min-h-screen">
@@ -93,8 +94,8 @@ const DiscoveryLayoutContent: React.FC<{
                 />
 
                 <div className="space-y-6">
-                    {/* Zone 2: The Buzz Clock (Hero) - Only if Today, no search, NOT a profile, and NOT the back room */}
-                    {isToday && !searchQuery && !isVenueProfile && !isBackRoom && (
+                    {/* Zone 2: The Buzz Clock (Hero) - Only if Today, no search, NOT a profile, NOT the back room, and NOT claim page */}
+                    {isToday && !searchQuery && !isVenueProfile && !isBackRoom && !isClaimPage && (
                         <div className="animate-in fade-in slide-in-from-top-4 duration-700">
                             <BuzzClock venues={venues} />
                         </div>

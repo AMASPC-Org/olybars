@@ -230,10 +230,10 @@ const PrivateSpaceCTA: React.FC<{ userProfile?: UserProfile }> = ({ userProfile 
                     </div>
                 </div>
                 <button
-                    onClick={() => navigate(userProfile ? '/claim' : '/login')}
+                    onClick={() => navigate(userProfile ? '/partners/claim' : '/login')}
                     className="w-full md:w-auto px-6 py-3 bg-slate-800 text-white border border-slate-700 font-black uppercase tracking-widest text-xs rounded-xl hover:bg-primary hover:text-black hover:border-primary transition-all shadow-lg active:scale-95 whitespace-nowrap"
                 >
-                    {userProfile ? "Claim Venue Listing" : "Log In / Claim"}
+                    {userProfile ? "Claim Venue" : "Log In / Claim"}
                 </button>
             </div>
         </div>

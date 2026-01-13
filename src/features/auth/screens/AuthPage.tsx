@@ -1,0 +1,56 @@
+import React, { useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { LoginModal } from '../components/LoginModal';
+import { UserProfile, Venue } from '../../../types';
+
+interface AuthPageProps {
+    userProfile: UserProfile;
+    setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
+    venues: Venue[];
+    alertPrefs: any;
+    setAlertPrefs: (prefs: any) => void;
+    openInfo: (title: string, text: string) => void;
+    onOwnerSuccess: () => void;
+    loginMode: 'user' | 'owner';
+    setLoginMode: (mode: 'user' | 'owner') => void;
+    userSubMode: 'login' | 'signup';
+    setUserSubMode: (mode: 'login' | 'signup') => void;
+}
+
+export const AuthPage: React.FC<AuthPageProps> = (props) => {
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+
+    const redirectPath = searchParams.get('redirect') || '/';
+    const modeParam = searchParams.get('mode');
+
+    useEffect(() => {
+        if (modeParam === 'signup' || modeParam === 'login') {
+            props.setUserSubMode(modeParam as 'login' | 'signup');
+        }
+    }, [modeParam, props]);
+
+    const handleModalClose = () => {
+        // If user is logged in (not guest), redirect to target
+        if (props.userProfile.uid !== 'guest') {
+            navigate(redirectPath);
+        } else {
+            // If cancelled/still guest, go home
+            navigate('/');
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Ambient Background */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black" />
+            <div className="absolute inset-0 opacity-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay" />
+
+            <LoginModal
+                {...props}
+                isOpen={true}
+                onClose={handleModalClose}
+            />
+        </div>
+    );
+};

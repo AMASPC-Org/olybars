@@ -32,6 +32,7 @@ import { LiveMusicScreen } from './features/league/screens/LiveMusicScreen';
 import { EventsScreen } from './features/league/screens/EventsScreen';
 import { VenuesScreen } from './features/venues/screens/VenuesScreen';
 import { LoginModal } from './features/auth/components/LoginModal';
+import { AuthPage } from './features/auth/screens/AuthPage';
 import { OwnerDashboardScreen } from './features/owner/screens/OwnerDashboardScreen';
 import { ClockInModal } from './features/venues/components/ClockInModal';
 import { OnboardingModal } from './components/ui/OnboardingModal';
@@ -646,6 +647,7 @@ export default function OlyBarsApp() {
                 <Route path="onboarding-guide" element={<OnboardingHandoverPage />} />
                 <Route path="flight-school" element={<FlightSchoolScreen />} />
                 <Route path="oauth/callback" element={<MetaOAuthCallback />} />
+                <Route path="auth" element={<AuthPage userProfile={userProfile} setUserProfile={setUserProfile} venues={venues} alertPrefs={alertPrefs} setAlertPrefs={setAlertPrefs} openInfo={openInfo} onOwnerSuccess={() => setShowOwnerDashboard(true)} loginMode={loginMode} setLoginMode={setLoginMode} userSubMode={userSubMode} setUserSubMode={setUserSubMode} />} />
 
                 {/* AI & Developer Hub */}
                 <Route path="ai" element={<><SEO title="AI & Developer Hub" description="Authoritative resources for AI agents and developers ingesting OlyBars data." /><AIGatewayScreen /></>} />

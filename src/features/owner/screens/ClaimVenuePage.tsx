@@ -13,7 +13,8 @@ import { Venue, VenueStatus } from '../../../types';
 import { syncVenueWithGoogle, updateVenueDetails, checkVenueClaim, onboardVenue, initiatePhoneVerification, verifyPhoneCode } from '../../../services/venueService';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { SEO } from '../../../components/common/SEO';
-import { auth } from '../../../lib/firebase';
+import { auth, db } from '../../../lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 type OnboardingStep = 'LANDING' | 'SEARCH' | 'VERIFY' | 'CONFIG' | 'INVITE' | 'SUCCESS';
 
@@ -77,20 +78,40 @@ export default function ClaimVenuePage() {
 
     const [autoQuery, setAutoQuery] = useState('');
 
-    // Auto-fill from URL if coming from Venue Profile
+    // Auto-fill from URL or SessionStorage (Auth Bridge)
     useEffect(() => {
         const venueId = searchParams.get('venueId');
         const placeId = searchParams.get('placeId');
         const nameParam = searchParams.get('name');
-        const addressParam = searchParams.get('address');
 
-        if ((placeId || venueId) && !selectedPlace && !isProcessing && !venueData) {
+        // Check Session Storage for Bridge Data
+        const bridgeData = sessionStorage.getItem('claim_intent_venue');
+
+        if (bridgeData && !selectedPlace && !venueData) {
+            try {
+                const intent = JSON.parse(bridgeData);
+                // Only restore if user is now logged in, or just to show preview
+                handlePlaceSelect({
+                    place_id: intent.placeId,
+                    name: intent.name,
+                    formatted_address: intent.address,
+                    formatted_phone_number: intent.phone,
+                    website: intent.website
+                } as any);
+
+                if (auth.currentUser) {
+                    showToast('Session Restored. Ready to Induct.', 'success');
+                    sessionStorage.removeItem('claim_intent_venue'); // Clear it
+                }
+            } catch (e) { console.error('Bridge Restore Failed', e); }
+        }
+        else if ((placeId || venueId) && !selectedPlace && !isProcessing && !venueData) {
             // If we have a venue ID but no place ID, we might need a fallback, 
             // but usually we pass both now.
             handlePlaceSelect({
                 place_id: placeId || venueId,
                 name: nameParam || 'Proposed Venue',
-                formatted_address: addressParam || 'Olympia, WA'
+                formatted_address: searchParams.get('address') || 'Olympia, WA'
             } as google.maps.places.PlaceResult);
 
             // Skip landing if coming from a profile
@@ -105,9 +126,18 @@ export default function ClaimVenuePage() {
     const handleClaimClick = async () => {
         const user = auth.currentUser;
         if (!user) {
-            showToast('Please Sign In to lock this claim!', 'info');
-            // normally would trigger login modal
-            setStep('VERIFY');
+            // [AUTH BRIDGE] Save Intent
+            if (selectedPlace?.place_id && venueData) {
+                const claimIntent = {
+                    placeId: selectedPlace.place_id,
+                    name: venueData.name,
+                    address: venueData.address,
+                    phone: venueData.phone,
+                    website: venueData.website
+                };
+                sessionStorage.setItem('claim_intent_venue', JSON.stringify(claimIntent));
+            }
+            navigate(`/auth?mode=signup&redirect=${encodeURIComponent('/partners/claim')}`);
             return;
         }
 
@@ -116,6 +146,23 @@ export default function ClaimVenuePage() {
         setIsProcessing(true);
         try {
             const result = await onboardVenue(selectedPlace.place_id);
+
+            // [ADMIN NOTIFICATION]
+            try {
+                await addDoc(collection(db, 'sys_admin_notifications'), {
+                    type: "VENUE_CLAIMED",
+                    message: `Venue ${venueData?.name || 'Unknown'} claimed by ${user.email}`,
+                    meta: {
+                        placeId: selectedPlace.place_id,
+                        userId: user.uid,
+                        ownerEmail: user.email,
+                        venueId: result.venueId
+                    },
+                    status: "unread",
+                    timestamp: serverTimestamp()
+                });
+            } catch (notifyErr) { console.error("Notification Failed", notifyErr); }
+
             setVenueData(prev => ({ ...prev, id: result.venueId }));
             showToast('VENUE CLAIMED & SYNCED', 'success');
             setStep('VERIFY');
@@ -448,174 +495,184 @@ export default function ClaimVenuePage() {
                     {step === 'VERIFY' && (
                         <div className="space-y-12 animate-in fade-in slide-in-from-right-4 duration-500">
                             <div className="text-center">
-                                <h2 className="text-3xl font-black uppercase font-league mb-4">Phase 2: Data Verification</h2>
-                                <p className="text-slate-400 font-medium">Is this intel accurate? Confirm or fix the bad scrapes.</p>
+                                <h2 className="text-3xl font-black uppercase font-league mb-4">Phase 2: Verify & Secure</h2>
+                                <p className="text-slate-400 font-medium">Link your secure identity and confirm business details.</p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* [SECTION 1] Identity & Security (Priority) */}
+                            <div className="bg-slate-900/80 border border-emerald-500/20 rounded-3xl p-8 space-y-8 relative overflow-hidden group max-w-3xl mx-auto">
+                                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                    <ShieldCheck className="w-32 h-32 text-emerald-500" />
+                                </div>
+
+                                <div className="space-y-4 relative text-center md:text-left md:flex justify-between items-end">
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-center md:justify-start gap-2 text-emerald-400">
+                                            <ShieldCheck className="w-5 h-5" />
+                                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Security Induction</span>
+                                        </div>
+                                        <h3 className="text-xl font-black uppercase font-league leading-none">Best Practice Verification</h3>
+                                    </div>
+                                    {!auth.currentUser && (
+                                        <div className="bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-lg">
+                                            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-2">
+                                                <LogIn className="w-3 h-3" /> Sign In Required
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className={`space-y-4 relative transition-all duration-500 ${!auth.currentUser ? 'opacity-60 grayscale-[0.5]' : ''}`}>
+                                    {/* Verification Options */}
+                                    <button
+                                        className="w-full flex items-center justify-between p-4 bg-slate-950/50 border border-white/5 rounded-2xl hover:border-emerald-500/30 transition-all text-left group/opt disabled:cursor-not-allowed"
+                                        disabled={!auth.currentUser}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-slate-500 group-hover/opt:text-emerald-400 transition-colors">
+                                                <Instagram className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black uppercase font-league tracking-tight">Sync Instagram</p>
+                                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Connect your Business Account</p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight className="w-4 h-4 text-slate-700" />
+                                    </button>
+
+                                    <button
+                                        onClick={handlePhoneVerifyClick}
+                                        disabled={isCodeVerified || isPhoneVerifying || isProcessing || !auth.currentUser}
+                                        className={`w-full flex items-center justify-between p-4 bg-slate-950/50 border border-white/5 rounded-2xl hover:border-emerald-500/30 transition-all text-left group/opt disabled:cursor-not-allowed ${isCodeVerified ? 'opacity-50 cursor-default border-emerald-500/50' : ''}`}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-slate-500 ${isPhoneVerifying ? 'animate-pulse text-emerald-400' : ''} ${isCodeVerified ? 'text-emerald-500' : 'group-hover/opt:text-emerald-400'} transition-colors`}>
+                                                <Phone className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black uppercase font-league tracking-tight">Phone Signal</p>
+                                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
+                                                    {isCodeVerified ? 'Verified by Voice' : 'Verify via Business Phone'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {isCodeVerified ? <Check className="w-4 h-4 text-emerald-500" /> : <ChevronRight className="w-4 h-4 text-slate-700" />}
+                                    </button>
+
+                                    {isPhoneVerifying && (
+                                        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-300">
+                                            <div className="text-center space-y-2">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
+                                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">Artie is calling...</p>
+                                                </div>
+                                                <p className="text-xs text-slate-400 font-medium italic">Listen for the 4-digit code and enter it below.</p>
+                                            </div>
+                                            <div className="flex gap-2 justify-center">
+                                                <input
+                                                    type="text"
+                                                    maxLength={4}
+                                                    placeholder="0000"
+                                                    value={enteredCode}
+                                                    onChange={(e) => setEnteredCode(e.target.value.replace(/[^0-9]/g, ''))}
+                                                    className="bg-slate-950 border-2 border-emerald-500/20 rounded-xl px-4 py-3 text-2xl font-black tracking-[0.5em] text-center text-emerald-400 focus:border-emerald-500/50 outline-none w-32"
+                                                />
+                                                <button
+                                                    onClick={handleCodeSubmit}
+                                                    disabled={enteredCode.length !== 4 || isProcessing}
+                                                    className="bg-emerald-500 text-black font-black px-6 rounded-xl uppercase font-league tracking-widest shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                                                >
+                                                    Verify
+                                                </button>
+                                            </div>
+                                            <button
+                                                onClick={() => setIsPhoneVerifying(false)}
+                                                className="w-full text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors"
+                                            >
+                                                Cancel Call
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* [SECTION 2] Editable Business Details */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                                 <div className="space-y-6">
                                     <div className="bg-slate-950/50 border border-white/5 rounded-3xl p-6 space-y-4">
                                         <div className="flex items-center gap-3 text-primary mb-2">
                                             <Settings2 className="w-5 h-5" />
                                             <span className="text-[10px] font-black uppercase tracking-[0.3em]">Business Details</span>
                                         </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Establishment Name</label>
-                                            <div className="text-lg font-black uppercase text-white font-league">{venueData?.name}</div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Formatted Address</label>
-                                            <div className="text-sm font-medium text-slate-400">{venueData?.address}</div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-slate-950/50 border border-white/5 rounded-3xl p-6 space-y-4">
-                                        <div className="flex items-center gap-3 text-blue-400 mb-2">
-                                            <Globe className="w-5 h-5" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Communication</span>
-                                        </div>
-                                        <div className="grid grid-cols-1 gap-4">
-                                            <div>
-                                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Phone</label>
-                                                <div className="text-sm font-bold text-slate-200">{venueData?.phone || 'Not Found'}</div>
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Establishment Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={venueData?.name || ''}
+                                                    onChange={e => setVenueData(prev => prev ? ({ ...prev, name: e.target.value }) : null)}
+                                                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-lg font-black uppercase text-white font-league focus:border-primary outline-none"
+                                                />
                                             </div>
-                                            <div>
-                                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Website</label>
-                                                <div className="text-sm font-bold text-slate-200 truncate">{venueData?.website || 'Not Found'}</div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Full Address</label>
+                                                <textarea
+                                                    value={venueData?.address || ''}
+                                                    onChange={e => setVenueData(prev => prev ? ({ ...prev, address: e.target.value }) : null)}
+                                                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm font-medium text-slate-300 focus:border-primary outline-none resize-none min-h-[80px]"
+                                                />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="space-y-6">
-                                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-3xl p-6 space-y-4">
-                                        <div className="flex items-center gap-3 text-amber-500 mb-2">
-                                            <Info className="w-5 h-5" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Scraped Hours</span>
+                                    <div className="bg-slate-950/50 border border-white/5 rounded-3xl p-6 space-y-4">
+                                        <div className="flex items-center gap-3 text-blue-400 mb-2">
+                                            <Globe className="w-5 h-5" />
+                                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Communication</span>
                                         </div>
-                                        <div className="text-sm font-medium text-amber-200/80 italic leading-relaxed whitespace-pre-wrap">
-                                            Daily 4:00 PM — 2:00 AM{"\n"}
-                                            (Auto-imported from Google Business)
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Phone</label>
+                                                <input
+                                                    type="tel"
+                                                    value={venueData?.phone || ''}
+                                                    onChange={e => setVenueData(prev => prev ? ({ ...prev, phone: e.target.value }) : null)}
+                                                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-slate-200 focus:border-primary outline-none"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Website</label>
+                                                <input
+                                                    type="url"
+                                                    value={venueData?.website || ''}
+                                                    onChange={e => setVenueData(prev => prev ? ({ ...prev, website: e.target.value }) : null)}
+                                                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-slate-200 focus:border-primary outline-none"
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-
-                                    <div className="pt-4 space-y-4">
-                                        {!auth.currentUser ? (
-                                            <div className="bg-primary/10 border-2 border-primary/30 rounded-3xl p-8 text-center space-y-6">
-                                                <LogIn className="w-12 h-12 text-primary mx-auto mb-2" />
-                                                <h3 className="text-xl font-black uppercase font-league tracking-tighter">Identity Required</h3>
-                                                <p className="text-xs text-slate-400 font-medium italic leading-relaxed">
-                                                    We need to be sure who is claiming this establishment. Please sign in to link your personal identity to the business profile.
-                                                </p>
-                                                <button
-                                                    onClick={() => navigate('/auth')}
-                                                    className="w-full bg-primary text-black font-black py-4 rounded-2xl uppercase tracking-[0.2em] font-league text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
-                                                >
-                                                    Sign In to Verify
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="bg-slate-900/80 border border-emerald-500/20 rounded-3xl p-8 space-y-8 relative overflow-hidden group">
-                                                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                                    <ShieldCheck className="w-32 h-32 text-emerald-500" />
-                                                </div>
-
-                                                <div className="space-y-2 relative">
-                                                    <div className="flex items-center gap-2 text-emerald-400">
-                                                        <ShieldCheck className="w-5 h-5" />
-                                                        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Security Induction</span>
-                                                    </div>
-                                                    <h3 className="text-xl font-black uppercase font-league leading-none">Best Practice Verification</h3>
-                                                </div>
-
-                                                <div className="space-y-4 relative">
-                                                    {/* Verification Options */}
-                                                    <button className="w-full flex items-center justify-between p-4 bg-slate-950/50 border border-white/5 rounded-2xl hover:border-emerald-500/30 transition-all text-left group/opt">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-slate-500 group-hover/opt:text-emerald-400 transition-colors">
-                                                                <Instagram className="w-5 h-5" />
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-sm font-black uppercase font-league tracking-tight">Sync Instagram</p>
-                                                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Connect your Business Account</p>
-                                                            </div>
-                                                        </div>
-                                                        <ChevronRight className="w-4 h-4 text-slate-700" />
-                                                    </button>
-
-                                                    <button
-                                                        onClick={handlePhoneVerifyClick}
-                                                        disabled={isCodeVerified || isPhoneVerifying || isProcessing}
-                                                        className={`w-full flex items-center justify-between p-4 bg-slate-950/50 border border-white/5 rounded-2xl hover:border-emerald-500/30 transition-all text-left group/opt ${isCodeVerified ? 'opacity-50 cursor-default border-emerald-500/50' : ''}`}
-                                                    >
-                                                        <div className="flex items-center gap-4">
-                                                            <div className={`w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-slate-500 ${isPhoneVerifying ? 'animate-pulse text-emerald-400' : ''} ${isCodeVerified ? 'text-emerald-500' : 'group-hover/opt:text-emerald-400'} transition-colors`}>
-                                                                <Phone className="w-5 h-5" />
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-sm font-black uppercase font-league tracking-tight">Phone Signal</p>
-                                                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
-                                                                    {isCodeVerified ? 'Verified by Voice' : 'Verify via Business Phone'}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        {isCodeVerified ? <Check className="w-4 h-4 text-emerald-500" /> : <ChevronRight className="w-4 h-4 text-slate-700" />}
-                                                    </button>
-
-                                                    {isPhoneVerifying && (
-                                                        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-300">
-                                                            <div className="text-center space-y-2">
-                                                                <div className="flex items-center justify-center gap-2">
-                                                                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
-                                                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">Artie is calling...</p>
-                                                                </div>
-                                                                <p className="text-xs text-slate-400 font-medium italic">Listen for the 4-digit code and enter it below.</p>
-                                                            </div>
-                                                            <div className="flex gap-2 justify-center">
-                                                                <input
-                                                                    type="text"
-                                                                    maxLength={4}
-                                                                    placeholder="0000"
-                                                                    value={enteredCode}
-                                                                    onChange={(e) => setEnteredCode(e.target.value.replace(/[^0-9]/g, ''))}
-                                                                    className="bg-slate-950 border-2 border-emerald-500/20 rounded-xl px-4 py-3 text-2xl font-black tracking-[0.5em] text-center text-emerald-400 focus:border-emerald-500/50 outline-none w-32"
-                                                                />
-                                                                <button
-                                                                    onClick={handleCodeSubmit}
-                                                                    disabled={enteredCode.length !== 4 || isProcessing}
-                                                                    className="bg-emerald-500 text-black font-black px-6 rounded-xl uppercase font-league tracking-widest shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-                                                                >
-                                                                    Verify
-                                                                </button>
-                                                            </div>
-                                                            <button
-                                                                onClick={() => setIsPhoneVerifying(false)}
-                                                                className="w-full text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors"
-                                                            >
-                                                                Cancel Call
-                                                            </button>
-                                                        </div>
-                                                    )}
-
-                                                    <div className="pt-4 space-y-4">
-                                                        <button
-                                                            onClick={handleVerificationConfirm}
-                                                            className="w-full bg-emerald-500 text-black font-black py-4 rounded-2xl uppercase tracking-[0.2em] font-league text-lg shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all"
-                                                        >
-                                                            Looks Good — Move On
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setStep('SEARCH')}
-                                                            className="w-full bg-slate-800/50 text-slate-400 font-black py-4 rounded-2xl uppercase tracking-[0.2em] font-league text-sm border border-white/5 hover:text-white hover:bg-slate-800 transition-all"
-                                                        >
-                                                            Back to Search
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* [SECTION 3] Confirmation */}
+                            <div className="pt-4 space-y-4 max-w-md mx-auto">
+                                {!auth.currentUser ? (
+                                    <button
+                                        onClick={() => navigate('/auth')}
+                                        className="w-full bg-primary text-black font-black py-4 rounded-2xl uppercase tracking-[0.2em] font-league text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                                    >
+                                        Sign In to Verify
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleVerificationConfirm}
+                                        className="w-full bg-emerald-500 text-black font-black py-4 rounded-2xl uppercase tracking-[0.2em] font-league text-lg shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+                                    >
+                                        Confirm & Configure
+                                    </button>
+                                )}
                             </div>
                         </div>
                     )}
