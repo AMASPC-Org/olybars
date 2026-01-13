@@ -514,11 +514,14 @@ export default function ClaimVenuePage() {
                                         <h3 className="text-xl font-black uppercase font-league leading-none">Best Practice Verification</h3>
                                     </div>
                                     {!auth.currentUser && (
-                                        <div className="bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-lg">
+                                        <button
+                                            onClick={() => navigate('/auth?mode=login')}
+                                            className="bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-lg hover:bg-amber-500/20 transition-colors"
+                                        >
                                             <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-2">
                                                 <LogIn className="w-3 h-3" /> Sign In Required
                                             </p>
-                                        </div>
+                                        </button>
                                     )}
                                 </div>
 
