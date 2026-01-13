@@ -492,8 +492,27 @@ v1Router.post('/venues/:id/sync-google', verifyToken, requireRole(['admin', 'sup
 });
 
 /**
+ * @route GET /api/venues/check-claim
+ * @desc Check if a venue is already claimed by Google Place ID
+ */
+v1Router.get('/venues/check-claim', async (req, res) => {
+    const { googlePlaceId } = req.query;
+    if (!googlePlaceId) {
+        return res.status(400).json({ error: 'Missing googlePlaceId parameter' });
+    }
+    try {
+        const { checkVenueClaimStatus } = await import('./venueService');
+        const status = await checkVenueClaimStatus(googlePlaceId as string);
+        res.json(status);
+    } catch (error: any) {
+        log('ERROR', 'Check Claim Failed', { error: error.message });
+        res.status(500).json({ error: 'Failed to check claim status' });
+    }
+});
+
+/**
  * @route GET /api/venues/:id/pulse
- * @desc Fetch real-time Pulse score for a venue
+ * @desc Get real-time pulse score
  */
 v1Router.get('/venues/:id/pulse', async (req, res) => {
     const { id } = req.params;
