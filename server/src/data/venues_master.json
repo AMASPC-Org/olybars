@@ -1477,8 +1477,8 @@
       "y": 56
     },
     "location": {
-      "lat": 47.0447176,
-      "lng": -122.9002862
+      "lat": 47.0447222,
+      "lng": -122.9001935
     },
     "address": "404 Washington St SE, Olympia, WA 98501, USA",
     "physicalRoom": true,
@@ -5196,8 +5196,8 @@
     "website": "https://olympiafoe.com/",
     "address": "805 4th Ave E, Olympia, WA 98506",
     "location": {
-      "lat": 47.0452716,
-      "lng": -122.8925667
+      "lat": 47.0453919,
+      "lng": -122.8926101
     },
     "hours": {
       "monday": "16:00 - 00:00",

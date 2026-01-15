@@ -455,7 +455,7 @@ export class VenueOpsService {
     /**
      * Skill: analyze_flyer (Vision API)
      */
-    static async analyzeFlyer(venueId: string, base64Image: string) {
+    static async analyzeFlyer(venueId: string, base64Image: string, contextDate: string) {
         if (!venueId) throw new Error("Venue ID is required.");
 
         const headers = await getAuthHeaders();
@@ -465,7 +465,7 @@ export class VenueOpsService {
                 ...headers,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ base64Image })
+            body: JSON.stringify({ base64Image, contextDate })
         });
 
         if (!response.ok) {

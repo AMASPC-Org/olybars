@@ -57,6 +57,7 @@ import CookiePolicyScreen from './features/marketing/screens/CookiePolicyScreen'
 import PartnerSecurityScreen from './features/marketing/screens/PartnerSecurityScreen';
 import FAQScreen from './features/marketing/screens/FAQScreen';
 import { AdminDashboardScreen } from './features/admin/screens/AdminDashboardScreen';
+import { FlyerExtractor } from './pages/admin/FlyerExtractor';
 import UserProfileScreen from './features/profile/screens/UserProfileScreen';
 import { VenueProfileScreen } from './features/venues/screens/VenueProfileScreen';
 import AboutPage from './features/marketing/screens/About';
@@ -632,6 +633,14 @@ export default function OlyBarsApp() {
                   element={
                     isSystemAdmin(userProfile)
                       ? <AdminDashboardScreen userProfile={userProfile} />
+                      : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
+                  }
+                />
+                <Route
+                  path="admin/extractor"
+                  element={
+                    isSystemAdmin(userProfile)
+                      ? <FlyerExtractor />
                       : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
                   }
                 />

@@ -90,6 +90,7 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 /**
  * Honeypot Middleware
@@ -1348,7 +1349,7 @@ v1Router.post('/ai/analyze-event', verifyToken, async (req, res) => {
  * @desc Extract event details from an architectural image/flyer
  */
 v1Router.post('/vision/analyze-flyer', verifyToken, async (req, res) => {
-    const { base64Image } = req.body;
+    const { base64Image, contextDate } = req.body;
 
     if (!base64Image) {
         return res.status(400).json({ error: 'Missing base64Image payload.' });
@@ -1361,10 +1362,7 @@ v1Router.post('/vision/analyze-flyer', verifyToken, async (req, res) => {
         // Convert base64 to Buffer
         const buffer = Buffer.from(base64Image, 'base64');
 
-        // Pass context date (ISO) for relative date resolution
-        const contextDate = new Date().toISOString();
-
-        const result = await gemini.parseFlyerContent(buffer, contextDate);
+        const result = await gemini.parseFlyerContent(buffer, contextDate || new Date().toISOString());
         res.json(result);
     } catch (error: any) {
         log('ERROR', 'Vision Flyer Analysis Failed', { error: error.message });

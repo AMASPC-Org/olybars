@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Send, Sparkles, Bot, CheckCircle2, Mic, MicOff, Loader2, RotateCcw, Paperclip } from 'lucide-react';
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { useArtie } from '../../hooks/useArtie';
 import { useArtieOps } from '../../hooks/useArtieOps';
+import { useDragAndDrop } from '../../hooks/useDragAndDrop';
 import { QuickReplyChips, QuickReplyOption } from './QuickReplyChips';
 import { useToast } from '../../components/ui/BrandedToast';
 import { UserProfile, isSystemAdmin } from '../../types';
@@ -409,12 +410,27 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
             .catch(() => { });
     };
 
+    const { isDragging, handleDragOver, handleDragLeave, handleDrop } = useDragAndDrop({
+        onDrop: (file) => {
+            if (isOpsMode) {
+                const venueId = initialVenueId || userProfile?.homeBase;
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const base64 = event.target?.result as string;
+                    const base64Clean = base64.split(',')[1];
+                    await opsArtie.processAction('UPLOAD_FILE', base64Clean, venueId);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    });
+
     if (!isOpen) return null;
 
     // Unified Messages
     const activeMessages = isOpsMode
         ? [...opsArtie.messages, ...guestArtie.messages.map(m => ({ ...m, role: m.role === 'model' ? 'artie' : 'user', text: m.content, timestamp: Date.now() }))]
-            .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
+            .sort((a: any, b: any) => (a.timestamp || 0) - (b.timestamp || 0))
         : guestArtie.messages;
 
     const activeIsLoading = isOpsMode ? (opsArtie.isLoading || guestArtie.isLoading) : guestArtie.isLoading;
@@ -607,7 +623,13 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                         </div>
                     )}
 
-                    <div className="flex gap-2 bg-black/40 border-2 border-slate-800 focus-within:border-primary/50 rounded-2xl p-1.5 transition-all">
+                    <div
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        className={`flex gap-2 bg-black/40 border-2 rounded-2xl p-1.5 transition-all ${isDragging ? 'border-primary bg-primary/10' : 'border-slate-800 focus-within:border-primary/50'
+                            }`}
+                    >
                         <div className="flex-1 relative flex items-center">
                             <input
                                 type="text"

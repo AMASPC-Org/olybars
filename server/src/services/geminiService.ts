@@ -223,7 +223,7 @@ export class GeminiService {
         TASK: Extract event details from this flyer for system entry.
         
         CONTEXT:
-        Current System Time: ${contextDate} (Use this to resolve relative dates like "Friday" or "Tomorrow").
+        Current Date Context: ${contextDate} (Use this to resolve relative dates like "Friday" or "Tomorrow").
         
         EXTRACTION RULES:
         1. TITLE: Catchy, clear. Shorten if it's too long.

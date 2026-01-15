@@ -751,7 +751,7 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                 addArtieResponse("Schmidt is reading the flyer... 🧐");
 
                 try {
-                    const extraction = await VenueOpsService.analyzeFlyer(venueId || venue?.id || '', payload);
+                    const extraction = await VenueOpsService.analyzeFlyer(venueId || venue?.id || '', payload, new Date().toISOString());
 
                     // Merge extraction results into eventDraft
                     const currentDraft = {
