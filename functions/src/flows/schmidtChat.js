@@ -1,19 +1,20 @@
-﻿import { ai as genkitAi } from '../genkit.js';
-import { z } from 'zod';
-import { GeminiService } from '../services/geminiService.js';
-import { config } from '../config/index.js';
-import { ARTIE_TOOLS } from '../config/aiTools.js';
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.schmidtChatLogic = void 0;
+const genkit_1 = require("../genkit");
+const zod_1 = require("zod");
+const geminiService_1 = require("../services/geminiService");
+const config_1 = require("../config");
+const aiTools_1 = require("../config/aiTools");
 // Lazy-load Gemini
-let geminiInstance: GeminiService;
+let geminiInstance;
 const getGemini = () => {
     if (!geminiInstance) {
-        const key = config.GOOGLE_GENAI_API_KEY;
-        geminiInstance = new GeminiService(key && key.length > 5 ? key : undefined);
+        const key = config_1.config.GOOGLE_GENAI_API_KEY;
+        geminiInstance = new geminiService_1.GeminiService(key && key.length > 5 ? key : undefined);
     }
     return geminiInstance;
 };
-
 // SCHMIDT'S BRAIN (The Business Logic)
 const SCHMIDT_SYSTEM_INSTRUCTION = `
 IDENTITY:
@@ -41,52 +42,41 @@ GUARDRAILS:
 - Never hallucinate features we don't have.
 - If a user asks for guest advice (e.g., "Where should I drink?"), remind them you are the Ops Manager and they should ask Artie.
 `;
-
-export const schmidtChatLogic = genkitAi.defineFlow({
+exports.schmidtChatLogic = genkit_1.ai.defineFlow({
     name: 'schmidtChatLogic',
-    inputSchema: z.object({
-        history: z.array(z.object({
-            role: z.enum(['user', 'model']),
-            content: z.string()
+    inputSchema: zod_1.z.object({
+        history: zod_1.z.array(zod_1.z.object({
+            role: zod_1.z.enum(['user', 'model']),
+            content: zod_1.z.string()
         })),
-        question: z.string(),
-        userId: z.string().optional(),
-        userRole: z.string().optional(),
-        venueId: z.string().optional(),
+        question: zod_1.z.string(),
+        userId: zod_1.z.string().optional(),
+        userRole: zod_1.z.string().optional(),
+        venueId: zod_1.z.string().optional(),
     }),
-    outputSchema: z.any(),
+    outputSchema: zod_1.z.any(),
 }, async (input) => {
     const { history, question, userId, userRole } = input;
-
     // 1. SECURITY: STRICT ROLE CHECK
     const isOwner = userRole === 'owner' || userRole === 'manager' || userRole === 'super-admin' || userRole === 'admin';
     if (!isOwner) {
         return "🛑 ACCESS DENIED. I only speak to the boss. (Role: " + userRole + ")";
     }
-
     try {
         const service = getGemini();
-
         // 2. Prepare Contents
         const contents = history.map(h => ({
             role: h.role === 'user' ? 'user' : 'model',
             parts: [{ text: (h.content || '').trim() }]
         }));
         contents.push({ role: 'user', parts: [{ text: question }] });
-
         console.log(`[SCHMIDT] Analyzing business request for ${userId}...`);
-
         // 3. Execute with Schmidt Persona
         // We reuse ARTIE_TOOLS for now as they contain the "Operator Actions"
-        return await service.generateArtieResponseStream(
-            'gemini-2.0-flash',
-            contents,
-            0.2, // Low temperature for business logic
-            SCHMIDT_SYSTEM_INSTRUCTION,
-            ARTIE_TOOLS
-        );
-
-    } catch (e: any) {
+        return await service.generateArtieResponseStream('gemini-2.0-flash', contents, 0.2, // Low temperature for business logic
+        SCHMIDT_SYSTEM_INSTRUCTION, aiTools_1.ARTIE_TOOLS);
+    }
+    catch (e) {
         console.error("Schmidt Error:", e);
         return `Schmidt is out to lunch. Error: ${e.message}`;
     }

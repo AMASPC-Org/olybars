@@ -30,6 +30,7 @@ export type ArtieOpsState =
     | 'image_gen_context'
     | 'post_image_gen'
     | 'confirm_action'
+    | 'upload_file'
     | 'completed';
 
 export interface ArtieMessage {
@@ -360,8 +361,32 @@ export const useArtieOps = () => {
                 if (!currentDraft.title && !isJustDateOrTime && payload.length > 3) {
                     // Check if it's not just a digit string
                     if (!/^\d+$/.test(payload)) {
-                        currentDraft.title = payload;
+                        let cleanedTitle = payload;
+                        // Strip time string if found
+                        if (timeMatchResult && timeMatchResult[0]) {
+                            cleanedTitle = cleanedTitle.replace(timeMatchResult[0], '');
+                        }
+                        // Strip date keywords (insensitive)
+                        cleanedTitle = cleanedTitle.replace(/today|tonight|tomorrow/gi, '');
+
+                        // Strip common prepositions left dangling (trailing/leading)
+                        cleanedTitle = cleanedTitle.replace(/\s+at\s*$/i, '').replace(/^\s*at\s+/i, '');
+
+                        // [CRITICAL FIX] If the title is just the trigger sentence "I want to add an event...", ignore it.
+                        const lowerTitle = cleanedTitle.toLowerCase();
+                        const isConversationalTrigger = (lowerTitle.includes('event') && lowerTitle.includes('calendar')) || lowerTitle.startsWith('i am having') || lowerTitle.startsWith('i need to');
+
+                        if (!isConversationalTrigger) {
+                            currentDraft.title = cleanedTitle.trim();
+                        }
                     }
+                }
+
+                // 2. The Slot Filling State Machine
+                if (!currentDraft.title) {
+                    setOpsState('event_input_title');
+                    addArtieResponse("I didn't catch the name. What is the OFFICIAL title of the event?"); // Emphasize official
+                    return;
                 }
 
                 setEventDraft(currentDraft);
@@ -444,13 +469,18 @@ export const useArtieOps = () => {
                     }
                 });
 
+                // Format time for display (12h)
+                // Format time for display (12h)
+                const [h, m] = currentDraft.time.split(':');
+                let hour = parseInt(h);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const hour12 = hour % 12 || 12; // 0 -> 12
+                const displayTime = `${hour12}:${m} ${ampm}`;
+
                 setOpsState('confirm_action');
-                addArtieResponse(`I've drafted a calendar entry for:\n\n"${currentDraft.title}"\n${currentDraft.date} @ ${currentDraft.time}\nType: ${currentDraft.type}\n\n"${currentDraft.description}"\n\nConfirm adding this to the schedule?`, [
-                    // Chips removed to reduce redundancy as requested, OR kept for easy mobile use?
-                    // User said "I think those are good". But "confirm and save button... seems redundant".
-                    // Let's keep chips as they are quick replies, but maybe minimalize them.
-                    { id: 'confirm', label: 'Add Event', value: 'confirm_post', icon: '✅' },
-                    { id: 'edit', label: 'Edit', value: 'edit_event', icon: '✏️' }, // Changed value to trigger specific logic
+                addArtieResponse(`I've drafted a calendar entry for:\n\n**${currentDraft.title}**\n${currentDraft.date} @ ${displayTime}\nType: ${currentDraft.type}\n\n"${currentDraft.description}"\n\nConfirm adding this to the schedule?`, [
+                    { id: 'confirm', label: 'Post It', value: 'confirm_post', icon: '✅' },
+                    { id: 'edit', label: 'Edit', value: 'edit_event', icon: '✏️' },
                     { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
                 ]);
                 break;
@@ -705,7 +735,112 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                     break;
                 }
                 setOpsState('completed');
-                addArtieResponse("Processing...");
+
+                let doneMsg = "Action complete. I've updated the system.";
+                if (draftData.skill === 'add_calendar_event' && payload) {
+                    const eventLink = `https://olybars.com/venue/${venue?.id}/events`; // Or simpler deep link if available
+                    doneMsg = `[Event Created](${eventLink}) successfully! 📅\n\nI've added it to your schedule.`;
+                }
+
+                addArtieResponse(`${doneMsg} What's next?`);
+                break;
+
+            case 'UPLOAD_FILE':
+                if (!payload) return;
+                setIsLoading(true);
+                addArtieResponse("Schmidt is reading the flyer... 🧐");
+
+                try {
+                    const extraction = await VenueOpsService.analyzeFlyer(venueId || venue?.id || '', payload);
+
+                    // Merge extraction results into eventDraft
+                    const currentDraft = {
+                        ...eventDraft,
+                        title: extraction.title || eventDraft.title,
+                        date: extraction.date || eventDraft.date,
+                        time: extraction.time || eventDraft.time,
+                        type: extraction.type || eventDraft.type,
+                        description: extraction.description || eventDraft.description
+                    };
+                    setEventDraft(currentDraft);
+                    setIsLoading(false);
+
+                    if (extraction.lcbViolationDetected) {
+                        addArtieResponse("⚠️ Heads up: Schmidt detected potential LCB compliance issues in this flyer. I've adjusted the description to be safe.");
+                    }
+
+                    // --- Smart Fallback Logic (The Slot Filling Check) ---
+                    if (!currentDraft.title) {
+                        setOpsState('event_input_title');
+                        addArtieResponse("Schmidt read the flyer, but couldn't find a clear TITLE. What's the name of the event?");
+                        return;
+                    }
+
+                    if (!currentDraft.date) {
+                        setOpsState('event_input_date');
+                        addArtieResponse(`I've got "${currentDraft.title}" ready. What DATE is this happening?`, [
+                            { id: 'today', label: 'Today', value: 'SUBMIT_EVENT_TEXT', icon: '📅' },
+                            { id: 'tmrw', label: 'Tomorrow', value: 'SUBMIT_EVENT_TEXT', icon: '⏭️' }
+                        ]);
+                        return;
+                    }
+
+                    if (!currentDraft.time) {
+                        setOpsState('event_input_time');
+                        addArtieResponse(`Okay, ${currentDraft.date}. What TIME does it start?`, [
+                            { id: '7pm', label: '7:00 PM', value: 'SUBMIT_EVENT_TEXT', icon: '🕖' },
+                            { id: '8pm', label: '8:00 PM', value: 'SUBMIT_EVENT_TEXT', icon: '🕗' },
+                            { id: '9pm', label: '9:00 PM', value: 'SUBMIT_EVENT_TEXT', icon: '🕘' }
+                        ]);
+                        return;
+                    }
+
+                    if (!currentDraft.type) {
+                        setOpsState('event_input_type');
+                        addArtieResponse("What kind of event is this?", [
+                            { id: 'trivia', label: 'Trivia', value: 'SUBMIT_EVENT_TEXT', icon: '🧠' },
+                            { id: 'karaoke', label: 'Karaoke', value: 'SUBMIT_EVENT_TEXT', icon: '🎤' },
+                            { id: 'music', label: 'Live Music', value: 'SUBMIT_EVENT_TEXT', icon: '🎸' },
+                            { id: 'other', label: 'Other', value: 'SUBMIT_EVENT_TEXT', icon: '🎉' }
+                        ]);
+                        return;
+                    }
+
+                    if (!currentDraft.description) {
+                        setOpsState('event_input_details');
+                        addArtieResponse("Schmidt extracted the basics, but do you have any extra details or prizes to add?");
+                        return;
+                    }
+
+                    // All slots filled -> Confirmation logic (same as at end of SUBMIT_EVENT_TEXT)
+                    setDraftData({
+                        skill: 'add_calendar_event',
+                        params: {
+                            ...currentDraft,
+                            type: currentDraft.type || 'other',
+                            venueName: venue?.name || '',
+                            summary: `${currentDraft.title} on ${currentDraft.date}`
+                        }
+                    });
+
+                    const [h, m] = currentDraft.time.split(':');
+                    let hour = parseInt(h);
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    const hour12 = hour % 12 || 12;
+                    const displayTime = `${hour12}:${m} ${ampm}`;
+
+                    setOpsState('confirm_action');
+                    addArtieResponse(`Schmidt is satisfied properly. I've drafted this from the flyer:\n\n**${currentDraft.title}**\n${currentDraft.date} @ ${displayTime}\n\n"${currentDraft.description}"\n\nConfirm adding this to the schedule?`, [
+                        { id: 'confirm', label: 'Post It', value: 'confirm_post', icon: '✅' },
+                        { id: 'edit', label: 'Edit', value: 'edit_event', icon: '✏️' },
+                        { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
+                    ]);
+
+                } catch (e: any) {
+                    setIsLoading(false);
+                    addArtieResponse(`Schmidt had trouble reading that: ${e.message}. Let's do it manually. What's the event title?`);
+                    setOpsState('event_input_title');
+                }
                 break;
 
             case 'cancel':

@@ -1,4 +1,4 @@
-import { auth, db } from './firebaseAdmin';
+import { auth, db } from './firebaseAdmin.js';
 
 async function seedAdmin() {
     const adminEmail = 'ryan@amaspc.com';

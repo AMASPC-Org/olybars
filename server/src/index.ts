@@ -2,10 +2,10 @@
 import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
-import { config } from './config';
-import { fetchVenues, clockIn, getVenueById } from './venueService';
-import { isAiBot, getBotName } from './utils/botDetector';
-import { verifyToken, requireRole, requireVenueAccess, verifyAppCheck, identifyUser } from './middleware/authMiddleware';
+import { config } from './config/index.js';
+import { fetchVenues, clockIn, getVenueById } from './venueService.js';
+import { isAiBot, getBotName } from './utils/botDetector.js';
+import { verifyToken, requireRole, requireVenueAccess, verifyAppCheck, identifyUser } from './middleware/authMiddleware.js';
 import {
     ClockInSchema,
     PlayClockInSchema,
@@ -15,7 +15,7 @@ import {
     VenueUpdateSchema,
     VenueOnboardSchema,
     AppEventSchema
-} from './utils/validation';
+} from './utils/validation.js';
 
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (Cloud Run load balancer)
@@ -89,7 +89,7 @@ app.use(cors({
     credentials: true
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 /**
  * Honeypot Middleware
@@ -147,7 +147,7 @@ app.use(async (req, res, next) => {
         // Non-blocking log to Firestore
         (async () => {
             try {
-                const { db } = await import('./firebaseAdmin');
+                const { db } = await import('./firebaseAdmin.js');
                 await db.collection('ai_access_logs').add({
                     botName,
                     userAgent,
@@ -216,7 +216,7 @@ v1Router.get('/health/artie', async (req, res) => {
     }
 
     try {
-        const { GeminiService } = await import('./services/geminiService');
+        const { GeminiService } = await import('./services/geminiService.js');
         const gemini = new GeminiService();
         // Minimal ping call (triage is cheap)
         const triage = await gemini.getTriage('Health Check Ping');
@@ -293,7 +293,7 @@ v1Router.post('/clock-in', verifyAppCheck, verifyToken, async (req, res) => {
  * @desc Submit a vibe check (Signal + Points)
  */
 v1Router.post('/vibe-check', verifyToken, async (req, res) => {
-    const { VibeCheckSchema } = await import('./utils/validation'); // Dynamic import to ensure schema is loaded
+    const { VibeCheckSchema } = await import('./utils/validation.js'); // Dynamic import to ensure schema is loaded
     const validation = VibeCheckSchema.safeParse(req.body);
 
     if (!validation.success) {
@@ -304,7 +304,7 @@ v1Router.post('/vibe-check', verifyToken, async (req, res) => {
     const userId = (req as any).user.uid;
 
     try {
-        const { performVibeCheck } = await import('./venueService');
+        const { performVibeCheck } = await import('./venueService.js');
         // Cast gameStatus to any to match strict type expectation if needed, or ensure validation schema matches exactly
         const result = await performVibeCheck(venueId, userId, status as any, hasConsent, photoUrl, verificationMethod as any, gameStatus as any);
         res.json(result);
@@ -323,7 +323,7 @@ v1Router.post('/play/clock-in', verifyToken, async (req, res) => {
     const userId = (req as any).user.uid;
 
     try {
-        const { clockInAmenity } = await import('./venueService');
+        const { clockInAmenity } = await import('./venueService.js');
         const result = await clockInAmenity(venueId, userId, amenityId);
         res.json(result);
     } catch (error: any) {
@@ -385,7 +385,7 @@ v1Router.post('/activity', verifyToken, async (req, res) => {
     }
 
     try {
-        const { logUserActivity } = await import('./venueService');
+        const { logUserActivity } = await import('./venueService.js');
         const result = await logUserActivity({ userId, type, venueId, points, hasConsent, metadata });
         res.json(result);
     } catch (error: any) {
@@ -406,7 +406,7 @@ v1Router.get('/activity', async (req, res) => {
     }
 
     try {
-        const { getActivityStats } = await import('./venueService');
+        const { getActivityStats } = await import('./venueService.js');
         const stats = await getActivityStats(venueId as string, period as string || 'week');
         res.json(stats);
     } catch (error: any) {
@@ -424,7 +424,7 @@ v1Router.get('/partners/reports/hourly', verifyToken, requireVenueAccess('manage
     if (!venueId) return res.status(400).json({ error: 'venueId is required' });
 
     try {
-        const { getPartnerHourlyReport } = await import('./venueService');
+        const { getPartnerHourlyReport } = await import('./venueService.js');
         const report = await getPartnerHourlyReport(venueId as string, day ? parseInt(day as string) : undefined);
         res.json(report);
     } catch (error: any) {
@@ -440,7 +440,7 @@ v1Router.get('/partners/reports/hourly', verifyToken, requireVenueAccess('manage
 v1Router.get('/users/me/history', verifyToken, async (req, res) => {
     const userId = (req as any).user.uid;
     try {
-        const { getUserPointHistory } = await import('./venueService');
+        const { getUserPointHistory } = await import('./venueService.js');
         const history = await getUserPointHistory(userId);
         res.json(history);
     } catch (error: any) {
@@ -463,7 +463,7 @@ v1Router.patch('/venues/:id', verifyToken, requireVenueAccess('manager'), async 
     const requestingUserId = (req as any).user.uid;
 
     try {
-        const { updateVenue } = await import('./venueService');
+        const { updateVenue } = await import('./venueService.js');
         const result = await updateVenue(id, updates, requestingUserId);
         res.json(result);
     } catch (error: any) {
@@ -482,7 +482,7 @@ v1Router.post('/venues/:id/sync-google', verifyToken, requireRole(['admin', 'sup
     const requestingUserId = (req as any).user.uid;
 
     try {
-        const { syncVenueWithGoogle } = await import('./venueService');
+        const { syncVenueWithGoogle } = await import('./venueService.js');
         const result = await syncVenueWithGoogle(id, googlePlaceId);
         res.json(result);
     } catch (error: any) {
@@ -501,7 +501,7 @@ v1Router.get('/venues/check-claim', async (req, res) => {
         return res.status(400).json({ error: 'Missing googlePlaceId parameter' });
     }
     try {
-        const { checkVenueClaimStatus } = await import('./venueService');
+        const { checkVenueClaimStatus } = await import('./venueService.js');
         const status = await checkVenueClaimStatus(googlePlaceId as string);
         res.json(status);
     } catch (error: any) {
@@ -517,7 +517,7 @@ v1Router.get('/venues/check-claim', async (req, res) => {
 v1Router.get('/venues/:id/pulse', async (req, res) => {
     const { id } = req.params;
     try {
-        const { getVenuePulse } = await import('./venueService');
+        const { getVenuePulse } = await import('./venueService.js');
         const pulse = await getVenuePulse(id);
         res.json({ pulse });
     } catch (error: any) {
@@ -533,7 +533,7 @@ v1Router.get('/venues/:id/pulse', async (req, res) => {
 v1Router.get('/venues/:id/insights', verifyToken, requireVenueAccess('manager'), async (req, res) => {
     const { id } = req.params;
     try {
-        const { generateVenueInsights } = await import('./venueService');
+        const { generateVenueInsights } = await import('./venueService.js');
         const insights = await generateVenueInsights(id);
         res.json(insights);
     } catch (error: any) {
@@ -553,7 +553,7 @@ v1Router.get('/venues/:id/insights', verifyToken, requireVenueAccess('manager'),
 v1Router.get('/venues/:id/private', verifyToken, requireVenueAccess('manager'), async (req, res) => {
     const { id } = req.params;
     try {
-        const { getVenuePrivateData } = await import('./venueService');
+        const { getVenuePrivateData } = await import('./venueService.js');
         const data = await getVenuePrivateData(id);
         res.json(data);
     } catch (error: any) {
@@ -569,7 +569,7 @@ v1Router.get('/venues/:id/private', verifyToken, requireVenueAccess('manager'), 
 v1Router.patch('/venues/:id/private', verifyToken, requireVenueAccess('manager'), async (req, res) => {
     const { id } = req.params;
     try {
-        const { updateVenuePrivateData } = await import('./venueService');
+        const { updateVenuePrivateData } = await import('./venueService.js');
         const result = await updateVenuePrivateData(id, req.body);
         res.json(result);
     } catch (error: any) {
@@ -587,7 +587,7 @@ v1Router.get('/venues/check-claim', async (req, res) => {
     if (!googlePlaceId) return res.status(400).json({ error: 'Missing googlePlaceId' });
 
     try {
-        const { checkVenueClaimStatus } = await import('./venueService');
+        const { checkVenueClaimStatus } = await import('./venueService.js');
         const status = await checkVenueClaimStatus(googlePlaceId as string);
         res.json(status);
     } catch (error: any) {
@@ -608,7 +608,7 @@ v1Router.post('/partners/onboard', verifyToken, async (req: any, res) => {
     const { googlePlaceId } = validation.data;
 
     try {
-        const { onboardVenue } = await import('./venueService');
+        const { onboardVenue } = await import('./venueService.js');
         const result = await onboardVenue(googlePlaceId, req.user.uid, req.user.role);
         res.json(result);
     } catch (error: any) {
@@ -628,7 +628,7 @@ v1Router.post('/partners/verify/phone/call', verifyToken, async (req: any, res) 
     }
 
     try {
-        const { VoiceService } = await import('./services/VoiceService');
+        const { VoiceService } = await import('./services/VoiceService.js');
         await VoiceService.initiateVerificationCall(venueId, phoneNumber, venueName);
         res.json({ success: true, message: 'Call initiated' });
     } catch (error: any) {
@@ -648,7 +648,7 @@ v1Router.post('/partners/verify/phone/verify', verifyToken, async (req: any, res
     }
 
     try {
-        const { VoiceService } = await import('./services/VoiceService');
+        const { VoiceService } = await import('./services/VoiceService.js');
         const isValid = await VoiceService.verifyPhoneCode(venueId, code);
         res.json({ success: isValid });
     } catch (error: any) {
@@ -673,7 +673,7 @@ v1Router.post('/venue/auth/meta/exchange', verifyToken, (req, res, next) => {
     }
 
     try {
-        const { MetaAuthService } = await import('./services/MetaAuthService');
+        const { MetaAuthService } = await import('./services/MetaAuthService.js');
         const result = await MetaAuthService.exchangeCode(code, venueId);
         res.json(result);
     } catch (error: any) {
@@ -691,7 +691,7 @@ v1Router.patch('/venues/:id/photos/:photoId', verifyToken, requireRole(['admin',
     const { isApprovedForFeed, isApprovedForSocial } = req.body;
 
     try {
-        const { updatePhotoStatus } = await import('./venueService');
+        const { updatePhotoStatus } = await import('./venueService.js');
         const result = await updatePhotoStatus(venueId, photoId, { isApprovedForFeed, isApprovedForSocial });
         res.json(result);
     } catch (error: any) {
@@ -707,7 +707,7 @@ v1Router.patch('/venues/:id/photos/:photoId', verifyToken, requireRole(['admin',
 v1Router.get('/venues/:id/members', verifyToken, requireVenueAccess('manager'), async (req, res) => {
     const { id } = req.params;
     try {
-        const { getVenueMembers } = await import('./venueService');
+        const { getVenueMembers } = await import('./venueService.js');
         const members = await getVenueMembers(id);
         res.json(members);
     } catch (error: any) {
@@ -730,7 +730,7 @@ v1Router.post('/venues/:id/members', verifyToken, requireVenueAccess('manager'),
     }
 
     try {
-        const { addVenueMember } = await import('./venueService');
+        const { addVenueMember } = await import('./venueService.js');
         const result = await addVenueMember(id, email, role, requestingUserId);
         res.json(result);
     } catch (error: any) {
@@ -748,7 +748,7 @@ v1Router.delete('/venues/:id/members/:memberId', verifyToken, requireVenueAccess
     const requestingUserId = (req as any).user.uid;
 
     try {
-        const { removeVenueMember } = await import('./venueService');
+        const { removeVenueMember } = await import('./venueService.js');
         const result = await removeVenueMember(venueId, memberId, requestingUserId);
         res.json(result);
     } catch (error: any) {
@@ -790,7 +790,7 @@ v1Router.get('/places/search', async (req, res) => {
     const { q } = req.query;
     if (!q) return res.json([]);
     try {
-        const { getAutocompletePredictions } = await import('./utils/placesService');
+        const { getAutocompletePredictions } = await import('./utils/placesService.js');
         const predictions = await getAutocompletePredictions(q as string);
         res.json(predictions);
     } catch (error) {
@@ -805,7 +805,7 @@ v1Router.get('/places/search', async (req, res) => {
 v1Router.get('/places/details/:placeId', async (req, res) => {
     const { placeId } = req.params;
     try {
-        const { getPlaceDetails } = await import('./utils/placesService');
+        const { getPlaceDetails } = await import('./utils/placesService.js');
         const details = await getPlaceDetails(placeId);
         if (!details) return res.status(404).json({ error: 'Place not found' });
         res.json(details);
@@ -835,7 +835,7 @@ v1Router.patch('/users/:uid', verifyToken, async (req, res) => {
     const { handle, email, phone, favoriteDrink, favoriteDrinks, homeBase, playerGamePreferences, hasCompletedMakerSurvey, role } = validation.data;
 
     try {
-        const { db } = await import('./firebaseAdmin');
+        const { db } = await import('./firebaseAdmin.js');
         const userRef = db.collection('users').doc(uid);
         const userDoc = await userRef.get();
 
@@ -910,7 +910,7 @@ v1Router.post('/admin/setup-super', async (req, res) => {
     }
 
     try {
-        const { db, auth } = await import('./firebaseAdmin');
+        const { db, auth } = await import('./firebaseAdmin.js');
         let user;
         try {
             user = await auth.getUserByEmail(email);
@@ -944,7 +944,7 @@ v1Router.post('/admin/setup-super', async (req, res) => {
 
 v1Router.get('/activity/recent', async (req, res) => {
     try {
-        const { db } = await import('./firebaseAdmin'); // Import db here
+        const { db } = await import('./firebaseAdmin.js'); // Import db here
         const limit = parseInt(req.query.limit as string) || 20;
         const snapshot = await db.collection('activity_logs')
             .orderBy('timestamp', 'desc')
@@ -965,7 +965,7 @@ v1Router.get('/activity/recent', async (req, res) => {
 v1Router.get('/events', async (req, res) => {
     const { venueId, status } = req.query;
     try {
-        const { db } = await import('./firebaseAdmin');
+        const { db } = await import('./firebaseAdmin.js');
         let query: any = db.collection('events');
 
         if (venueId) {
@@ -998,11 +998,14 @@ v1Router.post('/events', verifyHoneypot, async (req, res) => {
     }
 
     try {
-        const { db } = await import('./firebaseAdmin');
+        const { db } = await import('./firebaseAdmin.js');
+        const user = (req as any).user;
+        const isTrusted = user && ['admin', 'super-admin', 'owner', 'manager'].includes(user.role);
+
         const eventData = {
             ...validation.data,
-            status: 'pending', // Always start as pending
-            submittedBy: (req as any).user?.uid || 'guest',
+            status: isTrusted ? 'approved' : 'pending',
+            submittedBy: user?.uid || 'guest',
             createdAt: Date.now(),
         };
 
@@ -1024,7 +1027,7 @@ v1Router.patch('/events/:id', verifyToken, requireRole(['admin', 'super-admin', 
     const { status, title, type, date, time, description } = req.body;
 
     try {
-        const { db } = await import('./firebaseAdmin');
+        const { db } = await import('./firebaseAdmin.js');
         const eventRef = db.collection('events').doc(id);
         const eventDoc = await eventRef.get();
 
@@ -1058,7 +1061,7 @@ v1Router.patch('/events/:id', verifyToken, requireRole(['admin', 'super-admin', 
         // Trigger Media Distribution if status is 'approved' and it's a league event
         if (status === 'approved' && (updates.isLeagueEvent || eventData?.isLeagueEvent) && (updates.distributeToMedia || eventData?.distributeToMedia)) {
             try {
-                const { MediaDistributionService } = await import('./services/MediaDistributionService');
+                const { MediaDistributionService } = await import('./services/MediaDistributionService.js');
                 const fullEvent = { ...eventData, ...updates } as any;
                 await MediaDistributionService.dispatchEvent(eventData?.venueId, fullEvent);
                 log('INFO', `[MEDIA_SYNC] Triggered distribution for event ${id}`);
@@ -1082,7 +1085,7 @@ v1Router.delete('/events/:id', verifyToken, requireRole(['admin', 'super-admin',
     const { id } = req.params;
 
     try {
-        const { db } = await import('./firebaseAdmin');
+        const { db } = await import('./firebaseAdmin.js');
         const eventRef = db.collection('events').doc(id);
         const eventDoc = await eventRef.get();
 
@@ -1129,15 +1132,15 @@ v1Router.post('/chat', identifyUser, artieRateLimiter, verifyHoneypot, blockAggr
         // Fetch real role from DB instead of trusting request body
         let realRole = 'user';
         if (userId) {
-            const { db } = await import('./firebaseAdmin');
+            const { db } = await import('./firebaseAdmin.js');
             const userDoc = await db.collection('users').doc(userId).get();
             const userData = userDoc.data();
             realRole = userData?.role || 'user';
         }
 
         // Import the logic dynamically to keep dependencies clean
-        const { artieChatLogic } = await import('../../functions/src/flows/artieChat');
-        const { schmidtChatLogic } = await import('../../functions/src/flows/schmidtChat');
+        const { artieChatLogic } = await import('../../functions/src/flows/artieChat.js');
+        const { schmidtChatLogic } = await import('../../functions/src/flows/schmidtChat.js');
         // [SCHMIDT SWITCH] Dynamic Agent Routing
         let result;
         const isOwner = ['owner', 'manager', 'admin', 'super-admin'].includes(realRole);
@@ -1207,7 +1210,7 @@ v1Router.post('/chat', identifyUser, artieRateLimiter, verifyHoneypot, blockAggr
  */
 v1Router.get('/ai/access-logs', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
     try {
-        const { db } = await import('./firebaseAdmin');
+        const { db } = await import('./firebaseAdmin.js');
         const snapshot = await db.collection('ai_access_logs')
             .orderBy('timestamp', 'desc')
             .limit(50)
@@ -1228,7 +1231,7 @@ v1Router.get('/ai/access-logs', verifyToken, requireRole(['admin', 'super-admin'
 v1Router.get('/venues/:id/semantic', async (req, res) => {
     const { id } = req.params;
     try {
-        const { db } = await import('./firebaseAdmin');
+        const { db } = await import('./firebaseAdmin.js');
         const venueDoc = await db.collection('venues').doc(id).get();
         if (!venueDoc.exists) {
             return res.status(404).json({ error: 'Venue not found' });
@@ -1236,7 +1239,7 @@ v1Router.get('/venues/:id/semantic', async (req, res) => {
         const venue = venueDoc.data()!;
 
         // Dynamically import Gemini Service
-        const { GeminiService } = await import('../../functions/src/services/geminiService');
+        const { GeminiService } = await import('../../functions/src/services/geminiService.js');
         const gemini = new GeminiService();
 
         const prompt = `You are an SEO & AI Authority specialist for OlyBars.
@@ -1277,9 +1280,9 @@ v1Router.post('/ai/generate-description', async (req, res) => {
     }
 
     try {
-        const { db } = await import('./firebaseAdmin');
-        const { KnowledgeService } = await import('./services/knowledgeService');
-        const { GeminiService } = await import('../../functions/src/services/geminiService');
+        const { db } = await import('./firebaseAdmin.js');
+        const { KnowledgeService } = await import('./services/knowledgeService.js');
+        const { GeminiService } = await import('../../functions/src/services/geminiService.js');
 
         // 1. Fetch Venue Data
         const venueDoc = await db.collection('venues').doc(venueId).get();
@@ -1329,7 +1332,7 @@ v1Router.post('/ai/analyze-event', verifyToken, async (req, res) => {
     }
 
     try {
-        const { GeminiService } = await import('../../functions/src/services/geminiService');
+        const { GeminiService } = await import('./services/geminiService.js');
         const gemini = new GeminiService();
 
         const analysis = await gemini.analyzeEvent(event);
@@ -1337,6 +1340,35 @@ v1Router.post('/ai/analyze-event', verifyToken, async (req, res) => {
     } catch (error: any) {
         log('ERROR', 'Event Analysis Failed', { error: error.message });
         res.status(500).json({ error: 'Failed to analyze event.' });
+    }
+});
+
+/**
+ * @route POST /api/vision/analyze-flyer
+ * @desc Extract event details from an architectural image/flyer
+ */
+v1Router.post('/vision/analyze-flyer', verifyToken, async (req, res) => {
+    const { base64Image } = req.body;
+
+    if (!base64Image) {
+        return res.status(400).json({ error: 'Missing base64Image payload.' });
+    }
+
+    try {
+        const { GeminiService } = await import('./services/geminiService.js');
+        const gemini = new GeminiService();
+
+        // Convert base64 to Buffer
+        const buffer = Buffer.from(base64Image, 'base64');
+
+        // Pass context date (ISO) for relative date resolution
+        const contextDate = new Date().toISOString();
+
+        const result = await gemini.parseFlyerContent(buffer, contextDate);
+        res.json(result);
+    } catch (error: any) {
+        log('ERROR', 'Vision Flyer Analysis Failed', { error: error.message });
+        res.status(500).json({ error: 'Schmidt failed to read the flyer.' });
     }
 });
 
@@ -1352,8 +1384,8 @@ v1Router.post('/ai/generate-press-release', verifyToken, async (req, res) => {
     }
 
     try {
-        const { db } = await import('./firebaseAdmin');
-        const { GeminiService } = await import('../../functions/src/services/geminiService');
+        const { db } = await import('./firebaseAdmin.js');
+        const { GeminiService } = await import('../../functions/src/services/geminiService.js');
 
         const venueDoc = await db.collection('venues').doc(venueId).get();
         const venueData = venueDoc.data() || { name: 'Local Venue' };
@@ -1423,7 +1455,7 @@ app.use('/api', v1Router); // Fallback for legacy frontend
 // Flash Bounty Activator (Lazy Cron)
 setInterval(async () => {
     try {
-        const { syncFlashBounties } = await import('./venueService');
+        const { syncFlashBounties } = await import('./venueService.js');
         await syncFlashBounties();
     } catch (e) {
         console.error('[ACTIVATOR] Failed to sync Flash Bountys:', e);

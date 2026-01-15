@@ -1,5 +1,5 @@
-import { ConfigSchema, type Config } from './schema';
-import { loadLocalEnv } from './localEnv';
+import { ConfigSchema, type Config } from './schema.js';
+import { loadLocalEnv } from './localEnv.js';
 
 /**
  * Validates and exports the server configuration.

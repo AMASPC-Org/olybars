@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../types';
 import { isSystemAdmin } from '../../types/auth_schema';
-import { ArtieChatModal } from '../../features/venues/components/ArtieChatModal';
+import { ArtieChatModal } from '../../components/artie/ArtieChatModal';
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
 import { CookieBanner } from '../ui/CookieBanner';
 import { Footer } from './Footer';

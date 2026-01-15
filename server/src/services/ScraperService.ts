@@ -1,5 +1,5 @@
 import { db } from '../firebaseAdmin.js';
-import { Venue, PartnerTier, LeagueEvent } from '../../../src/types/venue';
+import { Venue, PartnerTier, LeagueEvent } from '../../../src/types/venue.js';
 
 /**
  * League Night Event Scraper Service

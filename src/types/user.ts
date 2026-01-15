@@ -1,4 +1,4 @@
-import { SystemRole, VenueRole } from './auth_schema';
+import { SystemRole, VenueRole } from './auth_schema.js';
 
 export type UserRole = 'guest' | 'user' | 'manager' | 'owner' | 'admin' | 'super-admin' | 'PLAYER';
 

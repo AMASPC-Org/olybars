@@ -7,7 +7,7 @@ export enum PartnerTier {
     AGENCY = 'agency'
 }
 
-import { TIER_CONFIG as GLOBAL_TIER_CONFIG, TierFeatures } from '../config/tiers';
+import { TIER_CONFIG as GLOBAL_TIER_CONFIG, TierFeatures } from '../config/tiers.js';
 
 export interface TierLimits extends TierFeatures { }
 

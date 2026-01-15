@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
-import { isProduction } from './schema';
+import { isProduction } from './schema.js';
 
 /**
  * Loads local .env files anchored to the repository root.

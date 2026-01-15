@@ -1,6 +1,6 @@
 import admin from 'firebase-admin';
 import * as dotenv from 'dotenv';
-import venues from './data/venues_master.json';
+import venues from './data/venues_master.json' with { type: 'json' };
 
 dotenv.config({ path: '.env.local' });
 dotenv.config();

@@ -5,8 +5,8 @@
  * It integrates with the Meta Graph API to read from and publish to IG/FB.
  */
 
-import { Venue, LeagueEvent } from '../../../src/types';
-import { db } from '../firebaseAdmin';
+import { Venue, LeagueEvent } from '../../../src/types.js';
+import { db } from '../firebaseAdmin.js';
 
 export class SocialManager {
     /**

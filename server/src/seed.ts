@@ -1,9 +1,9 @@
-import { db } from './firebaseAdmin';
-import { config } from './config';
+import { db } from './firebaseAdmin.js';
+import { config } from './config/index.js';
 import readline from 'readline';
-import venues from './data/venues_master.json'; // Direct import for script
-import knowledge from './data/knowledgeBase.json';
-import { VenueSchema } from './utils/validation';
+import venues from './data/venues_master.json' with { type: 'json' };
+import knowledge from './data/knowledgeBase.json' with { type: 'json' };
+import { VenueSchema } from './utils/validation.js';
 export { venues, knowledge };
 
 const rl = readline.createInterface({

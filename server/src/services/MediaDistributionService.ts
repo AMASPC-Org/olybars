@@ -1,5 +1,5 @@
-import { db } from '../firebaseAdmin';
-import { LeagueEvent, Venue, PartnerTier, TIER_CONFIG } from '../../../src/types/venue';
+import { db } from '../firebaseAdmin.js';
+import { LeagueEvent, Venue, PartnerTier, TIER_CONFIG } from '../../../src/types/venue.js';
 
 /**
  * Media Distribution Service

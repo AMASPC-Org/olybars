@@ -1,4 +1,4 @@
-import { syncVenueWithGoogle } from './venueService';
+import { syncVenueWithGoogle } from './venueService.js';
 
 async function testSync() {
     console.log('--- STARTING PLACES SYNC TEST ---');

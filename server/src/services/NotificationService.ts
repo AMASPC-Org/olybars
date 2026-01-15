@@ -1,6 +1,6 @@
-import { db } from '../firebaseAdmin';
-import { UserProfile, Venue } from '../../../src/types';
-import { PULSE_CONFIG } from '../../../src/config/pulse';
+import { db } from '../firebaseAdmin.js';
+import { UserProfile, Venue } from '../../../src/types.js';
+import { PULSE_CONFIG } from '../../../src/config/pulse.js';
 
 export class NotificationService {
     /**

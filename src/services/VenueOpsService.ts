@@ -445,11 +445,34 @@ export class VenueOpsService {
                 description: eventData.description || 'Added via Artie'
             };
 
-            await EventService.submitEvent(payload as any);
-            return { success: true };
+            const result = await EventService.submitEvent(payload as any);
+            return result;
         } catch (error: any) {
             console.error('Error submitting calendar event:', error);
             throw new Error(`Failed to submit event: ${error.message}`);
         }
+    }
+    /**
+     * Skill: analyze_flyer (Vision API)
+     */
+    static async analyzeFlyer(venueId: string, base64Image: string) {
+        if (!venueId) throw new Error("Venue ID is required.");
+
+        const headers = await getAuthHeaders();
+        const response = await fetch(API_ENDPOINTS.VISION.ANALYZE_FLYER, {
+            method: 'POST',
+            headers: {
+                ...headers,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ base64Image })
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Schmidt failed to analyze the flyer.');
+        }
+
+        return response.json();
     }
 }

@@ -1,5 +1,5 @@
-import { db } from './firebaseAdmin';
-import { updateVenueBuzz } from './venueService';
+import { db } from './firebaseAdmin.js';
+import { updateVenueBuzz } from './venueService.js';
 
 async function testBuzz() {
     const testVenueId = 'hannahs';

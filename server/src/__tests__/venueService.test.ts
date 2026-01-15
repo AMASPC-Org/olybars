@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { clockIn } from '../venueService';
-import { db } from '../firebaseAdmin';
+import { clockIn } from '../venueService.js';
+import { db } from '../firebaseAdmin.js';
 
 // Mock dependencies
-vi.mock('../firebaseAdmin', () => ({
+vi.mock('../firebaseAdmin.js', () => ({
     db: {
         collection: vi.fn(),
     }

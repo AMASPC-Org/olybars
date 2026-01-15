@@ -1,4 +1,4 @@
-import { Badge } from '../types';
+import { Badge } from '../types.js';
 
 export const BADGES: Badge[] = [
     {

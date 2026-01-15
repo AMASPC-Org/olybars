@@ -61,5 +61,8 @@ export const API_ENDPOINTS = {
     },
     META: {
         EXCHANGE: `${API_BASE_URL}/venue/auth/meta/exchange`,
+    },
+    VISION: {
+        ANALYZE_FLYER: `${API_BASE_URL}/vision/analyze-flyer`,
     }
 };

@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, Sparkles, Bot, CheckCircle2, Mic, MicOff, Loader2, RotateCcw } from 'lucide-react';
-import { useSpeechRecognition } from '../../../hooks/useSpeechRecognition';
-import { useArtie } from '../../../hooks/useArtie';
-import { useArtieOps } from '../../../hooks/useArtieOps';
-import { QuickReplyChips, QuickReplyOption } from '../../../components/artie/QuickReplyChips';
-import { useToast } from '../../../components/ui/BrandedToast';
-import { UserProfile, isSystemAdmin } from '../../../types';
+import { X, Send, Sparkles, Bot, CheckCircle2, Mic, MicOff, Loader2, RotateCcw, Paperclip } from 'lucide-react';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
+import { useArtie } from '../../hooks/useArtie';
+import { useArtieOps } from '../../hooks/useArtieOps';
+import { QuickReplyChips, QuickReplyOption } from './QuickReplyChips';
+import { useToast } from '../../components/ui/BrandedToast';
+import { UserProfile, isSystemAdmin } from '../../types';
 // Note: Ensure these paths exist in your assets folder
-import artieLogo from '../../../assets/Artie-Only-Logo.png';
-import schmidtLogo from '../../../assets/Schmidt-Only-Logo (40 x 40 px).png';
+import artieLogo from '../../assets/Artie-Only-Logo.png';
+import schmidtLogo from '../../assets/Schmidt-Only-Logo (40 x 40 px).png';
 
 interface ArtieChatModalProps {
     isOpen: boolean;
@@ -100,6 +100,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
     const [greeting, setGreeting] = useState<ArtieGreeting | null>(null);
     const [hpValue, setHpValue] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [hasInitializedOps, setHasInitializedOps] = useState(false);
     const { isListening, transcript, startListening, stopListening, isSupported } = useSpeechRecognition();
 
@@ -187,6 +188,32 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
     }, [opsArtie.messages, opsArtie.opsState, opsArtie.draftData, isOpsMode]);
 
 
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (isOpsMode) {
+            const venueId = initialVenueId || userProfile?.homeBase;
+            // Read file as Base64
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const base64 = event.target?.result as string;
+                // Strip the data:image/jpeg;base64, prefix for the backend
+                const base64Clean = base64.split(',')[1];
+
+                await opsArtie.processAction('UPLOAD_FILE', base64Clean, venueId);
+            };
+            reader.readAsDataURL(file);
+
+            // Auto-clear input to allow re-upload of same file if needed
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const handleFileClick = () => {
+        fileInputRef.current?.click();
+    };
+
     // --- 6. Handlers ---
     const handleSend = async (text?: string) => {
         const userText = text || input.trim();
@@ -249,7 +276,8 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
     const handleChipSelect = (option: QuickReplyOption) => {
         const venueId = initialVenueId || userProfile?.homeBase;
-        opsArtie.processAction(option.value, undefined, venueId);
+        // Fix: Pass the label (e.g. "Today") as the text payload so heuristics work
+        opsArtie.processAction(option.value, option.label, venueId);
     };
 
     const handleConfirmAction = async () => {
@@ -258,7 +286,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
         setActionStatus('loading');
         try {
             // Dynamic import to avoid circular deps or bloat if not needed
-            const { VenueOpsService } = await import('../../../services/VenueOpsService');
+            const { VenueOpsService } = await import('../../services/VenueOpsService');
             const venueId = pendingAction.venueId || userProfile.homeBase;
 
             if (!venueId) {
@@ -306,9 +334,10 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
                 case 'add_to_calendar':
                 case 'add_calendar_event':
-                    await VenueOpsService.submitCalendarEvent(venueId, pendingAction.params);
+                    const result = await VenueOpsService.submitCalendarEvent(venueId, pendingAction.params);
                     successMessage = "Event Scheduled Successfully!";
-                    opsArtie.processAction('confirm_post');
+                    // Pass the created event ID to the ops hook so it can show a link
+                    opsArtie.processAction('confirm_post', result?.id);
                     break;
 
                 case 'update_website':
@@ -590,6 +619,15 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                 ) : "Ask Artie...")}
                                 className={`w-full bg-transparent px-3 text-sm text-white outline-none placeholder:text-slate-600 font-medium ${isListening ? 'animate-pulse' : ''}`}
                             />
+                            {isOpsMode && !activeIsLoading && (
+                                <button
+                                    onClick={handleFileClick}
+                                    className="p-2 rounded-lg text-slate-500 hover:text-white transition-all"
+                                    title="Upload Image"
+                                >
+                                    <Paperclip size={16} />
+                                </button>
+                            )}
                             {isSupported && (
                                 <button
                                     onClick={isListening ? stopListening : startListening}
@@ -610,6 +648,13 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                 autoComplete="off"
                             />
                         </div>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            accept="image/*"
+                            className="hidden"
+                        />
                         <button
                             onClick={() => handleSend()}
                             disabled={!input.trim() || activeIsLoading || isListening}

@@ -1,6 +1,6 @@
 ﻿import { GoogleGenAI } from '@google/genai';
-import { ARTIE_SYSTEM_INSTRUCTION } from '../config/agents/artie';
-import { SCHMIDT_SYSTEM_INSTRUCTION } from '../config/agents/schmidt';
+import { ARTIE_SYSTEM_INSTRUCTION } from '../config/agents/artie.js';
+import { SCHMIDT_SYSTEM_INSTRUCTION } from '../config/agents/schmidt.js';
 
 export interface ChatMessage {
     role: 'user' | 'model';
@@ -163,7 +163,6 @@ export class GeminiService {
         return "I'm ready to serve, boss.";
     }
 
-    // [UPDATED] Uses SCHMIDT Persona for Business Logic
     async generateManagerSuggestion(stats: any, venue: any): Promise<any> {
         const prompt = `
         TASK: Analyze venue performance and suggest a "Yield Management" action.
@@ -216,6 +215,67 @@ export class GeminiService {
         } catch (e) {
             console.error("JSON Parse Error on Schmidt Suggestion:", text);
             return null;
+        }
+    }
+
+    async parseFlyerContent(imageBuffer: Buffer, contextDate: string): Promise<any> {
+        const prompt = `You are Schmidt, the Lead Architect of OlyBars.
+        TASK: Extract event details from this flyer for system entry.
+        
+        CONTEXT:
+        Current System Time: ${contextDate} (Use this to resolve relative dates like "Friday" or "Tomorrow").
+        
+        EXTRACTION RULES:
+        1. TITLE: Catchy, clear. Shorten if it's too long.
+        2. DATE: Convert to ISO (YYYY-MM-DD). If "tonight", use the system date.
+        3. TIME: Convert to 24h format (HH:mm).
+        4. TYPE: One of: trivia, music, sports, comedy, happy_hour, other.
+        5. DESCRIPTION: 1-2 sentence high-energy pitch.
+        
+        LCB COMPLIANCE:
+        - If the flyer mentions "Free base", "Bottomless", or "Unlimited alcohol", FLAG it but still try to extract other data.
+        - PIVOT descriptions to focus on the experience, NOT the volume of alcohol.
+        
+        {
+          "title": "string",
+          "date": "YYYY-MM-DD",
+          "time": "HH:mm",
+          "type": "string",
+          "description": "string",
+          "lcbViolationDetected": boolean,
+          "missingFields": ["date", "time", "type", "title"]
+        }
+        
+        Note: Only include fields in "missingFields" if they are truly ambiguous or missing from the image.
+        `;
+
+        const response = await this.genAI.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: [{
+                role: 'user',
+                parts: [
+                    { text: prompt },
+                    {
+                        inlineData: {
+                            mimeType: 'image/jpeg',
+                            data: imageBuffer.toString('base64')
+                        }
+                    }
+                ]
+            }],
+            systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
+            config: { response_mime_type: "application/json" }
+        });
+
+        let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!text) throw new Error("Schmidt failed to read the flyer.");
+        text = text.replace(/```json\n?|```/g, '').trim();
+
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error("JSON Parse Error on Flyer Analysis:", text);
+            throw new Error("Failed to parse flyer data.");
         }
     }
 }

@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { migratePartnerData } from './migrate-partner-data';
+import { migratePartnerData } from './migrate-partner-data.js';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 

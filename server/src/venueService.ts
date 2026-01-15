@@ -1,10 +1,10 @@
-import { PULSE_CONFIG } from '../../src/config/pulse';
+import { PULSE_CONFIG } from '../../src/config/pulse.js';
 import { db } from './firebaseAdmin.js';
 import admin from 'firebase-admin';
-import { Venue, Signal, SignalType, Badge, UserBadgeProgress, VenueStatus, GameStatus } from '../../src/types';
-import { geocodeAddress } from './utils/geocodingService';
-import { searchPlace, getPlaceDetails } from './utils/placesService';
-import { BADGES } from '../../src/config/badges';
+import { Venue, Signal, SignalType, Badge, UserBadgeProgress, VenueStatus, GameStatus } from '../../src/types.js';
+import { geocodeAddress } from './utils/geocodingService.js';
+import { searchPlace, getPlaceDetails } from './utils/placesService.js';
+import { BADGES } from '../../src/config/badges.js';
 
 // In-memory cache for venues (TTL: 60 seconds)
 let venueCache: { data: Venue[], lastFetched: number } | null = null;
@@ -196,7 +196,7 @@ export const updateVenueBuzz = async (venueId: string) => {
     const wasConsensusPacked = (venueData as any)?.isConsensusPacked || false;
 
     if (isConsensusPacked && !wasConsensusPacked) {
-        const { NotificationService } = await import('./services/NotificationService');
+        const { NotificationService } = await import('./services/NotificationService.js');
         await NotificationService.dispatchPulseAlert(venueId, venueData?.name || 'A venue');
 
         // Persist consensus state to avoid duplicate alerts
@@ -1456,7 +1456,7 @@ export const generateVenueInsights = async (venueId: string) => {
     if (!venueDoc.exists) throw new Error('Venue not found');
 
     // Lazy import GeminiService to follow OlyBars AI Infrastructure Rules
-    const { GeminiService } = await import('../../functions/src/services/geminiService');
+    const { GeminiService } = await import('../../functions/src/services/geminiService.js');
     const gemini = new GeminiService();
 
     return await gemini.generateManagerSuggestion(stats, { id: venueId, ...venueDoc.data() });
