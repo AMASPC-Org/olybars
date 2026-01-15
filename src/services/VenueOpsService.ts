@@ -424,4 +424,32 @@ export class VenueOpsService {
             type: 'IMAGE_PROMPT'
         });
     }
+
+    /**
+     * Skill: add_calendar_event
+     */
+    static async submitCalendarEvent(venueId: string, eventData: any) {
+        if (!venueId) throw new Error("Venue ID is required.");
+
+        try {
+            const { EventService } = await import('./eventService');
+            // Basic transformation to AppEvent structure
+            // In a real app, this would use an LLM or robust parser
+            const payload = {
+                venueId,
+                venueName: eventData.venueName || '', // Use provided name or let backend resolve
+                title: eventData.title || 'New Event',
+                type: eventData.type || 'other',
+                date: eventData.date || new Date().toISOString().split('T')[0],
+                time: eventData.time || '20:00',
+                description: eventData.description || 'Added via Artie'
+            };
+
+            await EventService.submitEvent(payload as any);
+            return { success: true };
+        } catch (error: any) {
+            console.error('Error submitting calendar event:', error);
+            throw new Error(`Failed to submit event: ${error.message}`);
+        }
+    }
 }

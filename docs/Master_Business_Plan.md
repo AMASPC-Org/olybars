@@ -57,25 +57,29 @@ OlyBars operates on a permission-gated hierarchy to ensure data integrity and co
 > [!NOTE]
 > **Super-Admin Access**: `ryan@amaspc.com` maintains master oversight. Use the `/api/admin/setup-super` endpoint with the `MASTER_SETUP_KEY` for manual elevation.
 
-### 2.3 The AI Concierge: "Artie" & "Schmidt"
-Role: The friendly, witty, slightly mystical "Spirit of the Well."
+### 2.3 The AI Dual-Core: Artie & Schmidt
+The OlyBars platform is powered by two distinct AI agents, separating "Play" from "Work."
 
-#### A. For Players: The Guide (including Visitor Mode)
-*   **Vibe Discovery**: "Artie, where can I play pool right now?"
-*   **League Support**: "How many points do I need for the next badge?"
-*   **Visitor Mode**: When accessed from public discovery feeds, Artie defaults to a "Visitor Concierge" persona. For Administrators, this mode suppresses Ops/Owner tools to ensure a consistent, role-agnostic guide experience for public-facing discovery.
-*   **Compliance Guardrails**: Artie shifts to "Guardian Mode" if users exhibit behavior suggesting over-consumption, suggesting food or water.
+#### A. Artie (The Guest Agent)
+*   **Persona**: "The Spirit of the Artesian Well." Fun, mysterious, and deeply connected to the city's history.
+*   **Role**: **Guest Experience & Discovery**. Artie answers "Where should we go?" and "What is the vibe?"
+*   **Capabilities**:
+    *   **Vibe Discovery**: Real-time recommendations based on user mood.
+    *   **League Concierge**: Explains rules, points, and badges to players.
+    *   **Visitor Mode**: A simplified guide for unauthenticated users.
+    *   **Guardian Mode**: Detects over-consumption language and pivots to food/water suggestions.
+*   **Constraint**: Artie is **Read-Only** regarding business logic. Artie cannot change hours, schedule events, or see profit margins.
 
-#### B. For Partners: "Schmidt" (The Coach)
-While Artie is the "Spirit," **Schmidt** is the "Coach." Schmidt is the business-facing persona exclusive to Venue Owners.
-*   **Tone**: Analytical, direct, results-oriented. "Let's look at the stats."
-*   **Role**: Analyzes margin logic, suggests operational improvements, and handles the "boring" stuff (hours, compliance).
-
-#### C. The Multimodal Marketing Co-Pilot
-*   **Marketing Suite**: Drafts social copy, emails, and website updates. High-margin ideation based on menu analysis.
-*   **Visual Asset Design**: Generates high-quality image prompts for marketing content (Powered by Gemini 3.0 Flash).
-*   **Automation**: Suggests Flash Bounties based on inventory/time, and ensures compliance.
-*   **Listing Management**: `update_hours`, `update_order_url`, `emergency_closure`.
+#### B. Schmidt (The Owner Agent)
+*   **Persona**: "The Operator." Efficient, analytical, helpful, and precise.
+*   **Ref**: Named after Olympia's mild-mannered brewmaster history.
+*   **Role**: **Venue Operations & Logic**. Schmidt handles the "boring" stuff so owners don't have to.
+*   **Capabilities**:
+    *   **Schmidup Interface**: The dedicated chat/dashboard for owners.
+    *   **Event Scheduling**: Handles the "Add Event" skill and calendar management.
+    *   **Marketing Co-Pilot**: Drafts copy, emails, and generates image prompts.
+    *   **Listing Management**: `update_hours`, `emergency_closure`, `update_menu`.
+    *   **Business Logic**: Suggests Flash Bounties based on inventory and time.
 
 ---
 
@@ -268,7 +272,8 @@ While OlyBars builds a global community, we proactively drive users into the **P
 *   **Guest**: A User who has authenticated (logged in) but has not yet joined the League.
 *   **League Player**: A registered patron (User) who has officially joined the League. Players earn points, track progress, and unlock digital trophies (Badges). (Formerly referred to as Member).
 *   **Venue Owner**: The human operator authorized to manage a venue's profile. This is the person who performs the login action to access The Brew House.
-*   **Schmidt**: The analytical, business-focused AI persona ("Coach Mode") designed exclusively for Venue Owners. Schmidt handles data, margins, and operational compliance.
+*   **Schmidt**: The Venue Operations Agent. Efficient, helpful, and precise. Handles "Add Event," analytics, and venue management.
+*   **Schmidup**: The operational dashboard/interface where the Venue Owner interacts with Schmidt to manage their business.
 *   **Super-Admin**: The platform lighthouse (typically `ryan@amaspc.com`). Has global authorization to manage any venue, override system settings, and enforce fair play standard across the entire AMA Network.
 *   **Listed Venue**: A physical location (bar/pub) that appears on the OlyBars map but has not yet claimed their profile or joined the League as a Partner.
 *   **League Partner**: A venue that has claimed their profile and entered into a marketing agreement with the League. Includes all active tiers: Free, DIY, Pro, and Agency.
@@ -281,7 +286,7 @@ While OlyBars builds a global community, we proactively drive users into the **P
 *   **Standings Tie-Breaker**: In the event of a point tie, the system ranks players based on: 1. Total Lifetime Clock Ins, 2. Current Streak, 3. Alphabetical Handle.
 
 ### 9.3 Key Concepts
-*   **Artie**: The spirit of the Artesian Well. A permission-gated AI agent that acts as a concierge for Players and a drafter/co-pilot for Partners.
+*   **Artie**: The Guest Experience Agent. The "Spirit of the Artesian Well." Fun, mysterious, and in-the-know. Strictly read-only/concierge for public users. Does NOT handle business operations.
 *   **Current State**: The real-time energy level of a venue (Dead, Chill, Buzzing, Packed).
     *   **Dead**: < 20% Capacity. Quiet, quick service.
     *   **Chill**: 20-60% Capacity. Conversational, date vibes.

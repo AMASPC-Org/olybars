@@ -587,36 +587,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                     </div>
                 )}
 
-                {/* Claim CTA - Only show if unclaimed */}
-                {!venue.ownerId && (
-                    <div className="bg-gradient-to-br from-primary/10 to-black border border-primary/30 p-8 rounded-2xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/20 transition-all duration-1000" />
 
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 bg-primary text-black rounded-lg">
-                                    <Crown className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-black text-white uppercase font-league tracking-wide">Own this Venue?</h3>
-                                    <p className="text-xs text-primary font-bold uppercase tracking-widest">Official Partner Program</p>
-                                </div>
-                            </div>
-
-                            <p className="text-slate-300 mb-6 max-w-xl leading-relaxed">
-                                Claim your official listing to manage your "Vibe," access real-time analytics, and launch Flash Bounties to drive traffic instantly.
-                            </p>
-
-                            <button
-                                onClick={() => navigate('/partners/claim', { state: { prefilledVenue: venue } })}
-                                className="bg-primary text-black font-black uppercase tracking-widest py-3 px-8 rounded-xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(251,191,36,0.3)] flex items-center gap-2"
-                            >
-                                <Crown className="w-4 h-4" />
-                                Claim Your Listing
-                            </button>
-                        </div>
-                    </div>
-                )}
                 {/* Insider Vibe (Pit/Stephanie/Chris Personas) */}
                 {venue.insiderVibe && (
                     <div className="bg-primary/10 border border-primary/30 p-6 rounded-2xl shadow-xl relative overflow-hidden group">
@@ -1131,29 +1102,43 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
 
                 {/* [NEW] Owner Claim Section */}
                 {(!venue.ownerId || isSystemAdmin(userProfile) || !userProfile || userProfile.uid === 'guest') && (
-                    <div className="pt-16 mt-16 border-t border-white/5 text-center pb-8 sticky-claim-trigger">
-                        <div className="inline-block p-4 bg-primary/10 rounded-3xl border border-primary/20 mb-6 group hover:scale-110 transition-transform duration-500">
-                            <Crown className="w-10 h-10 text-primary" />
+                    <div className="pt-16 mt-16 border-t border-white/5 pb-16 sticky-claim-trigger">
+                        <div className="bg-gradient-to-br from-primary/10 to-black border border-primary/30 p-8 rounded-2xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/20 transition-all duration-1000" />
+
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="p-2 bg-primary text-black rounded-lg">
+                                        <Crown className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-black text-white uppercase font-league tracking-wide">Own this Venue?</h3>
+                                        <p className="text-xs text-primary font-bold uppercase tracking-widest">Official Partner Program</p>
+                                    </div>
+                                </div>
+
+                                <p className="text-slate-300 mb-6 max-w-xl leading-relaxed">
+                                    Claim your official listing to manage your "Vibe," access real-time analytics, and launch Flash Bounties to drive traffic instantly.
+                                </p>
+
+                                <button
+                                    onClick={() => {
+                                        let url = '/partners/claim';
+                                        const params = new URLSearchParams();
+                                        if (venue.id) params.append('venueId', venue.id);
+                                        if (venue.googlePlaceId) params.append('placeId', venue.googlePlaceId);
+                                        params.append('name', venue.name);
+                                        if (venue.address) params.append('address', venue.address);
+                                        if (params.toString()) url += `?${params.toString()}`;
+                                        navigate(url, { state: { prefilledVenue: venue } });
+                                    }}
+                                    className="bg-primary text-black font-black uppercase tracking-widest py-3 px-8 rounded-xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(251,191,36,0.3)] flex items-center gap-2"
+                                >
+                                    <Crown className="w-4 h-4" />
+                                    Claim Your Listing
+                                </button>
+                            </div>
                         </div>
-                        <h4 className="text-2xl font-black text-white uppercase font-league mb-3 tracking-tighter">Claim Your Venue</h4>
-                        <p className="text-sm text-slate-400 font-medium mb-8 max-w-sm mx-auto leading-relaxed italic">
-                            Are you the owner or manager of <span className="text-primary font-bold">{venue.name}</span>? Claim this listing to manage your vibe, menu, and events in the 98501.
-                        </p>
-                        <button
-                            onClick={() => {
-                                let url = '/partners/claim';
-                                const params = new URLSearchParams();
-                                if (venue.id) params.append('venueId', venue.id);
-                                if (venue.googlePlaceId) params.append('placeId', venue.googlePlaceId);
-                                params.append('name', venue.name);
-                                if (venue.address) params.append('address', venue.address);
-                                if (params.toString()) url += `?${params.toString()}`;
-                                navigate(url);
-                            }}
-                            className="w-full sm:w-auto bg-primary text-black px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-primary/30 font-league"
-                        >
-                            Claim this Bar
-                        </button>
                     </div>
                 )}
             </div>

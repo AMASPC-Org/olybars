@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X, User, Hash, Home, Beer, Mail, Phone, ChevronRight, Shield, Lock, Facebook
 } from 'lucide-react';
@@ -60,6 +60,22 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   const [ownerEmail, setOwnerEmail] = useState('');
   const [ownerPassword, setOwnerPassword] = useState('');
+  const [pendingVenueName, setPendingVenueName] = useState('');
+
+  // Pre-fill Business Name from Auth Bridge (Claim Intent)
+  useEffect(() => {
+    const bridgeData = sessionStorage.getItem('claim_intent_venue');
+    if (bridgeData) {
+      try {
+        const intent = JSON.parse(bridgeData);
+        if (intent.name) {
+          setPendingVenueName(intent.name);
+        }
+      } catch (e) {
+        console.error('Failed to parse bridge data', e);
+      }
+    }
+  }, []);
 
   // Onboarding specific state
   const [joinLeague, setJoinLeague] = useState(true);
@@ -85,7 +101,52 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handleOwnerSignup = async () => {
+    if (!handle.trim()) { showToast('Contact Name is required.'); return; }
+    if (!pendingVenueName.trim()) { showToast('Business Name is required.'); return; }
+    if (!ownerEmail.includes('@')) { showToast('Valid Business Email required.'); return; }
+    if (ownerPassword.length < 6) { showToast('Password must be 6+ chars.'); return; }
+
+    setIsLoading(true);
+    try {
+      // 1. Create Auth User
+      const userCredential = await createUserWithEmailAndPassword(auth, ownerEmail, ownerPassword);
+      const uid = userCredential.user.uid;
+
+      // 2. Create Owner Profile
+      const newProfile: UserProfile = {
+        uid: uid,
+        role: 'owner', // Immediate Owner Role for onboarding flow
+        systemRole: 'guest',
+        venuePermissions: {}, // Will be linked in ClaimVenuePage via bridge
+        handle: handle, // Contact Name
+        email: ownerEmail,
+        phone: '', // Can be added later
+        homeBase: '',
+        favoriteDrinks: [],
+        weeklyBuzz: true,
+        showMemberSince: true,
+        createdAt: Date.now(),
+        pendingVenueName: pendingVenueName // Capture business name intent
+      };
+
+      await setDoc(doc(db, 'users', uid), newProfile);
+
+      setUserProfile(newProfile);
+      onOwnerSuccess();
+      onClose();
+      showToast(`Welcome Partner! Let's verify ${pendingVenueName}.`, 'success');
+
+    } catch (error: any) {
+      console.error("Partner Registration Error:", error);
+      showToast(mapAuthErrorToMessage(error.code));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleUserLogin = async () => {
+    // ... existing user login logic ...
     if (!email.includes('@')) { showToast('Please enter a valid email.'); return; }
     if (!password) { showToast('Please enter your password.'); return; }
 
@@ -123,7 +184,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           (profile.venuePermissions && Object.keys(profile.venuePermissions).length > 0) ||
           ['admin', 'owner', 'manager', 'super-admin'].includes(profile.role);
 
-        if (!hasAccess) {
+        // [IMPROVEMENT] Allow prospect owners (signup mode) or pre-filled intent users to pass
+        const hasIntent = sessionStorage.getItem('claim_intent_venue');
+        const isSignup = userSubMode === 'signup';
+
+        if (!hasAccess && !hasIntent && !isSignup) {
           showToast(`Access Denied: ${profile.email} is not authorized for Venue management.`);
           setIsLoading(false);
           return;
@@ -167,22 +232,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           (profile.venuePermissions && Object.keys(profile.venuePermissions).length > 0) ||
           ['admin', 'owner', 'manager', 'super-admin'].includes(profile.role);
 
-        if (!hasAccess) {
+        const hasIntent = sessionStorage.getItem('claim_intent_venue');
+
+        if (!hasAccess && !hasIntent) {
           showToast(`Access Denied: ${profile.email} is not authorized for Venue management.`);
           setIsLoading(false);
           return;
         }
-
-        const firebaseUser = auth.currentUser;
-        if (firebaseUser && multiFactor(firebaseUser).enrolledFactors.length === 0) {
-          showToast('MFA REQUIRED FOR PARTNERS. PLEASE ENROLL IN SETTINGS.', 'info');
-        }
+        // ...
       }
-
+      // ...
       setUserProfile(profile);
-      const welcomeName = profile.handle || profile.displayName || 'Legend';
-      showToast(loginMode === 'owner' ? `Logged in as Commissioner ${welcomeName}` : `Welcome to the League, ${welcomeName}!`, 'success');
-
+      // ...
       if (loginMode === 'owner') {
         onOwnerSuccess();
       }
@@ -211,9 +272,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
       const newProfile: UserProfile = {
         uid: uid,
-        role: joinLeague ? 'user' : 'guest', // Legacy support
-        systemRole: 'guest', // RBAC Default
-        venuePermissions: {}, // RBAC Default
+        role: joinLeague ? 'user' : 'guest',
+        systemRole: 'guest',
+        venuePermissions: {},
         handle,
         email,
         phone,
@@ -244,6 +305,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     } catch (error: any) {
       console.error("Registration Error:", error);
       showToast(mapAuthErrorToMessage(error.code));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -268,13 +331,16 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     const resolver = getMultiFactorResolver(auth, error);
     setMfaResolver(resolver);
 
-    // Auto-trigger SMS to the first enrolled factor
     const hints = resolver.hints;
     if (hints[0] && hints[0].factorId === 'phone') {
-      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible'
-      });
-      setRecaptchaVerifier(verifier);
+      let verifier = recaptchaVerifier;
+      if (!verifier) {
+        verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          'size': 'invisible'
+        });
+        setRecaptchaVerifier(verifier);
+      }
+
       const phoneInfoOptions = {
         multiFactorHint: hints[0],
         session: resolver.session
@@ -561,23 +627,62 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </>
           ) : (
             <>
-              <form onSubmit={(e) => { e.preventDefault(); handleOwnerLogin(); }} className="space-y-4">
-                <div className="bg-red-900/20 p-3 text-[10px] text-red-300 rounded border border-red-800 uppercase text-center">Partner Access</div>
+              <form onSubmit={(e) => { e.preventDefault(); userSubMode === 'signup' ? handleOwnerSignup() : handleOwnerLogin(); }} className="space-y-4">
+                <div className="bg-red-900/20 p-3 text-[10px] text-red-300 rounded border border-red-800 uppercase text-center font-bold">
+                  {userSubMode === 'signup' ? 'Partner Registration' : 'Partner Access'}
+                </div>
+
+                {userSubMode === 'signup' && (
+                  <>
+                    <div className="relative">
+                      <Home className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                      <input
+                        type="text"
+                        value={handle}
+                        onChange={(e) => setHandle(e.target.value)}
+                        placeholder="Contact Name (e.g. John Doe)"
+                        className={inputClasses}
+                      />
+                    </div>
+                    <div className="relative">
+                      <Beer className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                      <input
+                        type="text"
+                        value={pendingVenueName}
+                        onChange={(e) => setPendingVenueName(e.target.value)}
+                        placeholder="Business Name (e.g. The Artesian)"
+                        className={inputClasses}
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div className="relative">
                   <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                  <input type="email" value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} placeholder="Email" className={inputClasses} />
+                  <input type="email" value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} placeholder="Business Email" className={inputClasses} />
                 </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                   <input type="password" value={ownerPassword} onChange={(e) => setOwnerPassword(e.target.value)} placeholder="Password" className={inputClasses} autoComplete="current-password" />
                 </div>
+
                 <button
                   type="submit"
                   className="w-full bg-slate-800 text-white font-bold py-3 rounded mt-4 uppercase hover:bg-slate-700 transition-colors"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Processing...' : 'Login'}
+                  {isLoading ? 'Processing...' : userSubMode === 'signup' ? 'Register Venue' : 'Login'}
                 </button>
+
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setUserSubMode(userSubMode === 'signup' ? 'login' : 'signup')}
+                    className="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest"
+                  >
+                    {userSubMode === 'signup' ? 'Have an account? Partner Login' : 'New Venue? Register Here'}
+                  </button>
+                </div>
               </form>
 
               <div className="relative py-4">

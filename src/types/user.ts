@@ -106,4 +106,7 @@ export interface UserProfile {
     hasCompletedMakerSurvey?: boolean;
     vouchers?: UserVoucher[];
     lastDrinkBountyRedemption?: number; // Timestamp of last alcohol-related redemption
+
+    // Onboarding
+    pendingVenueName?: string;
 }

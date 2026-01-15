@@ -25,8 +25,19 @@ export const AuthPage: React.FC<AuthPageProps> = (props) => {
     const modeParam = searchParams.get('mode');
 
     useEffect(() => {
-        if (modeParam === 'signup' || modeParam === 'login') {
-            props.setUserSubMode(modeParam as 'login' | 'signup');
+        if (modeParam === 'owner') {
+            props.setLoginMode('owner');
+            props.setUserSubMode('login');
+        } else if (modeParam === 'register_venue') {
+            props.setLoginMode('owner');
+            props.setUserSubMode('signup');
+        } else if (modeParam === 'signup') {
+            props.setLoginMode('user');
+            props.setUserSubMode('signup');
+        } else {
+            // Default common path
+            props.setLoginMode('user');
+            props.setUserSubMode('login');
         }
     }, [modeParam, props]);
 

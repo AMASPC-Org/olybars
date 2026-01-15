@@ -6,7 +6,7 @@ import {
     Zap, Flame, Trophy, ArrowRight, Loader2,
     ShieldCheck, Instagram
 } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { PlaceAutocomplete } from '../../../components/ui/PlaceAutocomplete';
 import { AssetToggleGrid } from '../../../components/partners/AssetToggleGrid';
 import { Venue, VenueStatus } from '../../../types';
@@ -77,14 +77,32 @@ export default function ClaimVenuePage() {
     }, [showToast]);
 
     const [autoQuery, setAutoQuery] = useState('');
+    const location = useLocation();
 
-    // Auto-fill from URL or SessionStorage (Auth Bridge)
+    // Auto-fill from URL, State, or SessionStorage (Auth Bridge)
     useEffect(() => {
         const venueId = searchParams.get('venueId');
         const placeId = searchParams.get('placeId');
         const nameParam = searchParams.get('name');
 
-        // Check Session Storage for Bridge Data
+        // 1. Check State (Direct Navigation from Profile) - PRIORITY
+        const prefilledVenue = location.state?.prefilledVenue as Venue | undefined;
+        if (prefilledVenue && !selectedPlace && !venueData) {
+            setVenueData(prefilledVenue);
+            if (prefilledVenue.googlePlaceId) {
+                setSelectedPlace({
+                    place_id: prefilledVenue.googlePlaceId,
+                    name: prefilledVenue.name,
+                    formatted_address: prefilledVenue.address,
+                    formatted_phone_number: prefilledVenue.phone,
+                    website: prefilledVenue.website
+                } as any);
+            }
+            setStep('VERIFY'); // Skip Search, Go straight to Verify
+            return;
+        }
+
+        // 2. Check Session Storage for Bridge Data
         const bridgeData = sessionStorage.getItem('claim_intent_venue');
 
         if (bridgeData && !selectedPlace && !venueData) {
@@ -137,7 +155,7 @@ export default function ClaimVenuePage() {
                 };
                 sessionStorage.setItem('claim_intent_venue', JSON.stringify(claimIntent));
             }
-            navigate(`/auth?mode=signup&redirect=${encodeURIComponent('/partners/claim')}`);
+            navigate(`/auth?mode=register_venue&redirect=${encodeURIComponent('/partners/claim')}`);
             return;
         }
 
@@ -515,7 +533,22 @@ export default function ClaimVenuePage() {
                                     </div>
                                     {!auth.currentUser && (
                                         <button
-                                            onClick={() => navigate('/auth?mode=login')}
+                                            onClick={() => {
+                                                // [AUTH BRIDGE] Save Intent before redirecting
+                                                if (selectedPlace?.place_id && venueData) {
+                                                    try {
+                                                        const claimIntent = {
+                                                            placeId: selectedPlace.place_id,
+                                                            name: venueData.name,
+                                                            address: venueData.address,
+                                                            phone: venueData.phone,
+                                                            website: venueData.website
+                                                        };
+                                                        sessionStorage.setItem('claim_intent_venue', JSON.stringify(claimIntent));
+                                                    } catch (e) { console.error('Bridge Save Failed', e); }
+                                                }
+                                                navigate(`/auth?mode=register_venue&redirect=${encodeURIComponent('/partners/claim')}`);
+                                            }}
                                             className="bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-lg hover:bg-amber-500/20 transition-colors"
                                         >
                                             <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-2">
