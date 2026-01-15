@@ -42,6 +42,36 @@ export class VenueOpsService {
         return response.json();
     }
 
+    static async updatePhotoStatus(venueId: string, photoId: string, status: { isApprovedForFeed?: boolean; isApprovedForSocial?: boolean }) {
+        const headers = await getAuthHeaders();
+        const response = await fetch(API_ENDPOINTS.PHOTO.STATUS(venueId, photoId), {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                ...headers
+            },
+            body: JSON.stringify(status)
+        });
+        if (!response.ok) throw new Error('Failed to update photo status');
+        return response.json();
+    }
+
+    static async generateEventCopy(draft: any, venueId: string, vibe: string = 'standard'): Promise<string> {
+        const headers = await getAuthHeaders();
+        const response = await fetch(API_ENDPOINTS.AI.GEN_COPY, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...headers
+            },
+            body: JSON.stringify({ draft, venueId, vibe })
+        });
+
+        if (!response.ok) throw new Error('Failed to generate event copy');
+        const data = await response.json();
+        return data.copy;
+    }
+
     /**
      * Update an active flash bounty for a venue.
      */
@@ -224,24 +254,6 @@ export class VenueOpsService {
         } catch (error: any) {
             console.error('Error updating happy hour:', error);
             throw new Error(`Failed to update happy hour: ${error.message}`);
-        }
-    }
-
-    static async addEvent(venueId: string, event: { type: string, time: string, description?: string }) {
-        if (!venueId) throw new Error("Venue ID is required for adding an event.");
-
-        try {
-            const venueRef = doc(db, 'venues', venueId);
-            await updateDoc(venueRef, {
-                'leagueEvent': event.type,
-                'triviaTime': event.time,
-                'eventDescription': event.description || "",
-                'eventUpdatedAt': serverTimestamp()
-            });
-            return { success: true };
-        } catch (error: any) {
-            console.error('Error adding event:', error);
-            throw new Error(`Failed to add event: ${error.message}`);
         }
     }
 

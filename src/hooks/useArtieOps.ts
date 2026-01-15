@@ -16,7 +16,13 @@ export type ArtieOpsState =
     | 'event_input_date'    // Interview Mode: Asking for Date
     | 'event_input_time'    // Interview Mode: Asking for Time
     | 'event_input_type'    // Interview Mode: Asking for Type (Trivia, Karaoke, etc.)
+    | 'event_input_prizes'
     | 'event_input_details' // Interview Mode: Asking for Description/Prizes
+    | 'event_init_check_flyer'
+    | 'event_init_check_gen'
+    | 'event_upload_wait'
+    | 'generating_creative_copy'
+    | 'review_event_copy'
     | 'play_input'
     | 'social_post_input'
     | 'email_draft_input'
@@ -47,7 +53,12 @@ interface EventDraft {
     date?: string;
     time?: string;
     description?: string;
+    prizes?: string;
+    marketingCopy?: string;
+    vibeMode?: 'hype' | 'chill' | 'funny' | 'standard';
     type?: string;
+    imageState: 'none' | 'uploaded' | 'generated';
+    imageUrl?: string;
 }
 
 // 2. Regulatory Guardrails (LCB Compliance)
@@ -59,7 +70,7 @@ export const useArtieOps = () => {
     const [messages, setMessages] = useState<ArtieMessage[]>([]);
     const [currentBubbles, setCurrentBubbles] = useState<QuickReplyOption[]>([]);
     const [draftData, setDraftData] = useState<any>({});
-    const [eventDraft, setEventDraft] = useState<EventDraft>({}); // Specific state for the interview
+    const [eventDraft, setEventDraft] = useState<EventDraft>({ imageState: 'none' }); // Specific state for the interview
     const [isLoading, setIsLoading] = useState(false);
     const [venue, setVenue] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
@@ -256,7 +267,38 @@ export const useArtieOps = () => {
             case 'skill_add_event':
                 addUserMessage('Add Event');
                 // Reset draft
-                setEventDraft({});
+                setEventDraft({ imageState: 'none' });
+                setOpsState('event_init_check_flyer');
+                addArtieResponse("Do you have an existing flyer or image for this event?", [
+                    { id: 'event_has_flyer', label: 'Yes, I have one', value: 'event_has_flyer', icon: '🖼️' },
+                    { id: 'event_no_flyer', label: 'No', value: 'event_no_flyer', icon: '📝' }
+                ]);
+                break;
+
+            case 'event_has_flyer':
+                addUserMessage('Yes, I have one');
+                setOpsState('event_upload_wait');
+                addArtieResponse("Great! Drag and drop it here (or click the paperclip).");
+                break;
+
+            case 'event_no_flyer':
+                addUserMessage('No');
+                setOpsState('event_init_check_gen');
+                addArtieResponse("Would you like me to design a promotional image for you using the Artsian Spirit?", [
+                    { id: 'event_gen_flyer', label: 'Yes, Create One', value: 'event_gen_flyer', icon: '🎨' },
+                    { id: 'event_text_only', label: 'No, Just Text', value: 'event_text_only', icon: '📝' }
+                ]);
+                break;
+
+            case 'event_gen_flyer':
+                addUserMessage('Yes, Create One');
+                setDraftData({ ...draftData, isEventFlyer: true });
+                setEventDraft(prev => ({ ...prev, imageState: 'generated' }));
+                await processAction('skill_generate_image');
+                break;
+
+            case 'event_text_only':
+                addUserMessage('No, Just Text');
                 setOpsState('event_input');
                 addArtieResponse("Paste the event details (Name, Date, Time) or a link to the Facebook event.");
                 break;
@@ -275,6 +317,8 @@ export const useArtieOps = () => {
                     currentDraft.description = payload;
                 } else if (opsState === 'event_input_type') {
                     currentDraft.type = payload.toLowerCase().replace(' ', '_') as any;
+                } else if (opsState === 'event_input_prizes') {
+                    currentDraft.prizes = payload;
                 } else if (opsState === 'event_input_date') {
                     // Prioritize date parsing logic here to ensure Chips work
                     const lower = payload.toLowerCase();
@@ -418,71 +462,113 @@ export const useArtieOps = () => {
                     return;
                 }
 
-                // NEW: Type Check
+                // NEW: Type Check (Priority #1)
                 if (!currentDraft.type) {
                     setOpsState('event_input_type');
-                    // Simple heuristic: if payload mentions trivia/karaoke, auto-fill
-                    const lower = payload.toLowerCase();
-                    if (lower.includes('trivia')) currentDraft.type = 'trivia';
-                    else if (lower.includes('karaoke')) currentDraft.type = 'karaoke';
-                    else if (lower.includes('music') || lower.includes('band') || lower.includes('live')) currentDraft.type = 'live_music';
-                    else if (lower.includes('bingo')) currentDraft.type = 'bingo';
-                    else if (lower.includes('pool') || lower.includes('tournament') || lower.includes('party')) currentDraft.type = 'other';
-
-                    if (!currentDraft.type) {
-                        setEventDraft(currentDraft); // Save progress
-                        addArtieResponse("What kind of event is this?", [
-                            { id: 'trivia', label: 'Trivia', value: 'SUBMIT_EVENT_TEXT', icon: '🧠' },
-                            { id: 'karaoke', label: 'Karaoke', value: 'SUBMIT_EVENT_TEXT', icon: '🎤' },
-                            { id: 'music', label: 'Live Music', value: 'SUBMIT_EVENT_TEXT', icon: '🎸' },
-                            { id: 'other', label: 'Other', value: 'SUBMIT_EVENT_TEXT', icon: '🎉' }
-                        ]);
-                        return;
-                    }
+                    addArtieResponse("What kind of event is this?", [
+                        { id: 'trivia', label: 'Trivia', value: 'SUBMIT_EVENT_TEXT', icon: '🧠' },
+                        { id: 'karaoke', label: 'Karaoke', value: 'SUBMIT_EVENT_TEXT', icon: '🎤' },
+                        { id: 'music', label: 'Live Music', value: 'SUBMIT_EVENT_TEXT', icon: '🎸' },
+                        { id: 'other', label: 'Other', value: 'SUBMIT_EVENT_TEXT', icon: '🎉' }
+                    ]);
+                    return;
                 }
 
-                // NEW: Details/Description Check
-                if (!currentDraft.description) {
+                // NEW: Prizes Check (Priority #2 - Dynamic)
+                if (!currentDraft.prizes && (currentDraft.type === 'trivia' || currentDraft.type === 'bingo')) {
+                    setOpsState('event_input_prizes');
+                    setEventDraft(currentDraft);
+                    addArtieResponse("Winner's circle intel: What are the prizes? (e.g. $50 Venue Tab, OlyBars T-Shirt)");
+                    return;
+                }
+
+                // NEW: Details/Description Check (Priority #3)
+                if (!currentDraft.description && payload.toLowerCase() !== 'none') {
                     setOpsState('event_input_details');
                     setEventDraft(currentDraft);
 
                     // Context-aware prompting based on type
-                    let promptText = "Any specials, prizes, or rules I should mention? (Or type 'none' to skip)";
+                    let promptText = "Any rules or details I should mention? (Or type 'none' to skip)";
                     const t = currentDraft.type;
 
-                    if (t === 'trivia' || t === 'bingo') promptText = "What are the prizes for the winners? (e.g. $50 Tab)";
-                    else if (t === 'live_music') promptText = "Is there a cover charge? Who is opening?";
+                    if (t === 'live_music') promptText = "Is there a cover charge? Who is opening?";
                     else if (t === 'karaoke') promptText = "Any drink specials for singers?";
 
                     addArtieResponse(promptText);
                     return;
                 }
 
-                // 3. All slots filled -> Confirmation
+                // 3. All facts collected -> Transition to Creative Engine
+                setEventDraft(currentDraft);
+                await processAction('generating_creative_copy');
+                break;
+
+            case 'generating_creative_copy':
+                setOpsState('generating_creative_copy');
+                setIsLoading(true);
+                addArtieMessage("Schmidt is cooking up the marketing blurb... 🍳");
+
+                try {
+                    const copy = await VenueOpsService.generateEventCopy(
+                        eventDraft,
+                        venue?.id || venueId || '',
+                        eventDraft.vibeMode || 'standard'
+                    );
+
+                    const finalDraft = { ...eventDraft, marketingCopy: copy };
+                    setEventDraft(finalDraft);
+                    setIsLoading(false);
+                    setOpsState('review_event_copy');
+
+                    addArtieResponse(`How does this blurb sound?\n\n"${copy}"`, [
+                        { id: 'copy_ok', label: 'Looks Great', value: 'copy_approved', icon: '✅' },
+                        { id: 'regen_hype', label: 'More Hype!', value: 'regen_hype', icon: '🔥' },
+                        { id: 'regen_chill', label: 'Chill it out', value: 'regen_chill', icon: '🌊' },
+                        { id: 'regen_funny', label: 'Make it funny', value: 'regen_funny', icon: '😂' }
+                    ]);
+                } catch (e: any) {
+                    setIsLoading(false);
+                    console.error("Copy Gen Failed:", e);
+                    addArtieResponse("Schmidt's creative engine stalled. Let's use the facts for now.", [
+                        { id: 'fallback', label: 'Use Facts', value: 'copy_approved' }
+                    ]);
+                }
+                break;
+
+            case 'copy_approved':
+                addUserMessage('Looks Great');
+                // Proceed to confirmation or image gen check
+                setOpsState('confirm_action');
                 setDraftData({
                     skill: 'add_calendar_event',
                     params: {
-                        ...currentDraft,
-                        type: currentDraft.type || 'other',
+                        ...eventDraft,
+                        description: eventDraft.marketingCopy || eventDraft.description || `${eventDraft.title} on ${eventDraft.date}`,
                         venueName: venue?.name || '',
-                        summary: `${currentDraft.title} on ${currentDraft.date}` // Populates the card
+                        summary: `${eventDraft.title} on ${eventDraft.date}`
                     }
                 });
 
-                // Format time for display (12h)
-                // Format time for display (12h)
-                const [h, m] = currentDraft.time.split(':');
-                let hour = parseInt(h);
-                const ampm = hour >= 12 ? 'PM' : 'AM';
-                const hour12 = hour % 12 || 12; // 0 -> 12
-                const displayTime = `${hour12}:${m} ${ampm}`;
+                const [h, m] = (eventDraft.time || '20:00').split(':');
+                let hour1 = parseInt(h);
+                const ampm1 = hour1 >= 12 ? 'PM' : 'AM';
+                const hour12_1 = hour1 % 12 || 12;
+                const displayTime1 = `${hour12_1}:${m} ${ampm1}`;
 
-                setOpsState('confirm_action');
-                addArtieResponse(`I've drafted a calendar entry for:\n\n**${currentDraft.title}**\n${currentDraft.date} @ ${displayTime}\nType: ${currentDraft.type}\n\n"${currentDraft.description}"\n\nConfirm adding this to the schedule?`, [
+                addArtieResponse(`Ready to schedule!\n\n**${eventDraft.title}**\n${eventDraft.date} @ ${displayTime1}\n\n"${eventDraft.marketingCopy || eventDraft.description}"\n\nConfirm adding this to the schedule?`, [
                     { id: 'confirm', label: 'Post It', value: 'confirm_post', icon: '✅' },
-                    { id: 'edit', label: 'Edit', value: 'edit_event', icon: '✏️' },
+                    { id: 'gen_img', label: 'Gen Image', value: 'skill_generate_image', icon: '🎨' },
                     { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
                 ]);
+                break;
+
+            case 'regen_hype':
+            case 'regen_chill':
+            case 'regen_funny':
+                const vibe = action.split('_')[1] as any;
+                addUserMessage(`Make it ${vibe}`);
+                setEventDraft(prev => ({ ...prev, vibeMode: vibe }));
+                await processAction('generating_creative_copy');
                 break;
 
             // --- SKILL: Social Post ---
@@ -731,15 +817,28 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
             // --- CONFIRMATION & EXECUTION ---
             case 'confirm_post':
                 if (opsState === 'confirm_action' && draftData.skill === 'generate_image') {
+                    if (draftData.isEventFlyer) {
+                        setOpsState('event_input');
+                        addArtieResponse("Visual assets are staged! Now, paste the event details (Name, Date, Time) so I can link them.");
+                        break;
+                    }
                     await processAction('COMPLETE_IMAGE_GEN');
                     break;
                 }
                 setOpsState('completed');
 
                 let doneMsg = "Action complete. I've updated the system.";
-                if (draftData.skill === 'add_calendar_event' && payload) {
-                    const eventLink = `https://olybars.com/venue/${venue?.id}/events`; // Or simpler deep link if available
-                    doneMsg = `[Event Created](${eventLink}) successfully! 📅\n\nI've added it to your schedule.`;
+                if (draftData.skill === 'add_calendar_event') {
+                    const eventLink = `/venues/${venue?.id || ''}/events`;
+                    if (eventDraft.imageState !== 'none') {
+                        doneMsg = "Event & Assets Saved! Would you like to distribute this to social media now?";
+                        addArtieResponse(doneMsg, [
+                            { id: 'post_socials', label: 'Post to Socials', value: 'skill_social_post', icon: '📱' }
+                        ]);
+                        break;
+                    } else {
+                        doneMsg = `Event Created! View it here: [See Event](${eventLink})`;
+                    }
                 }
 
                 addArtieResponse(`${doneMsg} What's next?`);
@@ -754,8 +853,9 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                     const extraction = await VenueOpsService.analyzeFlyer(venueId || venue?.id || '', payload, new Date().toISOString());
 
                     // Merge extraction results into eventDraft
-                    const currentDraft = {
+                    const currentDraft: EventDraft = {
                         ...eventDraft,
+                        imageState: 'uploaded',
                         title: extraction.title || eventDraft.title,
                         date: extraction.date || eventDraft.date,
                         time: extraction.time || eventDraft.time,
@@ -797,7 +897,7 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
 
                     if (!currentDraft.type) {
                         setOpsState('event_input_type');
-                        addArtieResponse("What kind of event is this?", [
+                        addArtieResponse("Schmidt read the flyer, but couldn't be sure about the event CATEGORY. What type is this?", [
                             { id: 'trivia', label: 'Trivia', value: 'SUBMIT_EVENT_TEXT', icon: '🧠' },
                             { id: 'karaoke', label: 'Karaoke', value: 'SUBMIT_EVENT_TEXT', icon: '🎤' },
                             { id: 'music', label: 'Live Music', value: 'SUBMIT_EVENT_TEXT', icon: '🎸' },
@@ -806,35 +906,21 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                         return;
                     }
 
-                    if (!currentDraft.description) {
-                        setOpsState('event_input_details');
-                        addArtieResponse("Schmidt extracted the basics, but do you have any extra details or prizes to add?");
+                    if (!currentDraft.prizes && (currentDraft.type === 'trivia' || currentDraft.type === 'bingo')) {
+                        setOpsState('event_input_prizes');
+                        addArtieResponse("Schmidt missed it—what are the PRIZES? (e.g. $50 Venue Tab)");
                         return;
                     }
 
-                    // All slots filled -> Confirmation logic (same as at end of SUBMIT_EVENT_TEXT)
-                    setDraftData({
-                        skill: 'add_calendar_event',
-                        params: {
-                            ...currentDraft,
-                            type: currentDraft.type || 'other',
-                            venueName: venue?.name || '',
-                            summary: `${currentDraft.title} on ${currentDraft.date}`
-                        }
-                    });
+                    if (!currentDraft.description) {
+                        setOpsState('event_input_details');
+                        addArtieResponse("Schmidt extracted the basics, but do you have any extra details or rules to add?");
+                        return;
+                    }
 
-                    const [h, m] = currentDraft.time.split(':');
-                    let hour = parseInt(h);
-                    const ampm = hour >= 12 ? 'PM' : 'AM';
-                    const hour12 = hour % 12 || 12;
-                    const displayTime = `${hour12}:${m} ${ampm}`;
-
-                    setOpsState('confirm_action');
-                    addArtieResponse(`Schmidt is satisfied properly. I've drafted this from the flyer:\n\n**${currentDraft.title}**\n${currentDraft.date} @ ${displayTime}\n\n"${currentDraft.description}"\n\nConfirm adding this to the schedule?`, [
-                        { id: 'confirm', label: 'Post It', value: 'confirm_post', icon: '✅' },
-                        { id: 'edit', label: 'Edit', value: 'edit_event', icon: '✏️' },
-                        { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
-                    ]);
+                    // All slots filled -> Transition to Creative Engine
+                    setEventDraft(currentDraft);
+                    await processAction('generating_creative_copy');
 
                 } catch (e: any) {
                     setIsLoading(false);
@@ -846,7 +932,7 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
             case 'cancel':
                 setOpsState('selecting_skill');
                 setDraftData({});
-                setEventDraft({});
+                setEventDraft({ imageState: 'none' });
                 addArtieResponse("Cancelled. What else?", [
                     { id: '1', label: 'Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
                     { id: '2', label: 'Add Event', value: 'skill_add_event', icon: '📅' },
@@ -880,7 +966,7 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
         setMessages([]);
         setOpsState('event_input'); // Resets to initial input state
         setDraftData({ skill: 'none', params: {} });
-        setEventDraft({});
+        setEventDraft({ imageState: 'none' });
         // Re-inject initial greeting if desired, or let the component handle it
         setMessages([{
             id: 'artie-init',

@@ -420,7 +420,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league leading-none">
+                            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter font-league leading-none">
                                 THE BREW HOUSE
                             </h2>
                             <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded border border-primary/30 font-black uppercase tracking-widest">
@@ -505,70 +505,70 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
             )}
 
             {/* Navigation Tabs */}
-            <div className="flex bg-black px-4 border-b border-white/5">
+            {/* Navigation Tabs - Mobile Optimized Scrollable Bar */}
+            <div className="flex items-center overflow-x-auto whitespace-nowrap bg-black border-b border-white/5 no-scrollbar scroll-smooth">
                 <button
                     onClick={() => setDashboardView('main')}
-                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'main' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                    className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'main' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                 >
                     Operations
                 </button>
                 <button
                     onClick={() => setDashboardView('marketing')}
-                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'marketing' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                    className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'marketing' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                 >
                     Marketing
                 </button>
                 <button
                     onClick={() => setDashboardView('listing')}
-                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'listing' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                    className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'listing' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                 >
                     Listing
                 </button>
                 <button
                     onClick={() => setDashboardView('backroom')}
-                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'backroom' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                    className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'backroom' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                 >
                     Back Room
                 </button>
                 <button
                     onClick={() => setDashboardView('menu')}
-                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'menu' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                    className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'menu' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                 >
                     THE MENU
                 </button>
                 <button
                     onClick={() => setDashboardView('events')}
-                    className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'events' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                    className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'events' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                 >
                     Events
                 </button>
                 {myVenue && isVenueOwner(userProfile, myVenue.id) && (
                     <>
-                        {/* Only show Maker tab if they are already active or verified */}
                         {myVenue.isLocalMaker && (
                             <button
                                 onClick={() => setDashboardView('maker')}
-                                className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'maker' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                                className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'maker' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                             >
                                 Local Maker
                             </button>
                         )}
                         <button
                             onClick={() => setDashboardView('host')}
-                            className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'host' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                            className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'host' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                         >
                             League
                         </button>
                         <button
                             onClick={() => setDashboardView('qr')}
-                            className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'qr' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                            className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'qr' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                         >
                             QR Assets
                         </button>
                         {isVenueManager(userProfile, myVenue.id) && (
                             <button
                                 onClick={() => setDashboardView('reports')}
-                                className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'reports' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                                className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'reports' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                             >
                                 Reports
                             </button>
@@ -576,14 +576,14 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         {(isVenueOwner(userProfile, myVenue.id) || myVenue.managersCanAddUsers) && (
                             <button
                                 onClick={() => setDashboardView('people')}
-                                className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'people' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                                className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'people' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                             >
                                 People
                             </button>
                         )}
                         <button
                             onClick={() => setDashboardView('manual')}
-                            className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${dashboardView === 'manual' ? 'text-primary border-b-2 border-primary' : 'text-slate-500'}`}
+                            className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'manual' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                         >
                             THE MANUAL
                         </button>
@@ -594,8 +594,8 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
             <div className="flex-1 overflow-y-auto space-y-8 p-6 pb-24 scrollbar-hide">
                 {myVenue && dashboardView === 'main' && (
                     <>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-surface p-4 border border-white/10 rounded-lg shadow-xl">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="bg-surface p-4 border border-white/10 rounded-lg shadow-xl shrink-0">
                                 <p className="text-[10px] uppercase font-black text-slate-500 mb-1 font-league">Live Clock-ins</p>
                                 <p className="text-4xl font-black text-white font-league">{myVenue.clockIns || 0}</p>
                             </div>
@@ -611,12 +611,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                         </span>
                                     )}
                                 </div>
-                                <div className="grid grid-cols-4 gap-1">
+                                <div className="grid grid-cols-4 sm:grid-cols-4 gap-1">
                                     {['dead', 'chill', 'buzzing', 'packed'].map((s) => (
                                         <button
                                             key={s}
                                             onClick={() => setManualVibe(s)}
-                                            className={`py-2 text-[8px] font-black uppercase rounded border transition-all ${myVenue.status === s ? 'bg-primary border-primary text-black' : 'bg-black border-white/5 text-slate-500'}`}
+                                            className={`py-3 sm:py-2 text-[9px] sm:text-[8px] font-black uppercase rounded border transition-all ${myVenue.status === s ? 'bg-primary border-primary text-black' : 'bg-black border-white/5 text-slate-500'}`}
                                         >
                                             {s}
                                         </button>
@@ -714,12 +714,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center justify-between">
-                                <button onClick={() => adjustClockIns(-1)} className="w-14 h-14 flex items-center justify-center bg-black border border-white/10 text-white rounded-lg active:scale-95">
+                            <div className="flex items-center justify-between max-w-xs mx-auto">
+                                <button onClick={() => adjustClockIns(-1)} className="w-16 h-16 flex items-center justify-center bg-black border border-white/10 text-white rounded-xl active:scale-95 transition-transform">
                                     <Minus className="w-8 h-8" />
                                 </button>
-                                <p className="text-5xl font-black text-white font-league">{myVenue.clockIns || 0}</p>
-                                <button onClick={() => adjustClockIns(1)} className="w-14 h-14 flex items-center justify-center bg-primary text-black rounded-lg active:scale-95">
+                                <p className="text-6xl font-black text-white font-league tabular-nums">{myVenue.clockIns || 0}</p>
+                                <button onClick={() => adjustClockIns(1)} className="w-16 h-16 flex items-center justify-center bg-primary text-black rounded-xl active:scale-95 transition-transform">
                                     <Plus className="w-8 h-8" />
                                 </button>
                             </div>
@@ -862,17 +862,17 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
                         {/* Points Reporting Section */}
                         <section className="space-y-6">
-                            <div className="flex justify-between items-end">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                                 <div>
                                     <h3 className="text-2xl font-black text-white uppercase font-league leading-none">POINTS ANALYSIS</h3>
                                     <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">Revenue & Engagement metrics</p>
                                 </div>
-                                <div className="flex bg-black p-1 rounded-lg border border-white/10">
+                                <div className="flex bg-black p-1 rounded-lg border border-white/10 w-full sm:w-auto overflow-x-auto no-scrollbar">
                                     {['day', 'week', 'month', 'year'].map(p => (
                                         <button
                                             key={p}
                                             onClick={() => setStatsPeriod(p as any)}
-                                            className={`px-3 py-1.5 text-[10px] font-black uppercase rounded-md transition-all ${statsPeriod === p ? 'bg-primary text-black' : 'text-slate-500'}`}
+                                            className={`flex-1 sm:flex-none px-3 py-1.5 text-[10px] font-black uppercase rounded-md transition-all ${statsPeriod === p ? 'bg-primary text-black' : 'text-slate-500'}`}
                                         >
                                             {p}
                                         </button>
@@ -880,25 +880,25 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 <div className="bg-surface p-4 border border-white/10 rounded-xl">
                                     <p className="text-[9px] font-black text-slate-500 uppercase font-league mb-1">Earned</p>
-                                    <p className="text-2xl font-black text-primary font-league">+{activityStats.earned.toLocaleString()}</p>
+                                    <p className="text-xl sm:text-2xl font-black text-primary font-league">+{activityStats.earned.toLocaleString()}</p>
                                 </div>
                                 <div className="bg-surface p-4 border border-white/10 rounded-xl">
                                     <p className="text-[9px] font-black text-slate-500 uppercase font-league mb-1">Redeemed</p>
-                                    <p className="text-2xl font-black text-red-500 font-league">-{activityStats.redeemed.toLocaleString()}</p>
+                                    <p className="text-xl sm:text-2xl font-black text-red-500 font-league">-{activityStats.redeemed.toLocaleString()}</p>
                                 </div>
                                 <div className="bg-surface p-4 border border-white/10 rounded-xl">
                                     <p className="text-[9px] font-black text-slate-500 uppercase font-league mb-1">Active</p>
-                                    <p className="text-2xl font-black text-white font-league">{activityStats.activeUsers}</p>
+                                    <p className="text-xl sm:text-2xl font-black text-white font-league">{activityStats.activeUsers}</p>
                                 </div>
                                 <div className="bg-primary/5 p-4 border border-primary/20 rounded-xl relative overflow-hidden">
                                     <div className="absolute top-0 right-0 p-1 opacity-20">
-                                        <Zap className="w-12 h-12 text-primary" />
+                                        <Zap className="w-8 h-8 sm:w-12 sm:h-12 text-primary" />
                                     </div>
                                     <p className="text-[9px] font-black text-primary uppercase font-league mb-1">Point Bank</p>
-                                    <p className="text-2xl font-black text-primary font-league">
+                                    <p className="text-xl sm:text-2xl font-black text-primary font-league">
                                         {((privateData?.pointBank !== undefined) ? privateData.pointBank : (myVenue.pointBank || 5000)).toLocaleString()}
                                     </p>
                                 </div>

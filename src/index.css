@@ -159,3 +159,13 @@
   min-height: 50%;
   /* Ensure gradient covers enough of the image */
 }
+
+/* 9. UTILITIES */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

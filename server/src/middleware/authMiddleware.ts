@@ -6,6 +6,7 @@ export interface AuthenticatedRequest extends Request {
         uid: string;
         email?: string;
         role?: string;
+        homeBase?: string;
         venuePermissions?: Record<string, string>;
     };
     appCheck?: any;
@@ -89,7 +90,8 @@ export const identifyUser = async (req: AuthenticatedRequest, res: Response, nex
         req.user = {
             uid: decodedToken.uid,
             email: decodedToken.email,
-            role: userData?.role || 'user'
+            role: userData?.role || 'user',
+            homeBase: userData?.homeBase
         };
     } catch (error) {
         // Silently fail to continue as guest

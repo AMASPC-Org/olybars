@@ -2,13 +2,13 @@ import { z } from 'zod';
 
 export const ConfigSchema = z.object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-    PORT: z.string().default('3001'),
+    PORT: z.string().default(process.env.PORT || '3001'),
 
     // Auth & Project
-    GOOGLE_CLOUD_PROJECT: z.string().min(1, 'GOOGLE_CLOUD_PROJECT is required'),
+    GOOGLE_CLOUD_PROJECT: z.string().default(process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT || 'ama-ecosystem-prod'),
 
     // Internal Communication (Secured via Secret Manager in Prod)
-    INTERNAL_HEALTH_TOKEN: z.string().min(1, 'INTERNAL_HEALTH_TOKEN is required for diagnostic endpoints'),
+    INTERNAL_HEALTH_TOKEN: z.string().default(process.env.INTERNAL_HEALTH_TOKEN || 'oly-internal-default-shared'),
 
     // AI / Gemini (Private Secrets)
     GOOGLE_GENAI_API_KEY: z.string().optional(), // Optional in prod (uses ADC)

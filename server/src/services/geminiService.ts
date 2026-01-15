@@ -278,4 +278,42 @@ export class GeminiService {
             throw new Error("Failed to parse flyer data.");
         }
     }
+
+    async generateEventCopy(draft: any, venueContext: any, vibe: string = 'standard'): Promise<string> {
+        const prompt = `You are Schmidt, the Product Architect for OlyBars.
+        TASK: Write a creative, engaging social media / calendar blurb for this event.
+        
+        VENUE: ${venueContext.name} (${venueContext.venueType || 'Local Spot'})
+        EVENT: ${draft.title}
+        DATE: ${draft.date} @ ${draft.time}
+        PRIZES/SPECIALS: ${draft.prizes || 'None listed'}
+        VIBE REQUEST: ${vibe}
+        
+        INSTRUCTIONS:
+        1. Do NOT be robotic. Write like a local who knows the spot.
+        2. Match the Venue Type: ${venueContext.venueType}. (e.g., Dive bars are gritty/fun, Lounges are sleek/chill).
+        3. [STRICT LCB COMPLIANCE]:
+           - NEVER link points/prizes to alcohol purchase.
+           - NEVER imply rapid/volume consumption.
+           - Mention a safe ride (Lyft/Red Cab) if it's a late night "hype" vibe.
+        4. Emojis: Use 2-3 appropriate ones.
+        5. Length: 1-2 powerful sentences max.
+        
+        VIBE HINTS:
+        - hype: Energy, exclamation marks, "Get here early".
+        - chill: Laid back, "The perfect recovery", "Easy evening".
+        - funny: Witty observations, light sarcasm about the weather or trivia nerds.
+        - standard: Professional but warm.
+        
+        OUTPUT: Only the creative text.`;
+
+        const response = await this.genAI.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
+            config: { temperature: 0.8 }
+        });
+
+        return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Event details staged and ready!";
+    }
 }

@@ -64,5 +64,11 @@ export const API_ENDPOINTS = {
     },
     VISION: {
         ANALYZE_FLYER: `${API_BASE_URL}/vision/analyze-flyer`,
+    },
+    AI: {
+        GEN_COPY: `${API_BASE_URL}/ai/generate-event-copy`,
+    },
+    PHOTO: {
+        STATUS: (venueId: string, photoId: string) => `${API_BASE_URL}/venues/${venueId}/photos/${photoId}`,
     }
 };

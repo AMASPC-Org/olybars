@@ -13,8 +13,11 @@ COPY package*.json ./
 # Install production dependencies.
 RUN npm install --only=production
 
-# Copy local code to the container image.
+# Copy local code
 COPY . .
+
+# Build the server code
+RUN npm run build --prefix server
 
 # Service must listen to $PORT environment variable.
 # This variable is set by Cloud Run.
@@ -22,4 +25,5 @@ ENV PORT 8080
 ENV NODE_ENV production
 
 # Run the web service on container startup.
-CMD [ "npm", "start" ]
+# We run the compiled JS directly for speed and reliability.
+CMD [ "node", "server/dist/index.js" ]

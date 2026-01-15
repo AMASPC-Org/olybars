@@ -1,5 +1,47 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Send, Sparkles, Bot, CheckCircle2, Mic, MicOff, Loader2, RotateCcw, Paperclip } from 'lucide-react';
+import { RotateCcw, X, Send, Bot, Sparkles, Loader2, CheckCircle2, MessageSquare, AlertCircle, Paperclip, Mic, MicOff } from 'lucide-react';
+
+/**
+ * Strict Link Parser (Security-First)
+ * Specifically handles [label](url) patterns for Coach Mode guidance.
+ */
+const renderTextWithLinks = (text: string) => {
+    if (!text) return null;
+
+    const regex = /\[([^\]]+)\]\(((?:https?:\/\/|\/)[^\s\)]+)\)/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+            parts.push(text.substring(lastIndex, match.index));
+        }
+
+        const title = match[1];
+        const url = match[2];
+
+        parts.push(
+            <a
+                key={match.index}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-primary hover:text-yellow-400 font-bold transition-colors"
+            >
+                {title}
+            </a>
+        );
+        lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+        parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
+};
+
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { useArtie } from '../../hooks/useArtie';
 import { useArtieOps } from '../../hooks/useArtieOps';
@@ -233,7 +275,14 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                 'event_input_date': 'SUBMIT_EVENT_TEXT',
                 'event_input_time': 'SUBMIT_EVENT_TEXT',
                 'event_input_type': 'SUBMIT_EVENT_TEXT',
+                'event_input_prizes': 'SUBMIT_EVENT_TEXT',
                 'event_input_details': 'SUBMIT_EVENT_TEXT',
+                'event_init_check_flyer': 'event_init_check_flyer',
+                'event_init_check_gen': 'event_init_check_gen',
+                'event_upload_wait': 'event_upload_wait',
+                'generating_creative_copy': 'review_event_copy',
+                'review_event_copy': 'review_event_copy',
+                'play_input': 'SUBMIT_PLAY_TEXT',
                 'social_post_input': 'SUBMIT_SOCIAL_POST_TEXT',
                 'email_draft_input': 'SUBMIT_EMAIL_TEXT',
                 'calendar_post_input': 'SUBMIT_CALENDAR_TEXT',
@@ -518,7 +567,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                     ? 'bg-primary text-black rounded-tr-none'
                                     : 'bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none'
                                     }`}>
-                                    {displayContent}
+                                    {renderTextWithLinks(displayContent)}
                                     {m.imageUrl && (
                                         <div className="mt-3 rounded-xl overflow-hidden border border-white/10 shadow-lg">
                                             <img src={m.imageUrl} alt="Generated Asset" className="w-full h-auto object-cover" />

@@ -992,7 +992,7 @@ v1Router.get('/events', async (req, res) => {
  * @route POST /api/events
  * @desc Submit an event (Public or Authenticated)
  */
-v1Router.post('/events', verifyHoneypot, async (req, res) => {
+v1Router.post('/events', identifyUser, verifyHoneypot, async (req, res) => {
     const validation = AppEventSchema.safeParse(req.body);
     if (!validation.success) {
         return res.status(400).json({ error: 'Invalid event data', details: validation.error.format() });
@@ -1001,7 +1001,12 @@ v1Router.post('/events', verifyHoneypot, async (req, res) => {
     try {
         const { db } = await import('./firebaseAdmin.js');
         const user = (req as any).user;
-        const isTrusted = user && ['admin', 'super-admin', 'owner', 'manager'].includes(user.role);
+
+        // CRITICAL FIX: Auto-approve if Owner/Manager of the venue
+        const isTrusted = user && (
+            ['admin', 'super-admin'].includes(user.role) ||
+            (['owner', 'manager'].includes(user.role) && user.homeBase === validation.data.venueId)
+        );
 
         const eventData = {
             ...validation.data,
@@ -1011,7 +1016,7 @@ v1Router.post('/events', verifyHoneypot, async (req, res) => {
         };
 
         const docRef = await db.collection('events').add(eventData);
-        log('INFO', `[EVENT_SUBMITTED] Event ${docRef.id} received.`);
+        log('INFO', `[EVENT_SUBMITTED] Event ${docRef.id} received. Status: ${eventData.status}`);
         res.json({ success: true, id: docRef.id });
     } catch (error: any) {
         log('ERROR', 'Failed to submit event', { error: error.message });
@@ -1413,6 +1418,34 @@ v1Router.post('/ai/generate-press-release', verifyToken, async (req, res) => {
     } catch (error: any) {
         log('ERROR', 'Press Release Generation Failed', { error: error.message });
         res.status(500).json({ error: 'Failed to draft press release.' });
+    }
+});
+
+/**
+ * @route POST /api/ai/generate-event-copy
+ * @desc Generate creative marketing copy for an event
+ */
+v1Router.post('/ai/generate-event-copy', verifyToken, async (req, res) => {
+    const { draft, venueId, vibe } = req.body;
+
+    if (!draft || !venueId) {
+        return res.status(400).json({ error: 'Draft and VenueId are required.' });
+    }
+
+    try {
+        const { db } = await import('./firebaseAdmin.js');
+        const { GeminiService } = await import('./services/geminiService.js');
+
+        const venueDoc = await db.collection('venues').doc(venueId).get();
+        const venueData = venueDoc.data() || { name: 'Local Venue' };
+
+        const gemini = new GeminiService();
+        const copy = await gemini.generateEventCopy(draft, venueData, vibe);
+
+        res.json({ copy });
+    } catch (error: any) {
+        log('ERROR', 'Creative Copy Generation Failed', { error: error.message });
+        res.status(500).json({ error: 'Failed to generate creative copy.' });
     }
 });
 
