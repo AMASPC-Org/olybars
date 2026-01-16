@@ -1,6 +1,6 @@
 ﻿import { GoogleGenAI } from '@google/genai';
-import { ARTIE_SYSTEM_INSTRUCTION } from '../config/agents/artie.js';
-import { SCHMIDT_SYSTEM_INSTRUCTION } from '../config/agents/schmidt.js';
+import { ARTIE_SYSTEM_INSTRUCTION } from '../appConfig/agents/artie.js';
+import { SCHMIDT_SYSTEM_INSTRUCTION } from '../appConfig/agents/schmidt.js';
 
 export interface ChatMessage {
     role: 'user' | 'model';

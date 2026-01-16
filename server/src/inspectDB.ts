@@ -1,5 +1,5 @@
 import { db } from './firebaseAdmin.js';
-import { config } from './config/index.js';
+import { config } from './appConfig/config.js';
 
 async function inspect() {
     console.log('--- FIRESTORE INSPECTION ---');

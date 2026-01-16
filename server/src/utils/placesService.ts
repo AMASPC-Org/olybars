@@ -1,4 +1,4 @@
-import { config } from '../config/index.js';
+import { config } from '../appConfig/config.js';
 
 // Prioritize restricted backend-only key
 const GOOGLE_MAPS_API_KEY = config.GOOGLE_BACKEND_KEY;

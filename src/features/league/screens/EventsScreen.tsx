@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { ArenaLayout } from '../../../components/layout/ArenaLayout';
 import { UniversalEventCard } from '../../../components/ui/UniversalEventCard';
 import { Venue } from '../../../types';
@@ -25,6 +26,7 @@ interface UnifiedEvent {
 }
 
 export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
+  const { id: venueId } = useParams<{ id: string }>();
   const [searchQuery, setSearchQuery] = useState('');
   const [events, setEvents] = useState<UnifiedEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,11 +121,16 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
 
 
   const filteredEvents = events.filter(e => {
+    // 1. Venue Filter (URL context)
+    if (venueId && e.venueId !== venueId) return false;
+
+    // 2. Search Filter
     const matchesSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       e.venueName.toLowerCase().includes(searchQuery.toLowerCase());
 
     if (!matchesSearch) return false;
 
+    // 3. Type Filter
     if (eventTypeFilter === 'all') return true;
     const isMusic = e.type === 'live';
     const isActivity = e.type === 'play' || e.type === 'karaoke';

@@ -1,17 +1,26 @@
-import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import admin from 'firebase-admin';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as dotenv from 'dotenv';
 import * as crypto from 'crypto';
+import { fileURLToPath } from 'url';
 
-// Load .env from functions or root directory
-dotenv.config({ path: path.join(process.cwd(), '.env') });
-dotenv.config({ path: path.join(process.cwd(), 'functions', '.env') });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-if (getApps().length === 0) {
-    initializeApp();
+// Safety: Clear emulator variables if running locally
+delete process.env.FIRESTORE_EMULATOR_HOST;
+delete process.env.FIREBASE_AUTH_EMULATOR_HOST;
+
+const projectId = 'ama-ecosystem-prod';
+
+if (admin.apps.length === 0) {
+    console.log(`📡 [CLOUD] TARGETING REMOTE PROJECT: ${projectId}`);
+    admin.initializeApp({
+        projectId: projectId
+    });
 }
+
+const db = admin.firestore();
 
 /**
  * Generates a safe document ID from a string using SHA-256 prefix.
@@ -19,8 +28,6 @@ if (getApps().length === 0) {
 function generateSafeId(input: string): string {
     return crypto.createHash('sha256').update(input).digest('hex').substring(0, 32);
 }
-
-const db = getFirestore();
 
 async function syncKnowledge() {
     try {

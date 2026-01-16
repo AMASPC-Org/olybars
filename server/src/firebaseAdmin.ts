@@ -1,6 +1,6 @@
 import admin from 'firebase-admin';
 
-import { config } from './config/index.js';
+import { config } from './appConfig/config.js';
 
 // Safety Switch: Ensure we don't accidentally target Production from Local
 const isCloudIntention = process.argv.includes('--cloud') || process.argv.includes('--force-prod');

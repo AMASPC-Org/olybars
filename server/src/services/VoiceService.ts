@@ -1,5 +1,5 @@
 import twilio from 'twilio';
-import { config } from '../config/index.js';
+import { config } from '../appConfig/config.js';
 import { db } from '../firebaseAdmin.js';
 
 const TWILIO_SID = config.TWILIO_ACCOUNT_SID;

@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { QuickReplyOption } from '../components/artie/QuickReplyChips';
 import { VenueOpsService } from '../services/VenueOpsService';
+import * as FlashBounty from '../skills/Schmidt/flashBounty';
 
 // 1. State Definitions
 export type ArtieOpsState =
@@ -146,7 +147,7 @@ export const useArtieOps = () => {
             setMessages(prev => [...prev, { id: `u-${Date.now()}`, role: 'user', text, timestamp: Date.now() }]);
         };
 
-        const addArtieResponse = (text: string, options: QuickReplyOption[] = []) => {
+        const addSchmidtResponse = (text: string, options: QuickReplyOption[] = []) => {
             const newMessage: ArtieMessage = {
                 id: Date.now().toString(),
                 role: 'artie',
@@ -161,7 +162,7 @@ export const useArtieOps = () => {
             case 'START_SESSION':
                 setOpsState('selecting_skill');
                 setMessages([]);
-                addArtieResponse("Welcome back! I'm ready to help. What's the mission?", [
+                addSchmidtResponse("Welcome back! I'm ready to help. What's the mission?", [
                     { id: '1', label: 'Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
                     { id: '2', label: 'Add Event', value: 'skill_add_event', icon: '📅' },
                     { id: '3', label: 'Social Post', value: 'skill_social_post', icon: '📱' },
@@ -174,93 +175,29 @@ export const useArtieOps = () => {
 
             // --- SKILL: Flash Bounty ---
             case 'skill_flash_deal':
-                addUserMessage('Flash Bounty');
-                setOpsState('flash_deal_init_method');
-                addArtieResponse("Let's fill some seats. Do you have a deal in mind, or want some ideas?", [
-                    { id: 'have_deal', label: 'I have a deal', value: 'method_manual_input', icon: '📝' },
-                    { id: 'need_ideas', label: 'Help me decide', value: 'method_ideation', icon: '💡' }
-                ]);
+                FlashBounty.handleFlashBountyInit(addUserMessage, setOpsState, addSchmidtResponse);
                 break;
 
-            // --- BRANCH: IDEATION (Placeholder) ---
+            case 'bounty_food':
+            case 'bounty_drink':
+            case 'bounty_time':
+                FlashBounty.handleTypeSelection(action, addUserMessage, setDraftData, setOpsState, addSchmidtResponse);
+                break;
+
             case 'method_ideation':
-                addUserMessage('Help me decide');
-                setIsLoading(true);
-
-                // Analyze high margin items
-                const highMarginItems = venue?.fullMenu?.filter((item: any) => item.margin_tier === 'High') || [];
-
-                if (highMarginItems.length > 0) {
-                    const pickedItem = highMarginItems[Math.floor(Math.random() * highMarginItems.length)];
-                    addArtieResponse(`I took a look at your menu. Your **${pickedItem.name}** has a great margin. \n\nHow about a Flash Bounty like: "$2 off ${pickedItem.name} for the next hour"?`, [
-                        { id: 'accept_idea', label: 'Sounds good', value: 'accept_ideation_proposal', icon: '✅' },
-                        { id: 'manual', label: 'I have a different idea', value: 'method_manual_input', icon: '📝' }
-                    ]);
-                    setDraftData({ pickedItem });
-                } else {
-                    addArtieResponse("I'm still learning your menu! Once I have your food and drink list, I'll be able to suggest high-margin specials. \n\nFor now, please enter the deal manually.");
-                    setTimeout(() => {
-                        setOpsState('flash_deal_input');
-                        addArtieResponse("So, what's the deal? (e.g., '$5 Pints until 8pm')");
-                    }, 1500);
-                }
-                setIsLoading(false);
+                FlashBounty.handleMethodIdeation(addUserMessage, setIsLoading, venue, addSchmidtResponse, setOpsState, setDraftData);
                 break;
 
             case 'accept_ideation_proposal':
-                const proposal = `$2 off ${draftData.pickedItem?.name} for the next hour`;
-                addUserMessage('Sounds good');
-                await processAction('SUBMIT_DEAL_TEXT', proposal);
+                await FlashBounty.handleAcceptIdeationProposal(addUserMessage, draftData, processAction);
                 break;
 
-            // --- BRANCH: MANUAL INPUT ---
             case 'method_manual_input':
-                addUserMessage('I have a deal');
-                setOpsState('flash_deal_input');
-                addArtieResponse("Got it. What's the offer? (e.g., 'Half price nachos', '$4 Wells')");
+                FlashBounty.handleMethodManualInput(addUserMessage, setOpsState, addSchmidtResponse);
                 break;
 
             case 'SUBMIT_DEAL_TEXT':
-                if (!payload) return;
-                addUserMessage(payload);
-                setIsLoading(true);
-
-                const compliance = validateLCBCompliance(payload);
-
-                if (!compliance.valid) {
-                    setIsLoading(false);
-                    addArtieResponse(`⚠️ Hold on. ${compliance.reason}`);
-                } else {
-                    const now = new Date();
-                    const startTimeISO = now.toISOString();
-                    const duration = 60;
-
-                    const trafficCheck = await validateSchedule(startTimeISO, duration);
-                    if (!trafficCheck.valid) {
-                        setIsLoading(false);
-                        addArtieResponse(`⚠️ I can't schedule that. ${trafficCheck.reason}`);
-                    } else {
-                        setDraftData({
-                            skill: 'schedule_flash_deal',
-                            params: {
-                                summary: payload,
-                                details: "Limited time offer. See bartender for details.",
-                                startTimeISO: startTimeISO,
-                                duration: duration,
-                                staffBriefingConfirmed: true,
-                                price: "See details"
-                            }
-                        });
-
-                        setIsLoading(false);
-                        setOpsState('confirm_action');
-                        addArtieResponse(`Looks valid. I've drafted this:\n\n"${payload}"\n\nStarting: NOW\nDuration: 1 Hour\n\nPost to the Buzz Clock?`, [
-                            { id: 'confirm', label: 'Post It', value: 'confirm_post', icon: '🚀' },
-                            { id: 'edit', label: 'Edit', value: 'skill_flash_deal', icon: '✏️' },
-                            { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
-                        ]);
-                    }
-                }
+                await FlashBounty.handleSubmitBountyText(payload, addUserMessage, setIsLoading, validateLCBCompliance, validateSchedule, draftData, setDraftData, setOpsState, addSchmidtResponse);
                 break;
 
             // --- SKILL: ADD EVENT (INTERVIEW MODE) ---
@@ -269,7 +206,7 @@ export const useArtieOps = () => {
                 // Reset draft
                 setEventDraft({ imageState: 'none' });
                 setOpsState('event_init_check_flyer');
-                addArtieResponse("Do you have an existing flyer or image for this event?", [
+                addSchmidtResponse("Do you have an existing flyer or image for this event?", [
                     { id: 'event_has_flyer', label: 'Yes, I have one', value: 'event_has_flyer', icon: '🖼️' },
                     { id: 'event_no_flyer', label: 'No', value: 'event_no_flyer', icon: '📝' }
                 ]);
@@ -278,13 +215,13 @@ export const useArtieOps = () => {
             case 'event_has_flyer':
                 addUserMessage('Yes, I have one');
                 setOpsState('event_upload_wait');
-                addArtieResponse("Great! Drag and drop it here (or click the paperclip).");
+                addSchmidtResponse("Great! Drag and drop it here (or click the paperclip).");
                 break;
 
             case 'event_no_flyer':
                 addUserMessage('No');
                 setOpsState('event_init_check_gen');
-                addArtieResponse("Would you like me to design a promotional image for you using the Artsian Spirit?", [
+                addSchmidtResponse("Would you like me to design a promotional image for you using the Artsian Spirit?", [
                     { id: 'event_gen_flyer', label: 'Yes, Create One', value: 'event_gen_flyer', icon: '🎨' },
                     { id: 'event_text_only', label: 'No, Just Text', value: 'event_text_only', icon: '📝' }
                 ]);
@@ -300,7 +237,7 @@ export const useArtieOps = () => {
             case 'event_text_only':
                 addUserMessage('No, Just Text');
                 setOpsState('event_input');
-                addArtieResponse("Paste the event details (Name, Date, Time) or a link to the Facebook event.");
+                addSchmidtResponse("Paste the event details (Name, Date, Time) or a link to the Facebook event.");
                 break;
 
             case 'SUBMIT_EVENT_TEXT':
@@ -429,7 +366,7 @@ export const useArtieOps = () => {
                 // 2. The Slot Filling State Machine
                 if (!currentDraft.title) {
                     setOpsState('event_input_title');
-                    addArtieResponse("I didn't catch the name. What is the OFFICIAL title of the event?"); // Emphasize official
+                    addSchmidtResponse("I didn't catch the name. What is the OFFICIAL title of the event?"); // Emphasize official
                     return;
                 }
 
@@ -439,13 +376,13 @@ export const useArtieOps = () => {
                 // 2. The Slot Filling State Machine
                 if (!currentDraft.title) {
                     setOpsState('event_input_title');
-                    addArtieResponse("I didn't catch the name. What is the title of the event?");
+                    addSchmidtResponse("I didn't catch the name. What is the title of the event?");
                     return;
                 }
 
                 if (!currentDraft.date) {
                     setOpsState('event_input_date');
-                    addArtieResponse("Got it. What date is this happening?", [
+                    addSchmidtResponse("Got it. What date is this happening?", [
                         { id: 'today', label: 'Today', value: 'SUBMIT_EVENT_TEXT', icon: '📅' },
                         { id: 'tmrw', label: 'Tomorrow', value: 'SUBMIT_EVENT_TEXT', icon: '⏭️' }
                     ]);
@@ -454,7 +391,7 @@ export const useArtieOps = () => {
 
                 if (!currentDraft.time) {
                     setOpsState('event_input_time');
-                    addArtieResponse(`Okay, ${currentDraft.date}. What time does it start?`, [
+                    addSchmidtResponse(`Okay, ${currentDraft.date}. What time does it start?`, [
                         { id: '7pm', label: '7:00 PM', value: 'SUBMIT_EVENT_TEXT', icon: '🕖' },
                         { id: '8pm', label: '8:00 PM', value: 'SUBMIT_EVENT_TEXT', icon: '🕗' },
                         { id: '9pm', label: '9:00 PM', value: 'SUBMIT_EVENT_TEXT', icon: '🕘' }
@@ -465,7 +402,7 @@ export const useArtieOps = () => {
                 // NEW: Type Check (Priority #1)
                 if (!currentDraft.type) {
                     setOpsState('event_input_type');
-                    addArtieResponse("What kind of event is this?", [
+                    addSchmidtResponse("What kind of event is this?", [
                         { id: 'trivia', label: 'Trivia', value: 'SUBMIT_EVENT_TEXT', icon: '🧠' },
                         { id: 'karaoke', label: 'Karaoke', value: 'SUBMIT_EVENT_TEXT', icon: '🎤' },
                         { id: 'music', label: 'Live Music', value: 'SUBMIT_EVENT_TEXT', icon: '🎸' },
@@ -478,7 +415,7 @@ export const useArtieOps = () => {
                 if (!currentDraft.prizes && (currentDraft.type === 'trivia' || currentDraft.type === 'bingo')) {
                     setOpsState('event_input_prizes');
                     setEventDraft(currentDraft);
-                    addArtieResponse("Winner's circle intel: What are the prizes? (e.g. $50 Venue Tab, OlyBars T-Shirt)");
+                    addSchmidtResponse("Winner's circle intel: What are the prizes? (e.g. $50 Venue Tab, OlyBars T-Shirt)");
                     return;
                 }
 
@@ -494,7 +431,7 @@ export const useArtieOps = () => {
                     if (t === 'live_music') promptText = "Is there a cover charge? Who is opening?";
                     else if (t === 'karaoke') promptText = "Any drink specials for singers?";
 
-                    addArtieResponse(promptText);
+                    addSchmidtResponse(promptText);
                     return;
                 }
 
@@ -509,10 +446,15 @@ export const useArtieOps = () => {
                 addArtieMessage("Schmidt is cooking up the marketing blurb... 🍳");
 
                 try {
+                    // Use payload as a vibe override if available to prevent race conditions with setEventDraft
+                    const requestedVibe = (payload && ['hype', 'chill', 'funny', 'standard'].includes(payload))
+                        ? (payload as 'hype' | 'chill' | 'funny' | 'standard')
+                        : (eventDraft.vibeMode || 'standard');
+
                     const copy = await VenueOpsService.generateEventCopy(
                         eventDraft,
                         venue?.id || venueId || '',
-                        eventDraft.vibeMode || 'standard'
+                        requestedVibe
                     );
 
                     const finalDraft = { ...eventDraft, marketingCopy: copy };
@@ -520,7 +462,7 @@ export const useArtieOps = () => {
                     setIsLoading(false);
                     setOpsState('review_event_copy');
 
-                    addArtieResponse(`How does this blurb sound?\n\n"${copy}"`, [
+                    addSchmidtResponse(`How does this blurb sound?\n\n"${copy}"`, [
                         { id: 'copy_ok', label: 'Looks Great', value: 'copy_approved', icon: '✅' },
                         { id: 'regen_hype', label: 'More Hype!', value: 'regen_hype', icon: '🔥' },
                         { id: 'regen_chill', label: 'Chill it out', value: 'regen_chill', icon: '🌊' },
@@ -529,7 +471,7 @@ export const useArtieOps = () => {
                 } catch (e: any) {
                     setIsLoading(false);
                     console.error("Copy Gen Failed:", e);
-                    addArtieResponse("Schmidt's creative engine stalled. Let's use the facts for now.", [
+                    addSchmidtResponse("Schmidt's creative engine stalled. Let's use the facts for now.", [
                         { id: 'fallback', label: 'Use Facts', value: 'copy_approved' }
                     ]);
                 }
@@ -555,7 +497,7 @@ export const useArtieOps = () => {
                 const hour12_1 = hour1 % 12 || 12;
                 const displayTime1 = `${hour12_1}:${m} ${ampm1}`;
 
-                addArtieResponse(`Ready to schedule!\n\n**${eventDraft.title}**\n${eventDraft.date} @ ${displayTime1}\n\n"${eventDraft.marketingCopy || eventDraft.description}"\n\nConfirm adding this to the schedule?`, [
+                addSchmidtResponse(`Ready to schedule!\n\n**${eventDraft.title}**\n${eventDraft.date} @ ${displayTime1}\n\n"${eventDraft.marketingCopy || eventDraft.description}"\n\nConfirm adding this to the schedule?`, [
                     { id: 'confirm', label: 'Post It', value: 'confirm_post', icon: '✅' },
                     { id: 'gen_img', label: 'Gen Image', value: 'skill_generate_image', icon: '🎨' },
                     { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
@@ -563,19 +505,28 @@ export const useArtieOps = () => {
                 break;
 
             case 'regen_hype':
+                addUserMessage('More Hype!');
+                setEventDraft(prev => ({ ...prev, vibeMode: 'hype' }));
+                await processAction('generating_creative_copy', 'hype');
+                break;
+
             case 'regen_chill':
+                addUserMessage('Chill it out');
+                setEventDraft(prev => ({ ...prev, vibeMode: 'chill' }));
+                await processAction('generating_creative_copy', 'chill');
+                break;
+
             case 'regen_funny':
-                const vibe = action.split('_')[1] as any;
-                addUserMessage(`Make it ${vibe}`);
-                setEventDraft(prev => ({ ...prev, vibeMode: vibe }));
-                await processAction('generating_creative_copy');
+                addUserMessage('Make it funny');
+                setEventDraft(prev => ({ ...prev, vibeMode: 'funny' }));
+                await processAction('generating_creative_copy', 'funny');
                 break;
 
             // --- SKILL: Social Post ---
             case 'skill_social_post':
                 addUserMessage('Social Post');
                 setOpsState('social_post_input');
-                addArtieResponse("I'm ready to draft. What's the post about? (e.g. 'New IPA on tap', 'Live music at 8pm')");
+                addSchmidtResponse("I'm ready to draft. What's the post about? (e.g. 'New IPA on tap', 'Live music at 8pm')");
                 break;
 
             case 'SUBMIT_SOCIAL_POST_TEXT':
@@ -596,7 +547,7 @@ export const useArtieOps = () => {
 
                 setIsLoading(false);
                 setOpsState('confirm_action');
-                addArtieResponse(`I've drafted this for you:\n\n"${draft}"\n\nSave to your marketing dashboard?`, [
+                addSchmidtResponse(`I've drafted this for you:\n\n"${draft}"\n\nSave to your marketing dashboard?`, [
                     { id: 'confirm', label: 'Save Draft', value: 'confirm_post', icon: '🚀' },
                     { id: 'gen_img', label: 'Gen Image', value: 'skill_generate_image', icon: '🎨' },
                     { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
@@ -607,7 +558,7 @@ export const useArtieOps = () => {
             case 'skill_email_draft':
                 addUserMessage('Draft Email');
                 setOpsState('email_draft_input');
-                addArtieResponse("Who are we emailing, and what's the occasion? (e.g. 'Newsletter to regulars about Saturday trivia')");
+                addSchmidtResponse("Who are we emailing, and what's the occasion? (e.g. 'Newsletter to regulars about Saturday trivia')");
                 break;
 
             case 'SUBMIT_EMAIL_TEXT':
@@ -627,7 +578,7 @@ export const useArtieOps = () => {
 
                 setIsLoading(false);
                 setOpsState('confirm_action');
-                addArtieResponse(`I've drafted this email:\n\n"${emailDraft}"\n\nSave to your marketing dashboard?`, [
+                addSchmidtResponse(`I've drafted this email:\n\n"${emailDraft}"\n\nSave to your marketing dashboard?`, [
                     { id: 'confirm', label: 'Save Draft', value: 'confirm_post', icon: '🚀' },
                     { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
                 ]);
@@ -637,7 +588,7 @@ export const useArtieOps = () => {
             case 'skill_calendar_post':
                 addUserMessage('Calendar Post');
                 setOpsState('calendar_post_input');
-                addArtieResponse("What event should I add to the community calendar? (e.g. 'St Paddy's Day Bash, March 17th, 6pm')");
+                addSchmidtResponse("What event should I add to the community calendar? (e.g. 'St Paddy's Day Bash, March 17th, 6pm')");
                 break;
 
             case 'SUBMIT_CALENDAR_TEXT':
@@ -655,7 +606,7 @@ export const useArtieOps = () => {
 
                 setIsLoading(false);
                 setOpsState('confirm_action');
-                addArtieResponse(`I've prepared this calendar entry:\n\n"${payload}"\n\nPush it to the OlyBars calendar?`, [
+                addSchmidtResponse(`I've prepared this calendar entry:\n\n"${payload}"\n\nPush it to the OlyBars calendar?`, [
                     { id: 'confirm', label: 'Post It', value: 'confirm_post', icon: '✅' },
                     { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
                 ]);
@@ -665,7 +616,7 @@ export const useArtieOps = () => {
             case 'skill_website_content':
                 addUserMessage('Web Content');
                 setOpsState('website_content_input');
-                addArtieResponse("What page or section are we updating? (e.g. 'About Us section on the homepage')");
+                addSchmidtResponse("What page or section are we updating? (e.g. 'About Us section on the homepage')");
                 break;
 
             case 'SUBMIT_WEB_TEXT':
@@ -684,7 +635,7 @@ export const useArtieOps = () => {
 
                 setIsLoading(false);
                 setOpsState('confirm_action');
-                addArtieResponse(`Web content drafted:\n\n"${webDraft}"\n\nSave this for your web dev?`, [
+                addSchmidtResponse(`Web content drafted:\n\n"${webDraft}"\n\nSave this for your web dev?`, [
                     { id: 'confirm', label: 'Save', value: 'confirm_post', icon: '✅' },
                     { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
                 ]);
@@ -694,7 +645,7 @@ export const useArtieOps = () => {
             case 'skill_generate_image':
                 addUserMessage('Gen Image');
                 setOpsState('image_gen_purpose');
-                addArtieResponse("I'm on it. To get the perfect result, I need a little intel. \n\nWhat is this image for?", [
+                addSchmidtResponse("I'm on it. To get the perfect result, I need a little intel. \n\nWhat is this image for?", [
                     { id: '1', label: 'Social Media', value: 'purpose_social', icon: '📱' },
                     { id: '2', label: 'Website', value: 'purpose_web', icon: '🌐' },
                     { id: '3', label: 'Print Flyer', value: 'purpose_print', icon: '📄' },
@@ -707,7 +658,7 @@ export const useArtieOps = () => {
                 addUserMessage(payload);
                 setDraftData({ ...draftData, purpose: payload });
                 setOpsState('image_gen_goal');
-                addArtieResponse(`Got it, a ${payload}. \n\nWhat's the main goal of this asset?`, [
+                addSchmidtResponse(`Got it, a ${payload}. \n\nWhat's the main goal of this asset?`, [
                     { id: '1', label: 'Promote Event', value: 'goal_event', icon: '📅' },
                     { id: '2', label: 'Showcase Menu', value: 'goal_menu', icon: '🍔' },
                     { id: '3', label: 'Daily Vibe', value: 'goal_vibe', icon: '✨' },
@@ -722,10 +673,10 @@ export const useArtieOps = () => {
 
                 if (payload.toLowerCase().includes('event')) {
                     setOpsState('image_gen_event');
-                    addArtieResponse("Tell me about the event. (e.g. 'Trivia Night, 8pm, high energy')");
+                    addSchmidtResponse("Tell me about the event. (e.g. 'Trivia Night, 8pm, high energy')");
                 } else {
                     setOpsState('image_gen_audience');
-                    addArtieResponse("Who's the target audience for this? (e.g. 'Regulars', 'Families', 'Night owls')");
+                    addSchmidtResponse("Who's the target audience for this? (e.g. 'Regulars', 'Families', 'Night owls')");
                 }
                 break;
 
@@ -734,7 +685,7 @@ export const useArtieOps = () => {
                 addUserMessage(payload);
                 setDraftData({ ...draftData, eventDetails: payload });
                 setOpsState('image_gen_audience');
-                addArtieResponse("Solid. And who's the target audience? (e.g. 'Late night party crowd', 'Craft beer lovers')");
+                addSchmidtResponse("Solid. And who's the target audience? (e.g. 'Late night party crowd', 'Craft beer lovers')");
                 break;
 
             case 'SUBMIT_IMAGE_AUDIENCE':
@@ -742,7 +693,7 @@ export const useArtieOps = () => {
                 addUserMessage(payload);
                 setDraftData({ ...draftData, audience: payload });
                 setOpsState('image_gen_specials');
-                addArtieResponse("Are there any specific specials or details I should include in the visual context?", [
+                addSchmidtResponse("Are there any specific specials or details I should include in the visual context?", [
                     { id: 'none', label: 'Just the vibe', value: 'no_specials' }
                 ]);
                 break;
@@ -752,7 +703,7 @@ export const useArtieOps = () => {
                 addUserMessage(payload);
                 setDraftData({ ...draftData, specials: payload === 'no_specials' ? 'None' : payload });
                 setOpsState('image_gen_context');
-                addArtieResponse("Final question—do you have any specific input or creative context you'd like me to follow? (Colors, lighting, specific items)");
+                addSchmidtResponse("Final question—do you have any specific input or creative context you'd like me to follow? (Colors, lighting, specific items)");
                 break;
 
             case 'SUBMIT_IMAGE_CONTEXT':
@@ -780,7 +731,7 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
 
                 setIsLoading(false);
                 setOpsState('confirm_action');
-                addArtieResponse(`Artie is firing up the kiln... 🎨\n\nI've generated a multimodal prompt based on our brief: \n\n"${prompt}"\n\nGenerate and save to your dashboard?`, [
+                addSchmidtResponse(`Artie is firing up the kiln... 🎨\n\nI've generated a multimodal prompt based on our brief: \n\n"${prompt}"\n\nGenerate and save to your dashboard?`, [
                     { id: 'confirm', label: 'Generate', value: 'confirm_post', icon: '🎨' },
                     { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
                 ]);
@@ -789,12 +740,12 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
             case 'edit_event':
                 // Reset to inputs but keep draft data
                 setOpsState('event_input');
-                addArtieResponse("Okay, let's fix the details. Paste the correct info or type what you want to change.");
+                addSchmidtResponse("Okay, let's fix the details. Paste the correct info or type what you want to change.");
                 break;
 
             case 'COMPLETE_IMAGE_GEN':
                 setOpsState('post_image_gen');
-                addArtieResponse("Visual assets are staged. Shall I draft the high-engagement social copy to go with this visual?", [
+                addSchmidtResponse("Visual assets are staged. Shall I draft the high-engagement social copy to go with this visual?", [
                     { id: 'draft_copy', label: 'Draft Ad Copy', value: 'skill_ad_copy', icon: '✍️' },
                     { id: 'edit_vis', label: 'Edit Visual', value: 'skill_generate_image', icon: '🎨' },
                     { id: 'finish', label: 'All Done', value: 'completed', icon: '✅' }
@@ -807,7 +758,7 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                 const { goal, audience, eventDetails, specials, context } = draftData;
                 const adCopy = `✨ NEW ASSET ALERT ✨\n\nGoal: ${goal}\nTarget: ${audience}\n\n"Come down to ${venue?.name || 'Hannah\'s'}! 🍻 ${eventDetails ? `We've got ${eventDetails} happening.` : ''} ${specials !== 'None' ? `Don't miss out on ${specials}!` : ''} Our vibe is always ${context} and we can't wait to see you!"\n\n#OlyBars #SocialMarketing #LocalVibes`;
 
-                addArtieResponse(`Here is your suggested ad copy:\n\n---\n${adCopy}\n---\n\nWould you like to save this draft to your marketing suite?`, [
+                addSchmidtResponse(`Here is your suggested ad copy:\n\n---\n${adCopy}\n---\n\nWould you like to save this draft to your marketing suite?`, [
                     { id: 'save_copy', label: 'Save Copy', value: 'completed', icon: '🚀' },
                     { id: 'edit_copy', label: 'Edit', value: 'skill_social_post', icon: '✏️' }
                 ]);
@@ -819,7 +770,7 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                 if (opsState === 'confirm_action' && draftData.skill === 'generate_image') {
                     if (draftData.isEventFlyer) {
                         setOpsState('event_input');
-                        addArtieResponse("Visual assets are staged! Now, paste the event details (Name, Date, Time) so I can link them.");
+                        addSchmidtResponse("Visual assets are staged! Now, paste the event details (Name, Date, Time) so I can link them.");
                         break;
                     }
                     await processAction('COMPLETE_IMAGE_GEN');
@@ -832,7 +783,7 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                     const eventLink = `/venues/${venue?.id || ''}/events`;
                     if (eventDraft.imageState !== 'none') {
                         doneMsg = "Event & Assets Saved! Would you like to distribute this to social media now?";
-                        addArtieResponse(doneMsg, [
+                        addSchmidtResponse(doneMsg, [
                             { id: 'post_socials', label: 'Post to Socials', value: 'skill_social_post', icon: '📱' }
                         ]);
                         break;
@@ -841,13 +792,13 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                     }
                 }
 
-                addArtieResponse(`${doneMsg} What's next?`);
+                addSchmidtResponse(`${doneMsg} What's next?`);
                 break;
 
             case 'UPLOAD_FILE':
                 if (!payload) return;
                 setIsLoading(true);
-                addArtieResponse("Schmidt is reading the flyer... 🧐");
+                addSchmidtResponse("Schmidt is reading the flyer... 🧐");
 
                 try {
                     const extraction = await VenueOpsService.analyzeFlyer(venueId || venue?.id || '', payload, new Date().toISOString());
@@ -866,19 +817,19 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                     setIsLoading(false);
 
                     if (extraction.lcbViolationDetected) {
-                        addArtieResponse("⚠️ Heads up: Schmidt detected potential LCB compliance issues in this flyer. I've adjusted the description to be safe.");
+                        addSchmidtResponse("⚠️ Heads up: Schmidt detected potential LCB compliance issues in this flyer. I've adjusted the description to be safe.");
                     }
 
                     // --- Smart Fallback Logic (The Slot Filling Check) ---
                     if (!currentDraft.title) {
                         setOpsState('event_input_title');
-                        addArtieResponse("Schmidt read the flyer, but couldn't find a clear TITLE. What's the name of the event?");
+                        addSchmidtResponse("Schmidt read the flyer, but couldn't find a clear TITLE. What's the name of the event?");
                         return;
                     }
 
                     if (!currentDraft.date) {
                         setOpsState('event_input_date');
-                        addArtieResponse(`I've got "${currentDraft.title}" ready. What DATE is this happening?`, [
+                        addSchmidtResponse(`I've got "${currentDraft.title}" ready. What DATE is this happening?`, [
                             { id: 'today', label: 'Today', value: 'SUBMIT_EVENT_TEXT', icon: '📅' },
                             { id: 'tmrw', label: 'Tomorrow', value: 'SUBMIT_EVENT_TEXT', icon: '⏭️' }
                         ]);
@@ -887,7 +838,7 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
 
                     if (!currentDraft.time) {
                         setOpsState('event_input_time');
-                        addArtieResponse(`Okay, ${currentDraft.date}. What TIME does it start?`, [
+                        addSchmidtResponse(`Okay, ${currentDraft.date}. What TIME does it start?`, [
                             { id: '7pm', label: '7:00 PM', value: 'SUBMIT_EVENT_TEXT', icon: '🕖' },
                             { id: '8pm', label: '8:00 PM', value: 'SUBMIT_EVENT_TEXT', icon: '🕗' },
                             { id: '9pm', label: '9:00 PM', value: 'SUBMIT_EVENT_TEXT', icon: '🕘' }
@@ -897,7 +848,7 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
 
                     if (!currentDraft.type) {
                         setOpsState('event_input_type');
-                        addArtieResponse("Schmidt read the flyer, but couldn't be sure about the event CATEGORY. What type is this?", [
+                        addSchmidtResponse("Schmidt read the flyer, but couldn't be sure about the event CATEGORY. What type is this?", [
                             { id: 'trivia', label: 'Trivia', value: 'SUBMIT_EVENT_TEXT', icon: '🧠' },
                             { id: 'karaoke', label: 'Karaoke', value: 'SUBMIT_EVENT_TEXT', icon: '🎤' },
                             { id: 'music', label: 'Live Music', value: 'SUBMIT_EVENT_TEXT', icon: '🎸' },
@@ -908,13 +859,13 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
 
                     if (!currentDraft.prizes && (currentDraft.type === 'trivia' || currentDraft.type === 'bingo')) {
                         setOpsState('event_input_prizes');
-                        addArtieResponse("Schmidt missed it—what are the PRIZES? (e.g. $50 Venue Tab)");
+                        addSchmidtResponse("Schmidt missed it—what are the PRIZES? (e.g. $50 Venue Tab)");
                         return;
                     }
 
                     if (!currentDraft.description) {
                         setOpsState('event_input_details');
-                        addArtieResponse("Schmidt extracted the basics, but do you have any extra details or rules to add?");
+                        addSchmidtResponse("Schmidt extracted the basics, but do you have any extra details or rules to add?");
                         return;
                     }
 
@@ -924,7 +875,7 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
 
                 } catch (e: any) {
                     setIsLoading(false);
-                    addArtieResponse(`Schmidt had trouble reading that: ${e.message}. Let's do it manually. What's the event title?`);
+                    addSchmidtResponse(`Schmidt had trouble reading that: ${e.message}. Let's do it manually. What's the event title?`);
                     setOpsState('event_input_title');
                 }
                 break;
@@ -933,7 +884,7 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                 setOpsState('selecting_skill');
                 setDraftData({});
                 setEventDraft({ imageState: 'none' });
-                addArtieResponse("Cancelled. What else?", [
+                addSchmidtResponse("Cancelled. What else?", [
                     { id: '1', label: 'Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
                     { id: '2', label: 'Add Event', value: 'skill_add_event', icon: '📅' },
                     { id: '3', label: 'Social Post', value: 'skill_social_post', icon: '📱' },
@@ -946,7 +897,7 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
 
             default:
                 console.warn("Unknown Artie Action:", action);
-                addArtieResponse(`I'm learning a new trick called ${action}, but I haven't mastered it yet.`);
+                addSchmidtResponse(`I'm learning a new trick called ${action}, but I haven't mastered it yet.`);
                 setOpsState('selecting_skill');
         }
     }, [draftData, eventDraft, validateLCBCompliance, validateSchedule, venue]);

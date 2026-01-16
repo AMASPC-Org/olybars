@@ -18,6 +18,8 @@
     "exclude": [
         "node_modules",
         "dist",
-        "src/scripts"
+        "src/scripts",
+        "src/__tests__",
+        "../functions/src/scripts"
     ]
 }

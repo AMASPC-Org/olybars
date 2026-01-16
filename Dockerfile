@@ -26,4 +26,5 @@ ENV NODE_ENV production
 
 # Run the web service on container startup.
 # We run the compiled JS directly for speed and reliability.
-CMD [ "node", "server/dist/index.js" ]
+# Mirrored structure due to outside inclusions: dist/server/src/index.js
+CMD [ "node", "server/dist/server/src/index.js" ]

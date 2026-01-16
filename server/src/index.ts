@@ -2,7 +2,7 @@
 import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
-import { config } from './config/index.js';
+import { config } from './appConfig/config.js';
 import { fetchVenues, clockIn, getVenueById } from './venueService.js';
 import { isAiBot, getBotName } from './utils/botDetector.js';
 import { verifyToken, requireRole, requireVenueAccess, verifyAppCheck, identifyUser } from './middleware/authMiddleware.js';

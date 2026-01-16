@@ -556,6 +556,12 @@ export default function OlyBarsApp() {
                     }
                   />
                   <Route
+                    path="venues/:id/events"
+                    element={
+                      <EventsScreen venues={venues} />
+                    }
+                  />
+                  <Route
                     path="back-room"
                     element={
                       <>

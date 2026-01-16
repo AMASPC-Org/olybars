@@ -1,5 +1,5 @@
 import { db } from './firebaseAdmin.js';
-import { config } from './config/index.js';
+import { config } from './appConfig/config.js';
 import readline from 'readline';
 import venues from './data/venues_master.json' with { type: 'json' };
 import knowledge from './data/knowledgeBase.json' with { type: 'json' };

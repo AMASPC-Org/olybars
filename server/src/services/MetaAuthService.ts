@@ -1,4 +1,4 @@
-import { config } from '../config/index.js';
+import { config } from '../appConfig/config.js';
 import { db } from '../firebaseAdmin.js';
 
 export const MetaAuthService = {
