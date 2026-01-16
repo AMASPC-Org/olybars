@@ -1,6 +1,10 @@
 import { onCall } from 'firebase-functions/v2/https';
 import { setGlobalOptions } from 'firebase-functions/v2';
 import { artieChatLogic } from './flows/artieChat';
+import { extractBrandDnaFlow } from './flows/extractBrandDna';
+import { generateSocialFlyerFlow } from './flows/generateSocialFlyer';
+
+import { claimVenueFlow } from './flows/claimVenue';
 
 // Set Global Options (Region)
 setGlobalOptions({ region: 'us-west1' });
@@ -18,3 +22,7 @@ export const artieChat = onCall({ cors: true, secrets: ["GOOGLE_API_KEY"] }, asy
         throw new Error(`Connection issue: ${e.message}`);
     }
 });
+
+export const extractBrandDna = extractBrandDnaFlow;
+export const generateSocialFlyer = generateSocialFlyerFlow;
+export const claimVenue = claimVenueFlow;

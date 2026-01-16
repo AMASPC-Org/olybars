@@ -1,0 +1,83 @@
+{
+    "social_media_specs": {
+        "facebook": {
+            "profile_photo": {
+                "width": 2048,
+                "height": 2048,
+                "aspect_ratio": "1:1",
+                "notes": "Displays as circle. Upload high res for best quality."
+            },
+            "cover_photo_page": {
+                "width": 851,
+                "height": 315,
+                "aspect_ratio": "2.7:1",
+                "safe_zone": "Center 640x312px visible on mobile"
+            },
+            "cover_photo_group": {
+                "width": 1640,
+                "height": 856,
+                "aspect_ratio": "1.91:1"
+            },
+            "cover_photo_event": {
+                "width": 1920,
+                "height": 1005,
+                "aspect_ratio": "1.91:1"
+            },
+            "post_square": {
+                "width": 1080,
+                "height": 1080,
+                "aspect_ratio": "1:1"
+            },
+            "post_portrait": {
+                "width": 1080,
+                "height": 1350,
+                "aspect_ratio": "4:5"
+            },
+            "post_landscape": {
+                "width": 1200,
+                "height": 630,
+                "aspect_ratio": "1.91:1"
+            },
+            "story_reel": {
+                "width": 1080,
+                "height": 1920,
+                "aspect_ratio": "9:16",
+                "safe_padding_y": 250
+            }
+        },
+        "instagram": {
+            "profile_photo": {
+                "width": 320,
+                "height": 320,
+                "aspect_ratio": "1:1"
+            },
+            "post_square": {
+                "width": 1080,
+                "height": 1080,
+                "aspect_ratio": "1:1"
+            },
+            "post_portrait": {
+                "width": 1080,
+                "height": 1350,
+                "aspect_ratio": "4:5",
+                "notes": "Optimal for feed visibility"
+            },
+            "post_landscape": {
+                "width": 1080,
+                "height": 566,
+                "aspect_ratio": "1.91:1"
+            },
+            "story_reel": {
+                "width": 1080,
+                "height": 1920,
+                "aspect_ratio": "9:16"
+            },
+            "reel_cover": {
+                "width": 1080,
+                "height": 1920,
+                "aspect_ratio": "9:16",
+                "notes": "Keep main subject in center 1:1 box for profile grid view"
+            }
+        }
+    }
+}

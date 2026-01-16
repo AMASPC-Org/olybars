@@ -8,6 +8,7 @@ export enum PartnerTier {
 }
 
 import { TIER_CONFIG as GLOBAL_TIER_CONFIG, TierFeatures } from '../config/tiers.js';
+import { BrandDNA } from './schemas.js';
 
 export interface TierLimits extends TierFeatures { }
 
@@ -19,6 +20,7 @@ export interface PartnerConfig {
     flashBountiesUsed: number;    // Counter
     metaSync?: MetaSyncConfig;   // [NEW] OAuth and Page IDs
 }
+
 
 export interface MetaSyncConfig {
     facebookPageId?: string;
@@ -198,6 +200,8 @@ export interface Venue {
     capacity?: number; // [NEW] Total venue capacity for busyness calculations
     isPaidLeagueMember?: boolean;
     nicknames?: string[];
+
+    brand_dna?: BrandDNA; // [NEW] Central visual identity for Schmidt
 
     // Legacy/Computed fields for Frontend
     deal?: string;
