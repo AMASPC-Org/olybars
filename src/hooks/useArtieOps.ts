@@ -666,6 +666,36 @@ export const useArtieOps = () => {
                 ]);
                 break;
 
+            case 'purpose_social':
+            case 'purpose_web':
+            case 'purpose_print':
+            case 'purpose_exclusive':
+                {
+                    const labelMap: any = {
+                        'purpose_social': 'Social Media',
+                        'purpose_web': 'Website',
+                        'purpose_print': 'Print Flyer',
+                        'purpose_exclusive': 'Member Only'
+                    };
+                    await processAction('SUBMIT_IMAGE_PURPOSE', labelMap[action]);
+                }
+                break;
+
+            case 'goal_event':
+            case 'goal_menu':
+            case 'goal_vibe':
+            case 'goal_hiring':
+                {
+                    const labelMap: any = {
+                        'goal_event': 'Promote Event',
+                        'goal_menu': 'Showcase Menu',
+                        'goal_vibe': 'Daily Vibe',
+                        'goal_hiring': 'Hiring/Team'
+                    };
+                    await processAction('SUBMIT_IMAGE_GOAL', labelMap[action]);
+                }
+                break;
+
             case 'SUBMIT_IMAGE_GOAL':
                 if (!payload) return;
                 addUserMessage(payload);
@@ -735,6 +765,10 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                     { id: 'confirm', label: 'Generate', value: 'confirm_post', icon: '🎨' },
                     { id: 'cancel', label: 'Cancel', value: 'cancel', icon: '❌' }
                 ]);
+                break;
+
+            case 'no_specials':
+                await processAction('SUBMIT_IMAGE_SPECIALS', 'no_specials');
                 break;
 
             case 'edit_event':
@@ -878,6 +912,16 @@ Maintain the OlyBars brand aesthetic: Local, authentic, and vibrant Olympia ener
                     addSchmidtResponse(`Schmidt had trouble reading that: ${e.message}. Let's do it manually. What's the event title?`);
                     setOpsState('event_input_title');
                 }
+                break;
+
+            case 'completed':
+                setOpsState('selecting_skill');
+                addSchmidtResponse("Mission accomplished. What's next?", [
+                    { id: '1', label: 'Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
+                    { id: '2', label: 'Add Event', value: 'skill_add_event', icon: '📅' },
+                    { id: '3', label: 'Social Post', value: 'skill_social_post', icon: '📱' },
+                    { id: '7', label: 'Gen Image', value: 'skill_generate_image', icon: '🎨' }
+                ]);
                 break;
 
             case 'cancel':

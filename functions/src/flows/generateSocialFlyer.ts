@@ -76,7 +76,7 @@ export const generateSocialFlyerFlow = onCall(
         });
 
         // 5. Save (The "Librarian")
-        const media = result.media;
+        const media = result.media as any;
         if (!media || !media.data) throw new Error("AI generated no image media data.");
 
         const asset = await saveGeneratedFlyer({
