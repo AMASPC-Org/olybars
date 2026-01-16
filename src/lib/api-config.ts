@@ -67,6 +67,7 @@ export const API_ENDPOINTS = {
     },
     AI: {
         GEN_COPY: `${API_BASE_URL}/ai/generate-event-copy`,
+        GEN_IMAGE: `${API_BASE_URL}/ai/generate-image`,
     },
     PHOTO: {
         STATUS: (venueId: string, photoId: string) => `${API_BASE_URL}/venues/${venueId}/photos/${photoId}`,

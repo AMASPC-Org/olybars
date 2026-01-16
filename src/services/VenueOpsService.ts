@@ -427,16 +427,28 @@ export class VenueOpsService {
     /**
      * Skill: generate_image
      */
-    static async generateImage(venueId: string, image: { prompt: string }) {
-        // In a real implementation, this might trigger a cloud function for DALL-E/Midjourney/Gemini Image Gen
-        // For now, we save it as a pending asset
-        return this.saveDraft(venueId, {
-            topic: 'Generated Image Prompt',
-            copy: image.prompt,
-            type: 'IMAGE_PROMPT'
+    static async generateImage(venueId: string, image: { prompt: string }): Promise<{ success: boolean; imageUrl: string }> {
+        const headers = await getAuthHeaders();
+        const response = await fetch(API_ENDPOINTS.AI.GEN_IMAGE, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...headers
+            },
+            body: JSON.stringify({ prompt: image.prompt, venueId })
         });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to generate image');
+        }
+
+        return response.json();
     }
 
+    /**
+     * Skill: add_calendar_event
+     */
     /**
      * Skill: add_calendar_event
      */
@@ -445,17 +457,32 @@ export class VenueOpsService {
 
         try {
             const { EventService } = await import('./eventService');
-            // Basic transformation to AppEvent structure
-            // In a real app, this would use an LLM or robust parser
+
+            // Map the Schmidt-style draft to the official AppEvent format
+            // Ensure type is snake_case and venueName is present
             const payload = {
                 venueId,
-                venueName: eventData.venueName || '', // Use provided name or let backend resolve
+                venueName: eventData.venueName || 'Unknown Venue',
                 title: eventData.title || 'New Event',
-                type: eventData.type || 'other',
+                type: (eventData.type || 'other').toLowerCase().replace(/\s+/g, '_'),
                 date: eventData.date || new Date().toISOString().split('T')[0],
                 time: eventData.time || '20:00',
-                description: eventData.description || 'Added via Artie'
+                description: eventData.marketingCopy || eventData.description || 'Added via Artie'
             };
+
+            // Double check validation requirements
+            if (payload.venueName === 'Unknown Venue') {
+                console.warn('VenueOpsService: venueName is missing, attempting to resolve from venueId');
+                try {
+                    const { fetchVenueById } = await import('./venueService');
+                    const v = await fetchVenueById(venueId);
+                    if (v?.name) payload.venueName = v.name;
+                } catch (e) {
+                    console.error('Failed to resolve venue name for event submission');
+                }
+            }
+
+            console.log('VenueOpsService: Submitting transformed payload:', payload);
 
             const result = await EventService.submitEvent(payload as any);
             return result;

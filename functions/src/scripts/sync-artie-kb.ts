@@ -2,10 +2,7 @@ import admin from 'firebase-admin';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// In CommonJS, __filename and __dirname are already available globally.
 
 // Safety: Clear emulator variables if running locally
 delete process.env.FIRESTORE_EMULATOR_HOST;

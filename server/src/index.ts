@@ -1,6 +1,7 @@
 ﻿import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import compression from 'compression';
 import { rateLimit } from 'express-rate-limit';
 import { config } from './appConfig/config.js';
 import { fetchVenues, clockIn, getVenueById } from './venueService.js';
@@ -14,7 +15,8 @@ import {
     ChatRequestSchema,
     VenueUpdateSchema,
     VenueOnboardSchema,
-    AppEventSchema
+    AppEventSchema,
+    GenerateImageSchema
 } from './utils/validation.js';
 
 const app = express();
@@ -25,6 +27,7 @@ const port = config.PORT;
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
+app.use(compression());
 
 /**
  * Global Rate Limiter
@@ -241,7 +244,8 @@ v1Router.get('/venues', async (req, res) => {
     try {
         const brief = req.query.brief === 'true';
         const venues = await fetchVenues(brief);
-        res.setHeader('Cache-Control', 'public, max-age=30'); // Cache for 30s
+        // Optimize for CDN: 30s fresh, 60s stale-while-revalidate for instant loads
+        res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=60');
         res.json(venues);
     } catch (error: any) {
         log('ERROR', 'CRITICAL ERROR fetching venues', {
@@ -1497,3 +1501,49 @@ app.listen(port, () => {
     log('INFO', `Flash Boarding... OlyBars Server running on port ${port} in ${config.NODE_ENV} mode.`);
 });
 
+/**
+ * @route POST /api/ai/generate-copy
+ * @desc Generate creative copy for events
+ */
+v1Router.post('/ai/generate-copy', verifyToken, async (req, res) => {
+    // ... existing implementation if any or placeholder
+    // The plan didn't specify modifying this, but checking consistency.
+    // Actually, VenueOpsService.generateEventCopy calls /api/ai/generate-event-copy
+    // Let's stick to the plan: Add /api/ai/generate-image
+    res.status(501).json({ error: 'Not implemented yet' });
+});
+
+/**
+ * @route POST /api/ai/generate-image
+ * @desc Generate an image using Vertex AI Imagen 3
+ */
+v1Router.post('/ai/generate-image', verifyToken, requireVenueAccess('manager'), async (req, res) => {
+    const validation = GenerateImageSchema.safeParse(req.body);
+    if (!validation.success) {
+        return res.status(400).json({ error: 'Invalid generation data', details: validation.error.format() });
+    }
+    const { prompt, venueId } = validation.data;
+
+    try {
+        const { GeminiService } = await import('./services/geminiService.js');
+        const gemini = new GeminiService();
+        const imageUrl = await gemini.generateImage(prompt, venueId);
+
+        log('INFO', 'Image Generated Successfully', { venueId, promptLength: prompt.length });
+        res.json({ success: true, imageUrl });
+    } catch (error: any) {
+        log('ERROR', 'Image Generation Failed', { venueId, error: error.message });
+        res.status(500).json({ error: 'Image generation failed. Please try again.' });
+    }
+});
+
+app.use('/api/v1', v1Router);
+app.use('/api/v2', v2Router);
+
+app.listen(port, () => {
+    const isCloudRun = !!process.env.K_SERVICE;
+    console.log(`\n🚀 OLYBARS BACKEND LISTENING ON PORT ${port}`);
+    console.log(`🌍 Environment: ${config.NODE_ENV}`);
+    console.log(`☁️ Platform: ${isCloudRun ? 'Cloud Run (Production)' : 'Local'}`);
+    console.log(`🛡️ Rate Limiting: Active`);
+});

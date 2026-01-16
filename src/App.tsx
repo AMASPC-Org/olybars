@@ -146,6 +146,16 @@ export default function OlyBarsApp() {
     queryFn: () => fetchVenues(true), // Fetch brief mode for the list
     staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    initialData: () => {
+      // Instant hydration for Returning Users [OPTIMIZATION]
+      try {
+        const cached = localStorage.getItem('oly_venues_cache');
+        if (cached) return JSON.parse(cached);
+      } catch (e) {
+        console.error('[OlyBars] Hydration failed:', e);
+      }
+      return [];
+    }
   });
 
   // Sync Venues to LocalStorage for next boot

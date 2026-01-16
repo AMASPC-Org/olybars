@@ -75,7 +75,7 @@ const getArtieGreeting = (profile?: UserProfile): ArtieGreeting => {
     // Coach Mode for Logged In Users
     if (profile && profile.handle) {
         // [OPS MODE] Greeting is handled by the Ops Hook state machine
-        if (profile.role === 'owner' || profile.role === 'manager') {
+        if (profile.role === 'owner' || profile.role === 'manager' || isSystemAdmin(profile)) {
             return {
                 message: "Initializing Venue Ops...",
                 status: "OPS LINK ESTABLISHED"
@@ -134,6 +134,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
     // --- 2. Hooks ---
     const guestArtie = useArtie();
     const opsArtie = useArtieOps();
+    const { persona, setPersona } = opsArtie;
 
     const { showToast } = useToast();
     const [input, setInput] = useState('');
@@ -155,7 +156,8 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
     // --- 3. Initialization ---
     useEffect(() => {
-        if (isOpen && !greeting) {
+        if (isOpen) {
+            // Always refresh greeting on open to ensure state is fresh
             setGreeting(getArtieGreeting(userProfile));
 
             const venueContext = initialVenueId || userProfile?.homeBase;
@@ -165,9 +167,8 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
             if (isOpsMode) {
                 if (!hasInitializedOps) {
-                    const venueId = initialVenueId || userProfile?.homeBase;
-                    // Pass the venue ID here to ensure hook loads context
-                    opsArtie.processAction('START_SESSION', undefined, venueId);
+                    // Force a full state reset on modal re-open
+                    opsArtie.resetOps();
                     setHasInitializedOps(true);
                 }
             } else {
@@ -495,15 +496,31 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                     <div className="flex items-center gap-3">
                         <div className="bg-primary p-0.5 rounded-xl shadow-lg shadow-primary/20 overflow-hidden w-14 h-14 flex items-center justify-center">
                             <img
-                                src={isOpsMode ? schmidtLogo : artieLogo}
+                                src={(isOpsMode && persona === 'schmidt') ? schmidtLogo : artieLogo}
                                 className="w-full h-full object-cover scale-110"
-                                alt={isOpsMode ? "Schmidt" : "Artie"}
+                                alt={(isOpsMode && persona === 'schmidt') ? "Schmidt" : "Artie"}
                             />
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-white uppercase tracking-tight font-league">
-                                {isOpsMode ? "Schmidt" : "Artie"}
-                            </h3>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-xl font-black text-white uppercase tracking-tight font-league">
+                                    {(isOpsMode && persona === 'schmidt') ? "Schmidt" : "Artie"}
+                                </h3>
+                                {isOpsMode && (
+                                    <button
+                                        onClick={() => {
+                                            const newPersona = persona === 'schmidt' ? 'artie' : 'schmidt';
+                                            setPersona(newPersona);
+                                            opsArtie.resetOps();
+                                            showToast(`Switched to ${newPersona === 'schmidt' ? 'Schmidt (Owner)' : 'Artie (Visitor)'} Mode`, "info");
+                                        }}
+                                        className="bg-primary/20 hover:bg-primary/40 p-1 rounded-md transition-colors"
+                                        title="Switch Persona"
+                                    >
+                                        {persona === 'schmidt' ? <Bot size={14} className="text-primary" /> : <Sparkles size={14} className="text-primary" />}
+                                    </button>
+                                )}
+                            </div>
                             <div className="flex items-center gap-1.5">
                                 <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isOpsMode ? 'bg-primary' : 'bg-green-500'}`} />
                                 <span className="text-[9px] text-primary font-bold uppercase tracking-widest">{greeting?.status || "Online"}</span>

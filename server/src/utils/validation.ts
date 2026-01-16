@@ -66,6 +66,11 @@ export const ChatRequestSchema = z.object({
     _hp_id: z.string().optional(), // Honeypot
 });
 
+export const GenerateImageSchema = z.object({
+    prompt: z.string().min(1).max(2000),
+    venueId: z.string().min(1),
+});
+
 export const VenueUpdateSchema = z.object({
     name: z.string().optional(),
     nicknames: z.array(z.string()).optional(),

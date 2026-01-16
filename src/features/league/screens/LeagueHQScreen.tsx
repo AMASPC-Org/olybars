@@ -2,39 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Crown, Trophy, Star, Gift, Zap, Users, ArrowRight, ShieldCheck, Clock, Ticket, ChevronRight } from 'lucide-react';
 import { Venue } from '../../../types';
+import { fetchAllUsers, fetchSystemStats } from '../../../services/userService';
 
 type LeagueTab = 'league' | 'schedule' | 'standings' | 'bars' | 'rules' | 'prizes';
-
-// Mock data for the standings with tie-breaker info
-const leaderboardData = [
-  { id: '1', name: "BarFly_99", points: 4520, lifetimeClockins: 150, currentStreak: 12, badge: "👑" },
-  { id: '2', name: "IPA_Lover", points: 3890, lifetimeClockins: 120, currentStreak: 8, badge: "🥈" },
-  { id: '3', name: "TriviaKing", points: 3890, lifetimeClockins: 110, currentStreak: 5, badge: "🥉" }, // Tied in points with IPA_Lover
-  { id: '4', name: "OlyGirl", points: 3100, lifetimeClockins: 90, currentStreak: 10, badge: "" },
-  { id: '5', name: "Zack_Attack", points: 2950, lifetimeClockins: 85, currentStreak: 3, badge: "" },
-];
-
-const totalMembers = 1242; // Example total
-
-// Standard Competition Ranking (1224)
-const calculateRanks = (data: typeof leaderboardData) => {
-  const sorted = [...data].sort((a, b) => {
-    if (b.points !== a.points) return b.points - a.points;
-    if (b.lifetimeClockins !== a.lifetimeClockins) return b.lifetimeClockins - a.lifetimeClockins;
-    if (b.currentStreak !== a.currentStreak) return b.currentStreak - a.currentStreak;
-    return a.name.localeCompare(b.name);
-  });
-
-  return sorted.map((p, i, arr) => {
-    let rank = i + 1;
-    if (i > 0 && p.points === arr[i - 1].points) {
-      // Find the first occurrence of this points value to get the rank
-      let firstIndex = arr.findIndex(item => item.points === p.points);
-      rank = firstIndex + 1;
-    }
-    return { ...p, rank };
-  });
-};
 
 interface LeagueHQScreenProps {
   venues: Venue[];
@@ -49,7 +19,49 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
   const initialTab = searchParams.get('tab') as LeagueTab || 'league';
   const [leagueTab, setLeagueTab] = useState<LeagueTab>(initialTab);
 
-  const rankedPlayers = useMemo(() => calculateRanks(leaderboardData), []);
+  const [rankedPlayers, setRankedPlayers] = useState<any[]>([]);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
+  const [totalMembers, setTotalMembers] = useState(0);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      const stats = await fetchSystemStats();
+      setTotalMembers(stats.totalUsers);
+    };
+    loadStats();
+  }, []);
+
+  useEffect(() => {
+    const loadLeaderboard = async () => {
+      setIsLoadingLeaderboard(true);
+      try {
+        const users = await fetchAllUsers();
+        // The fetchAllUsers service already orders by points desc
+        // We just need to apply the rank numbering logic
+        const ranked = users.map((u, i, arr) => {
+          let rank = i + 1;
+          if (i > 0 && u.league_stats?.points === arr[i - 1].league_stats?.points) {
+            let firstIndex = arr.findIndex(item => item.league_stats?.points === u.league_stats?.points);
+            rank = firstIndex + 1;
+          }
+          // Map public profile fields to match the UI expectations
+          return {
+            id: u.uid,
+            name: u.handle || "Anonymous",
+            points: u.league_stats?.points || 0,
+            rank: rank,
+            badge: u.isLeagueHQ ? "👑" : "" // Use HQ badge as example or omit
+          };
+        });
+        setRankedPlayers(ranked.slice(0, 5)); // Keep top 5 for this view
+      } catch (e) {
+        console.error("Failed to load leaderboard", e);
+      } finally {
+        setIsLoadingLeaderboard(false);
+      }
+    };
+    loadLeaderboard();
+  }, []);
 
   // Events Logic: Chronological list for tonight
   const tonightHappenings = useMemo(() => {

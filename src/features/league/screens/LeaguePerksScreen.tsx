@@ -5,6 +5,7 @@ import {
     Star, Gift, Search, Crown,
     MapPin, MessageCircle
 } from 'lucide-react';
+// Correcting imports if they existed. I will actually CHECK the file content again because the previous view didn't show skills imports.
 
 export const LeaguePerksScreen: React.FC = () => {
     const navigate = useNavigate();

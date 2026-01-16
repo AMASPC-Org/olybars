@@ -1,6 +1,7 @@
 {
   "name": "olybars-functions",
   "version": "1.0.0",
+  "type": "commonjs",
   "main": "dist/index.js",
   "dependencies": {
     "@genkit-ai/ai": "^1.27.0",

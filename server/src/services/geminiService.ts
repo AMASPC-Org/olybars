@@ -1,6 +1,14 @@
 ﻿import { GoogleGenAI } from '@google/genai';
 import { ARTIE_SYSTEM_INSTRUCTION } from '../appConfig/agents/artie.js';
 import { SCHMIDT_SYSTEM_INSTRUCTION } from '../appConfig/agents/schmidt.js';
+import { genkit } from 'genkit';
+import { vertexAI, imagen3Fast } from '@genkit-ai/vertexai';
+import { StorageService } from './storageService.js';
+
+// Initialize Genkit with Vertex AI
+const ai = genkit({
+    plugins: [vertexAI({ location: 'us-west1' })],
+});
 
 export interface ChatMessage {
     role: 'user' | 'model';
@@ -315,5 +323,51 @@ export class GeminiService {
         });
 
         return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Event details staged and ready!";
+    }
+
+    async generateImage(prompt: string, venueId: string): Promise<string> {
+        console.log(`🎨 GeminiService: Generating image for ${venueId} with prompt: "${prompt.substring(0, 50)}..."`);
+
+        try {
+            const result = await ai.generate({
+                model: imagen3Fast,
+                prompt: prompt,
+                config: {
+                    aspectRatio: '1:1', // Standard square for social
+                },
+            });
+
+            if (!result || !result.media) {
+                throw new Error("No media returned from Imagen 3");
+            }
+
+            // Imagen returns media with a url (if GCS) or data URI? 
+            // Genkit's GenerateResponse for image models typically puts the image in the message.
+            // Let's inspect the result structure for basic Genkit usage.
+            // Actually, genkit generate returns a GenerateResponse.
+            // For image models, the output is media.
+
+            const media = result.media;
+            if (!media) throw new Error("No media in generation result");
+
+            // If it's a data URI, we need to strip headers and upload
+            // media.url might be a data uri like: data:image/png;base64,....
+            let buffer: Buffer;
+
+            if (media.url.startsWith('data:')) {
+                const base64Data = media.url.split(',')[1];
+                buffer = Buffer.from(base64Data, 'base64');
+            } else {
+                throw new Error("Unexpected media URL format from Genkit (expected data URI)");
+            }
+
+            // Upload to Persistence Layer
+            const publicUrl = await StorageService.uploadImage(buffer, venueId);
+            return publicUrl;
+
+        } catch (error: any) {
+            console.error("❌ GeminiService: Image Generation Failed", error);
+            throw new Error(`Image Generation Failed: ${error.message}`);
+        }
     }
 }
