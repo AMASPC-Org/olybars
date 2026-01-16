@@ -26,6 +26,7 @@ export const functions = getFunctions(app, 'us-west1');
 
 // --- EMULATOR WIRING ---
 // If we are on localhost, connect to the local emulators instead of the cloud.
+/* 
 if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
   console.log('?? Connecting to Local Firebase Emulators...');
 
@@ -43,15 +44,16 @@ if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' |
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   console.log('??? [AppCheck] Local Debug Token Enabled');
 } else {
-  // --- PRODUCTION APP CHECK ---
-  // Only run standard App Check in production/staging
-  if (typeof window !== 'undefined') {
-    const siteKey = import.meta.env.VITE_APP_CHECK_KEY;
-    if (siteKey && !siteKey.includes('PLACEHOLDER')) {
-      initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider(siteKey),
-        isTokenAutoRefreshEnabled: true
-      });
-    }
+*/
+// --- PRODUCTION APP CHECK ---
+// Only run standard App Check in production/staging
+if (typeof window !== 'undefined') {
+  const siteKey = import.meta.env.VITE_APP_CHECK_KEY;
+  if (siteKey && !siteKey.includes('PLACEHOLDER')) {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(siteKey),
+      isTokenAutoRefreshEnabled: true
+    });
   }
 }
+// }

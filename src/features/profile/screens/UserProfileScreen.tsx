@@ -11,9 +11,6 @@ import { shareAchievement } from '../../social/ShareService';
 import {
     updatePassword,
     updateEmail,
-    multiFactor,
-    PhoneAuthProvider,
-    PhoneMultiFactorGenerator,
     RecaptchaVerifier
 } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
@@ -21,6 +18,7 @@ import { updateUserProfile } from '../../../services/userService';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { Link, useNavigate } from 'react-router-dom';
 import { isSystemAdmin } from '../../../types/auth_schema';
+import { MfaService } from '../../../services/mfaService';
 
 interface UserProfileScreenProps {
     userProfile: UserProfile;
@@ -60,7 +58,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
 
     useEffect(() => {
         if (auth.currentUser) {
-            setEnrolledFactors(multiFactor(auth.currentUser).enrolledFactors);
+            setEnrolledFactors(MfaService.getEnrolledFactors(auth.currentUser));
         }
     }, [userProfile.uid]);
 
@@ -189,27 +187,12 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
     };
 
     const handleStartMfaEnrollment = async () => {
-        if (!auth.currentUser) return;
-        if (!mfaPhone.startsWith('+')) {
-            showToast("Phone must start with + (e.g. +1360...)", "error");
-            return;
-        }
-
+        if (!auth.currentUser || !mfaPhone) return;
         setIsLoading(true);
         try {
-            // Initialize Recaptcha if not already done
-            const verifier = new RecaptchaVerifier(auth, 'recaptcha-enroll-container', {
-                'size': 'invisible'
-            });
+            const verifier = MfaService.createRecaptchaVerifier('recaptcha-enroll-container');
             setRecaptchaVerifier(verifier);
-
-            const session = await multiFactor(auth.currentUser).getSession();
-            const phoneInfoOptions = {
-                phoneNumber: mfaPhone,
-                session: session
-            };
-            const phoneAuthProvider = new PhoneAuthProvider(auth);
-            const vId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, verifier);
+            const vId = await MfaService.startEnrollment(auth.currentUser, mfaPhone, verifier);
             setVerificationId(vId);
             setMfaStep('code');
             showToast("Verification code sent!", "success");
@@ -229,11 +212,9 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
         if (!auth.currentUser || !verificationId || !mfaCode) return;
         setIsLoading(true);
         try {
-            const cred = PhoneAuthProvider.credential(verificationId, mfaCode);
-            const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
-            await multiFactor(auth.currentUser).enroll(multiFactorAssertion, "Primary Phone");
+            await MfaService.finishEnrollment(auth.currentUser, verificationId, mfaCode);
 
-            setEnrolledFactors(multiFactor(auth.currentUser).enrolledFactors);
+            setEnrolledFactors(MfaService.getEnrolledFactors(auth.currentUser));
             setMfaStep('none');
             showToast("MFA ENROLLED SUCCESSFULLY", "success");
 
@@ -241,9 +222,43 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
             if (mfaPhone !== userProfile.phone) {
                 autoSaveUpdates({ phone: mfaPhone });
             }
+
+            // Cleanup recaptcha
+            if (recaptchaVerifier) {
+                recaptchaVerifier.clear();
+                setRecaptchaVerifier(null);
+            }
         } catch (error: any) {
             console.error("MFA Verify Error:", error);
             showToast("Invalid code or enrollment failed", "error");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleUnenrollMfa = async () => {
+        if (!auth.currentUser) return;
+
+        const isVenuePartner = MfaService.isPartner(userProfile);
+        if (isVenuePartner) {
+            if (!window.confirm("WARNING: DISABLING MFA AS A PARTNER WILL REVOKE YOUR SESSION FOR SECURITY. YOU MUST RE-LOGIN TO RE-ENABLE. PROCEED?")) {
+                return;
+            }
+        }
+
+        setIsLoading(true);
+        try {
+            await MfaService.unenroll(auth.currentUser);
+            setEnrolledFactors([]);
+            showToast("MFA DISABLED", "info");
+
+            if (isVenuePartner) {
+                await MfaService.revokeSession();
+                navigate('/auth');
+            }
+        } catch (error: any) {
+            console.error("MFA Unenroll Error:", error);
+            showToast("FAILED TO DISABLE MFA. RE-LOGIN MAY BE REQUIRED.", "error");
         } finally {
             setIsLoading(false);
         }
@@ -738,7 +753,12 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                                                     <p className="text-xs font-bold text-slate-300">Identity protected via SMS</p>
                                                 </div>
                                             </div>
-                                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">ENABLED</span>
+                                            <button
+                                                onClick={handleUnenrollMfa}
+                                                className="text-[9px] font-black text-slate-500 hover:text-red-500 transition-colors uppercase tracking-widest"
+                                            >
+                                                DISABLE
+                                            </button>
                                         </div>
                                     ) : (
                                         <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-2xl space-y-4">

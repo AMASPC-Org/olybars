@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../../lib/firebase';
-import { multiFactor } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info, QrCode, Download, Printer, Calendar, Crown, Clock, Lock, AlertTriangle } from 'lucide-react';
 import { Venue, UserProfile, GameStatus, PartnerTier, TIER_CONFIG, ScheduledDeal } from '../../../types';
@@ -24,7 +23,8 @@ import { Camera } from 'lucide-react';
 import { MenuManagementTab } from '../components/MenuManagementTab';
 import { PartnerManualTab } from '../components/PartnerManualTab';
 import { BackRoomManagementTab } from '../components/BackRoomManagementTab';
-import { Book } from 'lucide-react';
+import { Book, ShieldCheck } from 'lucide-react';
+import { MfaService } from '../../../services/mfaService';
 
 interface OwnerDashboardProps {
     isOpen: boolean;
@@ -98,7 +98,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const { showToast } = useToast();
 
     // [SECURITY] MFA Enforcement Check for Partners
-    const isMfaEnrolled = auth.currentUser && multiFactor(auth.currentUser).enrolledFactors.length > 0;
+    const isMfaEnrolled = MfaService.isEnrolled(auth.currentUser);
     const isSuperAdmin = isSystemAdmin(userProfile);
 
     if (!isMfaEnrolled && !isSuperAdmin) {

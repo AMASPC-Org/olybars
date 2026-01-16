@@ -43,6 +43,7 @@ export const claimVenue = claimVenueFlow;
 export const syncUserProfile = onDocumentWritten("users/{userId}", async (event) => {
     const userId = event.params.userId;
     const newUser = event.data?.after.data();
+    const oldUser = event.data?.before.data();
 
     if (!event.data?.after.exists) {
         logger.info(`[Privacy] Deleting public profile for ${userId}`);
@@ -52,6 +53,24 @@ export const syncUserProfile = onDocumentWritten("users/{userId}", async (event)
 
     if (!newUser) return;
 
+    // 1. Sync Custom Claims (Role/Admin)
+    // Only update if role or isAdmin has changed to save Auth API calls
+    const roleChanged = newUser.role !== oldUser?.role;
+    const adminChanged = newUser.isAdmin !== oldUser?.isAdmin;
+
+    if (roleChanged || adminChanged) {
+        try {
+            await admin.auth().setCustomUserClaims(userId, {
+                role: newUser.role || 'user',
+                isAdmin: !!newUser.isAdmin
+            });
+            logger.info(`[Auth] Synced custom claims for ${userId}`, { role: newUser.role });
+        } catch (error) {
+            logger.error(`[Auth] Failed to sync custom claims for ${userId}`, error);
+        }
+    }
+
+    // 2. Sync Public Profile
     const publicProfile = {
         handle: newUser.handle || "Anonymous",
         avatarUrl: newUser.avatarUrl || "",

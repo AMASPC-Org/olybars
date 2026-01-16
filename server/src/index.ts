@@ -75,6 +75,7 @@ const allowedOrigins = [
     'http://localhost:3001',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
+    'https://ama-ecosystem-dev-9ceda.web.app',
     'https://olybars-dev.web.app',
     'https://olybars.web.app',
     'https://olybars.com',
@@ -875,8 +876,8 @@ v1Router.patch('/users/:uid', verifyToken, async (req, res) => {
             const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
             const now = Date.now();
 
-            // Super-admins/Admin bypass (Ryan's email)
-            const isPrivileged = userData?.role === 'super-admin' || userData?.email === 'ryan@amaspc.com';
+            // Super-admins/Admin bypass
+            const isPrivileged = userData?.role === 'super-admin';
 
             if ((now - lastChanged) < thirtyDaysInMs && !isPrivileged) {
                 const daysLeft = Math.ceil((thirtyDaysInMs - (now - lastChanged)) / (24 * 60 * 60 * 1000));
@@ -1497,10 +1498,6 @@ setInterval(async () => {
     }
 }, 60000); // Check every minute
 
-app.listen(port, () => {
-    log('INFO', `Flash Boarding... OlyBars Server running on port ${port} in ${config.NODE_ENV} mode.`);
-});
-
 /**
  * @route POST /api/ai/generate-copy
  * @desc Generate creative copy for events
@@ -1536,9 +1533,6 @@ v1Router.post('/ai/generate-image', verifyToken, requireVenueAccess('manager'), 
         res.status(500).json({ error: 'Image generation failed. Please try again.' });
     }
 });
-
-app.use('/api/v1', v1Router);
-app.use('/api/v2', v2Router);
 
 app.listen(port, () => {
     const isCloudRun = !!process.env.K_SERVICE;

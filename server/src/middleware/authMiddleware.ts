@@ -51,14 +51,28 @@ export const verifyToken = async (req: AuthenticatedRequest, res: Response, next
 
     try {
         const decodedToken = await auth.verifyIdToken(idToken);
+        const { uid, email, role: claimRole, isAdmin: claimIsAdmin } = decodedToken;
 
-        // Fetch User Role from Firestore for RBAC if needed
-        const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+        // Optimization: Priority 1 - Custom Claims (No Read)
+        if (claimRole) {
+            req.user = {
+                uid,
+                email,
+                role: (claimRole as string),
+                isAdmin: !!claimIsAdmin,
+                venuePermissions: {} // Will be hydrated if needed by requireVenueAccess
+            };
+            return next();
+        }
+
+        // Priority 2 - Fallback to Firestore (Transition Period)
+        console.warn(`[Auth] Fallback to Firestore for ${email} (Missing Custom Claims)`);
+        const userDoc = await db.collection('users').doc(uid).get();
         const userData = userDoc.data();
 
         req.user = {
-            uid: decodedToken.uid,
-            email: decodedToken.email,
+            uid,
+            email,
             role: userData?.role || 'user',
             systemRole: userData?.systemRole || 'user',
             isAdmin: !!userData?.isAdmin,
@@ -86,14 +100,25 @@ export const identifyUser = async (req: AuthenticatedRequest, res: Response, nex
 
     try {
         const decodedToken = await auth.verifyIdToken(idToken);
+        const { uid, email, role: claimRole, isAdmin: claimIsAdmin } = decodedToken;
 
-        // Fetch User Role from Firestore for RBAC
-        const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+        if (claimRole) {
+            req.user = {
+                uid,
+                email,
+                role: (claimRole as string),
+                isAdmin: !!claimIsAdmin
+            };
+            return next();
+        }
+
+        // Fallback for identification
+        const userDoc = await db.collection('users').doc(uid).get();
         const userData = userDoc.data();
 
         req.user = {
-            uid: decodedToken.uid,
-            email: decodedToken.email,
+            uid,
+            email,
             role: userData?.role || 'user',
             systemRole: userData?.systemRole || 'user',
             isAdmin: !!userData?.isAdmin,

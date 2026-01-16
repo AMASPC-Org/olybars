@@ -1,20 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
-  X, User, Hash, Home, Beer, Mail, Phone, ChevronRight, Shield, Lock, Facebook
+  X, User, Hash, Home, Beer, Mail, Phone, ChevronRight, Shield, Lock, Facebook, Smartphone, Zap
 } from 'lucide-react';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   getMultiFactorResolver,
-  PhoneAuthProvider,
-  PhoneMultiFactorGenerator,
   RecaptchaVerifier,
-  multiFactor,
   User as FirebaseUser
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../../../lib/firebase';
+import { auth, googleProvider, facebookProvider, db } from '../../../lib/firebase';
 import { UserProfile, Venue, UserRole, SystemRole } from '../../../types';
+import { MfaService } from '../../../services/mfaService';
+import { isSystemAdmin } from '../../../types/auth_schema';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { mapAuthErrorToMessage } from '../utils/authErrorHandler';
 import { AuthService } from '../../../services/authService';
@@ -90,7 +89,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [mfaId, setMfaId] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [showMfaStep, setShowMfaStep] = useState(false);
-  const [recaptchaVerifier, setRecaptchaVerifier] = useState<any>(null);
+  const [showMfaEnrollmentStep, setShowMfaEnrollmentStep] = useState(false);
+  const [mfaEnrollPhone, setMfaEnrollPhone] = useState('');
+  const [mfaEnrollStep, setMfaEnrollStep] = useState<'phone' | 'code'>('phone');
+  const [mfaEnrollVerificationId, setMfaEnrollVerificationId] = useState('');
+  const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
 
   const interestOptions = [
     { id: 'karaoke', label: 'Karaoke', icon: '🎤' },
@@ -132,10 +135,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
       await setDoc(doc(db, 'users', uid), newProfile);
 
-      setUserProfile(newProfile);
-      onOwnerSuccess();
-      onClose();
-      showToast(`Welcome Partner! Let's verify ${pendingVenueName}.`, 'success');
+      // 3. Funnel through finishLogin to enforce MFA
+      await finishLogin(userCredential.user);
 
     } catch (error: any) {
       console.error("Partner Registration Error:", error);
@@ -157,10 +158,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       const profileSnap = await getDoc(doc(db, 'users', uid));
 
       if (profileSnap.exists()) {
-        const profileData = profileSnap.data() as UserProfile;
-        setUserProfile(profileData);
-        onClose();
-        showToast(`Welcome back, ${profileData.handle || 'Legend'}!`, 'success');
+        await finishLogin(userCredential.user);
       } else {
         showToast('Profile not found. Please register.');
         setUserSubMode('signup');
@@ -176,40 +174,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     setIsLoading(true);
     try {
       const profile = await AuthService.signInWithGoogle();
-
-      if (loginMode === 'owner') {
-        // RBAC Access Check for Venue Login
-        const hasAccess =
-          profile.systemRole === 'admin' ||
-          (profile.venuePermissions && Object.keys(profile.venuePermissions).length > 0) ||
-          ['admin', 'owner', 'manager', 'super-admin'].includes(profile.role);
-
-        // [IMPROVEMENT] Allow prospect owners (signup mode) or pre-filled intent users to pass
-        const hasIntent = sessionStorage.getItem('claim_intent_venue');
-        const isSignup = userSubMode === 'signup';
-
-        if (!hasAccess && !hasIntent && !isSignup) {
-          showToast(`Access Denied: ${profile.email} is not authorized for Venue management.`);
-          setIsLoading(false);
-          return;
-        }
-
-        // Check for MFA Enrollment for Owners/Managers
-        const firebaseUser = auth.currentUser;
-        if (firebaseUser && multiFactor(firebaseUser).enrolledFactors.length === 0) {
-          showToast('MFA REQUIRED FOR PARTNERS. PLEASE ENROLL IN SETTINGS.', 'info');
-          // We might want to force enrollment here, but for now we'll just warn and let App.tsx block access if needed.
-        }
-      }
-
-      setUserProfile(profile);
-      const welcomeName = profile.handle || profile.displayName || 'Legend';
-      showToast(loginMode === 'owner' ? `Logged in as Commissioner ${welcomeName}` : `Welcome to the League, ${welcomeName}!`, 'success');
-
-      if (loginMode === 'owner') {
-        onOwnerSuccess();
-      }
-      onClose();
+      await finishLogin(auth.currentUser!);
     } catch (error: any) {
       if (error.code === 'auth/multi-factor-auth-required') {
         await handleMfaRequired(error);
@@ -225,29 +190,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     setIsLoading(true);
     try {
       const profile = await AuthService.signInWithFacebook();
-
-      if (loginMode === 'owner') {
-        const hasAccess =
-          profile.systemRole === 'admin' ||
-          (profile.venuePermissions && Object.keys(profile.venuePermissions).length > 0) ||
-          ['admin', 'owner', 'manager', 'super-admin'].includes(profile.role);
-
-        const hasIntent = sessionStorage.getItem('claim_intent_venue');
-
-        if (!hasAccess && !hasIntent) {
-          showToast(`Access Denied: ${profile.email} is not authorized for Venue management.`);
-          setIsLoading(false);
-          return;
-        }
-        // ...
-      }
-      // ...
-      setUserProfile(profile);
-      // ...
-      if (loginMode === 'owner') {
-        onOwnerSuccess();
-      }
-      onClose();
+      await finishLogin(auth.currentUser!);
     } catch (error: any) {
       if (error.code === 'auth/multi-factor-auth-required') {
         await handleMfaRequired(error);
@@ -333,20 +276,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
     const hints = resolver.hints;
     if (hints[0] && hints[0].factorId === 'phone') {
-      let verifier = recaptchaVerifier;
-      if (!verifier) {
-        verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          'size': 'invisible'
-        });
-        setRecaptchaVerifier(verifier);
-      }
-
-      const phoneInfoOptions = {
-        multiFactorHint: hints[0],
-        session: resolver.session
-      };
-      const phoneAuthProvider = new PhoneAuthProvider(auth);
-      const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, verifier);
+      const verifier = MfaService.createRecaptchaVerifier('recaptcha-container');
+      setRecaptchaVerifier(verifier);
+      const verificationId = await MfaService.startChallenge(resolver, hints[0], verifier);
       setMfaId(verificationId);
       setShowMfaStep(true);
       showToast('ONE-TIME CODE SENT TO SECURE DEVICE', 'success');
@@ -359,10 +291,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     if (!mfaCode || !mfaResolver || !mfaId) return;
     setIsLoading(true);
     try {
-      const cred = PhoneAuthProvider.credential(mfaId, mfaCode);
-      const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
-      const userCredential = await mfaResolver.resolveSignIn(multiFactorAssertion);
-      await finishLogin(userCredential.user);
+      const firebaseUser = await MfaService.resolveChallenge(mfaResolver, mfaId, mfaCode);
+      await finishLogin(firebaseUser);
     } catch (error: any) {
       showToast('INVALID MFA CODE. PLEASE RETRY.', 'error');
     } finally {
@@ -378,51 +308,107 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
       if (firebaseUser.email === 'ryan@amaspc.com') {
         // The Ryan Rule: Always force super-admin rights
-        // Adding venuePermissions: {} to trigger the check correctly in all screens
         const superAdminData = {
-          role: 'super-admin' as UserRole, // Legacy
-          systemRole: 'admin' as SystemRole, // RBAC Master Key
+          role: 'super-admin' as UserRole,
+          systemRole: 'admin' as SystemRole,
           handle: 'Ryan (Admin)',
           email: 'ryan@amaspc.com',
-          venuePermissions: profileData.venuePermissions || {}, // Keep existing if any, but systemRole: admin overrides anyway
+          venuePermissions: profileData.venuePermissions || {},
         };
 
         await setDoc(doc(db, 'users', uid), {
           ...superAdminData,
-          // Fix: Reset 9999 points if present
           ...(profileData.stats?.seasonPoints === 9999 ? { stats: { ...profileData.stats, seasonPoints: 0 } } : {})
         }, { merge: true });
 
         setUserProfile({ ...profileData, ...superAdminData });
         onOwnerSuccess();
         onClose();
-        showToast(`Logged in as SUPER-ADMIN (Golden Ticket)`, 'success');
+        showToast(`Logged in as SUPER - ADMIN(Golden Ticket)`, 'success');
         return;
       }
 
       setUserProfile(profileData);
 
       // RBAC Access Check
-      const hasAccess =
-        profileData.systemRole === 'admin' ||
-        (profileData.venuePermissions && Object.keys(profileData.venuePermissions).length > 0) ||
-        ['admin', 'owner', 'manager', 'super-admin'].includes(profileData.role);
+      const hasPartnerAccess = MfaService.isPartner(profileData);
+      const hasIntent = sessionStorage.getItem('claim_intent_venue');
+      const isSignupFlow = userSubMode === 'signup' || !!profileData.pendingVenueName;
 
-      if (hasAccess) {
+      if (loginMode === 'owner') {
+        if (!hasPartnerAccess && !hasIntent && !isSignupFlow) {
+          showToast(`Access Denied: ${profileData.email} is not authorized for Venue management.`);
+          setIsLoading(false);
+          return;
+        }
+
         // Check for enrollment for partners
-        if (multiFactor(firebaseUser).enrolledFactors.length === 0) {
+        if (!MfaService.isEnrolled(firebaseUser)) {
+          setShowMfaEnrollmentStep(true);
           showToast('MFA ENROLLMENT REQUIRED FOR PARTNER ACCESS', 'info');
+          return; // Block further login progress
         }
         onOwnerSuccess();
         onClose();
-        showToast(`Logged in as ${profileData.handle || 'Owner'}`, 'success');
+        showToast(`Logged in as ${profileData.handle || 'Owner'} `, 'success');
       } else {
-        showToast(`Access Denied: Venue account required.`);
         onClose();
+        showToast(`Welcome back, ${profileData.handle || 'Legend'} !`, 'success');
       }
     } else {
-      showToast('Profile not found.');
+      showToast('Profile not found. Please register.');
+      if (loginMode !== 'owner') {
+        setUserSubMode('signup');
+      }
     }
+  };
+
+  const handleStartMfaEnrollment = async () => {
+    if (!auth.currentUser || !mfaEnrollPhone) return;
+    setIsLoading(true);
+    try {
+      const verifier = MfaService.createRecaptchaVerifier('recaptcha-enroll-container');
+      setRecaptchaVerifier(verifier);
+      const vId = await MfaService.startEnrollment(auth.currentUser, mfaEnrollPhone, verifier);
+      setMfaEnrollVerificationId(vId);
+      setMfaEnrollStep('code');
+      showToast('VERIFICATION CODE SENT', 'success');
+    } catch (error: any) {
+      console.error('MFA Enrollment Error:', error);
+      showToast('FAILED TO START ENROLLMENT. CHECK PHONE FORMAT.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyMfaEnrollment = async () => {
+    if (!auth.currentUser || !mfaEnrollVerificationId || !mfaCode) return;
+    setIsLoading(true);
+    try {
+      await MfaService.finishEnrollment(auth.currentUser, mfaEnrollVerificationId, mfaCode);
+      showToast('MFA SECURED. ACCESS GRANTED.', 'success');
+
+      // Cleanup recaptcha
+      if (recaptchaVerifier) {
+        recaptchaVerifier.clear();
+        setRecaptchaVerifier(null);
+      }
+
+      // Resume login flow through finishLogin to ensure state is fully updated
+      await finishLogin(auth.currentUser);
+    } catch (error: any) {
+      showToast('INVALID CODE. PLEASE RETRY.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMfaEnrollCancel = async () => {
+    await MfaService.revokeSession();
+    setShowMfaEnrollmentStep(false);
+    setMfaEnrollStep('phone');
+    onClose();
+    showToast('LOGIN CANCELLED: MFA REQUIRED FOR PARTNERS.', 'info');
   };
 
   const inputClasses = "w-full bg-slate-100 border border-slate-300 focus:border-primary rounded-md py-2 text-sm text-black outline-none font-bold pl-10";
@@ -432,8 +418,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       <div className="bg-surface w-full max-w-sm border-2 border-slate-700 shadow-lg rounded-xl relative flex flex-col max-h-[90vh] overflow-hidden">
         {userSubMode === 'login' && !showMfaStep && (
           <div className="flex border-b-2 border-slate-700">
-            <button onClick={() => setLoginMode('user')} className={`flex-1 py-3 font-bold uppercase ${loginMode === 'user' ? 'bg-primary text-black' : 'text-slate-400'}`}>Player</button>
-            <button onClick={() => setLoginMode('owner')} className={`flex-1 py-3 font-bold uppercase ${loginMode === 'owner' ? 'bg-primary text-black' : 'text-slate-400'}`}>Partner</button>
+            <button onClick={() => setLoginMode('user')} className={`flex - 1 py - 3 font - bold uppercase ${loginMode === 'user' ? 'bg-primary text-black' : 'text-slate-400'} `}>Player</button>
+            <button onClick={() => setLoginMode('owner')} className={`flex - 1 py - 3 font - bold uppercase ${loginMode === 'owner' ? 'bg-primary text-black' : 'text-slate-400'} `}>Partner</button>
           </div>
         )}
 
@@ -441,8 +427,75 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           <button onClick={onClose} className="absolute top-3 right-3 text-slate-500"><X className="w-5 h-5" /></button>
 
           <div id="recaptcha-container"></div>
+          <div id="recaptcha-enroll-container"></div>
 
-          {showMfaStep ? (
+          {showMfaEnrollmentStep ? (
+            <div className="space-y-6 text-center animate-in fade-in zoom-in duration-300">
+              <div className="bg-primary/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto border border-primary/30">
+                <Smartphone className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold uppercase">Secure Your Account</h3>
+                <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">MFA is required for Venue Partners</p>
+              </div>
+
+              {mfaEnrollStep === 'phone' ? (
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Phone className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                    <input
+                      type="tel"
+                      value={mfaEnrollPhone}
+                      onChange={(e) => setMfaEnrollPhone(e.target.value)}
+                      placeholder="+1 555-000-0000"
+                      className={inputClasses}
+                    />
+                  </div>
+                  <button
+                    onClick={handleStartMfaEnrollment}
+                    disabled={isLoading || !mfaEnrollPhone}
+                    className="w-full bg-primary text-black font-bold py-3 rounded uppercase disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? <Zap className="w-4 h-4 animate-spin" /> : 'Send Security Code'}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Hash className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                    <input
+                      type="text"
+                      value={mfaCode}
+                      onChange={(e) => setMfaCode(e.target.value)}
+                      placeholder="6-Digit Code"
+                      className={inputClasses}
+                      maxLength={6}
+                    />
+                  </div>
+                  <button
+                    onClick={handleVerifyMfaEnrollment}
+                    disabled={isLoading || mfaCode.length < 6}
+                    className="w-full bg-primary text-black font-bold py-3 rounded uppercase disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? <Zap className="w-4 h-4 animate-spin" /> : 'Verify & Finish'}
+                  </button>
+                  <button
+                    onClick={() => setMfaEnrollStep('phone')}
+                    className="text-[10px] text-slate-500 hover:text-white uppercase font-bold"
+                  >
+                    Change Phone Number
+                  </button>
+                </div>
+              )}
+
+              <button
+                onClick={handleMfaEnrollCancel}
+                className="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest pt-4"
+              >
+                Log Out & Exit
+              </button>
+            </div>
+          ) : showMfaStep ? (
             <div className="space-y-6 text-center">
               <div className="bg-primary/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto border border-primary/30">
                 <Shield className="w-8 h-8 text-primary" />
@@ -521,7 +574,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       <select
                         value={homeBase}
                         onChange={(e) => setHomeBase(e.target.value)}
-                        className={`${inputClasses} appearance-none cursor-pointer`}
+                        className={`${inputClasses} appearance - none cursor - pointer`}
                       >
                         <option value="" disabled className="text-black">Select Home Base</option>
                         {venues.map(v => (
@@ -536,8 +589,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   <div className="pt-4 border-t border-slate-700 space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold uppercase">Join League?</span>
-                      <button type="button" onClick={() => setJoinLeague(!joinLeague)} className={`w-10 h-5 rounded-full p-1 ${joinLeague ? 'bg-primary' : 'bg-slate-700'}`}>
-                        <div className={`w-3 h-3 bg-white rounded-full transition-transform ${joinLeague ? 'translate-x-5' : 'translate-x-0'}`} />
+                      <button type="button" onClick={() => setJoinLeague(!joinLeague)} className={`w - 10 h - 5 rounded - full p - 1 ${joinLeague ? 'bg-primary' : 'bg-slate-700'} `}>
+                        <div className={`w - 3 h - 3 bg - white rounded - full transition - transform ${joinLeague ? 'translate-x-5' : 'translate-x-0'} `} />
                       </button>
                     </div>
 
@@ -545,7 +598,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       <div className="grid grid-cols-2 gap-2">
                         {interestOptions.map(opt => (
                           <button key={opt.id} type="button" onClick={() => setSelectedInterests(prev => prev.includes(opt.id) ? prev.filter(i => i !== opt.id) : [...prev, opt.id])}
-                            className={`p-2 border rounded text-[10px] font-bold uppercase ${selectedInterests.includes(opt.id) ? 'bg-primary text-black' : 'border-slate-700 text-slate-400'}`}>
+                            className={`p - 2 border rounded text - [10px] font - bold uppercase ${selectedInterests.includes(opt.id) ? 'bg-primary text-black' : 'border-slate-700 text-slate-400'} `}>
                             {opt.label}
                           </button>
                         ))}
@@ -554,8 +607,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold uppercase">Weekly Digest?</span>
-                      <button type="button" onClick={() => setWeeklyBuzz(!weeklyBuzz)} className={`w-10 h-5 rounded-full p-1 ${weeklyBuzz ? 'bg-primary' : 'bg-slate-700'}`}>
-                        <div className={`w-3 h-3 bg-white rounded-full transition-transform ${weeklyBuzz ? 'translate-x-5' : 'translate-x-0'}`} />
+                      <button type="button" onClick={() => setWeeklyBuzz(!weeklyBuzz)} className={`w - 10 h - 5 rounded - full p - 1 ${weeklyBuzz ? 'bg-primary' : 'bg-slate-700'} `}>
+                        <div className={`w - 3 h - 3 bg - white rounded - full transition - transform ${weeklyBuzz ? 'translate-x-5' : 'translate-x-0'} `} />
                       </button>
                     </div>
 

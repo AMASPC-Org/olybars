@@ -30,7 +30,7 @@ const getApiBaseUrl = () => {
     }
 
     // 3. Absolute fallback (Legacy/Hard-coded)
-    return 'https://olybars-backend-26629455103.us-west1.run.app/api';
+    return 'https://olybars-backend-juthzlaerq-uw.a.run.app/api';
 };
 
 export const API_BASE_URL = getApiBaseUrl();

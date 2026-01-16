@@ -64,8 +64,7 @@ async function heal() {
             stdio: 'inherit',
             env: {
                 ...process.env,
-                NODE_ENV: 'development',
-                FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080'
+                NODE_ENV: 'development'
             }
         });
     } catch (e) {
@@ -93,9 +92,7 @@ function startService(name: string, command: string) {
         stdio: 'ignore',
         env: {
             ...process.env,
-            NODE_ENV: 'development',
-            FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080',
-            FIREBASE_AUTH_EMULATOR_HOST: '127.0.0.1:9099'
+            NODE_ENV: 'development'
         }
     });
 

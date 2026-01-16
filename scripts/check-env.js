@@ -16,11 +16,11 @@ const DIST_DIR = path.join(__dirname, '..', 'dist');
 // Define backend URLs as strings to search for
 const ENV_CONFIGS = {
     production: {
-        expected: 'olybars-backend-26629455103.us-west1.run.app',
-        forbidden: 'localhost:3001' // Ensure we don't leak local config in prod
+        expected: 'olybars-backend-juthzlaerq-uw.a.run.app',
+        forbidden: 'localhost:3001'
     },
     development: {
-        expected: 'olybars-backend-26629455103.us-west1.run.app',
+        expected: 'olybars-backend-STAGING_PLACEHOLDER.a.run.app', // Placeholder to be updated after Phase 2
         forbidden: 'localhost:3001'
     }
 };

@@ -17,6 +17,10 @@ service cloud.firestore {
     
     function isAdmin() {
       return isAuthenticated() && (
+        request.auth.token.role == 'admin' || 
+        request.auth.token.role == 'super-admin' || 
+        request.auth.token.isAdmin == true ||
+        // Legacy fallback for transition period
         getUserData().role == 'admin' || 
         getUserData().role == 'super-admin' || 
         getUserData().isAdmin == true
@@ -25,8 +29,9 @@ service cloud.firestore {
 
     function isSuperAdmin() {
       return isAuthenticated() && (
-        getUserData().role == 'super-admin' ||
-        request.auth.token.email == 'ryan@amaspc.com'
+        request.auth.token.role == 'super-admin' ||
+        // Legacy fallback for transition period
+        getUserData().role == 'super-admin'
       );
     }
     
