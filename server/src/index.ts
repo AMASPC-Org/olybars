@@ -1164,7 +1164,7 @@ v1Router.get('/venues/:id/semantic', async (req, res) => {
         const venue = venueDoc.data()!;
 
         // Dynamically import Gemini Service
-        const { GeminiService } = await import('../../functions/src/services/geminiService.js');
+        const { GeminiService } = await import('./services/geminiService.js');
         const gemini = new GeminiService();
 
         const prompt = `You are an SEO & AI Authority specialist for OlyBars.
@@ -1207,7 +1207,7 @@ v1Router.post('/ai/generate-description', async (req, res) => {
     try {
         const { db } = await import('./firebaseAdmin.js');
         const { KnowledgeService } = await import('./services/knowledgeService.js');
-        const { GeminiService } = await import('../../functions/src/services/geminiService.js');
+        const { GeminiService } = await import('./services/geminiService.js');
 
         // 1. Fetch Venue Data
         const venueDoc = await db.collection('venues').doc(venueId).get();
@@ -1307,7 +1307,7 @@ v1Router.post('/ai/generate-press-release', verifyToken, async (req, res) => {
 
     try {
         const { db } = await import('./firebaseAdmin.js');
-        const { GeminiService } = await import('../../functions/src/services/geminiService.js');
+        const { GeminiService } = await import('./services/geminiService.js');
 
         const venueDoc = await db.collection('venues').doc(venueId).get();
         const venueData = venueDoc.data() || { name: 'Local Venue' };
