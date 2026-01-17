@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { Venue, UserProfile } from '../../types';
 import { isSystemAdmin } from '../../types/auth_schema';
-import { ArtieChatModal } from '../../components/artie/ArtieChatModal';
+import { OlyChatModal } from '../artie/OlyChatModal';
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
 import { CookieBanner } from '../ui/CookieBanner';
 import { Footer } from './Footer';
@@ -357,8 +357,8 @@ export const AppShell: React.FC<AppShellProps> = ({
         userProfile={userProfile}
       />
 
-      {/* Artie Chat Modal */}
-      <ArtieChatModal
+      {/* OlyBars Assistant Modal */}
+      <OlyChatModal
         isOpen={!!showArtie}
         onClose={() => setShowArtie?.(false)}
         userProfile={userProfile}

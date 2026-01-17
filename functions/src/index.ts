@@ -25,15 +25,49 @@ function fuzzStatus(status: string | undefined): string {
 }
 
 // --- ARTIE AI GATEWAY ---
-export const artieChat = onCall({ cors: true, secrets: ["GOOGLE_API_KEY"] }, async (req) => {
-    try {
-        const result = await artieChatLogic(req.data);
-        return result;
-    } catch (e: any) {
-        console.error("ArtieChat Wrapper Error:", e);
-        throw new Error(`Connection issue: ${e.message}`);
-    }
+// --- ARTIE AI GATEWAY (v2 HTTPS) ---
+import { onRequest } from 'firebase-functions/v2/https';
+import cors from 'cors';
+import { validateFirebaseIdToken } from './middleware/auth';
+
+const corsHandler = cors({ origin: [/olybars\.com$/, /firebaseapp\.com$/, /localhost/] });
+
+export const artieChat = onRequest({ secrets: ["GOOGLE_API_KEY"] }, async (req, res) => {
+    corsHandler(req, res, async () => {
+        // 1. Validate Honeypot (Cheap filter)
+        if (req.body._hp_id && req.body._hp_id.length > 0) {
+            logger.warn(`[Security] Honeypot triggered by ${req.ip}`);
+            res.status(200).json({ data: "Message received" }); // Silent rejection
+            return;
+        }
+
+        // 2. Validate Auth (Expensive verification)
+        await validateFirebaseIdToken(req, res, async () => {
+            try {
+                const user = (req as any).user;
+                const secureContext = {
+                    ...req.body,
+                    userId: user.uid,
+                    userRole: user.role || 'guest'
+                };
+
+                // ArtieChatLogic assumes Genkit flow structure, keep calling it as function
+                const result = await artieChatLogic(secureContext);
+
+                // If result is streamable, handle it (Genkit might need stream logic, 
+                // but standard flow returns value. We'll send JSON for now to ensure stable migration)
+                res.status(200).json({ data: result });
+            } catch (e: any) {
+                console.error("ArtieChat Error:", e);
+                res.status(500).json({ error: `Connection issue: ${e.message}` });
+            }
+        });
+    });
 });
+
+
+// --- OBSERVABILITY ---
+export * from './flows/logClientError';
 
 export const extractBrandDna = extractBrandDnaFlow;
 export const generateSocialFlyer = generateSocialFlyerFlow;
@@ -85,4 +119,8 @@ export const syncUserProfile = onDocumentWritten("users/{userId}", async (event)
 });
 
 // --- SCHEDULED TASKS ---
+// --- SCHEDULED TASKS ---
 export { scheduledLeaderboardSnapshot } from './triggers/scheduledLeaderboard';
+
+// --- SCOUT AUTOMATION ---
+export { scoutDispatcher, scoutWorker } from './scout/index';

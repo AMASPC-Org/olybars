@@ -30,6 +30,14 @@
       ],
       "rewrites": [
         {
+          "source": "/api/artieChat",
+          "function": "artieChat"
+        },
+        {
+          "source": "/api/client-errors",
+          "function": "logClientError"
+        },
+        {
           "source": "/api/**",
           "run": {
             "serviceId": "olybars-backend",
@@ -71,6 +79,14 @@
         "**/node_modules/**"
       ],
       "rewrites": [
+        {
+          "source": "/api/artieChat",
+          "function": "artieChat"
+        },
+        {
+          "source": "/api/client-errors",
+          "function": "logClientError"
+        },
         {
           "source": "/api/**",
           "run": {

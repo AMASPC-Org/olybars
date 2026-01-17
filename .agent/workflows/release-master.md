@@ -14,9 +14,9 @@ Before any deploy, ensure the full stack builds correctly.
 4. **Halt on Failure**: Trigger the "Self-Healing Loop" if build fails.
 
 ## 2. Deploy & Sync Data to DEV (Target: olybars-dev)
-1. **Command**: `npm run deploy:dev` (This automatically syncs `venues_master.json` to Firestore).
+1. **Command**: `npm run deploy:dev` (Total Stack Sync: Backend, Functions, Rules, Frontend, Data).
 2. **Verification**: `npm run smoke:dev`
-3. **Cache Check**: Confirm no console errors on `olybars-dev.web.app`. Use `Invoke-WebRequest -Method Head` to verify ETag/Cache headers if UI is stale.
+3. **Cache Check**: Confirm no console errors on `olybars-dev.web.app`.
 
 ## 3. PROD Approval Gate
 **STOP**: Propose PROD only after explicit user approval.
@@ -24,9 +24,9 @@ Before any deploy, ensure the full stack builds correctly.
 - Environment target must be stated clearly: `PROD` (olybars-prod).
 
 ## 4. Deploy & Sync Data to PROD (Target: olybars)
-1. **Command**: `npm run deploy:prod` (This automatically syncs `venues_master.json` to Production Firestore).
+1. **Command**: `npm run deploy:prod` (Total Stack Sync: Backend, Functions, Rules, Frontend, Data).
 2. **Verification**: `npm run smoke:prod`
-3. **Health**: `curl https://olybars.com/health` (must return 200).
+3. **Health Check**: Verify the root `/api/health` returns status okay via Hosting Rewrites.
 
 ---
 > [!CAUTION]

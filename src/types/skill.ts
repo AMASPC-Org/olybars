@@ -1,19 +1,22 @@
 import { QuickReplyOption } from '../components/artie/QuickReplyChips';
-import { ArtieOpsState } from '../hooks/useArtieOps';
+import { SchmidtOpsState } from '../features/Schmidt/types'; // Moved types to feature to avoid circular dep if needed, or just keep as is for now but add ChatMessage
+import { ChatMessage } from './chat';
 
 /**
  * Standard context provided to every skill module to allow interaction
- * with the main useArtieOps state.
+ * with the main useSchmidtOps state.
  */
 export interface SkillContext {
     // UI/Messaging
     addUserMessage: (text: string) => void;
     addSchmidtResponse: (text: string, options?: QuickReplyOption[]) => void;
+    addSchmidtMessage: (text: string, imageUrl?: string) => void;
+    updateLastSchmidtMessage: (text: string) => void; // Support for streaming updates
     setIsLoading: (loading: boolean) => void;
 
     // State Management
-    setOpsState: (state: ArtieOpsState) => void;
-    currentOpsState: ArtieOpsState;
+    setOpsState: (state: SchmidtOpsState) => void;
+    currentOpsState: SchmidtOpsState;
 
     // Data Management
     draftData: any;
@@ -23,7 +26,7 @@ export interface SkillContext {
     venue: any;
 
     // Core Logic Relay (to allow skills to trigger other actions/skills)
-    processAction: (action: string, payload?: string) => Promise<void>;
+    processAction: (action: string, payload?: string, venueId?: string, context?: { userId?: string; userRole?: string; hpValue?: string }) => Promise<void>;
 
     // Validation Helpers
     validateLCBCompliance?: (text: string) => { valid: boolean; reason?: string };

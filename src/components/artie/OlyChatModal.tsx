@@ -43,8 +43,8 @@ const renderTextWithLinks = (text: string) => {
 };
 
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
-import { useArtie } from '../../hooks/useArtie';
-import { useArtieOps } from '../../hooks/useArtieOps';
+import { useArtieOps } from '../../hooks/useArtieOps'; // [NEW] Visitor Logic
+import { useSchmidtOps } from '../../hooks/useSchmidtOps'; // [MOD] Owner Logic
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
 import { QuickReplyChips, QuickReplyOption } from './QuickReplyChips';
 import { useToast } from '../../components/ui/BrandedToast';
@@ -52,6 +52,7 @@ import { UserProfile, isSystemAdmin } from '../../types';
 // Note: Ensure these paths exist in your assets folder
 import artieLogo from '../../assets/Artie-Only-Logo.png';
 import schmidtLogo from '../../assets/Schmidt-Only-Logo (40 x 40 px).png';
+import { ChatMessage } from '../../types/chat';
 
 interface ArtieChatModalProps {
     isOpen: boolean;
@@ -74,7 +75,7 @@ interface ArtieGreeting {
 const getArtieGreeting = (profile?: UserProfile): ArtieGreeting => {
     // Coach Mode for Logged In Users
     if (profile && profile.handle) {
-        // [OPS MODE] Greeting is handled by the Ops Hook state machine
+        // [NOTE] greeting handled by hook state usually, but this is a fallback visual status
         if (profile.role === 'owner' || profile.role === 'manager' || isSystemAdmin(profile)) {
             return {
                 message: "Initializing Venue Ops...",
@@ -127,14 +128,19 @@ const getArtieGreeting = (profile?: UserProfile): ArtieGreeting => {
     };
 };
 
-export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, userProfile, initialVenueId }) => {
+export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, userProfile, initialVenueId }) => {
     // --- 1. Mode Determination ---
     const isOpsMode = !((window as any)._artie_force_guest) && userProfile && (isSystemAdmin(userProfile) || userProfile.role === 'owner' || userProfile.role === 'manager');
 
-    // --- 2. Hooks ---
-    const guestArtie = useArtie();
-    const opsArtie = useArtieOps();
-    const { persona, setPersona } = opsArtie;
+    // [STATE] Lifted Persona State
+    const [persona, setPersona] = useState<'schmidt' | 'artie'>('schmidt');
+
+    // --- 2. Hooks (Both Active) ---
+    const guestArtie = useArtieOps();
+    const opsSchmidt = useSchmidtOps();
+
+    // [SELECTOR] Decide which hook drives the UI
+    const activeHook = (isOpsMode && persona === 'schmidt') ? opsSchmidt : guestArtie;
 
     const { showToast } = useToast();
     const [input, setInput] = useState('');
@@ -157,31 +163,40 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
     // --- 3. Initialization ---
     useEffect(() => {
         if (isOpen) {
-            // Always refresh greeting on open to ensure state is fresh
+            // Force persona based on permissions
+            if (isOpsMode) {
+                // Default to Schmidt, but respect manual toggles if persistent? 
+                // For now, let's stick to Schmidt default on fresh open
+                if (!hasInitializedOps) {
+                    setPersona('schmidt');
+                    opsSchmidt.resetOps();
+                    setHasInitializedOps(true);
+                }
+            } else {
+                setPersona('artie'); // Force Artie for guests
+                if (!hasInitializedOps) {
+                    guestArtie.resetOps(); // Initialize Guest Greeting
+                    setSuggestions([
+                        "Who's winning?",
+                        "Happy Hour now?",
+                        "Trivia tonight?",
+                        "Local Makers"
+                    ]);
+                    setHasInitializedOps(true);
+                }
+            }
+
+            // Visual Greeting Status
             setGreeting(getArtieGreeting(userProfile));
 
             const venueContext = initialVenueId || userProfile?.homeBase;
             if (venueContext) {
                 (window as any)._artie_venue_id = venueContext;
             }
-
-            if (isOpsMode) {
-                if (!hasInitializedOps) {
-                    // Force a full state reset on modal re-open
-                    opsArtie.resetOps();
-                    setHasInitializedOps(true);
-                }
-            } else {
-                setSuggestions([
-                    "Who's winning?",
-                    "Happy Hour now?",
-                    "Trivia tonight?",
-                    "Local Makers"
-                ]);
-            }
         }
         if (!isOpen) {
-            setHasInitializedOps(false);
+            // Optional: Reset on close? Or keep history?
+            // setHasInitializedOps(false); // If we want fresh start every time
         }
     }, [isOpen, userProfile, isOpsMode, initialVenueId]);
 
@@ -189,67 +204,65 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    // --- 4. Guest Mode Effects ---
+    // --- 4. Guest Mode Effects (Action Parsing from Stream) ---
     useEffect(() => {
-        if (isOpsMode) return;
         scrollToBottom();
-        const lastMessage = guestArtie.messages[guestArtie.messages.length - 1];
 
-        if (lastMessage?.role === 'model' && !guestArtie.isLoading) {
-            if (lastMessage.content.includes('[ACTION]:')) {
-                try {
-                    const actionJson = lastMessage.content.split('[ACTION]:')[1].trim();
-                    const action = JSON.parse(actionJson) as ArtieAction;
-                    setPendingAction(action);
-                } catch (e) { console.error("Failed to parse guest action", e); }
-            }
-            if (lastMessage.content.includes('[SUGGESTIONS]:')) {
-                try {
-                    const suggJson = lastMessage.content.split('[SUGGESTIONS]:')[1].trim();
-                    const suggs = JSON.parse(suggJson) as string[];
-                    setSuggestions(suggs);
-                } catch (e) { console.error("Failed to parse guest suggestions", e); }
+        // Only parse actions if looking at Artie (Visitor)
+        if (persona === 'artie') {
+            const messages = guestArtie.messages;
+            const lastMessage = messages[messages.length - 1];
+
+            if (lastMessage?.role === 'model' /* or 'artie' */ && !guestArtie.isLoading) {
+                if (lastMessage.text.includes('[ACTION]:')) {
+                    try {
+                        const actionJson = lastMessage.text.split('[ACTION]:')[1].trim();
+                        const action = JSON.parse(actionJson) as ArtieAction;
+                        setPendingAction(action);
+                    } catch (e) { console.error("Failed to parse guest action", e); }
+                }
+                if (lastMessage.text.includes('[SUGGESTIONS]:')) {
+                    try {
+                        const suggJson = lastMessage.text.split('[SUGGESTIONS]:')[1].trim();
+                        const suggs = JSON.parse(suggJson) as string[];
+                        setSuggestions(suggs);
+                    } catch (e) { console.error("Failed to parse guest suggestions", e); }
+                }
             }
         }
-    }, [guestArtie.messages, guestArtie.isLoading, isOpsMode]);
+    }, [guestArtie.messages, guestArtie.isLoading, persona]);
 
     // --- 5. Ops Mode Effects ---
     useEffect(() => {
-        if (!isOpsMode) return;
         scrollToBottom();
+        if (persona !== 'schmidt') return;
 
-        // Sync Pending Action Logic
-        if (opsArtie.draftData && opsArtie.opsState === 'confirm_action') {
+        // Sync Pending Action Logic from Schmidt Hook State
+        if (opsSchmidt.draftData && opsSchmidt.opsState === 'confirm_action') {
             setPendingAction({
-                skill: opsArtie.draftData.skill,
-                params: opsArtie.draftData.params,
+                skill: opsSchmidt.draftData.skill,
+                params: opsSchmidt.draftData.params,
                 venueId: initialVenueId || userProfile?.homeBase
             });
-        } else if (opsArtie.opsState === 'completed' || opsArtie.opsState === 'idle') {
-            // Clear pending action if Ops state moves on
+        } else if (opsSchmidt.opsState === 'completed' || opsSchmidt.opsState === 'idle') {
             if (actionStatus === 'idle') setPendingAction(null);
         }
-    }, [opsArtie.messages, opsArtie.opsState, opsArtie.draftData, isOpsMode]);
+    }, [opsSchmidt.messages, opsSchmidt.opsState, opsSchmidt.draftData, persona]);
 
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (isOpsMode) {
+        if (isOpsMode && persona === 'schmidt') {
             const venueId = initialVenueId || userProfile?.homeBase;
-            // Read file as Base64
             const reader = new FileReader();
             reader.onload = async (event) => {
                 const base64 = event.target?.result as string;
-                // Strip the data:image/jpeg;base64, prefix for the backend
                 const base64Clean = base64.split(',')[1];
-
-                await opsArtie.processAction('UPLOAD_FILE', base64Clean, venueId);
+                await opsSchmidt.processAction('UPLOAD_FILE', base64Clean, venueId);
             };
             reader.readAsDataURL(file);
-
-            // Auto-clear input to allow re-upload of same file if needed
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
@@ -265,10 +278,11 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
         setInput('');
 
-        if (isOpsMode) {
-            const venueId = initialVenueId || userProfile?.homeBase;
+        const venueId = initialVenueId || userProfile?.homeBase;
+        const requestContext = { userId: userProfile?.uid, userRole: userProfile?.role, hpValue };
 
-            // Map the current State Machine state to the Trigger Action
+        if (isOpsMode && persona === 'schmidt') {
+            // --- Schmidt / Ops Logic ---
             const stateToActionMap: Record<string, string> = {
                 'flash_deal_input': 'SUBMIT_DEAL_TEXT',
                 'event_input': 'SUBMIT_EVENT_TEXT',
@@ -283,7 +297,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                 'event_upload_wait': 'event_upload_wait',
                 'generating_creative_copy': 'review_event_copy',
                 'review_event_copy': 'review_event_copy',
-                'play_input': 'SUBMIT_PLAY_TEXT',
+                'play_input': 'SUBMIT_PLAY_TEXT', // Deprecated?
                 'social_post_input': 'SUBMIT_SOCIAL_POST_TEXT',
                 'email_draft_input': 'SUBMIT_EMAIL_TEXT',
                 'calendar_post_input': 'SUBMIT_CALENDAR_TEXT',
@@ -296,28 +310,23 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                 'image_gen_context': 'SUBMIT_IMAGE_CONTEXT'
             };
 
-            const action = stateToActionMap[opsArtie.opsState];
+            const action = stateToActionMap[opsSchmidt.opsState];
 
             if (action) {
-                await opsArtie.processAction(action, userText, venueId);
+                await opsSchmidt.processAction(action, userText, venueId);
             } else {
-                // Fallback / General Conversation inside Ops Mode (currently just echoes or passes to guest logic if needed)
-                // For MVP Ops, we want to stay in the funnel.
-                if (opsArtie.opsState === 'selecting_skill') {
-                    // If user types instead of clicking a chip in menu
-                    // Could implement intent recognition here later.
+                if (opsSchmidt.opsState === 'selecting_skill') {
                     showToast("Please select a skill from the chips above.", "info");
                 } else {
-                    await guestArtie.sendMessage(userText, userProfile?.uid, userProfile?.role, hpValue, 'Schmidt');
+                    await opsSchmidt.processAction(userText, undefined, venueId, requestContext);
                 }
             }
-
         } else {
-            // Guest Mode
+            // --- Guest / Artie Logic ---
             setPendingAction(null);
             setSuggestions([]);
             setActionStatus('idle');
-            await guestArtie.sendMessage(userText, userProfile?.uid, userProfile?.role, hpValue, 'Artie');
+            await guestArtie.processAction(userText, undefined, undefined, requestContext);
         }
     };
 
@@ -327,8 +336,10 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
     const handleChipSelect = (option: QuickReplyOption) => {
         const venueId = initialVenueId || userProfile?.homeBase;
-        // Fix: Pass the label (e.g. "Today") as the text payload so heuristics work
-        opsArtie.processAction(option.value, option.label, venueId);
+        // Strict routing for Schmidt chips
+        if (persona === 'schmidt') {
+            opsSchmidt.processAction(option.value, option.label, venueId);
+        }
     };
 
     const handleConfirmAction = async () => {
@@ -336,7 +347,6 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
         setActionStatus('loading');
         try {
-            // Dynamic import to avoid circular deps or bloat if not needed
             const { VenueOpsService } = await import('../../services/VenueOpsService');
             const venueId = pendingAction.venueId || userProfile.homeBase;
 
@@ -364,7 +374,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                         terms: pendingAction.params.details
                     });
                     successMessage = "Flash Bounty Scheduled!";
-                    opsArtie.processAction('confirm_post'); // Advance state machine
+                    opsSchmidt.processAction('confirm_post'); // Advance state machine
                     break;
 
                 case 'promote_menu_item':
@@ -374,13 +384,13 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                         type: 'SOCIAL_PROMO'
                     });
                     successMessage = "Social Post Drafted!";
-                    opsArtie.processAction('confirm_post');
+                    opsSchmidt.processAction('confirm_post');
                     break;
 
                 case 'draft_email':
                     await VenueOpsService.draftEmail(venueId, pendingAction.params as { subject: string; body: string });
                     successMessage = "Email Draft Saved!";
-                    opsArtie.processAction('confirm_post');
+                    opsSchmidt.processAction('confirm_post');
                     break;
 
                 case 'add_to_calendar':
@@ -388,13 +398,13 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                     const result = await VenueOpsService.submitCalendarEvent(venueId, pendingAction.params);
                     successMessage = "Event Scheduled Successfully!";
                     // Pass the created event ID to the ops hook so it can show a link
-                    opsArtie.processAction('confirm_post', result?.id);
+                    opsSchmidt.processAction('confirm_post', result?.id);
                     break;
 
                 case 'update_website':
                     await VenueOpsService.updateWebsite(venueId, pendingAction.params as { content: string });
                     successMessage = "Web Update Sent to Dev!";
-                    opsArtie.processAction('confirm_post');
+                    opsSchmidt.processAction('confirm_post');
                     break;
 
                 case 'generate_image':
@@ -402,19 +412,23 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                     successMessage = "Image Assets Generated!";
 
                     // Mock Visual feedback
-                    opsArtie.addArtieMessage(
+                    opsSchmidt.addSchmidtMessage(
                         "I've drafted the assets based on your vision. Here's a preview:",
                         "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&auto=format&fit=crop&q=60"
                     );
                     // Critical: Advance state so user can draft copy next
-                    opsArtie.processAction('COMPLETE_IMAGE_GEN');
+                    opsSchmidt.processAction('COMPLETE_IMAGE_GEN');
                     break;
 
                 default:
                     if (pendingAction.skill.startsWith('update_')) {
                         await VenueOpsService.updateVenue(venueId, pendingAction.params);
                         successMessage = "Listing Updated!";
-                        opsArtie.processAction('confirm_post');
+                        opsSchmidt.processAction('confirm_post');
+                    }
+                    else {
+                        // Fallback confirm
+                        opsSchmidt.processAction('confirm_post');
                     }
                     break;
             }
@@ -437,12 +451,12 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
     const handleEditAction = () => {
         if (!pendingAction) return;
 
-        if (isOpsMode) {
+        if (isOpsMode && persona === 'schmidt') {
             // Context-aware edit routing
             if (pendingAction.skill === 'add_calendar_event') {
-                opsArtie.setOpsState('event_input');
+                opsSchmidt.setOpsState('event_input');
             } else {
-                opsArtie.processAction('skill_flash_deal'); // Default fallback
+                opsSchmidt.processAction('skill_flash_deal'); // Default fallback
             }
             setPendingAction(null);
             setActionStatus('idle');
@@ -462,13 +476,13 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
     const { isDragging, handleDragOver, handleDragLeave, handleDrop } = useDragAndDrop({
         onDrop: (file) => {
-            if (isOpsMode) {
+            if (isOpsMode && persona === 'schmidt') {
                 const venueId = initialVenueId || userProfile?.homeBase;
                 const reader = new FileReader();
                 reader.onload = async (event) => {
                     const base64 = event.target?.result as string;
                     const base64Clean = base64.split(',')[1];
-                    await opsArtie.processAction('UPLOAD_FILE', base64Clean, venueId);
+                    await opsSchmidt.processAction('UPLOAD_FILE', base64Clean, venueId);
                 };
                 reader.readAsDataURL(file);
             }
@@ -477,14 +491,14 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
     if (!isOpen) return null;
 
-    // Unified Messages
-    const activeMessages = isOpsMode
-        ? [...opsArtie.messages, ...guestArtie.messages.map(m => ({ ...m, role: m.role === 'model' ? 'artie' : 'user', text: m.content, timestamp: Date.now() }))]
-            .sort((a: any, b: any) => (a.timestamp || 0) - (b.timestamp || 0))
-        : guestArtie.messages;
+    // Unified Variables from Active Hook
+    const activeMessages = activeHook.messages;
+    const activeIsLoading = activeHook.isLoading;
+    const activeError = activeHook.error;
 
-    const activeIsLoading = isOpsMode ? (opsArtie.isLoading || guestArtie.isLoading) : guestArtie.isLoading;
-    const activeError = isOpsMode ? (opsArtie.error || guestArtie.error) : guestArtie.error;
+    // Schmidt has bubbles, Artie (guest) currently doesn't use the same quickReply system but could
+    // For now we only show bubbles if they exist in the active hook (ArtieOps doesn't have them yet)
+    const activeBubbles = (activeHook as any).currentBubbles || [];
 
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -496,22 +510,24 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                     <div className="flex items-center gap-3">
                         <div className="bg-primary p-0.5 rounded-xl shadow-lg shadow-primary/20 overflow-hidden w-14 h-14 flex items-center justify-center">
                             <img
-                                src={(isOpsMode && persona === 'schmidt') ? schmidtLogo : artieLogo}
+                                src={persona === 'schmidt' ? schmidtLogo : artieLogo}
                                 className="w-full h-full object-cover scale-110"
-                                alt={(isOpsMode && persona === 'schmidt') ? "Schmidt" : "Artie"}
+                                alt={persona === 'schmidt' ? "Schmidt" : "Artie"}
                             />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
                                 <h3 className="text-xl font-black text-white uppercase tracking-tight font-league">
-                                    {(isOpsMode && persona === 'schmidt') ? "Schmidt" : "Artie"}
+                                    {persona === 'schmidt' ? "Coach Schmidt" : "Artie"}
                                 </h3>
                                 {isOpsMode && (
                                     <button
                                         onClick={() => {
                                             const newPersona = persona === 'schmidt' ? 'artie' : 'schmidt';
                                             setPersona(newPersona);
-                                            opsArtie.resetOps();
+                                            // Reset the new persona on switch
+                                            if (newPersona === 'schmidt') opsSchmidt.resetOps();
+                                            else guestArtie.resetOps();
                                             showToast(`Switched to ${newPersona === 'schmidt' ? 'Schmidt (Owner)' : 'Artie (Visitor)'} Mode`, "info");
                                         }}
                                         className="bg-primary/20 hover:bg-primary/40 p-1 rounded-md transition-colors"
@@ -523,19 +539,22 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isOpsMode ? 'bg-primary' : 'bg-green-500'}`} />
-                                <span className="text-[9px] text-primary font-bold uppercase tracking-widest">{greeting?.status || "Online"}</span>
+                                <span className="text-[9px] text-primary font-bold uppercase tracking-widest">
+                                    {isOpsMode ? (persona === 'schmidt' ? "Schmidt Mode" : "Coach Observation") : (greeting?.status || "Online")}
+                                </span>
                             </div>
                         </div>
                     </div>
                     <button
                         onClick={() => {
                             if (isOpsMode) {
-                                opsArtie.resetOps();
+                                if (persona === 'schmidt') opsSchmidt.resetOps();
+                                else guestArtie.resetOps();
                                 setPendingAction(null);
                             } else {
-                                // For Guest Artie, we might want a similar reset, but for now just clear local state
-                                // setGuestArtieMessages([]); // If we had access to setter
-                                onClose(); // Fallback for guest, or implement Guest reset later
+                                guestArtie.resetOps();
+                                setPendingAction(null);
+                                // onClose(); // Don't close, just reset
                             }
                         }}
                         className="text-slate-500 hover:text-white transition-colors mr-2"
@@ -555,13 +574,15 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                         <div className="flex justify-center -mt-2 mb-2">
                             <div className="bg-primary/20 border border-primary/30 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse">
                                 <Bot className="w-3 h-3 text-primary" />
-                                <span className="text-[10px] font-black text-primary uppercase tracking-widest">Operator Mode Active</span>
+                                <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                                    {persona === 'schmidt' ? "Owner Operations Active" : "Coach Perspective Active"}
+                                </span>
                             </div>
                         </div>
                     )}
 
-                    {/* Guest Greeting if empty */}
-                    {!isOpsMode && guestArtie.messages.length === 0 && greeting && (
+                    {/* Show Greeting if messages empty (Fallback) */}
+                    {activeMessages.length === 0 && greeting && (
                         <div className="flex justify-start animate-in fade-in slide-in-from-left-4 duration-500">
                             <div className="max-w-[85%] p-3 rounded-2xl text-sm font-medium leading-relaxed bg-slate-800 text-slate-200 border border-white/5 rounded-tl-none">
                                 {greeting.message}
@@ -569,14 +590,18 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                         </div>
                     )}
 
+
                     {/* Message Loop */}
                     {activeMessages.map((m: any, i: number) => {
                         let displayContent = m.content || m.text || '';
                         const isUser = m.role === 'user';
 
-                        if (!isOpsMode && !isUser) {
+                        if (persona === 'artie' && !isUser) {
                             displayContent = displayContent.split('[ACTION]:')[0].split('[SUGGESTIONS]:')[0].trim();
                         }
+
+                        // Don't render empty messages (streaming placeholders)
+                        if (!displayContent && !m.imageUrl) return null;
 
                         return (
                             <div key={i} className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
@@ -596,10 +621,10 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                     })}
 
                     {/* Chips */}
-                    {isOpsMode && opsArtie.currentBubbles.length > 0 && (
+                    {activeBubbles.length > 0 && (
                         <div className="flex justify-end pr-8">
                             <QuickReplyChips
-                                options={opsArtie.currentBubbles}
+                                options={activeBubbles}
                                 onSelect={handleChipSelect}
                                 maxVisible={3}
                             />
@@ -608,46 +633,46 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
 
                     {/* Pending Action Card */}
                     {pendingAction && (
-                        <div className="flex justify-center my-4 animate-in slide-in-from-bottom-4 duration-500">
-                            <div className="bg-gradient-to-br from-slate-800 to-black border-2 border-primary/50 p-4 rounded-2xl shadow-xl w-full max-w-[90%]">
-                                <div className="flex items-center gap-2 mb-3">
-                                    <Sparkles className="w-4 h-4 text-primary" />
-                                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                        <div className="flex justify-center my-6 animate-in slide-in-from-bottom-6 duration-500">
+                            <div className="bg-gradient-to-br from-slate-900 to-black border-4 border-primary p-6 rounded-[2.5rem] shadow-[0_0_40px_rgba(251,191,36,0.25)] w-full max-w-[95%]">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Sparkles className="w-5 h-5 text-primary animate-pulse" />
+                                    <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">
                                         Action Required
                                     </span>
                                 </div>
-                                <h4 className="text-white font-bold text-sm mb-1 uppercase tracking-tight">
+                                <h4 className="text-white font-black text-base mb-2 uppercase tracking-tight">
                                     {pendingAction.skill.split('_').join(' ')}
                                 </h4>
-                                <div className="bg-black/30 p-2 rounded-lg border border-white/5 mb-4">
-                                    <p className="text-slate-300 text-[11px] font-medium leading-relaxed italic line-clamp-2">
+                                <div className="bg-black/40 p-3 rounded-2xl border border-white/10 mb-5">
+                                    <p className="text-slate-200 text-xs font-semibold leading-relaxed italic line-clamp-3">
                                         &ldquo;{pendingAction.params.summary || pendingAction.params.topic || pendingAction.params.prompt || 'Review details below...'}&rdquo;
                                     </p>
                                 </div>
 
                                 {actionStatus === 'success' ? (
-                                    <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-xl flex items-center gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                        <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Live on Buzz Clock!</span>
+                                    <div className="bg-green-500/10 border-2 border-green-500/40 p-4 rounded-2xl flex items-center justify-center gap-3">
+                                        <CheckCircle2 className="w-6 h-6 text-green-500" />
+                                        <span className="text-xs font-black text-green-500 uppercase tracking-widest text-center">Live on Buzz Clock!</span>
                                     </div>
                                 ) : (
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-col gap-3">
                                         <button
                                             onClick={handleConfirmAction}
                                             disabled={actionStatus === 'loading'}
-                                            className="flex-1 bg-primary hover:bg-yellow-400 text-black font-black text-[10px] py-2 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50"
+                                            className="w-full bg-primary hover:bg-yellow-400 text-black font-black text-sm py-4 rounded-2xl uppercase tracking-[0.15em] transition-all disabled:opacity-50 shadow-[0_4px_0_0_#92400e] active:shadow-none active:translate-y-1"
                                         >
                                             {actionStatus === 'loading' ? 'Processing...' : (
-                                                pendingAction.skill === 'generate_image' ? 'Generate Assets' :
-                                                    pendingAction.skill === 'schedule_flash_deal' ? 'Deploy' : 'Confirm & Save'
+                                                pendingAction.skill === 'generate_image' ? 'Generate & Preview' :
+                                                    pendingAction.skill === 'schedule_flash_deal' ? 'Deploy Now' : 'Confirm & Post'
                                             )}
                                         </button>
                                         <button
                                             onClick={handleEditAction}
                                             disabled={actionStatus === 'loading'}
-                                            className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-black text-[10px] py-2 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50"
+                                            className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black text-xs py-3 rounded-2xl uppercase tracking-widest transition-all disabled:opacity-50"
                                         >
-                                            Edit
+                                            Edit Details
                                         </button>
                                     </div>
                                 )}
@@ -675,7 +700,7 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                 {/* Input Area */}
                 <div className="p-4 bg-surface border-t border-white/5 space-y-3">
                     {/* Guest Suggestions */}
-                    {!isOpsMode && !activeIsLoading && suggestions.length > 0 && (
+                    {persona === 'artie' && !activeIsLoading && suggestions.length > 0 && (
                         <div className="flex flex-wrap gap-2 justify-center animate-in fade-in slide-in-from-bottom-2 duration-300">
                             {suggestions.map((s, idx) => (
                                 <button
@@ -702,12 +727,12 @@ export const ArtieChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose,
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                                placeholder={isListening ? "Listening..." : (isOpsMode ? (
-                                    opsArtie.opsState.includes('input') ? "Type details..." : "Ask Schmidt..."
-                                ) : "Ask Artie...")}
+                                placeholder={isListening ? "Listening..." : (
+                                    persona === 'schmidt' ? (opsSchmidt.opsState.includes('input') ? "Type details..." : "Ask Coach...") : "Ask Artie..."
+                                )}
                                 className={`w-full bg-transparent px-3 text-sm text-white outline-none placeholder:text-slate-600 font-medium ${isListening ? 'animate-pulse' : ''}`}
                             />
-                            {isOpsMode && !activeIsLoading && (
+                            {isOpsMode && persona === 'schmidt' && !activeIsLoading && (
                                 <button
                                     onClick={handleFileClick}
                                     className="p-2 rounded-lg text-slate-500 hover:text-white transition-all"

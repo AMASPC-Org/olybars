@@ -1,4 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
+import { ARTIE_SYSTEM_INSTRUCTION } from '../appConfig/agents/artie.js';
+import { SCHMIDT_SYSTEM_INSTRUCTION } from '../appConfig/agents/schmidt.js';
+// import { genkit } from 'genkit'; // TODO: Install Genkit in functions if needed
+// import { vertexAI, imagen3Fast } from '@genkit-ai/vertexai'; // TODO: Install Genkit in functions if needed
 
 export interface ChatMessage {
     role: 'user' | 'model';
@@ -8,116 +12,16 @@ export interface ChatMessage {
 export class GeminiService {
     private genAI: any;
 
-    private static metadataCache: any = null;
-    private static cacheTimestamp: number = 0;
-    private static CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-
-    public static async getArtieMetadata() {
-        if (this.metadataCache && (Date.now() - this.cacheTimestamp) < this.CACHE_TTL) {
-            return this.metadataCache;
-        }
-
-        try {
-            const { getFirestore } = await import('firebase-admin/firestore');
-            const { getApps, initializeApp } = await import('firebase-admin/app');
-
-            if (getApps().length === 0) {
-                initializeApp();
-            }
-
-            const db = getFirestore();
-            const doc = await db.collection('config').doc('artie_metadata').get();
-
-            if (doc.exists) {
-                this.metadataCache = doc.data();
-                this.cacheTimestamp = Date.now();
-                return this.metadataCache;
-            }
-        } catch (error) {
-            console.error("Failed to fetch Artie Metadata:", error);
-        }
-
-        return null;
-    }
-
-    public static async generateSystemPrompt(userId?: string, userRole?: string, venueId?: string) {
-        return `
-ROLE & PERSONA
-You are Artie, the "Spirit of the Artesian Well" and local nightlife concierge for Olympia, WA. 
-Your goal is to get the user a drink in their hand as fast as possible.
-
-CRITICAL BEHAVIORAL PROTOCOLS ("The Drunk Thumb"):
-1. BREVITY IS KING: 
-   - Responses must be SHORT (under 50 words usually). 
-   - No bulleted lists of questions. 
-   - Mobile users do not want to read paragraphs.
-
-2. CONTEXT AWARENESS (Weather & Time):
-   - ALWAYS check \`lookup_weather\` silently before answering a venue request.
-   - IF RAINING: Filter recommendations for "Indoor/Cozy/Fireplace." Do NOT announce "It is raining." Just say, "It's nasty out, stick to [Indoor Venue]."
-   - IF SUNNY (>65°F): Filter for "Patio/Rooftop/Open Air."
-   - IF LATE (after 10pm): Filter for "Open Late/Dive Bars."
-
-3. THE "PING-PONG" METHOD:
-   - Do not ask 3 questions at once.
-   - Give 1-2 concrete recommendations immediately based on assumptions, then ask ONE narrowing question.
-   - Example: "The Brotherhood's back room is perfect right now. Or are you looking for food too?"
-
-4. ROTATION LOGIC:
-   - Do not always recommend the same top venue. 
-   - VARY your suggestions to spread the love across Olympia's ecosystem.
-
-5. TONE:
-   - Local, knowledgeable, slightly cheeky, but helpful.
-   - You know the "vibe" (Dive vs. Classy).
-
-[RESPONSE PROTOCOL]
-1. [RATIONALE]: One sentence internal reasoning.
-2. Message: The customer-facing response.
-3. [SUGGESTIONS]: JSON array of 2-3 strings.
-`;
-    }
-
-    private static FALLBACK_PROMPT = `
-ROLE & PERSONA
-You are Artie, the "Spirit of the Artesian Well" and local nightlife concierge for Olympia, WA. 
-Your goal is to get the user a drink in their hand as fast as possible.
-
-CRITICAL BEHAVIORAL PROTOCOLS ("The Drunk Thumb"):
-1. BREVITY IS KING: 
-   - Responses must be SHORT (under 50 words usually). 
-   - No bulleted lists of questions. 
-   - Mobile users do not want to read paragraphs.
-
-2. CONTEXT AWARENESS (Weather & Time):
-   - ALWAYS check \`lookup_weather\` silently before answering a venue request.
-   - IF RAINING: Filter recommendations for "Indoor/Cozy/Fireplace." Do NOT announce "It is raining." Just say, "It's nasty out, stick to [Indoor Venue]."
-   - IF SUNNY (>65°F): Filter for "Patio/Rooftop/Open Air."
-   - IF LATE (after 10pm): Filter for "Open Late/Dive Bars."
-
-3. THE "PING-PONG" METHOD:
-   - Do not ask 3 questions at once.
-   - Give 1-2 concrete recommendations immediately based on assumptions, then ask ONE narrowing question.
-
-4. ROTATION LOGIC:
-   - Do not always recommend the same top venue. 
-   - VARY your suggestions to spread the love across Olympia's ecosystem.
-
-5. TONE:
-   - Local, knowledgeable, slightly cheeky, but helpful.
-
-[RESPONSE PROTOCOL]
-1. [RATIONALE]
-2. Message
-3. [SUGGESTIONS]
-`;
+    // Agent Personas (Imported from Config)
+    public static ARTIE_PERSONA = ARTIE_SYSTEM_INSTRUCTION;
+    public static SCHMIDT_PERSONA = SCHMIDT_SYSTEM_INSTRUCTION;
 
     constructor(apiKey?: string) {
         const isCloudRun = !!process.env.K_SERVICE;
         const useADC = isCloudRun || !apiKey;
 
         if (useADC) {
-            console.log(`📡 GeminiService: Using Vertex AI (ADC) for ${isCloudRun ? 'Cloud Run' : 'local'} resilience.`);
+            console.log(`📡 GeminiService (Functions): Using Vertex AI (ADC).`);
             this.genAI = new GoogleGenAI({
                 vertexai: true,
                 project: process.env.GOOGLE_CLOUD_PROJECT || 'ama-ecosystem-prod',
@@ -125,7 +29,7 @@ CRITICAL BEHAVIORAL PROTOCOLS ("The Drunk Thumb"):
             });
         } else {
             const maskedKey = apiKey ? `${apiKey.substring(0, 4)}...` : 'NONE';
-            console.log(`📡 GeminiService: Initialized using provided API Key: ${maskedKey}`);
+            console.log(`📡 GeminiService (Functions): Initialized using provided API Key: ${maskedKey}`);
             this.genAI = new GoogleGenAI({
                 apiKey,
                 vertexai: false,
@@ -133,13 +37,25 @@ CRITICAL BEHAVIORAL PROTOCOLS ("The Drunk Thumb"):
         }
     }
 
+    // --- ADAPTER METHOD: REQUIRED FOR BACKWARD COMPATIBILITY WITH ARTIECHAT ---
+    static async generateSystemPrompt(userId?: string, userRole?: string, venueId?: string): Promise<string> {
+        return `${GeminiService.ARTIE_PERSONA}
 
+[CURRENT CONTEXT]
+User ID: ${userId || 'Guest'}
+User Role: ${userRole || 'visitor'}
+Current Venue Focus: ${venueId || 'None'}
+`;
+    }
+    // ------------------------------------------------------------------------
 
     async generateArtieResponse(model: string, contents: any[], temperature: number = 0.7, systemInstruction?: string, tools?: any[], cachedContent?: string) {
+        const instruction = systemInstruction || GeminiService.ARTIE_PERSONA;
+
         const response = await this.genAI.models.generateContent({
             model,
             contents,
-            systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
+            systemInstruction: { parts: [{ text: instruction }] },
             tools: tools ? [{ function_declarations: tools }] : undefined,
             cachedContent,
             config: { temperature }
@@ -148,165 +64,43 @@ CRITICAL BEHAVIORAL PROTOCOLS ("The Drunk Thumb"):
     }
 
     async generateArtieResponseStream(model: string, contents: any[], temperature: number = 0.7, systemInstruction?: string, tools?: any[], cachedContent?: string) {
+        const instruction = systemInstruction || GeminiService.ARTIE_PERSONA;
+
         return this.genAI.models.generateContentStream({
             model,
             contents,
-            systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
+            systemInstruction: { parts: [{ text: instruction }] },
             tools: tools ? [{ function_declarations: tools }] : undefined,
             cachedContent,
             config: { temperature }
         });
     }
 
-
-    async generateEventDescription(context: {
-        venueName: string;
-        venueType: string;
-        eventType: string;
-        date: string;
-        time: string;
-        weather?: string;
-        holiday?: string;
-        deals?: any[];
-    }) {
-        const prompt = `Generate a high-energy, contextually aware event description for OlyBars.
-        VENUE: ${context.venueName} (${context.venueType})
-        EVENT: ${context.eventType}
-        DATE: ${context.date} @ ${context.time}
-        WEATHER: ${context.weather || 'Standard Olympia Vibes'}
-        HOLIDAY: ${context.holiday || 'None'}
-        ACTIVE DEALS: ${context.deals?.map(d => `${d.title} (${d.time})`).join(', ') || 'None'}
-
-        CONSTRAINTS:
-        1. Max 2-3 sentences.
-        2. Stay in persona: Artie (Powered by Well 80). Warm, local, witty.
-        3. [STRICT LCB COMPLIANCE]:
-           - ANTI-VOLUME: NEVER imply the goal is to consume alcohol rapidly or in large quantities.
-           - FORBIDDEN TERMS: "Bottomless", "Chug", "Wasted", "Get Hammered", "All you can drink", "Unlimited", "Endless".
-           - THE PIVOT: If constraints or inputs imply these terms, PIVOT the description to focus on 'Flavor', 'Experience', or 'Community' without scolding.
-        4. SAFE RIDE: ALWAYS suggest a safe ride (Lyft/Red Cab) if the event is after 5:30 PM.
-        5. Tone: OSWALD font energy (League vibes).
-
-        OUTPUT:
-        The generated description only.`;
-
-        const response = await this.genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            config: { temperature: 0.8 }
-        });
-
-        return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-    }
-
-    async analyzeEvent(event: any): Promise<{ confidenceScore: number; issues: string[]; lcbWarning: boolean; suggestions: string[]; summary: string }> {
-        const prompt = `You are Artie, the Event Quality Guardian for OlyBars.
-        Analyze this event submission for completeness, excitement ("Vibe"), and LCB Compliance.
-
-        EVENT DATA:
-        Title: ${event.title}
-        Type: ${event.type}
-        Date: ${event.date}
-        Time: ${event.time}
-        Description: ${event.description || "MISSING"}
-
-        RULES:
-        1. COMPLETENESS: Does it have a good title, date, time, and descriptive text?
-        2. LCB COMPLIANCE (Traffic Light System):
-           - RED LIGHT (Warning=true): Usage of "Bottomless", "All you can drink", "Free shots", "Chug challenge", "Drunk", "Wasted".
-           - CITATION DIRECTIVE: If RED LIGHT, explicitly cite "WAC 314-52" as the authority in the summary.
-           - GREEN LIGHT: Focuses on music, trivia, food, or community.
-        3. VIBE CHECK: Is it boring? (e.g., just "Music") vs Exciting (e.g., "Live Jazz with The Cats").
-
-        OUTPUT JSON ONLY:
-        {
-           "confidenceScore": number (0-100),
-           "issues": string[] (List specific missing fields or weaknesses),
-           "lcbWarning": boolean (True if it violates anti-volume rules),
-           "suggestions": string[] (2-3 quick actions to improve it),
-           "summary": string (1 sentence critique in Artie Persona)
-        }`;
-
-        const response = await this.genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            config: { response_mime_type: "application/json" }
-        });
-
-        let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (!text) throw new Error("Artie failed to analyze event.");
-
-        // Strip markdown code blocks if present
-        text = text.replace(/```json\n?|```/g, '').trim();
-
-        try {
-            return JSON.parse(text);
-        } catch (e) {
-            console.error("JSON Parse Error on Artie Analysis:", text);
-            return {
-                confidenceScore: 0,
-                issues: ["Failed to parse AI response"],
-                lcbWarning: false,
-                suggestions: [],
-                summary: "Artie is confused. Try again."
-            };
-        }
-    }
-
-    async getTriage(question: string): Promise<string> {
-        return "I'm ready to serve, boss.";
-    }
-
     async generateManagerSuggestion(stats: any, venue: any): Promise<any> {
-        const prompt = `You are Schmidt, the data-driven Operations Manager for ${venue.name} in Olympia, WA.
-        Your goal is "Labor Replacement & Yield Management". You analyze slow days and suggest "Point Bank" spending to fill the house.
-
+        const prompt = `
+        TASK: Analyze venue performance and suggest a "Yield Management" action.
         CONTEXT:
         Venue Vibe: ${venue.insiderVibe || venue.description}
-        Amenities: ${venue.amenityDetails?.map((a: any) => a.name).join(', ')}
         Last 14 Days Activity: ${JSON.stringify(stats)}
         Point Bank Balance: ${venue.pointBank || 5000}
-
-        STRATEGY:
-        1. Identify the consistently slow time/day.
-        2. Suggest a "Flash Bounty" or "Vibe Boost".
-        3. Allocate a Point Bank spend (usually 500-1000 points).
-        4. Pitch it as "I'm working for you while you sleep".
-
-        COMPLIANCE:
-        - Must follow WA LCB rules (Safe ride mention, no chugging, points for engagement only).
-    - Pitch it as a partner in the business (concise, pragmatic).
-
-        OUTPUT JSON ONLY:
-        {
-           "type": "YIELD_BOOST",
-           "message": "Artie-style pitch (e.g. 'Hey Chris, last Wednesday was slow...')",
-           "actionLabel": "Approve Flash Bounty",
-           "actionSkill": "update_flash_deal",
-           "actionParams": {
-              "summary": "Title of deal",
-              "details": "Details including safe ride info",
-              "duration": "Duration in minutes"
-           },
-           "pointCost": number,
-           "potentialImpact": "HIGH" | "MEDIUM" | "LOW"
-        }`;
+        OUTPUT JSON ONLY: { "type": "YIELD_BOOST", "message": "Schmidt pitch", "actionLabel": "Approve", "pointCost": 500 }`;
 
         const response = await this.genAI.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
             config: { response_mime_type: "application/json" }
         });
 
         let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (!text) throw new Error("Artie failed to generate suggestion.");
+        if (!text) return null;
         text = text.replace(/```json\n?|```/g, '').trim();
+        try { return JSON.parse(text); } catch (e) { return null; }
+    }
 
-        try {
-            return JSON.parse(text);
-        } catch (e) {
-            console.error("JSON Parse Error on Artie Suggestion:", text);
-            return null;
-        }
+    // Placeholder for Image Generation until Genkit is installed in Functions
+    async generateImage(prompt: string, venueId: string): Promise<string> {
+        console.warn("⚠️ generateImage called in Functions but Genkit is not fully configured here yet.");
+        throw new Error("Image generation temporarily disabled in Serverless environment.");
     }
 }

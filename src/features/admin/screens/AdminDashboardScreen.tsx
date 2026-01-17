@@ -66,7 +66,11 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
         .sort((a, b) => (b.stats?.seasonPoints || 0) - (a.stats?.seasonPoints || 0));
 
     const filteredVenues = venues
-        .filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase()) || v.id.includes(searchTerm))
+        .filter(v =>
+            v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            v.id.includes(searchTerm) ||
+            v.scraper_config?.some(s => s.url.toLowerCase().includes(searchTerm.toLowerCase()))
+        )
         .filter(v => {
             if (venueFilter === 'visible') return v.isVisible !== false && v.isActive !== false;
             if (venueFilter === 'ghost') return v.isVisible === false && v.isActive !== false;
@@ -309,8 +313,8 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                         <th className="p-3">Venue Name</th>
                                         <th className="p-3">ID</th>
                                         <th className="p-3 text-center">Paid Member</th>
-                                        <th className="p-3 text-center">Game Vibe</th>
                                         <th className="p-3 text-center">Ghost Mode</th>
+                                        <th className="p-3 text-center">Sync</th>
                                         <th className="p-3 text-center">Map</th>
                                         <th className="p-3 text-right">Status</th>
                                     </tr>
@@ -345,6 +349,17 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                                 >
                                                     {venue.isVisible !== false ? <Eye size={16} /> : <EyeOff size={16} />}
                                                 </button>
+                                            </td>
+                                            <td className="p-3 text-center">
+                                                <div className="flex items-center justify-center gap-1" title="Active Scraper Sources">
+                                                    {venue.scraper_config?.some(s => s.status === 'error') ? (
+                                                        <AlertTriangle className="w-4 h-4 text-red-500" />
+                                                    ) : (
+                                                        <span className={`text-[10px] font-black font-mono ${venue.is_scraping_enabled && (venue.scraper_config?.length || 0) > 0 ? 'text-green-400' : 'text-slate-700'}`}>
+                                                            {venue.scraper_config?.filter(s => s.isEnabled).length || 0}/{venue.scraper_config?.length || 0}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="p-3 text-center">
                                                 <button

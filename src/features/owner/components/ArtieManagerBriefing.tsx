@@ -8,6 +8,7 @@ interface ArtieManagerBriefingProps {
     onActionApproved: (insight: VenueInsight) => Promise<void>;
 }
 
+// Renamed component for internal consistency, but kept filename for now
 export const ArtieManagerBriefing: React.FC<ArtieManagerBriefingProps> = ({ venue, onActionApproved }) => {
     const [insights, setInsights] = useState<VenueInsight[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -29,7 +30,7 @@ export const ArtieManagerBriefing: React.FC<ArtieManagerBriefingProps> = ({ venu
             const data = await response.json();
             setInsights(data);
         } catch (error) {
-            console.error('Failed to fetch Artie insights:', error);
+            console.error('Failed to fetch Coach insights:', error);
         } finally {
             setIsLoading(false);
         }
@@ -53,7 +54,7 @@ export const ArtieManagerBriefing: React.FC<ArtieManagerBriefingProps> = ({ venu
                     <Sparkles className="w-6 h-6 text-primary animate-spin" />
                 </div>
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-league text-center">
-                    Artie is analyzing your traffic...
+                    Coach is analyzing your traffic...
                 </p>
             </div>
         );
@@ -80,7 +81,7 @@ export const ArtieManagerBriefing: React.FC<ArtieManagerBriefingProps> = ({ venu
                         <div className="flex-1 space-y-3">
                             <div className="flex justify-between items-start">
                                 <div className="flex items-center gap-2">
-                                    <h4 className="text-[10px] font-black text-primary uppercase tracking-widest font-league">Artie Pro Briefing</h4>
+                                    <h4 className="text-[10px] font-black text-primary uppercase tracking-widest font-league">Coach Pro Briefing</h4>
                                     <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${insight.potentialImpact === 'HIGH' ? 'bg-green-500/20 text-green-500' :
                                         insight.potentialImpact === 'MEDIUM' ? 'bg-amber-500/20 text-amber-500' : 'bg-slate-500/20 text-slate-500'
                                         }`}>

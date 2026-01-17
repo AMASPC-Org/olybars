@@ -29,8 +29,8 @@ const getApiBaseUrl = () => {
         return builtInUrl.replace(/\/api\/?$/, '') + '/api';
     }
 
-    // 3. Absolute fallback (Legacy/Hard-coded)
-    return 'https://olybars-backend-juthzlaerq-uw.a.run.app/api';
+    // 3. Absolute fallback (Fail-safe)
+    return '/api'; // Standardize on relative path
 };
 
 export const API_BASE_URL = getApiBaseUrl();

@@ -15,6 +15,10 @@ import { SoberPledgeModal } from './SoberPledgeModal';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { normalizeTo24h } from '../../../utils/timeUtils';
 import { format } from 'date-fns';
+import { ConnectSourceCard } from './scraper/ConnectSourceCard';
+import { ScraperConsentToggle } from './scraper/ScraperConsentToggle';
+import { AddSourceModal } from './scraper/AddSourceModal';
+import { ScraperSource, ScrapeTarget } from '../../../types/venue';
 
 interface ListingManagementTabProps {
     venue: Venue;
@@ -47,6 +51,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
     const [isSyncing, setIsSyncing] = useState(false);
     const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
     const [showSoberPledge, setShowSoberPledge] = useState(false);
+    const [isAddSourceModalOpen, setIsAddSourceModalOpen] = useState(false);
     const [formData, setFormData] = useState<Partial<Venue>>({
         description: venue.description || '',
         hours: typeof venue.hours === 'string' ? venue.hours : 'Standard Hours',
@@ -83,7 +88,8 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         capacity: venue.capacity,
         // Scraper Metadata
         partner_tier: venue.partner_tier || PartnerTier.LOCAL,
-        scrape_source_url: venue.scrape_source_url || '',
+        // scrape_source_url: venue.scrape_source_url || '', // DEPRECATED
+        scraper_config: venue.scraper_config || [], // [NEW] Multi-Source
         is_scraping_enabled: venue.is_scraping_enabled || false,
         // Meta Sync
         partnerConfig: venue.partnerConfig || {
@@ -134,8 +140,9 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
             orderUrl: venue.orderUrl || '',
             directMenuUrl: venue.directMenuUrl || '',
             capacity: venue.capacity,
-            partner_tier: venue.partner_tier || 'local',
-            scrape_source_url: venue.scrape_source_url || '',
+            partner_tier: venue.partner_tier || PartnerTier.LOCAL,
+            // scrape_source_url: venue.scrape_source_url || '',
+            scraper_config: venue.scraper_config || [],
             is_scraping_enabled: venue.is_scraping_enabled || false,
             partnerConfig: venue.partnerConfig || {
                 tier: venue.partner_tier || PartnerTier.LOCAL,
@@ -199,6 +206,34 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleAddSource = (url: string, target: ScrapeTarget) => {
+        const newSource: ScraperSource = {
+            id: crypto.randomUUID(),
+            url,
+            target,
+            isEnabled: true,
+            status: 'pending'
+        };
+        setFormData(prev => ({
+            ...prev,
+            scraper_config: [...(prev.scraper_config || []), newSource]
+        }));
+    };
+
+    const handleDeleteSource = (id: string) => {
+        setFormData(prev => ({
+            ...prev,
+            scraper_config: prev.scraper_config?.filter(s => s.id !== id) || []
+        }));
+    };
+
+    const handleToggleSource = (id: string, enabled: boolean) => {
+        setFormData(prev => ({
+            ...prev,
+            scraper_config: prev.scraper_config?.map(s => s.id === id ? { ...s, isEnabled: enabled } : s) || []
+        }));
     };
 
     const handleGoogleSync = async () => {
@@ -583,54 +618,61 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                     <InputField label="Venue Capacity (Occupancy)" name="capacity" value={formData.capacity || ''} icon={Users} type="number" placeholder="Ex: 50" />
                 </div>
 
-                {/* [BETA BATTALION] League Night Scraper Configuration */}
+                {/* [BETA BATTALION] Multi-Source Ingestion Engine */}
                 {(formData.partnerConfig?.tier === PartnerTier.PRO || formData.partnerConfig?.tier === PartnerTier.AGENCY || isSystemAdmin(userProfile)) && (
-                    <div className="mt-8 bg-primary/5 border border-primary/20 rounded-3xl p-6 space-y-6 animate-in fade-in duration-500">
+                    <div className="mt-8 space-y-6 animate-in fade-in duration-500">
                         <div>
-                            <div className="flex justify-between items-center mb-1">
-                                <h4 className="text-sm font-black text-primary uppercase font-league leading-none">League Night Event Scraper</h4>
-                                <div className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${formData.is_scraping_enabled ? 'bg-green-500 text-black' : 'bg-slate-800 text-slate-500'} `}>
-                                    {formData.is_scraping_enabled ? 'ACTIVE' : 'DISABLED'}
+                            <h3 className="text-xl font-black text-white uppercase font-league leading-none flex items-center gap-2">
+                                <Globe className="w-5 h-5 text-primary" />
+                                CONNECT & INTEGRATIONS
+                            </h3>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest italic">Sync events & menus from your digital world</p>
+                        </div>
+
+                        <ScraperConsentToggle
+                            isEnabled={formData.is_scraping_enabled || false}
+                            onToggle={(val) => setFormData(prev => ({ ...prev, is_scraping_enabled: val }))}
+                        />
+
+                        {formData.is_scraping_enabled && (
+                            <div className="space-y-4 animate-in slide-in-from-top-4 fade-in">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Connected Sources (Max 5)</h4>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAddSourceModalOpen(true)}
+                                        disabled={(formData.scraper_config?.length || 0) >= 5}
+                                        className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline disabled:opacity-50 disabled:no-underline"
+                                    >
+                                        + Add New Source
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-3">
+                                    {(formData.scraper_config || []).length === 0 ? (
+                                        <div className="bg-black/20 border border-dashed border-white/5 rounded-xl p-8 text-center">
+                                            <p className="text-[10px] text-slate-600 font-bold uppercase">No sources connected yet</p>
+                                        </div>
+                                    ) : (
+                                        formData.scraper_config?.map(source => (
+                                            <ConnectSourceCard
+                                                key={source.id}
+                                                source={source}
+                                                onDelete={handleDeleteSource}
+                                                onToggle={handleToggleSource}
+                                            />
+                                        ))
+                                    )}
                                 </div>
                             </div>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">Automated ingestion for Partner events (Instagram, Website)</p>
-                        </div>
+                        )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <InputField
-                                label="Scrape Source URL (Public IG or Web)"
-                                name="scrape_source_url"
-                                value={formData.scrape_source_url}
-                                icon={Globe}
-                                placeholder="https://instagram.com/yourvenue"
-                            />
-
-                            <div className="flex flex-col justify-end pb-2">
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${formData.is_scraping_enabled ? 'bg-primary border-primary' : 'border-slate-600 bg-transparent'} `}>
-                                        {formData.is_scraping_enabled && <ChevronRight className="w-3 h-3 text-black font-bold" />}
-                                    </div>
-                                    <input
-                                        type="checkbox"
-                                        name="is_scraping_enabled"
-                                        checked={formData.is_scraping_enabled || false}
-                                        onChange={e => setFormData(prev => ({ ...prev, is_scraping_enabled: e.target.checked }))}
-                                        className="hidden"
-                                    />
-                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">Enable Autopilot Scraping</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-2">
-                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Scraper History</p>
-                            <div className="flex justify-between items-center">
-                                <span className="text-[10px] text-slate-400 font-medium">Last synced:</span>
-                                <span className="text-[10px] text-white font-black uppercase tracking-widest">
-                                    {venue.last_scrape_timestamp ? format(venue.last_scrape_timestamp, 'MMM d, h:mm a') : 'NEVER'}
-                                </span>
-                            </div>
-                        </div>
+                        <AddSourceModal
+                            isOpen={isAddSourceModalOpen}
+                            onClose={() => setIsAddSourceModalOpen(false)}
+                            onAdd={handleAddSource}
+                            existingUrls={formData.scraper_config?.map(s => s.url) || []}
+                        />
                     </div>
                 )}
             </section>

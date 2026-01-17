@@ -34,10 +34,12 @@ export const artieChatLogic = genkitAi.defineFlow({
         userId: z.string().optional(),
         userRole: z.string().optional(),
         venueId: z.string().optional(),
+        _hp_id: z.string().optional(), // Honeypot field (should be empty)
+        contextDate: z.string().optional(),
     }),
     outputSchema: z.any(), // Can be string or stream
 }, async (input) => {
-    const { history, question, userId, userRole, venueId } = input;
+    const { history, question, userId, userRole, venueId, contextDate } = input;
 
     try {
         const service = getGemini();
@@ -60,7 +62,12 @@ export const artieChatLogic = genkitAi.defineFlow({
         // 3. Prepare Universal System Instructions
         const universalSystemInstruction = await GeminiService.generateSystemPrompt(userId, userRole, input.venueId);
 
-        const dynamicSystemInstruction = `${pulseContext}\n\n${universalSystemInstruction}`;
+        let timeContext = '';
+        if (contextDate) {
+            timeContext = `\n\n[TIME CONTEXT]\nCurrent User Local Time: ${contextDate}\nAssume all questions about "today", "tonight", or "now" refer to this time.`;
+        }
+
+        const dynamicSystemInstruction = `${pulseContext}\n\n${universalSystemInstruction}${timeContext}`;
 
         // [FINOPS] Check for or create context cache
         let cachedContent = null;

@@ -26,7 +26,7 @@ const FlyerGeneratorInput = z.object({
 export const generateSocialFlyerFlow = onCall(
     {
         cors: true,
-        secrets: ["GOOGLE_API_KEY", "GOOGLE_MAPS_API_KEY"],
+        secrets: ["GOOGLE_API_KEY", "google-maps-api-key"],
         region: 'us-west1'
     },
     async (request) => {

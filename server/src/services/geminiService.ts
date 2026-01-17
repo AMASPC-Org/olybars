@@ -370,4 +370,109 @@ export class GeminiService {
             throw new Error(`Image Generation Failed: ${error.message}`);
         }
     }
+
+    async analyzeScrapedContent(rawContent: string, currentTime: string, target: 'EVENTS' | 'MENU' | 'NEWSLETTER' | 'SOCIAL_FEED' = 'EVENTS'): Promise<any> {
+        let prompt = '';
+
+        if (target === 'EVENTS') {
+            prompt = `You are Schmidt, the Lead Architect of OlyBars.
+            TASK: Extract all upcoming nightlife events from the provided raw page content.
+            
+            CONTEXT:
+            Current Date Context: ${currentTime} (Use this to resolve relative dates like "Tonight", "This Friday", or "Tomorrow").
+            Venue Location: Olympia, WA (Pacific Time).
+            
+            EXTRACTION RULES:
+            1. Extract ALL unique events found in the text.
+            2. TITLE: Catchy, clear. Shorten if it's too long.
+            3. DATE: Convert to ISO (YYYY-MM-DD). If "tonight", use the system date.
+            4. TIME: Convert to 24h format (HH:mm). If only "7 PM" is listed, use "19:00".
+            5. TYPE: One of: trivia, karaoke, live_music, bingo, sports, comedy, happy_hour, other.
+            6. DESCRIPTION: 1-2 sentence high-energy pitch.
+            
+            LCB COMPLIANCE:
+            - If the text mentions "Free drinks", "Bottomless", or "Unlimited alcohol", FLAG it in the description or pivot to focus on the experience.
+            
+            OUTPUT FORMAT (JSON ARRAY ONLY):
+            [{
+              "title": "string",
+              "date": "YYYY-MM-DD",
+              "time": "HH:mm",
+              "type": "string",
+              "description": "string",
+              "sourceConfidence": number (0.0 to 1.0)
+            }]
+            
+            Note: If no events are found, return an empty array [].
+            `;
+        } else if (target === 'MENU') {
+            prompt = `You are Schmidt, the Lead Architect of OlyBars.
+            TASK: Analyze this menu/webpage and extract "Hero Items" and "Special Deals".
+            
+            CONTEXT:
+            Current Date Context: ${currentTime}.
+            Venue Location: Olympia, WA.
+
+            EXTRACTION RULES:
+            1. HIGHLIGHTS: Identify 3-5 distinct items that define this place (e.g., "Signature Burger", "Flight of 4", "Taco Tuesday Special").
+            2. DEALS: Extract any happy hour rules or time-based offers.
+            3. SUMMARY: A 2-sentence vibe check of the menu (e.g., "Pub grub heavy on fryers but great selection of local drafts.").
+
+            OUTPUT FORMAT (JSON ONLY):
+            {
+                "highlights": ["string"],
+                "deals": [{ "title": "string", "details": "string" }],
+                "menuSummary": "string",
+                "sourceConfidence": number
+            }
+            `;
+        } else if (target === 'NEWSLETTER') {
+            prompt = `You are Schmidt, the Lead Architect of OlyBars.
+            TASK: Extract key announcements from this text.
+            
+            CONTEXT:
+            Current Date Context: ${currentTime}.
+            
+            EXTRACTION RULES:
+            1. LOOK FOR: Closures, Grand Openings, New Menu Launches, Special Guests.
+            2. IGNORE: Generic marketing fluff ("We create memories").
+            3. OUTPUT: A concise bulleted list of ACTUAL news.
+            
+            OUTPUT FORMAT (JSON ONLY):
+            {
+                "newsItems": ["string"],
+                "hasUrgentNews": boolean,
+                "sourceConfidence": number
+            }
+            `;
+        } else {
+            // Default/Fallback
+            prompt = `Analyze this text and extract key summary points relevant to nightlife. Output JSON: { "summary": string }`;
+        }
+
+        const response = await this.genAI.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: [{
+                role: 'user',
+                parts: [
+                    { text: prompt },
+                    { text: `RAW PAGE CONTENT:\n\n${rawContent.substring(0, 20000)}` } // Token clamp
+                ]
+            }],
+            systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
+            config: { response_mime_type: "application/json" }
+        });
+
+        let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!text) return target === 'EVENTS' ? [] : null;
+        text = text.replace(/```json\n?|```/g, '').trim();
+
+        try {
+            const result = JSON.parse(text);
+            return result;
+        } catch (e) {
+            console.error("JSON Parse Error on Scraped Content Analysis:", text);
+            return target === 'EVENTS' ? [] : null;
+        }
+    }
 }

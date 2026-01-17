@@ -163,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <button onClick={() => handleNavigation('/meet-artie')} className="w-full bg-slate-900/50 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
                         <div className="flex items-center gap-4">
                             <Bot className="w-4 h-4 text-primary" />
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Meet Artie</span>
+                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">About the AI Assistant</span>
                         </div>
                         <ChevronRight className="w-3 h-3 text-slate-700 group-hover:text-primary" />
                     </button>
@@ -222,8 +222,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 <Zap className="w-4 h-4 text-primary" />
                             </div>
                             <div className="text-left">
-                                <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Partner Access</span>
-                                <span className="block text-sm font-black uppercase text-white group-hover:text-primary transition-colors">Switch To Partner Mode</span>
+                                <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Operations Control</span>
+                                <span className="block text-sm font-black uppercase text-white group-hover:text-primary transition-colors">Switch To Schmidt Mode</span>
                             </div>
                         </div>
                         <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-white" />
@@ -331,7 +331,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <User className="w-4 h-4 text-slate-400" />
                         </div>
                         <div className="text-left">
-                            <span className="block text-[10px] font-black uppercase tracking-widest text-slate-500">Exit Work Mode</span>
+                            <span className="block text-[10px] font-black uppercase tracking-widest text-slate-500">Exit Operations</span>
                             <span className="block text-sm font-black uppercase text-white group-hover:text-slate-200 transition-colors">Back To Player View</span>
                         </div>
                     </div>
