@@ -7,7 +7,7 @@ import { X } from 'lucide-react';
 // --- CONFIG & TYPES ---
 import { queryClient } from './lib/queryClient';
 import {
-  Venue, PointsReason, UserProfile, ClockInRecord, UserAlertPreferences, VenueStatus, ActivityLog, GameStatus
+  Venue, PointsReason, UserProfile, ClockInRecord, UserAlertPreferences, VenueStatus, ActivityLog, GameStatus, VibeCheckRecord
 } from './types';
 import { isSystemAdmin } from './types/auth_schema';
 
@@ -54,6 +54,7 @@ const HistoryFeedScreen = lazy(() => import('./features/history/screens/HistoryF
 const HistoryArticleScreen = lazy(() => import('./features/history/screens/HistoryArticleScreen').then(m => ({ default: m.HistoryArticleScreen })));
 const SettingsScreen = lazy(() => import('./features/profile/screens/SettingsScreen')); // Default export
 const AuthPage = lazy(() => import('./features/auth/screens/AuthPage').then(m => ({ default: m.AuthPage })));
+const PassportScreen = lazy(() => import('./features/league/screens/PassportScreen').then(m => ({ default: m.PassportScreen })));
 
 // --- UTILS & HELPERS ---
 import { cookieService } from './services/cookieService';
@@ -173,6 +174,7 @@ export default function OlyBarsApp() {
 
   const [userPoints, setUserPoints] = useState(() => parseInt(localStorage.getItem('oly_points') || '0'));
   const [clockInHistory, setClockInHistory] = useState<ClockInRecord[]>(() => JSON.parse(localStorage.getItem('oly_clockins') || '[]'));
+  const [vibeCheckHistory, setVibeCheckHistory] = useState<VibeCheckRecord[]>(() => JSON.parse(localStorage.getItem('oly_vibe_history') || '[]'));
   const [alertPrefs, setAlertPrefs] = useState<UserAlertPreferences>(() => JSON.parse(localStorage.getItem('oly_prefs') || '{"nightlyDigest":true,"weeklyDigest":true,"followedVenues":[],"interests":[]}'));
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
@@ -239,6 +241,14 @@ export default function OlyBarsApp() {
   useEffect(() => {
     localStorage.setItem('oly_clockins', JSON.stringify(clockInHistory));
   }, [clockInHistory]);
+
+  useEffect(() => {
+    localStorage.setItem('oly_vibe_history', JSON.stringify(vibeCheckHistory));
+  }, [vibeCheckHistory]);
+
+  useEffect(() => {
+    localStorage.setItem('oly_vibe_history', JSON.stringify(vibeCheckHistory));
+  }, [vibeCheckHistory]);
 
   useEffect(() => {
     localStorage.setItem('oly_prefs', JSON.stringify(alertPrefs));
@@ -316,8 +326,10 @@ export default function OlyBarsApp() {
       return;
     }
 
-    setSelectedVenue(venue);
-    setShowClockInModal(true);
+    React.startTransition(() => {
+      setSelectedVenue(venue);
+      setShowClockInModal(true);
+    });
   };
 
   const handleVibeCheck = (venue: Venue) => {
@@ -393,6 +405,17 @@ export default function OlyBarsApp() {
       }
     };
     setCurrentReceipt(receipt);
+
+    // Persist to Local History (optimistic)
+    setVibeCheckHistory(prev => [
+      {
+        venueId: venue.id,
+        timestamp: Date.now(),
+        status,
+        points: (hasConsent ? 20 : 5) + (photoUrl ? 10 : 0) + gameBonus
+      },
+      ...prev
+    ]);
   };
 
   const handleToggleWeeklyBuzz = async () => {
@@ -485,8 +508,8 @@ export default function OlyBarsApp() {
       <Router>
         <DiscoveryProvider>
           <ScrollToTop />
-          <div className="h-full bg-background overflow-hidden relative">
-            <Suspense fallback={<LoadingScreen />}>
+          <Suspense fallback={<LoadingScreen />}>
+            <div className="h-full bg-background overflow-hidden relative">
               <Routes>
                 <Route
                   path="*"
@@ -541,6 +564,8 @@ export default function OlyBarsApp() {
                       onVenueDashboardClick={() => setShowOwnerDashboard(true)}
                       showArtie={showArtie}
                       setShowArtie={setShowArtie}
+                      clockInHistory={clockInHistory}
+                      vibeCheckHistory={vibeCheckHistory}
                     />
                   }
                 >
@@ -558,7 +583,7 @@ export default function OlyBarsApp() {
                       }
                     />
                     <Route
-                      path="venues"
+                      path="bars"
                       element={
                         <>
                           <SEO title="Bar Directory" description="The complete index of bars, taprooms, and lounges in Thurston County." />
@@ -567,13 +592,13 @@ export default function OlyBarsApp() {
                       }
                     />
                     <Route
-                      path="venues/:id"
+                      path="bars/:id"
                       element={
                         <VenueProfileScreen />
                       }
                     />
                     <Route
-                      path="venues/:id/events"
+                      path="bars/:id/events"
                       element={
                         <EventsScreen venues={venues} />
                       }
@@ -609,6 +634,17 @@ export default function OlyBarsApp() {
                           onAskArtie={() => setShowArtie(true)}
                         />
                       </>
+                    }
+                  />
+                  <Route
+                    path="passport"
+                    element={
+                      <PassportScreen
+                        venues={venues}
+                        userProfile={userProfile}
+                        clockInHistory={clockInHistory}
+                        vibeCheckHistory={vibeCheckHistory}
+                      />
                     }
                   />
                   <Route path="partners/claim" element={<ClaimVenuePage />} />
@@ -687,106 +723,107 @@ export default function OlyBarsApp() {
                   <Route path="ai/conduct" element={<><SEO title="AI Conduct Policy" description="Rules and standards for AI agents interacting with the OlyBars ecosystem." /><AIConductScreen /></>} />
                 </Route>
               </Routes>
-            </Suspense>
 
-            <LoginModal
-              isOpen={showLoginModal}
-              onClose={() => setShowLoginModal(false)}
-              loginMode={loginMode}
-              setLoginMode={setLoginMode}
-              userSubMode={userSubMode}
-              setUserSubMode={setUserSubMode}
-              userProfile={userProfile}
-              setUserProfile={setUserProfile}
-              venues={venues}
-              alertPrefs={alertPrefs}
-              setAlertPrefs={setAlertPrefs}
-              openInfo={openInfo}
-              onOwnerSuccess={() => setShowOwnerDashboard(true)}
-            />
-
-            {showOnboarding && (
-              <OnboardingModal
-                isOpen={showOnboarding}
-                onClose={() => setShowOnboarding(false)}
-                userRole={userProfile.role}
-              />
-            )}
-
-            {showOwnerDashboard && (
-              <OwnerDashboardScreen
-                isOpen={showOwnerDashboard}
-                onClose={() => setShowOwnerDashboard(false)}
-                venues={venues}
-                updateVenue={handleUpdateVenue}
+              <LoginModal
+                isOpen={showLoginModal}
+                onClose={() => setShowLoginModal(false)}
+                loginMode={loginMode}
+                setLoginMode={setLoginMode}
+                userSubMode={userSubMode}
+                setUserSubMode={setUserSubMode}
                 userProfile={userProfile}
-                initialVenueId={ownerDashboardInitialVenueId}
-                initialView={ownerDashboardInitialView}
+                setUserProfile={setUserProfile}
+                venues={venues}
+                alertPrefs={alertPrefs}
+                setAlertPrefs={setAlertPrefs}
+                openInfo={openInfo}
+                onOwnerSuccess={() => setShowOwnerDashboard(true)}
               />
-            )}
 
-            {showClockInModal && selectedVenue && (
-              <ClockInModal
-                isOpen={showClockInModal}
-                onClose={() => setShowClockInModal(false)}
-                selectedVenue={selectedVenue}
-                awardPoints={awardPoints}
-                setClockInHistory={setClockInHistory}
-                setClockedInVenue={setClockedInVenue}
-                vibeChecked={vibeCheckedVenue === selectedVenue.id}
-                onVibeCheckPrompt={() => {
-                  setVibeVenue(selectedVenue);
-                  setShowVibeCheckModal(true);
-                  setShowClockInModal(false);
-                }}
-                isLoggedIn={userProfile.uid !== 'guest'}
-                userId={userProfile.uid}
-                onLogin={handleMemberLoginClick}
-              />
-            )}
+              {showOnboarding && (
+                <OnboardingModal
+                  isOpen={showOnboarding}
+                  onClose={() => setShowOnboarding(false)}
+                  userRole={userProfile.role}
+                />
+              )}
 
-            {showVibeCheckModal && vibeVenue && (
-              <VibeCheckModal
-                isOpen={showVibeCheckModal}
-                onClose={() => setShowVibeCheckModal(false)}
-                venue={vibeVenue}
-                onConfirm={confirmVibeCheck}
-                clockedIn={clockedInVenue === vibeVenue.id}
-                onClockInPrompt={() => {
-                  setSelectedVenue(vibeVenue);
-                  setShowClockInModal(true);
-                  setShowVibeCheckModal(false);
-                }}
-                isLoggedIn={userProfile.uid !== 'guest'}
-                onLogin={handleMemberLoginClick}
-              />
-            )}
+              {showOwnerDashboard && (
+                <OwnerDashboardScreen
+                  isOpen={showOwnerDashboard}
+                  onClose={() => setShowOwnerDashboard(false)}
+                  venues={venues}
+                  updateVenue={handleUpdateVenue}
+                  userProfile={userProfile}
+                  initialVenueId={ownerDashboardInitialVenueId}
+                  initialView={ownerDashboardInitialView}
+                />
+              )}
 
-            {showMakerSurvey && (
-              <MakerSurveyModal
-                isOpen={showMakerSurvey}
-                onClose={() => {
-                  setShowMakerSurvey(false);
-                  // Optimistic update to prevent re-trigger in this session
-                  setUserProfile(prev => ({ ...prev, hasCompletedMakerSurvey: true }));
-                }}
-                userId={userProfile.uid}
-              />
-            )}
+              {showClockInModal && selectedVenue && (
+                <ClockInModal
+                  isOpen={showClockInModal}
+                  onClose={() => setShowClockInModal(false)}
+                  selectedVenue={selectedVenue}
+                  awardPoints={awardPoints}
+                  setClockInHistory={setClockInHistory}
+                  setClockedInVenue={setClockedInVenue}
+                  vibeChecked={vibeCheckedVenue === selectedVenue.id}
+                  onVibeCheckPrompt={() => {
+                    setVibeVenue(selectedVenue);
+                    setShowVibeCheckModal(true);
+                    setShowClockInModal(false);
+                  }}
+                  isLoggedIn={userProfile.uid !== 'guest'}
+                  userId={userProfile.uid}
+                  onLogin={handleMemberLoginClick}
+                />
+              )}
 
-            {currentReceipt && (
-              <VibeReceiptModal
-                data={currentReceipt}
-                onClose={() => setCurrentReceipt(null)}
-                isLoggedIn={userProfile.uid !== 'guest'}
-                onLogin={handleMemberLoginClick}
-              />
-            )}
+              {showVibeCheckModal && vibeVenue && (
+                <VibeCheckModal
+                  isOpen={showVibeCheckModal}
+                  onClose={() => setShowVibeCheckModal(false)}
+                  venue={vibeVenue}
+                  onConfirm={confirmVibeCheck}
+                  clockedIn={clockedInVenue === vibeVenue.id}
+                  onClockInPrompt={() => {
+                    setSelectedVenue(vibeVenue);
+                    setShowClockInModal(true);
+                    setShowVibeCheckModal(false);
+                  }}
+                  isLoggedIn={userProfile.uid !== 'guest'}
+                  onLogin={handleMemberLoginClick}
+                />
+              )}
 
-            <InfoPopup infoContent={infoContent} setInfoContent={setInfoContent} />
-          </div>
+              {showMakerSurvey && (
+                <MakerSurveyModal
+                  isOpen={showMakerSurvey}
+                  onClose={() => {
+                    setShowMakerSurvey(false);
+                    // Optimistic update to prevent re-trigger in this session
+                    setUserProfile(prev => ({ ...prev, hasCompletedMakerSurvey: true }));
+                  }}
+                  userId={userProfile.uid}
+                />
+              )}
+
+              {currentReceipt && (
+                <VibeReceiptModal
+                  data={currentReceipt}
+                  onClose={() => setCurrentReceipt(null)}
+                  isLoggedIn={userProfile.uid !== 'guest'}
+                  onLogin={handleMemberLoginClick}
+                />
+              )}
+
+              <InfoPopup infoContent={infoContent} setInfoContent={setInfoContent} />
+            </div>
+          </Suspense>
         </DiscoveryProvider>
       </Router>
     </ErrorBoundary >
+
   );
 }

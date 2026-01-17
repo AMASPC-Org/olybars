@@ -1,4 +1,5 @@
-﻿import express from 'express';
+﻿console.log('🔄 [DEBUG] Server process starting...');
+import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -7,6 +8,8 @@ import { config } from './appConfig/config.js';
 import { fetchVenues, clockIn, getVenueById } from './venueService.js';
 import { isAiBot, getBotName } from './utils/botDetector.js';
 import { verifyToken, requireRole, requireVenueAccess, verifyAppCheck, identifyUser } from './middleware/authMiddleware.js';
+import { vibeNormalizer } from './middleware/vibeNormalizer.js';
+
 import {
     ClockInSchema,
     PlayClockInSchema,
@@ -189,7 +192,7 @@ app.get('/', (req, res) => {
     res.send(`
     <body style="background: #0f172a; color: #fbbf24; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0;">
       <h1 style="font-size: 3rem; margin-bottom: 0;">OLYBARS BACKEND</h1>
-      <p style="color: #94a3b8; font-size: 1.2rem;">Artie Relay is Online! ðŸ»</p>
+      <p style="color: #94a3b8; font-size: 1.2rem;">Artie Relay is Online! 🍺</p>
       <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="margin-top: 2rem; padding: 1rem 2rem; background: #fbbf24; color: #000; text-decoration: none; font-weight: bold; border-radius: 0.5rem;">Launch Frontend</a>
     </body>
   `);
@@ -212,6 +215,16 @@ app.get('/health', (req, res) => {
  * @route GET /api/health/artie
  * @desc Artie Health Check (Authenticated)
  */
+v1Router.get('/health', (req, res) => {
+    res.json({
+        status: 'popping',
+        timestamp: Date.now(),
+        env: config.NODE_ENV,
+        version: '1.0.0-hardened',
+        router: 'v1'
+    });
+});
+
 v1Router.get('/health/artie', async (req, res) => {
     const internalToken = req.header('X-Internal-Token');
     const expectedToken = config.INTERNAL_HEALTH_TOKEN;
@@ -298,7 +311,7 @@ v1Router.post('/clock-in', verifyAppCheck, verifyToken, async (req, res) => {
  * @route POST /api/vibe-check
  * @desc Submit a vibe check (Signal + Points)
  */
-v1Router.post('/vibe-check', verifyToken, async (req, res) => {
+v1Router.post('/vibe-check', verifyToken, vibeNormalizer, async (req, res) => {
     const { VibeCheckSchema } = await import('./utils/validation.js'); // Dynamic import to ensure schema is loaded
     const validation = VibeCheckSchema.safeParse(req.body);
 
@@ -459,7 +472,7 @@ v1Router.get('/users/me/history', verifyToken, async (req, res) => {
  * @route PATCH /api/venues/:id
  * @desc Update general venue information (Listing management)
  */
-v1Router.patch('/venues/:id', verifyToken, requireVenueAccess('manager'), async (req, res) => {
+v1Router.patch('/venues/:id', verifyToken, requireVenueAccess('manager'), vibeNormalizer, async (req, res) => {
     const { id } = req.params;
     const validation = VenueUpdateSchema.safeParse(req.body.updates);
     if (!validation.success) {
@@ -584,23 +597,6 @@ v1Router.patch('/venues/:id/private', verifyToken, requireVenueAccess('manager')
     }
 });
 
-/**
- * @route GET /api/venues/check-claim
- * @desc Check if a venue is already claimed by Google Place ID
- */
-v1Router.get('/venues/check-claim', async (req, res) => {
-    const { googlePlaceId } = req.query;
-    if (!googlePlaceId) return res.status(400).json({ error: 'Missing googlePlaceId' });
-
-    try {
-        const { checkVenueClaimStatus } = await import('./venueService.js');
-        const status = await checkVenueClaimStatus(googlePlaceId as string);
-        res.json(status);
-    } catch (error: any) {
-        log('ERROR', 'Failed to check venue claim status', { googlePlaceId, error: error.message });
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
 
 /**
  * @route POST /api/partners/onboard
@@ -1381,7 +1377,7 @@ v1Router.post('/utils/send-email', verifyToken, async (req, res) => {
 
     try {
         // Log the dispatch (Simulating real mailer)
-        console.log(`\nðŸ“¨ --- BACKEND EMAIL DISPATCH ---`);
+        console.log(`\n📧 --- BACKEND EMAIL DISPATCH ---`);
         console.log(`From: ${fromName || 'OlyBars Admin'}`);
         console.log(`To: ${Array.isArray(to) ? to.join(', ') : to}`);
         console.log(`Subject: ${subject}`);

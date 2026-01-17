@@ -196,7 +196,7 @@ export class GeminiService {
            "type": "YIELD_BOOST",
            "message": "Schmidt-style pitch (Direct, business-focused, citing the data)",
            "actionLabel": "Approve Flash Bounty",
-           "actionSkill": "update_flash_deal",
+           "actionSkill": "schedule_flash_deal",
            "actionParams": {
               "summary": "Title of deal",
               "details": "Details including safe ride info",

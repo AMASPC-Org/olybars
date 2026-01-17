@@ -1,4 +1,8 @@
-import admin from 'firebase-admin';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const admin = require('firebase-admin');
+
+import type * as AdminTypes from 'firebase-admin';
 
 import { config } from './appConfig/config.js';
 
@@ -25,7 +29,7 @@ if (!admin.apps.length) {
     });
 }
 
-export const db = admin.firestore();
-export const auth = admin.auth();
-export const appCheck = admin.appCheck();
-export const storage = admin.storage();
+export const db = admin.firestore() as AdminTypes.firestore.Firestore;
+export const auth = admin.auth() as AdminTypes.auth.Auth;
+export const appCheck = admin.appCheck() as AdminTypes.appCheck.AppCheck;
+export const storage = admin.storage() as AdminTypes.storage.Storage;

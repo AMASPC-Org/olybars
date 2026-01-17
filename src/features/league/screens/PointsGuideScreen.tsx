@@ -19,7 +19,7 @@ const PointsGuideScreen: React.FC = () => {
                 {
                     name: 'Vibe Check',
                     points: '5 pts',
-                    desc: 'Confirm the current energy (Dead, Chill, Buzzing, Packed) for the city map and homepage.',
+                    desc: 'Confirm the current energy (Mellow, Chill, Buzzing, Packed) for the city map and homepage.',
                     icon: Zap,
                     color: 'bg-primary/20 text-primary'
                 }

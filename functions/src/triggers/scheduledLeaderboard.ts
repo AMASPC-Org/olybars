@@ -13,10 +13,19 @@ const db = admin.firestore();
  * Runs every 60 minutes.
  * Fetches top 50 profiles and stores them in a single document for FinOps optimization.
  */
-export const scheduledLeaderboardSnapshot = onSchedule("every 60 minutes", async (event) => {
+export const scheduledLeaderboardSnapshot = onSchedule({
+    schedule: "every 30 minutes", // Increased frequency for real-time feel
+    region: "us-west1",
+    memory: "256MiB"
+}, async (event) => {
     logger.info("[FinOps] Starting Leaderboard Snapshot...");
 
     try {
+        // 1. Get total members count efficiently
+        const countSnapshot = await db.collection("public_profiles").count().get();
+        const totalMembers = countSnapshot.data().count;
+
+        // 2. Fetch top 50
         const snapshot = await db.collection("public_profiles")
             .orderBy("league_stats.points", "desc")
             .limit(50)
@@ -37,7 +46,7 @@ export const scheduledLeaderboardSnapshot = onSchedule("every 60 minutes", async
 
         await db.collection("system_data").doc("leaderboard").set({
             topUsers: leaderboardData,
-            totalMembers: entryCount, // Approximate count from the query
+            totalMembers: totalMembers,
             lastUpdated: admin.firestore.FieldValue.serverTimestamp()
         });
 

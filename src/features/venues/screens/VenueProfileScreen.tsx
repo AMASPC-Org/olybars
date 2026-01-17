@@ -239,7 +239,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                     "@type": "ListItem",
                     "position": 3,
                     "name": venue.name,
-                    "item": `https://olybars.com/venues/${venue.id}`
+                    "item": `https://olybars.com/bars/${venue.id}`
                 }
             ]
         };
@@ -511,13 +511,27 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
 
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="bg-surface border-[1.5px] border-primary p-4 rounded-2xl flex flex-col items-center gap-1 shadow-[0_0_15px_rgba(251,191,36,0.15)] relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        {venue.status === 'buzzing' || venue.status === 'packed' ? <Flame className="w-5 h-5 text-orange-500 animate-pulse fill-orange-500/20" /> :
-                            venue.status === 'chill' ? <Users className="w-5 h-5 text-yellow-400 fill-yellow-400/20" /> :
-                                <Beer className="w-5 h-5 text-blue-400 fill-blue-400/20" />}
+                    <div className={`bg-surface border-[1.5px] p-4 rounded-2xl flex flex-col items-center gap-1 relative overflow-hidden group ${(venue.status === 'buzzing' || venue.status === 'packed') ? 'border-primary shadow-[0_0_15px_rgba(251,191,36,0.15)]' :
+                            venue.status === 'chill' ? 'border-blue-400/50 shadow-[0_0_10px_rgba(59,130,246,0.1)]' :
+                                'border-slate-700 shadow-none'
+                        }`}>
+                        <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity ${(venue.status === 'buzzing' || venue.status === 'packed') ? 'bg-primary/5' : 'bg-white/5'
+                            }`} />
+
+                        {(venue.status === 'buzzing' || venue.status === 'packed') ?
+                            <Flame className="w-5 h-5 text-orange-500 animate-pulse fill-orange-500/20" /> :
+                            venue.status === 'chill' ?
+                                <Users className="w-5 h-5 text-blue-400 fill-blue-400/20" /> :
+                                <Beer className="w-5 h-5 text-slate-500 fill-slate-500/20" />
+                        }
+
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest relative z-10">Energy</span>
-                        <span className="text-sm font-black text-white uppercase font-league relative z-10">{venue.status}</span>
+                        <span className={`text-sm font-black uppercase font-league relative z-10 ${(venue.status === 'buzzing' || venue.status === 'packed') ? 'text-white' :
+                                venue.status === 'chill' ? 'text-blue-100' :
+                                    'text-slate-400'
+                            }`}>
+                            {venue.status === 'dead' ? 'MELLOW' : venue.status}
+                        </span>
                     </div>
                     <div className="bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
                         <Trophy className="w-5 h-5 text-primary" />
@@ -991,7 +1005,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                             </p>
                             <div className="grid grid-cols-1 gap-2">
                                 {venues.filter(v => v.carryingMakers?.includes(venue.id) || venue.scavengerHunts?.[0]?.partnerVenues.includes(v.id)).map(carrier => (
-                                    <div key={carrier.id} onClick={() => navigate(`/venues/${carrier.id}`)} className="flex items-center justify-between p-3 bg-black/40 rounded-lg border border-white/5 cursor-pointer hover:bg-white/5 transition-colors group">
+                                    <div key={carrier.id} onClick={() => navigate(`/bars/${carrier.id}`)} className="flex items-center justify-between p-3 bg-black/40 rounded-lg border border-white/5 cursor-pointer hover:bg-white/5 transition-colors group">
                                         <div className="flex items-center gap-3">
                                             <Beer className="w-4 h-4 text-slate-500 group-hover:text-primary transition-colors" />
                                             <span className="font-bold text-sm text-white">{carrier.name}</span>

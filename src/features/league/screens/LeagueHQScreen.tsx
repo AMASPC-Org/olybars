@@ -11,9 +11,10 @@ interface LeagueHQScreenProps {
   isLeagueMember?: boolean;
   onJoinClick?: (mode?: 'login' | 'signup') => void;
   onAskArtie?: () => void;
+  onPassportClick?: () => void;
 }
 
-export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeagueMember = true, onJoinClick, onAskArtie }) => {
+export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeagueMember = true, onJoinClick, onAskArtie, onPassportClick }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') as LeagueTab || 'league';
@@ -309,7 +310,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
             {venues.map(v => (
               <div
                 key={v.id}
-                onClick={() => navigate(`/venues/${v.id}`)}
+                onClick={() => navigate(`/bars/${v.id}`)}
                 className="bg-background/50 p-4 rounded-xl flex justify-between items-center border border-slate-800 hover:border-primary/30 hover:bg-slate-900/50 cursor-pointer transition-all mx-2 group"
               >
                 <span className="font-league text-white text-lg tracking-wide uppercase group-hover:text-primary transition-colors">{v.name}</span>
@@ -401,13 +402,19 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
               >
                 <Trophy size={14} /> Standings
               </button>
+              <button
+                onClick={() => navigate('/passport')}
+                className="bg-slate-800 text-white font-league font-black text-sm px-8 py-2.5 rounded-lg shadow-lg border border-slate-700 hover:bg-slate-700 transition-colors uppercase tracking-wider flex items-center gap-2"
+              >
+                <ShieldCheck size={14} /> Passport
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Sub Nav Bubbles (Moved up as requested) */}
-      <div className="flex gap-3 overflow-x-auto pb-6 mb-4 scrollbar-hide no-scrollbar px-1">
+      <div className="flex gap-3 overflow-x-auto pb-6 mb-4 px-1">
         {(['league', 'prizes', 'bars', 'rules'] as LeagueTab[]).map((tab) => (
           <button
             key={tab}

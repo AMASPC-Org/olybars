@@ -36,10 +36,11 @@ service cloud.firestore {
     }
     
     function isOwnerOf(venueId) {
-      // Schmidt Logic: Verify specific venue ownership from token claims
+      // Schmidt Logic: Verify specific venue ownership from token claims OR direct doc lookup
       return isAuthenticated() && (
         request.auth.token.role == 'owner' && request.auth.token.venueId == venueId ||
-        getUserData().venuePermissions[venueId] == 'owner'
+        getUserData().venuePermissions[venueId] == 'owner' ||
+        get(/databases/$(database)/documents/venues/$(venueId)).data.ownerId == request.auth.uid
       );
     }
 

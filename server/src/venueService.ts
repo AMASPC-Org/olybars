@@ -1,6 +1,6 @@
 import { PULSE_CONFIG } from '../../src/config/pulse.js';
 import { db } from './firebaseAdmin.js';
-import admin from 'firebase-admin';
+
 import { Venue, Signal, SignalType, Badge, UserBadgeProgress, VenueStatus, GameStatus } from '../../src/types.js';
 import { geocodeAddress } from './utils/geocodingService.js';
 import { searchPlace, getPlaceDetails } from './utils/placesService.js';
@@ -18,7 +18,7 @@ const stripSensitiveVenueData = (venue: Venue, brief = false): Venue => {
     const stripped = { ...venue };
 
     // 1. Root level sensitive fields
-    const sensitiveFields: (keyof Venue)[] = ['partnerConfig', 'pointBank', 'pointBankLastReset'];
+    const sensitiveFields: (keyof Venue)[] = ['partnerConfig', 'pointBank', 'pointBankLastReset', 'wifiPassword', 'posKey'];
     sensitiveFields.forEach(field => delete (stripped as any)[field]);
 
     // 2. Menu level metadata (Margin Tiers)
@@ -135,7 +135,8 @@ export const updateVenueBuzz = async (venueId: string) => {
         score += decayedValue;
 
         // 2. Calculate Live Headcount (Rolling Window)
-        if (data.timestamp > liveWindowAgo && data.type === 'clock_in') {
+        // [Unified Density] Count Vibe Reports as "Bodies" too
+        if (data.timestamp > liveWindowAgo && (data.type === 'clock_in' || data.type === 'vibe_report')) {
             activeUserIds.add(data.userId);
         }
     });
@@ -166,11 +167,15 @@ export const updateVenueBuzz = async (venueId: string) => {
         consensusClockins.size >= PULSE_CONFIG.CONSENSUS.CLOCKINS_REQUIRED ||
         consensusVibeReports.size >= PULSE_CONFIG.CONSENSUS.VIBE_REPORTS_REQUIRED;
 
-    // If consensus is met, force 'packed'. Otherwise follow score-based status.
-    let calibratedStatus: VenueStatus = 'dead';
-    if (score > PULSE_CONFIG.THRESHOLDS.PACKED) calibratedStatus = 'packed';
-    else if (score > PULSE_CONFIG.THRESHOLDS.BUZZING) calibratedStatus = 'buzzing';
-    else if (score > PULSE_CONFIG.THRESHOLDS.CHILL) calibratedStatus = 'chill';
+    // [Relative Density] Calculate Saturation
+    const capacity = venueData?.capacity || PULSE_CONFIG.PHYSICS.DEFAULT_CAPACITY;
+    const saturation = score / capacity;
+
+    // If consensus is met, force 'packed'. Otherwise follow saturation-based status.
+    let calibratedStatus: VenueStatus = 'mellow';
+    if (saturation > PULSE_CONFIG.THRESHOLDS.PACKED) calibratedStatus = 'packed';
+    else if (saturation > PULSE_CONFIG.THRESHOLDS.BUZZING) calibratedStatus = 'buzzing';
+    else if (saturation > PULSE_CONFIG.THRESHOLDS.CHILL) calibratedStatus = 'chill';
 
     if (isConsensusPacked) calibratedStatus = 'packed';
 
@@ -233,10 +238,13 @@ const applyVirtualDecay = (venue: Venue): Venue => {
     // 2. Determine Status (Respect Manual Override)
     let status = venue.status;
     if (!(venue.manualStatus && venue.manualStatusExpiresAt && venue.manualStatusExpiresAt > now)) {
+        const capacity = venue.capacity || PULSE_CONFIG.PHYSICS.DEFAULT_CAPACITY;
+        const saturation = decayedScore / capacity;
+
         status = 'dead';
-        if (decayedScore > PULSE_CONFIG.THRESHOLDS.PACKED) status = 'packed';
-        else if (decayedScore > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
-        else if (decayedScore > PULSE_CONFIG.THRESHOLDS.CHILL) status = 'chill';
+        if (saturation > PULSE_CONFIG.THRESHOLDS.PACKED) status = 'packed';
+        else if (saturation > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
+        else if (saturation > PULSE_CONFIG.THRESHOLDS.CHILL) status = 'chill';
         else status = 'dead';
     }
 
@@ -453,12 +461,10 @@ export const clockIn = async (venueId: string, userId: string, userLat: number, 
     // Invalidate cache
     venueCache = null;
 
-    // Calculate Dynamic Points (Maker Atlas Protocol Dec 2025)
-    // Base: 10
-    // Local Maker (Supporter/High Local Score): 15 (1.5x)
-    // Master Maker (Hybrid/Verified Production): 20 (2x)
-
-    let points = PULSE_CONFIG.POINTS.CLOCK_IN; // 10.0
+    // Calculate Dynamic Points (The Pioneer Curve - Refactored Jan 2026)
+    // Mellow: 100, Chill: 50, Buzzing: 25, Packed: 10
+    const basePoints = PULSE_CONFIG.POINTS.VIBE_POINTS[venueData.status as VenueStatus] || PULSE_CONFIG.POINTS.VIBE_POINTS.mellow;
+    let points = basePoints;
     const isLocalMakerSupporter = venueData.isLocalMaker === true;
 
     if (isLocalMakerSupporter) {
@@ -474,8 +480,9 @@ export const clockIn = async (venueId: string, userId: string, userLat: number, 
         points,
         verificationMethod,
         metadata: {
-            multiplier: points / 10,
-            isLocalMakerSupporter
+            multiplier: points / basePoints,
+            isLocalMakerSupporter,
+            vibeAtClockIn: venueData.status || 'mellow'
         }
     });
 
@@ -1016,7 +1023,12 @@ export const updateVenue = async (venueId: string, updates: Partial<Venue>, requ
         'privateSpaces', 'hasPrivateRoom', // [FIX] Whitelist private spaces
         'isCinderella', 'cinderellaHours',
         'guestPolicy', 'membershipRequired',
-        'social_auto_sync'
+        'social_auto_sync',
+        'scraper_config', 'is_scraping_enabled', 'scrape_source_url',
+        'wifiPassword', 'posKey', 'capacity',
+        'venueType', 'reservations', 'reservationUrl', 'reservationPolicy',
+        'ticketLink', 'giftCardUrl', 'loyalty_signup_url', 'newsletterUrl',
+        'directMenuUrl', 'orderUrl'
     ];
 
     const playerFields: (keyof Venue)[] = ['status', 'liveGameStatus', 'photos'];
@@ -1456,7 +1468,7 @@ export const generateVenueInsights = async (venueId: string) => {
     if (!venueDoc.exists) throw new Error('Venue not found');
 
     // Lazy import GeminiService to follow OlyBars AI Infrastructure Rules
-    const { GeminiService } = await import('../../functions/src/services/geminiService.js');
+    const { GeminiService } = await import('./services/geminiService.js');
     const gemini = new GeminiService();
 
     return await gemini.generateManagerSuggestion(stats, { id: venueId, ...venueDoc.data() });

@@ -127,7 +127,7 @@ export const artieChatLogic = genkitAi.defineFlow({
 
                     const { ARTIE_SKILLS } = await import('../config/artieSkills.js');
                     const skillId = args.skill_id;
-                    const skill = ARTIE_SKILLS[skillId] || ARTIE_SKILLS['update_flash_deal'];
+                    const skill = ARTIE_SKILLS[skillId] || ARTIE_SKILLS['schedule_flash_deal'];
 
                     const venueOpsSystem = `${dynamicSystemInstruction} \n\n[OPERATOR MODE ACTIVE] ${userId} (${userRole})
 Action: ${skill.name}

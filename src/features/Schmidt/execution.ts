@@ -75,7 +75,7 @@ export const handleConfirmAction = async (ctx: EventSkillContext) => {
             let doneMsg = `Mission achieved! **${draftData.skill.replace(/_/g, ' ')}** is live.`;
 
             if (draftData.skill === 'add_calendar_event') {
-                const eventLink = `/venues/${vId}/events`;
+                const eventLink = `/bars/${vId}/events`;
                 if (eventDraft.imageState !== 'none') {
                     doneMsg = "Event & Assets Saved! Would you like to distribute this to social media now?";
                     addSchmidtResponse(doneMsg, [

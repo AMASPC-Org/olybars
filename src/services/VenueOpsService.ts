@@ -302,17 +302,20 @@ export class VenueOpsService {
     /**
      * Generic update for venue details (whitelisted fields only on backend).
      */
+    /**
+     * Generic update for venue details (whitelisted fields only on backend).
+     * [REFACTOR] Now uses Path A (Secure API) instead of Path B (Direct SDK)
+     */
     static async updateVenue(venueId: string, updates: Partial<Venue>, userId?: string) {
         if (!venueId) throw new Error("Venue ID is required.");
 
         try {
-            const venueRef = doc(db, 'venues', venueId);
-            // We append local metadata if needed, but primarily just send updates
-            // Backend rules will enforce whitelist
-            await updateDoc(venueRef, {
-                ...updates,
-                updatedAt: serverTimestamp()
-            });
+            // Import the secure API wrapper dynamically to avoid circular deps if any
+            const { updateVenueDetails } = await import('./venueService');
+
+            // Delegate to the API layer which enforces the 'ownerManagerFields' whitelist
+            await updateVenueDetails(venueId, updates, userId);
+
             return { success: true };
         } catch (error: any) {
             console.error('Error updating venue:', error);

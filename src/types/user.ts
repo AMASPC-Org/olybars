@@ -23,6 +23,13 @@ export type ClockInRecord = {
     timestamp: number;
 }
 
+export interface VibeCheckRecord {
+    venueId: string;
+    timestamp: number;
+    status: string;
+    points: number;
+}
+
 export type PointsReason = 'clockin' | 'photo' | 'share' | 'vibe' | 'redeem' | 'bonus' | 'play' | 'social_share';
 
 export interface ActivityLog {

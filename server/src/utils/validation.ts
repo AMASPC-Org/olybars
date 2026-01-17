@@ -209,6 +209,17 @@ export const VenueUpdateSchema = z.object({
         description: z.string(),
         bookingLink: z.string().url().optional().or(z.literal(''))
     })).optional(),
+    scraper_config: z.array(z.object({
+        id: z.string(),
+        url: z.string(),
+        target: z.enum(['EVENTS', 'MENU', 'NEWSLETTER', 'SOCIAL_FEED', 'WEBSITE']),
+        isEnabled: z.boolean(),
+        status: z.enum(['pending', 'active', 'failed', 'partial']),
+        lastScraped: z.number().optional(),
+        error: z.string().optional()
+    })).optional(),
+    is_scraping_enabled: z.boolean().optional(),
+    scrape_source_url: z.string().optional(),
 });
 
 export const VenueOnboardSchema = z.object({

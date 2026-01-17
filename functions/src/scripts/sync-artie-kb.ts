@@ -8,7 +8,14 @@ import * as crypto from 'crypto';
 delete process.env.FIRESTORE_EMULATOR_HOST;
 delete process.env.FIREBASE_AUTH_EMULATOR_HOST;
 
-const projectId = 'ama-ecosystem-prod';
+const projectId = process.env.GOOGLE_CLOUD_PROJECT;
+
+if (!projectId) {
+    console.error("❌ CRTICAL ERROR: GOOGLE_CLOUD_PROJECT is not set.");
+    console.error("   To prevent accidental production data wipes, this script requires an explicit target.");
+    console.error("   Usage: cross-env GOOGLE_CLOUD_PROJECT=your-project-id npm run artie:sync");
+    process.exit(1);
+}
 
 if (admin.apps.length === 0) {
     console.log(`📡 [CLOUD] TARGETING REMOTE PROJECT: ${projectId}`);

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
-import { Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info, QrCode, Download, Printer, Calendar, Crown, Clock, Lock, AlertTriangle } from 'lucide-react';
+import { Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info, QrCode, Download, Printer, Calendar, Crown, Clock, Lock, AlertTriangle, ShoppingBag, Utensils } from 'lucide-react';
 import { Venue, UserProfile, GameStatus, PartnerTier, TIER_CONFIG, ScheduledDeal } from '../../../types';
 import { format, addHours, parseISO } from 'date-fns';
 import { OwnerMarketingPromotions } from '../../../components/OwnerMarketingPromotions';
@@ -21,10 +21,13 @@ import { VenueInsight } from '../../../types';
 import { PhotoApprovalCard } from '../../admin/components/PhotoApprovalCard';
 import { Camera } from 'lucide-react';
 import { MenuManagementTab } from '../components/MenuManagementTab';
+import { ScraperManagementTab } from '../components/ScraperManagementTab';
 import { PartnerManualTab } from '../components/PartnerManualTab';
 import { BackRoomManagementTab } from '../components/BackRoomManagementTab';
-import { Book, ShieldCheck } from 'lucide-react';
+import { Book, ShieldCheck, Globe } from 'lucide-react';
 import { MfaService } from '../../../services/mfaService';
+import { BrewHouse } from '../../../components/dashboard/BrewHouse';
+
 
 interface OwnerDashboardProps {
     isOpen: boolean;
@@ -43,17 +46,9 @@ const TOP_PLAYERS = [
 ];
 const DEAL_PRESETS = ["$1 Off Drafts", "$5 Well Drinks", "Half-Price Apps", "BOGO Burgers", "Industry Night"];
 
-const calculatePulseScore = (venue: Venue): number => {
-    let score = 50;
-    switch (venue.status) {
-        case 'buzzing': score += 30; break;
-        case 'chill': score += 15; break;
-    }
-    if (venue.deal) score += 10;
-    if (venue.leagueEvent) score += 10;
-    score += (venue.clockIns || 0) * 1.5;
-    return Math.min(Math.round(score), 100);
-};
+// [REMOVED] Obsolete Client-Side Score Calculation
+// The Vibe Engine (server/src/venueService.ts) now handles all scoring via Density Physics.
+// Do not attempt to replicate 0-100 logic here.
 
 export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     isOpen, onClose, venues, updateVenue, userProfile,
@@ -83,7 +78,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const [dealDescription, setDealDescription] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
     const [showArtieCommands, setShowArtieCommands] = useState(false);
-    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'menu' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports' | 'manual' | 'backroom'>(initialView as any); // Added 'menu', 'manual', 'backroom'
+    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'menu' | 'scraper' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports' | 'manual' | 'backroom'>(initialView as any); // Added 'menu', 'scraper', 'manual', 'backroom'
     const [hourlyReport, setHourlyReport] = useState<any>(null);
     const [selectedReportDate, setSelectedReportDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [statsPeriod, setStatsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
@@ -506,7 +501,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
             {/* Navigation Tabs */}
             {/* Navigation Tabs - Mobile Optimized Scrollable Bar */}
-            <div className="flex items-center overflow-x-auto whitespace-nowrap bg-black border-b border-white/5 no-scrollbar scroll-smooth">
+            <div className="flex items-center overflow-x-auto whitespace-nowrap bg-black border-b border-white/5 scroll-smooth">
                 <button
                     onClick={() => setDashboardView('main')}
                     className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'main' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
@@ -536,6 +531,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                     className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'menu' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                 >
                     THE MENU
+                </button>
+                <button
+                    onClick={() => setDashboardView('scraper')}
+                    className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'scraper' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
+                >
+                    Scrapers
                 </button>
                 <button
                     onClick={() => setDashboardView('events')}
@@ -591,7 +592,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-8 p-6 pb-24 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto space-y-8 p-6 pb-24">
                 {myVenue && dashboardView === 'main' && (
                     <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -599,29 +600,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 <p className="text-[10px] uppercase font-black text-slate-500 mb-1 font-league">Live Clock-ins</p>
                                 <p className="text-4xl font-black text-white font-league">{myVenue.clockIns || 0}</p>
                             </div>
-                            <div className="bg-surface p-4 border border-white/10 rounded-lg shadow-xl">
-                                <div className="flex justify-between items-center mb-2">
-                                    <div className="flex flex-col">
-                                        <p className="text-[10px] uppercase font-black text-slate-500 font-league">Vibe Override (Suggested)</p>
-                                        <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest">SMS Alerts trigger on user consensus only</p>
-                                    </div>
-                                    {myVenue.manualStatusExpiresAt && Date.now() < myVenue.manualStatusExpiresAt && (
-                                        <span className="text-[8px] font-black text-primary uppercase animate-pulse">
-                                            Active {Math.ceil((myVenue.manualStatusExpiresAt - Date.now()) / 60000)}m
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="grid grid-cols-4 sm:grid-cols-4 gap-1">
-                                    {['dead', 'chill', 'buzzing', 'packed'].map((s) => (
-                                        <button
-                                            key={s}
-                                            onClick={() => setManualVibe(s)}
-                                            className={`py-3 sm:py-2 text-[9px] sm:text-[8px] font-black uppercase rounded border transition-all ${myVenue.status === s ? 'bg-primary border-primary text-black' : 'bg-black border-white/5 text-slate-500'}`}
-                                        >
-                                            {s}
-                                        </button>
-                                    ))}
-                                </div>
+                            <div className="bg-surface p-6 border border-white/10 rounded-lg shadow-xl">
+                                <BrewHouse
+                                    currentStatus={myVenue.status || 'mellow'}
+                                    onStatusChange={setManualVibe}
+                                    isLoading={isLoadingPrivate}
+                                />
                             </div>
                         </div>
 
@@ -649,6 +633,56 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             </div>
                             <ChevronRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
                         </button>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <button
+                                onClick={() => {
+                                    setDashboardView('listing');
+                                    setTimeout(() => {
+                                        const element = document.getElementById('hours-section');
+                                        if (element) {
+                                            element.scrollIntoView({ behavior: 'smooth' });
+                                        }
+                                    }, 100);
+                                }}
+                                className="w-full bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 rounded-lg p-4 flex items-center justify-between group active:scale-[0.98] transition-all"
+                            >
+                                <div className="flex items-center gap-3 text-left">
+                                    <div className="p-2 bg-blue-500/20 rounded text-blue-400">
+                                        <Clock className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black uppercase tracking-widest text-white">UPDATE HOURS</p>
+                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Manage standard & seasonal operating hours</p>
+                                    </div>
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-blue-400 group-hover:translate-x-1 transition-transform" />
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    setDashboardView('listing');
+                                    setTimeout(() => {
+                                        const element = document.getElementById('fulfillment-section');
+                                        if (element) {
+                                            element.scrollIntoView({ behavior: 'smooth' });
+                                        }
+                                    }, 100);
+                                }}
+                                className="w-full bg-gradient-to-r from-green-500/10 to-transparent border border-green-500/20 rounded-lg p-4 flex items-center justify-between group active:scale-[0.98] transition-all"
+                            >
+                                <div className="flex items-center gap-3 text-left">
+                                    <div className="p-2 bg-green-500/20 rounded text-green-400">
+                                        <ShoppingBag className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black uppercase tracking-widest text-white">LINKS & FULFILLMENT</p>
+                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Reservations, Ticketing, & External URLs</p>
+                                    </div>
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-green-400 group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        </div>
 
                         {/* Live Game Status Management */}
                         {myVenue.hasGameVibeCheckEnabled && (
@@ -714,7 +748,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center justify-between max-w-xs mx-auto">
+                            <div className="flex items-center justify-between max-w-xs mx-auto mb-6">
                                 <button onClick={() => adjustClockIns(-1)} className="w-16 h-16 flex items-center justify-center bg-black border border-white/10 text-white rounded-xl active:scale-95 transition-transform">
                                     <Minus className="w-8 h-8" />
                                 </button>
@@ -722,6 +756,23 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 <button onClick={() => adjustClockIns(1)} className="w-16 h-16 flex items-center justify-center bg-primary text-black rounded-xl active:scale-95 transition-transform">
                                     <Plus className="w-8 h-8" />
                                 </button>
+                            </div>
+
+                            {/* [NEW] Capacity Configuration */}
+                            <div className="bg-black/40 p-3 rounded-lg border border-white/5 flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-league">Venue Capacity</p>
+                                    <p className="text-[9px] text-slate-600 font-bold">Denominator for Density Physics</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        value={myVenue.capacity || 50}
+                                        onChange={(e) => updateVenue(myVenue.id, { capacity: parseInt(e.target.value) || 50 })}
+                                        className="w-16 bg-slate-900 border border-slate-700 text-white font-bold text-center rounded py-1 outline-none focus:border-primary"
+                                    />
+                                    <span className="text-[10px] font-black text-slate-500 uppercase">MAX</span>
+                                </div>
                             </div>
                         </div>
 
@@ -993,6 +1044,15 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         venue={myVenue}
                         onUpdate={(id, updates) => updateVenue(id, updates)}
                         userId={userProfile.uid}
+                        userProfile={userProfile}
+                    />
+                )}
+
+                {myVenue && dashboardView === 'scraper' && (
+                    <ScraperManagementTab
+                        venue={myVenue}
+                        onUpdate={(id, updates) => updateVenue(id, updates)}
+                        userProfile={userProfile}
                     />
                 )}
 

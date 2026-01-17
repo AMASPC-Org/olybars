@@ -1,4 +1,9 @@
-export type VenueStatus = 'dead' | 'chill' | 'buzzing' | 'packed';
+/**
+ * VenueStatus: Current energy/capacity level of a venue.
+ * 'dead' is deprecated in favor of 'mellow'.
+ */
+export type VenueStatus = 'dead' | 'mellow' | 'chill' | 'buzzing' | 'packed';
+
 
 export enum PartnerTier {
     LOCAL = 'local',
@@ -65,7 +70,7 @@ export interface ScheduledDeal {
 
 export type VenueType = 'bar_pub' | 'restaurant_bar' | 'brewery_taproom' | 'lounge_club' | 'arcade_bar' | 'brewpub' | 'private_club' | 'winery_tasting';
 
-export type ScrapeTarget = 'EVENTS' | 'MENU' | 'NEWSLETTER' | 'SOCIAL_FEED';
+export type ScrapeTarget = 'EVENTS' | 'MENU' | 'NEWSLETTER' | 'SOCIAL_FEED' | 'WEBSITE';
 
 export interface ScraperSource {
     id: string; // UUID
@@ -167,6 +172,7 @@ export type SceneTag =
     | 'tiki_theme'
     | 'wine_focus'
     | 'cocktail_focus'
+    | 'martini_bar'
     | 'lgbtq'
     | 'patio_garden';
 
@@ -412,6 +418,7 @@ export interface Venue {
     privateSpaces?: PrivateSpace[];
     reservations?: string;
     reservationUrl?: string;
+    reservationPolicy?: string;
     openingTime?: string;
     services?: string[];
 
@@ -427,6 +434,8 @@ export interface Venue {
     // [NEW] Social Engine
     social_auto_sync: boolean;
     auto_sync_sources?: ('facebook' | 'instagram' | 'website')[];
+    wifiPassword?: string;
+    posKey?: string;
 
     // [NEW] AI Refinery Draft
     ai_draft_profile?: {

@@ -64,14 +64,14 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({ isOpen, onClose,
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Source Type</label>
                         <div className="grid grid-cols-2 gap-2">
-                            {(['EVENTS', 'MENU', 'NEWSLETTER'] as ScrapeTarget[]).map((t) => (
+                            {(['EVENTS', 'MENU', 'NEWSLETTER', 'WEBSITE'] as ScrapeTarget[]).map((t) => (
                                 <button
                                     key={t}
                                     type="button"
                                     onClick={() => setTarget(t)}
                                     className={`px-4 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${target === t
-                                            ? 'bg-primary text-black border-primary'
-                                            : 'bg-black border-white/10 text-slate-500 hover:border-white/20'
+                                        ? 'bg-primary text-black border-primary'
+                                        : 'bg-black border-white/10 text-slate-500 hover:border-white/20'
                                         }`}
                                 >
                                     {t}
@@ -88,7 +88,11 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({ isOpen, onClose,
                                 type="text"
                                 value={url}
                                 onChange={(e) => setUrl(e.target.value)}
-                                placeholder={target === 'EVENTS' ? 'https://facebook.com/events...' : 'https://yourvenue.com/menu'}
+                                placeholder={
+                                    target === 'EVENTS' ? 'https://facebook.com/events/...' :
+                                        target === 'WEBSITE' ? 'https://yourvenue.com' :
+                                            'https://yourvenue.com/menu'
+                                }
                                 className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:border-primary/50 outline-none font-medium"
                                 autoFocus
                             />

@@ -151,7 +151,7 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
       searchPlaceholder="Search the wire..."
     >
       {/* Event Type Toggles */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
         {[
           { id: 'all', label: 'All Events', icon: List },
           { id: 'music', label: 'Live Music', icon: Music },

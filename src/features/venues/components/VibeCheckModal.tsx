@@ -132,7 +132,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     };
 
     const vibeOptions: { status: VenueStatus; label: string; icon: any; color: string; desc: string }[] = [
-        { status: 'dead', label: 'Dead', icon: Clock, color: 'text-slate-500', desc: 'Empty, almost no one here' },
+        { status: 'mellow', label: 'Mellow', icon: Clock, color: 'text-emerald-400', desc: 'Private session... only a few nomads here' },
         { status: 'chill', label: 'Chill', icon: Beer, color: 'text-blue-400', desc: 'Relaxed, plenty of space' },
         { status: 'buzzing', label: 'Buzzing', icon: Flame, color: 'text-red-500', desc: 'Active, good energy!' },
         { status: 'packed', label: 'Packed', icon: Zap, color: 'text-pink-500', desc: 'Shoulder to shoulder, wild!' },

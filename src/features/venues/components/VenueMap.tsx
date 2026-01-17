@@ -120,7 +120,7 @@ export const VenueMap: React.FC<VenueMapProps> = ({
             });
 
             marker.addListener('click', () => {
-                navigate(`/venues/${venue.id}`);
+                navigate(`/bars/${venue.id}`);
             });
 
             markersRef.current.push(marker);

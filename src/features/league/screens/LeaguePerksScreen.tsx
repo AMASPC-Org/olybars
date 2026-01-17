@@ -111,7 +111,7 @@ export const LeaguePerksScreen: React.FC = () => {
                         <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Live Updates</span>
                     </div>
 
-                    <div className="flex gap-4 overflow-x-auto pb-4 px-2 snap-x no-scrollbar">
+                    <div className="flex gap-4 overflow-x-auto pb-4 px-2 snap-x">
                         {[
                             { title: "$20 Well 80 Card", pts: "200 PTS", date: "2m ago", img: "bg-gradient-to-br from-blue-600 to-blue-900" },
                             { title: "League Snapback", pts: "150 PTS", date: "15m ago", img: "bg-gradient-to-br from-slate-700 to-black" },

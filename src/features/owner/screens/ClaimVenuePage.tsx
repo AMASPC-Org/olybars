@@ -368,8 +368,8 @@ export default function ClaimVenuePage() {
                                 </div>
 
                                 <div className="bg-slate-950/50 border border-white/5 p-6 rounded-3xl space-y-4 hover:border-emerald-500/30 transition-all group">
-                                    <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <Trophy className="w-6 h-6 text-emerald-400" />
+                                    <div className="w-12 h-12 bg-slate-500/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <Trophy className="w-6 h-6 text-slate-400" />
                                     </div>
                                     <h3 className="text-xl font-black uppercase font-league text-white italic">League Integration</h3>
                                     <p className="text-xs text-slate-500 font-bold leading-relaxed uppercase">
@@ -403,7 +403,7 @@ export default function ClaimVenuePage() {
                                             <p className="text-[8px] text-slate-500 font-bold uppercase mt-2">IG/FB Write-Sync & 10k Pts</p>
                                         </div>
                                         <div className="bg-slate-950/30 p-4 rounded-2xl border border-white/5 text-center">
-                                            <p className="text-[10px] text-emerald-400 font-black uppercase mb-1">Agency Legend</p>
+                                            <p className="text-[10px] text-slate-400 font-black uppercase mb-1">Agency Legend</p>
                                             <p className="text-lg font-black font-league">$799/mo</p>
                                             <p className="text-[8px] text-slate-500 font-bold uppercase mt-2">Full Management & Keystones</p>
                                         </div>
@@ -727,7 +727,7 @@ export default function ClaimVenuePage() {
                                             <h3 className="text-lg font-black uppercase font-league text-primary leading-none">DEFAULT ATMOSPHERE</h3>
                                             <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">Help users find the right mood</p>
                                         </div>
-                                        <span className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-lg ${vibe === 'dead' ? 'text-slate-500 bg-slate-500/10' :
+                                        <span className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-lg ${vibe === 'mellow' ? 'text-slate-400 bg-slate-400/10' :
                                             vibe === 'chill' ? 'text-blue-400 bg-blue-400/10' :
                                                 vibe === 'buzzing' ? 'text-primary bg-primary/10' : 'text-red-400 bg-red-400/10'
                                             }`}>
@@ -741,15 +741,15 @@ export default function ClaimVenuePage() {
                                             min="0"
                                             max="3"
                                             step="1"
-                                            value={vibe === 'dead' ? 0 : vibe === 'chill' ? 1 : vibe === 'buzzing' ? 2 : 3}
+                                            value={vibe === 'mellow' ? 0 : vibe === 'chill' ? 1 : vibe === 'buzzing' ? 2 : 3}
                                             onChange={(e) => {
                                                 const val = parseInt(e.target.value);
-                                                setVibe(val === 0 ? 'dead' : val === 1 ? 'chill' : val === 2 ? 'buzzing' : 'packed');
+                                                setVibe(val === 0 ? 'mellow' : val === 1 ? 'chill' : val === 2 ? 'buzzing' : 'packed');
                                             }}
                                             className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-primary"
                                         />
                                         <div className="flex justify-between mt-4 text-[9px] font-black uppercase tracking-widest text-slate-600">
-                                            <span className={vibe === 'dead' ? 'text-primary' : ''}>DEAD (Quiet)</span>
+                                            <span className={vibe === 'mellow' ? 'text-slate-400' : ''}>MELLOW (Quiet)</span>
                                             <span className={vibe === 'chill' ? 'text-primary' : ''}>CHILL (Conversational)</span>
                                             <span className={vibe === 'buzzing' ? 'text-primary' : ''}>BUZZING (Social)</span>
                                             <span className={vibe === 'packed' ? 'text-primary' : ''}>PACKED (Party)</span>

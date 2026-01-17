@@ -32,7 +32,11 @@ import { validateFirebaseIdToken } from './middleware/auth';
 
 const corsHandler = cors({ origin: [/olybars\.com$/, /firebaseapp\.com$/, /localhost/] });
 
-export const artieChat = onRequest({ secrets: ["GOOGLE_API_KEY"] }, async (req, res) => {
+export const artieChat = onRequest({
+    secrets: ["GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GOOGLE_BACKEND_KEY", "VITE_GOOGLE_BROWSER_KEY", "INTERNAL_HEALTH_TOKEN", "google-maps-api-key", "GOOGLE_MAPS_API_KEY"],
+    region: 'us-west1',
+    memory: '1GiB'
+}, async (req, res) => {
     corsHandler(req, res, async () => {
         // 1. Validate Honeypot (Cheap filter)
         if (req.body._hp_id && req.body._hp_id.length > 0) {
@@ -51,12 +55,29 @@ export const artieChat = onRequest({ secrets: ["GOOGLE_API_KEY"] }, async (req, 
                     userRole: user.role || 'guest'
                 };
 
-                // ArtieChatLogic assumes Genkit flow structure, keep calling it as function
+                // ArtieChatLogic assumes Genkit flow structure
                 const result = await artieChatLogic(secureContext);
 
-                // If result is streamable, handle it (Genkit might need stream logic, 
-                // but standard flow returns value. We'll send JSON for now to ensure stable migration)
-                res.status(200).json({ data: result });
+                // [FRESH EYES] Stream Detection & Pipe
+                // If the result is a GenerateContentStreamResult (async iterable), stream it.
+                // Otherwise, send as JSON.
+                if (result && typeof (result as any).stream === 'object') {
+                    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+                    res.setHeader('Transfer-Encoding', 'chunked');
+
+                    try {
+                        for await (const chunk of (result as any).stream) {
+                            const text = chunk.text();
+                            if (text) res.write(text);
+                        }
+                    } catch (streamError: any) {
+                        logger.error("Streaming error:", streamError);
+                    } finally {
+                        res.end();
+                    }
+                } else {
+                    res.status(200).json({ data: result });
+                }
             } catch (e: any) {
                 console.error("ArtieChat Error:", e);
                 res.status(500).json({ error: `Connection issue: ${e.message}` });
@@ -64,6 +85,51 @@ export const artieChat = onRequest({ secrets: ["GOOGLE_API_KEY"] }, async (req, 
         });
     });
 });
+
+
+// --- SCHMIDT AI GATEWAY (v2 HTTPS) ---
+export const schmidtChat = onRequest({
+    secrets: ["GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GOOGLE_BACKEND_KEY", "VITE_GOOGLE_BROWSER_KEY", "INTERNAL_HEALTH_TOKEN", "google-maps-api-key", "GOOGLE_MAPS_API_KEY"],
+    region: 'us-west1',
+    memory: '1GiB'
+}, async (req, res) => {
+    corsHandler(req, res, async () => {
+        await validateFirebaseIdToken(req, res, async () => {
+            try {
+                const { schmidtChatLogic } = await import('./flows/schmidtChat.js');
+                const user = (req as any).user;
+                const secureContext = {
+                    ...req.body,
+                    userId: user.uid,
+                    userRole: user.role || 'guest'
+                };
+
+                const result = await schmidtChatLogic(secureContext);
+
+                if (result && typeof (result as any).stream === 'object') {
+                    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+                    res.setHeader('Transfer-Encoding', 'chunked');
+                    try {
+                        for await (const chunk of (result as any).stream) {
+                            const text = chunk.text();
+                            if (text) res.write(text);
+                        }
+                    } catch (streamError) {
+                        logger.error("Schmidt Streaming error:", streamError);
+                    } finally {
+                        res.end();
+                    }
+                } else {
+                    res.status(200).json({ data: result });
+                }
+            } catch (e: any) {
+                logger.error("SchmidtChat Error:", e);
+                res.status(500).json({ error: `Schmidt logic issue: ${e.message}` });
+            }
+        });
+    });
+});
+
 
 
 // --- OBSERVABILITY ---
@@ -105,16 +171,23 @@ export const syncUserProfile = onDocumentWritten("users/{userId}", async (event)
     }
 
     // 2. Sync Public Profile
+    const profileRef = db.collection("public_profiles").doc(userId);
+    const existingSnap = await profileRef.get();
+    const existingData = existingSnap.data();
+
     const publicProfile = {
         handle: newUser.handle || "Anonymous",
         avatarUrl: newUser.avatarUrl || "",
-        league_stats: newUser.league_stats || { points: 0, rank: "Unranked" },
+        league_stats: {
+            points: (newUser.stats?.seasonPoints || 0),
+            rank: newUser.league_stats?.rank || existingData?.league_stats?.rank || "Unranked"
+        },
         current_status: fuzzStatus(newUser.current_status),
         isLeagueHQ: newUser.isLeagueHQ || false,
         lastSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    await db.collection("public_profiles").doc(userId).set(publicProfile, { merge: true });
+    await profileRef.set(publicProfile, { merge: true });
     logger.info(`[Privacy] Synced safe profile for ${userId}`);
 });
 

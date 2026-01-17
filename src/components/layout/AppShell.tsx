@@ -31,7 +31,7 @@ import {
   Shield,
   Zap
 } from 'lucide-react';
-import { Venue, UserProfile } from '../../types';
+import { Venue, UserProfile, ClockInRecord, VibeCheckRecord } from '../../types';
 import { isSystemAdmin } from '../../types/auth_schema';
 import { OlyChatModal } from '../artie/OlyChatModal';
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
@@ -66,6 +66,8 @@ interface AppShellProps {
   isLoading?: boolean;
   showArtie?: boolean;
   setShowArtie?: (show: boolean) => void;
+  clockInHistory?: ClockInRecord[];
+  vibeCheckHistory?: VibeCheckRecord[];
 }
 
 // --- The App Shell Component ---
@@ -92,7 +94,9 @@ export const AppShell: React.FC<AppShellProps> = ({
   onEditVenue,
   isLoading,
   showArtie,
-  setShowArtie
+  setShowArtie,
+  clockInHistory,
+  vibeCheckHistory
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -156,7 +160,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   // Extract Venue Context for Artie
   const getVenueIdFromPath = () => {
-    const venueMatch = location.pathname.match(/\/venues\/([^/]+)/);
+    const venueMatch = location.pathname.match(/\/(?:venues|bars)\/([^/]+)/);
     if (venueMatch) return venueMatch[1];
     const vcMatch = location.pathname.match(/\/vc\/([^/]+)/);
     if (vcMatch) return vcMatch[1];
@@ -189,7 +193,7 @@ export const AppShell: React.FC<AppShellProps> = ({
     '/venue-handover'
   ].includes(location.pathname);
 
-  const isDiscoveryFlow = location.pathname === '/' || location.pathname.startsWith('/venues/') || location.pathname === '/back-room';
+  const isDiscoveryFlow = location.pathname === '/' || location.pathname === '/bars' || location.pathname.startsWith('/bars/') || location.pathname === '/back-room';
 
   return (
     <div className={`h-full bg-background text-white font-sans mx-auto relative shadow-2xl overflow-hidden flex flex-col transition-all duration-500 ${isFullWidthPage
@@ -243,7 +247,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           {/* The Buzz Clock Component - Hidden on Map, during Search, on League Membership, or on administrative/profile pages */}
           {!isMapPage &&
             !searchQuery &&
-            !['/league-membership', '/profile', '/settings', '/owner', '/admin', '/back-room'].includes(location.pathname) &&
+            !['/league-membership', '/profile', '/settings', '/owner', '/admin', '/back-room', '/passport', '/league'].includes(location.pathname) &&
             <BuzzClock venues={venues} />
           }
 
@@ -268,7 +272,9 @@ export const AppShell: React.FC<AppShellProps> = ({
             onToggleFavorite,
             onEditVenue,
             isLoading,
-            onToggleWeeklyBuzz
+            onToggleWeeklyBuzz,
+            clockInHistory,
+            vibeCheckHistory
           }} />
         </div>
         {location.pathname !== '/map' && <Footer />}
